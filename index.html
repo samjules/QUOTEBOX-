@@ -10,26 +10,559 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    /* → Paste the ENTIRE CSS block from the previous multi-step form here ← */
-    /* (everything inside <style> ... </style>) */
+    :root {
+      --primary:    #4f46e5;     /* indigo-600 */
+      --primary-dark:#4338ca;
+      --primary-light:#6366f1;
+      --bg:         #f8fafc;
+      --surface:    #ffffff;
+      --text:       #0f172a;
+      --text-muted: #64748b;
+      --border:     #e2e8f0;
+      --error:      #ef4444;
+      --success:    #10b981;
+      --radius:     14px;
+      --shadow:     0 10px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.04);
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 40px 20px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 580px;
+      margin: 0 auto;
+    }
+
+    .logo {
+      text-align: center;
+      font-size: 2.25rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    .tagline {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      margin-bottom: 32px;
+    }
+
+    /* Progress Bar */
+    .progress-wrapper {
+      margin: 0 auto 40px;
+      max-width: 420px;
+    }
+
+    .progress {
+      display: flex;
+      justify-content: space-between;
+      position: relative;
+      margin-bottom: 12px;
+    }
+
+    .progress::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--border);
+      transform: translateY(-50%);
+      z-index: 1;
+    }
+
+    .step {
+      width: 36px;
+      height: 36px;
+      background: white;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: var(--text-muted);
+      position: relative;
+      z-index: 2;
+      transition: var(--transition);
+    }
+
+    .step.active {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 0 0 4px rgba(79,70,229,0.15);
+    }
+
+    .step.completed {
+      background: var(--primary-light);
+      border-color: var(--primary-light);
+      color: white;
+    }
+
+    .step-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .step-labels .active { color: var(--primary); font-weight: 600; }
+
+    /* Card / Form */
+    .form-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 32px;
+      border: 1px solid var(--border);
+    }
+
+    h1 {
+      font-size: 1.9rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+    }
+
+    .step-content {
+      display: none;
+    }
+
+    .step-content.active {
+      display: block;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    label {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    input, select {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 1.05rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      transition: var(--transition);
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(79,70,229,0.12);
+    }
+
+    .error-message {
+      color: var(--error);
+      font-size: 0.85rem;
+      margin-top: 6px;
+      display: none;
+    }
+
+    .field.error .error-message { display: block; }
+    .field.error input, .field.error select {
+      border-color: var(--error);
+      box-shadow: 0 0 0 4px rgba(239,68,68,0.1);
+    }
+
+    .hint {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 15px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+      text-align: center;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 6px 16px rgba(79,70,229,0.25);
+    }
+
+    .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover { background: #f1f5f9; }
+
+    /* Summary */
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .summary-item:last-child { border-bottom: none; }
+
+    .summary-total {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-top: 20px;
+      text-align: right;
+    }
+
+    .trust {
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-top: 24px;
+    }
+
+    @media (max-width: 640px) {
+      body { padding: 24px 16px; }
+      .form-card { padding: 24px; }
+      .btn-group { flex-direction: column; gap: 12px; }
+    }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <!-- → Paste the ENTIRE HTML structure here (logo, progress, form-card, all steps) ← -->
+  <div class="logo">MoveEasy</div>
+  <div class="tagline">Instant quotes • Transparent pricing • No surprises</div>
 
-  <form id="multiStepForm">
-    <!-- all step-content divs ... -->
-  </form>
+  <div class="progress-wrapper">
+    <div class="progress">
+      <div class="step">1</div>
+      <div class="step">2</div>
+      <div class="step">3</div>
+      <div class="step">4</div>
+      <div class="step">5</div>
+    </div>
+    <div class="step-labels">
+      <span>Home</span>
+      <span>Details</span>
+      <span>Extras</span>
+      <span>Info</span>
+      <span>Review</span>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <form id="multiStepForm">
+
+      <!-- STEP 1 -->
+      <div class="step-content active" data-step="1">
+        <h1>Tell us about your move</h1>
+        <p class="subtitle">Step 1 of 5 — Home basics</p>
+
+        <div class="field" id="field-homeType">
+          <label for="homeType">Home type</label>
+          <select id="homeType" required>
+            <option value="">Select...</option>
+            <option value="apartment">Apartment / Condo</option>
+            <option value="house">House</option>
+            <option value="townhouse">Townhouse</option>
+            <option value="other">Other</option>
+          </select>
+          <div class="error-message">Please select your home type</div>
+        </div>
+
+        <div class="field" id="field-bedrooms">
+          <label for="bedrooms">Number of bedrooms</label>
+          <select id="bedrooms" required>
+            <option value="">Select...</option>
+            <option value="0">Studio</option>
+            <option value="1">1 bedroom</option>
+            <option value="2">2 bedrooms</option>
+            <option value="3">3 bedrooms</option>
+            <option value="4">4+ bedrooms</option>
+          </select>
+          <div class="error-message">Please select number of bedrooms</div>
+        </div>
+
+        <div class="btn-group">
+          <button type="button" class="btn btn-primary" onclick="nextStep(1)">Continue</button>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="step-content" data-step="2">
+        <h1>Move details</h1>
+        <p class="subtitle">Step 2 of 5</p>
+
+        <div class="field" id="field-moveDate">
+          <label for="moveDate">Preferred move date</label>
+          <input type="date" id="moveDate" required min="2026-01-26">
+          <div class="error-message">Please choose a move date</div>
+        </div>
+
+        <div class="field" id="field-fromZip">
+          <label for="fromZip">Moving from (ZIP code)</label>
+          <input type="text" id="fromZip" pattern="[0-9]{5}" placeholder="97128" required maxlength="5">
+          <div class="error-message">Please enter a valid 5-digit ZIP code</div>
+        </div>
+
+        <div class="field" id="field-toZip">
+          <label for="toZip">Moving to (ZIP code)</label>
+          <input type="text" id="toZip" pattern="[0-9]{5}" placeholder="97201" required maxlength="5">
+          <div class="error-message">Please enter a valid 5-digit ZIP code</div>
+        </div>
+
+        <div class="btn-group">
+          <button type="button" class="btn btn-secondary" onclick="prevStep()">Back</button>
+          <button type="button" class="btn btn-primary" onclick="nextStep(2)">Continue</button>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="step-content" data-step="3">
+        <h1>Any extras?</h1>
+        <p class="subtitle">Step 3 of 5 — Helps us give a better estimate</p>
+
+        <div class="field">
+          <label for="stairs">Flights of stairs (pickup + delivery combined)</label>
+          <input type="number" id="stairs" min="0" value="0">
+          <p class="hint">$50/flight • No elevator = more effort</p>
+        </div>
+
+        <div class="field">
+          <label for="heavy">Heavy/specialty items (piano, safe, hot tub, etc.)</label>
+          <input type="number" id="heavy" min="0" value="0">
+          <p class="hint">$75+ per item depending on size/weight</p>
+        </div>
+
+        <div class="btn-group">
+          <button type="button" class="btn btn-secondary" onclick="prevStep()">Back</button>
+          <button type="button" class="btn btn-primary" onclick="nextStep(3)">Continue</button>
+        </div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="step-content" data-step="4">
+        <h1>Your contact info</h1>
+        <p class="subtitle">Step 4 of 5 — We’ll send the detailed quote here</p>
+
+        <div class="field" id="field-name">
+          <label for="name">Full name</label>
+          <input type="text" id="name" required minlength="2">
+          <div class="error-message">Please enter your name</div>
+        </div>
+
+        <div class="field" id="field-email">
+          <label for="email">Email address</label>
+          <input type="email" id="email" required placeholder="you@example.com">
+          <div class="error-message">Please enter a valid email</div>
+        </div>
+
+        <div class="field" id="field-phone">
+          <label for="phone">Phone number (optional)</label>
+          <input type="tel" id="phone" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" placeholder="503-555-1234">
+          <p class="hint">We’ll text you only if needed</p>
+        </div>
+
+        <div class="btn-group">
+          <button type="button" class="btn btn-secondary" onclick="prevStep()">Back</button>
+          <button type="button" class="btn btn-primary" onclick="nextStep(4)">Review Estimate →</button>
+        </div>
+      </div>
+
+      <!-- STEP 5 – Review & Submit -->
+      <div class="step-content" data-step="5">
+        <h1>Review & submit</h1>
+        <p class="subtitle">Step 5 of 5 — Almost there!</p>
+
+        <div id="summary" style="margin: 24px 0;"></div>
+
+        <label style="display:flex; align-items:center; gap:12px; font-size:0.95rem; margin:24px 0;">
+          <input type="checkbox" required>
+          <span>I agree to receive a quote via email/text and understand this is an <strong>estimate</strong>.</span>
+        </label>
+
+        <div class="trust">🔒 Secure • No credit card required • Cancel anytime</div>
+
+        <div class="btn-group">
+          <button type="button" class="btn btn-secondary" onclick="prevStep()">Back</button>
+          <button type="submit" class="btn btn-primary">Get My Quote →</button>
+        </div>
+      </div>
+
+    </form>
+  </div>
 </div>
 
 <script>
-  /* → Paste the ENTIRE JavaScript here ← */
-  /* including showStep, nextStep, prevStep, validateStep, generateSummary, and the submit handler with fetch */
+  let currentStep = 1;
+  const totalSteps = 5;
+  const steps = document.querySelectorAll('.step-content');
+  const progressSteps = document.querySelectorAll('.progress .step');
+  const labels = document.querySelectorAll('.step-labels span');
 
-  // Make sure to update the fetch URL to your real Wix endpoint:
-  // await fetch('https://your-wix-site.com/_functions/submitQuote', { ... })
+  function updateProgress() {
+    progressSteps.forEach((s, i) => {
+      s.classList.remove('active', 'completed');
+      if (i + 1 < currentStep) s.classList.add('completed');
+      if (i + 1 === currentStep) s.classList.add('active');
+    });
+
+    labels.forEach((l, i) => {
+      l.classList.toggle('active', i + 1 === currentStep);
+    });
+  }
+
+  function showStep(n) {
+    steps.forEach(s => s.classList.remove('active'));
+    document.querySelector(`[data-step="${n}"]`).classList.add('active');
+    currentStep = n;
+    updateProgress();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function validateStep(step) {
+    const current = document.querySelector(`[data-step="${step}"]`);
+    let valid = true;
+
+    current.querySelectorAll('.field').forEach(field => {
+      const input = field.querySelector('input, select');
+      if (input && input.hasAttribute('required') && !input.value.trim()) {
+        field.classList.add('error');
+        valid = false;
+      } else if (input && input.pattern && !input.checkValidity()) {
+        field.classList.add('error');
+        valid = false;
+      } else {
+        field.classList.remove('error');
+      }
+    });
+
+    if (!valid) {
+      current.querySelector('.error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    return valid;
+  }
+
+  function nextStep(fromStep) {
+    if (validateStep(fromStep) && currentStep < totalSteps) {
+      showStep(currentStep + 1);
+      if (currentStep === 5) generateSummary();
+    }
+  }
+
+  function prevStep() {
+    if (currentStep > 1) showStep(currentStep - 1);
+  }
+
+  function generateSummary() {
+    const data = {
+      homeType: document.getElementById('homeType').options[document.getElementById('homeType').selectedIndex]?.text || '',
+      bedrooms: document.getElementById('bedrooms').options[document.getElementById('bedrooms').selectedIndex]?.text || '',
+      moveDate: document.getElementById('moveDate').value || 'Not specified',
+      fromZip: document.getElementById('fromZip').value,
+      toZip: document.getElementById('toZip').value,
+      stairs: document.getElementById('stairs').value || 0,
+      heavy: document.getElementById('heavy').value || 0,
+      name: document.getElementById('name').value,
+      email: document.getElementById('email').value,
+    };
+
+    document.getElementById('summary').innerHTML = `
+      <div class="summary-item"><strong>Move type:</strong><span>${data.bedrooms} ${data.homeType || '—'}</span></div>
+      <div class="summary-item"><strong>Date:</strong><span>${data.moveDate}</span></div>
+      <div class="summary-item"><strong>From → To:</strong><span>${data.fromZip} → ${data.toZip}</span></div>
+      <div class="summary-item"><strong>Stairs:</strong><span>${data.stairs} flights</span></div>
+      <div class="summary-item"><strong>Heavy items:</strong><span>${data.heavy}</span></div>
+      <div class="summary-item"><strong>Contact:</strong><span>${data.name} • ${data.email}</span></div>
+    `;
+  }
+
+  document.getElementById('multiStepForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    if (!validateStep(5)) return;
+
+    const formData = {
+      name:     document.getElementById('name').value.trim(),
+      email:    document.getElementById('email').value.trim(),
+      phone:    document.getElementById('phone').value.trim(),
+      homeType: document.getElementById('homeType').value,
+      bedrooms: document.getElementById('bedrooms').value,
+      moveDate: document.getElementById('moveDate').value,
+      fromZip:  document.getElementById('fromZip').value,
+      toZip:    document.getElementById('toZip').value,
+      stairs:   document.getElementById('stairs').value,
+      heavy:    document.getElementById('heavy').value
+    };
+
+    try {
+      const response = await fetch('https://YOUR-SITE-NAME.wixsite.com/YOUR-SITE-NAME/_functions/submitQuote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        alert(result.message || "Thank you! Your quote request has been sent.");
+        // Optional: window.location.reload(); or show success message
+      } else {
+        alert(result.error || "Something went wrong. Please try again.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error – please check your connection or try again later.");
+    }
+  });
+
+  // Clear error on input
+  document.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('input', () => {
+      el.closest('.field')?.classList.remove('error');
+    });
+  });
+
+  // Init
+  updateProgress();
 </script>
 
 </body>
