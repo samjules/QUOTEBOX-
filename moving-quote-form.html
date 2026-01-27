@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moving Quote Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background-image: url('https://static.wixstatic.com/media/e8b6a5_85200f9378c24bdf8c17fd2ada4d20c4~mv2.jpg/v1/fill/w_1440,h_633,al_c,q_85,enc_avif,quality_auto/e8b6a5_85200f9378c24bdf8c17fd2ada4d20c4~mv2.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 68, 0, 0.85) 0%, rgba(255, 140, 0, 0.75) 100%);
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 650px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 3rem 2.5rem;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3), 
+                        0 0 0 1px rgba(255, 255, 255, 0.5);
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            padding-bottom: 2rem;
+            border-bottom: 3px solid #FF4500;
+        }
+
+        .header h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3rem;
+            color: #1a1a1a;
+            letter-spacing: 2px;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        /* Progress bar */
+        .progress-container {
+            margin-bottom: 2rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FF4500, #FF8C00);
+            border-radius: 10px;
+            transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            width: 0%;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 0.5rem;
+            color: #666;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        /* Question container */
+        .question-container {
+            margin-bottom: 1.5rem;
+            animation: fadeIn 0.5s ease-out;
+            animation-fill-mode: both;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 1rem;
+            line-height: 1.4;
+        }
+
+        .options-container {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .option-button {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: #ffffff;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-family: 'Work Sans', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 100%;
+            background: linear-gradient(90deg, #FF4500, #FF8C00);
+            transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 0;
+        }
+
+        .option-button span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .option-button:hover {
+            border-color: #FF4500;
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(255, 69, 0, 0.2);
+        }
+
+        .option-button:hover::before {
+            width: 100%;
+        }
+
+        .option-button:hover span {
+            color: #ffffff;
+        }
+
+        .option-button:active {
+            transform: translateX(2px);
+        }
+
+        .option-button.selected {
+            background: linear-gradient(90deg, #FF4500, #FF8C00);
+            border-color: #FF4500;
+            color: #ffffff;
+        }
+
+        .option-button.selected::before {
+            width: 100%;
+        }
+
+        /* Quote result */
+        .quote-result {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #ffffff;
+            padding: 2.5rem;
+            border-radius: 16px;
+            margin-top: 2rem;
+            animation: fadeIn 0.6s ease-out;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .quote-result h2 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            letter-spacing: 1px;
+            color: #FF8C00;
+            text-align: center;
+        }
+
+        .quote-breakdown {
+            margin-bottom: 1.5rem;
+        }
+
+        .quote-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.95rem;
+        }
+
+        .quote-item:last-child {
+            border-bottom: none;
+        }
+
+        .quote-item-label {
+            color: #ccc;
+            font-weight: 500;
+        }
+
+        .quote-item-value {
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .quote-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 0;
+            border-top: 3px solid #FF4500;
+            margin-top: 1rem;
+        }
+
+        .quote-total-label {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.75rem;
+            letter-spacing: 1px;
+        }
+
+        .quote-total-value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5rem;
+            color: #FF8C00;
+            letter-spacing: 1px;
+        }
+
+        .broke-boy-badge {
+            background: linear-gradient(90deg, #FF4500, #FF8C00);
+            color: #fff;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 700;
+            display: inline-block;
+            margin-top: 1rem;
+            text-align: center;
+            width: 100%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        /* Responsive design */
+        @media (max-width: 640px) {
+            .container {
+                padding: 2rem 1.5rem;
+            }
+
+            .header h1 {
+                font-size: 2.25rem;
+            }
+
+            .question-text {
+                font-size: 1.1rem;
+            }
+
+            .option-button {
+                padding: 0.875rem 1.25rem;
+                font-size: 0.95rem;
+            }
+
+            .quote-result {
+                padding: 1.75rem;
+            }
+
+            .quote-total-label {
+                font-size: 1.5rem;
+            }
+
+            .quote-total-value {
+                font-size: 2rem;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Moving Quote</h1>
+            <p>Answer a few questions to get your instant estimate</p>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Question 1 of 13</div>
+        </div>
+
+        <form id="quoteForm">
+            <!-- Questions will be dynamically inserted here -->
+        </form>
+
+        <div id="quoteResult" class="quote-result hidden">
+            <!-- Quote calculation will be shown here -->
+        </div>
+    </div>
+
+    <script>
+        // Question flow logic - each question may have conditional next steps
+        const questions = [
+            {
+                id: 1,
+                text: "How big is your house?",
+                options: [
+                    { value: "studio", label: "Studio/1 Bedroom", next: 2 },
+                    { value: "2bed", label: "2 Bedroom", next: 2 },
+                    { value: "3bed", label: "3 Bedroom", next: 2 },
+                    { value: "4bed", label: "4+ Bedroom", next: 2 }
+                ]
+            },
+            {
+                id: 2,
+                text: "Do you plan on bringing your Washer/Dryer set?",
+                options: [
+                    { value: "yes", label: "Yes", next: 10 }, // Skip to bed question
+                    { value: "no", label: "No", next: 3 }
+                ]
+            },
+            {
+                id: 3,
+                text: "Do you have a Washer/Dryer set?",
+                options: [
+                    { value: "yes", label: "Yes", next: 6 }, // Skip to apartment complex question
+                    { value: "no", label: "No", next: 4 }
+                ]
+            },
+            {
+                id: 4,
+                text: "Oh… do you just go to a laundromat or something?",
+                options: [
+                    { value: "yes", label: "Yes", next: 5 },
+                    { value: "no", label: "No", next: 6 }
+                ]
+            },
+            {
+                id: 5,
+                text: "Is the laundromat at your apartment complex or somewhere in town?",
+                options: [
+                    { value: "complex", label: "Apartment complex", next: 6 },
+                    { value: "town", label: "In town", next: 6 }
+                ]
+            },
+            {
+                id: 6,
+                text: "Does your new apartment complex have a Washer/Dryer set?",
+                options: [
+                    { value: "yes", label: "Yes", next: 8 }, // Skip "is that a choice"
+                    { value: "no", label: "No", next: 7 }
+                ]
+            },
+            {
+                id: 7,
+                text: "Is that a choice?",
+                options: [
+                    { value: "yes", label: "Yes", next: 8 },
+                    { value: "no", label: "No", next: 8 }
+                ]
+            },
+            {
+                id: 8,
+                text: "Do you have a high-paying, marketable job skill?",
+                options: [
+                    { value: "yes", label: "Yes", next: 10 }, // Skip "is it really"
+                    { value: "no", label: "No", next: 10 },
+                    { value: "complicated", label: "It's complicated", next: 9 }
+                ]
+            },
+            {
+                id: 9,
+                text: "Is it really?",
+                options: [
+                    { value: "yes", label: "Yes", next: 10 },
+                    { value: "no", label: "No", next: 10 },
+                    { value: "complicated", label: "It's complicated", next: 10 }
+                ]
+            },
+            {
+                id: 10,
+                text: "Are you bringing a bed?",
+                options: [
+                    { value: "yes", label: "Yes", next: 11 },
+                    { value: "no", label: "No", next: 12 }
+                ]
+            },
+            {
+                id: 11,
+                text: "What size bed are you bringing?",
+                options: [
+                    { value: "twin", label: "Twin", next: "calculate" },
+                    { value: "full", label: "Full", next: "calculate" },
+                    { value: "queen", label: "Queen", next: "calculate" },
+                    { value: "king", label: "King", next: "calculate" }
+                ]
+            },
+            {
+                id: 12,
+                text: "So basically you get no bitches…",
+                options: [
+                    { value: "girlfriend", label: "I have a girlfriend", next: 13 }
+                ]
+            },
+            {
+                id: 13,
+                text: "Do you feel like she deserves a Washer/Dryer in the unit?",
+                options: [
+                    { value: "yes", label: "Yes", next: "calculate" },
+                    { value: "no", label: "No", next: "calculate" }
+                ]
+            }
+        ];
+
+        // State management
+        let currentQuestionIndex = 0;
+        let answers = {};
+        let questionHistory = []; // Track which questions were shown
+
+        // Initialize form
+        function init() {
+            showQuestion(questions[0]);
+        }
+
+        // Display a question dynamically
+        function showQuestion(question) {
+            const form = document.getElementById('quoteForm');
+            
+            // Create question container
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question-container';
+            questionDiv.dataset.questionId = question.id;
+            
+            // Question text
+            const questionText = document.createElement('div');
+            questionText.className = 'question-text';
+            questionText.textContent = question.text;
+            questionDiv.appendChild(questionText);
+            
+            // Options container
+            const optionsContainer = document.createElement('div');
+            optionsContainer.className = 'options-container';
+            
+            // Create option buttons
+            question.options.forEach(option => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'option-button';
+                button.dataset.value = option.value;
+                button.dataset.next = option.next;
+                
+                const span = document.createElement('span');
+                span.textContent = option.label;
+                button.appendChild(span);
+                
+                // Handle option selection
+                button.addEventListener('click', () => handleAnswer(question.id, option.value, option.next, button));
+                
+                optionsContainer.appendChild(button);
+            });
+            
+            questionDiv.appendChild(optionsContainer);
+            form.appendChild(questionDiv);
+            
+            // Update progress
+            updateProgress();
+        }
+
+        // Handle answer selection and load next question
+        function handleAnswer(questionId, answer, nextQuestionId, selectedButton) {
+            // Store answer
+            answers[questionId] = answer;
+            questionHistory.push(questionId);
+            
+            // Mark button as selected
+            selectedButton.classList.add('selected');
+            
+            // Disable all buttons in this question
+            const questionContainer = selectedButton.closest('.question-container');
+            const buttons = questionContainer.querySelectorAll('.option-button');
+            buttons.forEach(btn => btn.disabled = true);
+            
+            // Short delay before showing next question
+            setTimeout(() => {
+                if (nextQuestionId === "calculate") {
+                    // Calculate and show quote
+                    calculateQuote();
+                } else {
+                    // Find and show next question
+                    const nextQuestion = questions.find(q => q.id === nextQuestionId);
+                    if (nextQuestion) {
+                        showQuestion(nextQuestion);
+                    }
+                }
+            }, 400);
+        }
+
+        // Update progress bar
+        function updateProgress() {
+            const totalQuestions = 13; // Maximum possible questions
+            const currentQuestion = questionHistory.length + 1;
+            const progressPercentage = (currentQuestion / totalQuestions) * 100;
+            
+            document.getElementById('progressFill').style.width = progressPercentage + '%';
+            document.getElementById('progressText').textContent = `Question ${currentQuestion} of ${totalQuestions}`;
+        }
+
+        // Calculate moving quote with "broke boy tax"
+        function calculateQuote() {
+            // Hide form
+            document.getElementById('quoteForm').style.display = 'none';
+            
+            // Base calculation
+            let baseRate = 100; // per hour
+            let hours = 2; // minimum hours
+            let flightOfStairs = 2; // assume 2 flights
+            let heavyItems = 0;
+            let brokeBoyTax = 20;
+            
+            // Adjust based on house size (question 1)
+            if (answers[1] === '4bed') {
+                hours += 2;
+                heavyItems += 3;
+            } else if (answers[1] === '3bed') {
+                hours += 1;
+                heavyItems += 2;
+            } else if (answers[1] === '2bed') {
+                heavyItems += 1;
+            }
+            
+            // Bringing washer/dryer (question 2)
+            if (answers[2] === 'yes') {
+                heavyItems += 1;
+            }
+            
+            // Bed size (question 11)
+            if (answers[11] === 'king') {
+                heavyItems += 2;
+            } else if (answers[11] === 'queen') {
+                heavyItems += 1;
+            }
+            
+            // Calculate totals
+            const laborCost = baseRate * hours;
+            const stairsCost = flightOfStairs * 50;
+            const heavyItemsCost = heavyItems * 50;
+            const subtotal = laborCost + stairsCost + heavyItemsCost;
+            const total = subtotal + brokeBoyTax;
+            
+            // Display quote
+            const quoteResult = document.getElementById('quoteResult');
+            quoteResult.innerHTML = `
+                <h2>Your Moving Quote</h2>
+                <div class="quote-breakdown">
+                    <div class="quote-item">
+                        <span class="quote-item-label">Labor (${hours} hours × $${baseRate}/hr)</span>
+                        <span class="quote-item-value">$${laborCost.toFixed(2)}</span>
+                    </div>
+                    <div class="quote-item">
+                        <span class="quote-item-label">Stairs (${flightOfStairs} flights × $50)</span>
+                        <span class="quote-item-value">$${stairsCost.toFixed(2)}</span>
+                    </div>
+                    <div class="quote-item">
+                        <span class="quote-item-label">Heavy Items (${heavyItems} items × $50)</span>
+                        <span class="quote-item-value">$${heavyItemsCost.toFixed(2)}</span>
+                    </div>
+                    <div class="quote-item">
+                        <span class="quote-item-label">Broke Boy Tax 💸</span>
+                        <span class="quote-item-value">$${brokeBoyTax.toFixed(2)}</span>
+                    </div>
+                </div>
+                <div class="quote-total">
+                    <span class="quote-total-label">Total Estimate:</span>
+                    <span class="quote-total-value">$${total.toFixed(2)}</span>
+                </div>
+                <div class="broke-boy-badge">
+                    🎉 Congratulations! You've been assessed the prestigious Broke Boy Tax
+                </div>
+            `;
+            quoteResult.classList.remove('hidden');
+            
+            // Update progress to 100%
+            document.getElementById('progressFill').style.width = '100%';
+            document.getElementById('progressText').textContent = 'Complete!';
+        }
+
+        // Start the form
+        init();
+    </script>
+</body>
+</html>
