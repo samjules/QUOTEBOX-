@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instant Moving Quote | Professional Moving Services</title>
+    <title>Instant Moving Quote | Big Johns Moving</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -14,7 +14,11 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, rgba(255, 140, 60, 0.85) 0%, rgba(255, 100, 30, 0.85) 100%), 
+                        url('https://static.wixstatic.com/media/e8b6a5_8e3f1e0e33fc4ce9bc73057d50145dc5~mv2.jpeg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -29,6 +33,27 @@
             max-width: 600px;
             width: 100%;
             overflow: hidden;
+        }
+
+        .company-header {
+            background: linear-gradient(135deg, #ff8c3c 0%, #ff641e 100%);
+            padding: 25px 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .company-header h1 {
+            margin: 0;
+            font-size: 32px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .company-header p {
+            margin: 5px 0 0 0;
+            font-size: 14px;
+            opacity: 0.9;
         }
 
         .progress-container {
@@ -47,7 +72,7 @@
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(90deg, #ff8c3c 0%, #ff641e 100%);
             transition: width 0.3s ease;
             border-radius: 10px;
         }
@@ -90,7 +115,7 @@
 
         .question-icon i {
             font-size: 48px;
-            color: #667eea;
+            color: #ff8c3c;
         }
 
         h2 {
@@ -128,7 +153,7 @@
         select:focus,
         textarea:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #ff8c3c;
         }
 
         textarea {
@@ -167,14 +192,14 @@
 
         .radio-option:hover,
         .checkbox-option:hover {
-            border-color: #667eea;
-            background: #f8f9ff;
+            border-color: #ff8c3c;
+            background: #fff5f0;
         }
 
         .radio-option.selected,
         .checkbox-option.selected {
-            border-color: #667eea;
-            background: #f8f9ff;
+            border-color: #ff8c3c;
+            background: #fff5f0;
         }
 
         .radio-option input[type="radio"],
@@ -223,16 +248,16 @@
         }
 
         .mask-option-img:hover {
-            border-color: #667eea;
-            background: #f8f9ff;
+            border-color: #ff8c3c;
+            background: #fff5f0;
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2);
+            box-shadow: 0 5px 20px rgba(255, 140, 60, 0.2);
         }
 
         .mask-option-img.selected {
-            border-color: #667eea;
-            background: #f8f9ff;
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+            border-color: #ff8c3c;
+            background: #fff5f0;
+            box-shadow: 0 5px 20px rgba(255, 140, 60, 0.3);
         }
 
         .mask-option-img input[type="radio"] {
@@ -275,7 +300,7 @@
         }
 
         .mask-link {
-            color: #667eea;
+            color: #ff8c3c;
             font-size: 12px;
             text-decoration: none;
             margin-top: 5px;
@@ -304,14 +329,14 @@
 
         .btn-next,
         .btn-submit {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #ff8c3c 0%, #ff641e 100%);
             color: white;
         }
 
         .btn-next:hover,
         .btn-submit:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 20px rgba(255, 140, 60, 0.4);
         }
 
         .btn-prev {
@@ -326,8 +351,8 @@
         .btn-skip {
             padding: 12px 24px;
             background: #fff;
-            color: #667eea;
-            border: 2px solid #667eea;
+            color: #ff8c3c;
+            border: 2px solid #ff8c3c;
             border-radius: 8px;
             font-size: 15px;
             font-weight: 600;
@@ -336,10 +361,10 @@
         }
 
         .btn-skip:hover {
-            background: #667eea;
+            background: #ff8c3c;
             color: white;
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 5px 15px rgba(255, 140, 60, 0.3);
         }
 
         .btn-skip i {
@@ -362,7 +387,7 @@
         .quote-amount {
             font-size: 48px;
             font-weight: bold;
-            color: #667eea;
+            color: #ff8c3c;
             margin: 20px 0;
         }
 
@@ -387,7 +412,7 @@
         }
 
         .payment-btn:hover {
-            border-color: #667eea;
+            border-color: #ff8c3c;
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
@@ -421,6 +446,10 @@
 </head>
 <body>
     <div class="container">
+        <div class="company-header">
+            <h1>🚚 Big Johns Moving</h1>
+            <p>Get Your Instant Quote Today</p>
+        </div>
         <div class="progress-container">
             <div class="progress-bar">
                 <div class="progress-fill" id="progressFill"></div>
@@ -828,7 +857,7 @@
 
         // Process payment
         function processPayment(method) {
-            alert(`Processing $50 deposit via ${method}...\n\nThank you for choosing our moving services!`);
+            alert(`Processing $50 deposit via ${method}...\n\nThank you for choosing Big Johns Moving!`);
         }
 
         // Initialize
