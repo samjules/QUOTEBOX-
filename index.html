@@ -245,12 +245,13 @@
         .mask-content {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 15px;
         }
 
         .mask-image {
-            width: 120px;
-            height: 120px;
+            width: 200px;
+            height: 200px;
             object-fit: cover;
             border-radius: 8px;
             border: 1px solid #e0e0e0;
@@ -485,24 +486,8 @@
                     </div>
                 </div>
 
-                <!-- Slide 4: Mileage -->
+                <!-- Slide 4: Washer/Dryer -->
                 <div class="slide" data-step="4">
-                    <div class="question-icon">
-                        <i class="fas fa-route"></i>
-                    </div>
-                    <h2>What's the distance of your move?</h2>
-                    <div class="input-group">
-                        <label for="mileage">Miles</label>
-                        <input type="number" id="mileage" min="1" placeholder="Enter estimated miles" required>
-                    </div>
-                    <div class="btn-group">
-                        <button type="button" class="btn-prev" onclick="prevSlide()">Back</button>
-                        <button type="button" class="btn-next" onclick="nextSlide()">Next</button>
-                    </div>
-                </div>
-
-                <!-- Slide 5: Washer/Dryer -->
-                <div class="slide" data-step="5">
                     <div class="question-icon">
                         <i class="fas fa-tshirt"></i>
                     </div>
@@ -523,8 +508,8 @@
                     </div>
                 </div>
 
-                <!-- Slide 6: Explanation -->
-                <div class="slide" data-step="6">
+                <!-- Slide 5: Explanation -->
+                <div class="slide" data-step="5">
                     <div class="question-icon">
                         <i class="fas fa-comment-dots"></i>
                     </div>
@@ -547,8 +532,8 @@
                     </div>
                 </div>
 
-                <!-- Slide 7: Safety Policy -->
-                <div class="slide" data-step="7">
+                <!-- Slide 6: Safety Policy -->
+                <div class="slide" data-step="6">
                     <div class="question-icon">
                         <i class="fas fa-shield-alt"></i>
                     </div>
@@ -570,8 +555,8 @@
                     </div>
                 </div>
 
-                <!-- Slide 8: Mask Choice -->
-                <div class="slide" data-step="8">
+                <!-- Slide 7: Mask Choice -->
+                <div class="slide" data-step="7">
                     <div class="question-icon">
                         <i class="fas fa-mask"></i>
                     </div>
@@ -580,34 +565,19 @@
                         <label class="mask-option-img" onclick="selectMask('mask1', this)">
                             <input type="radio" name="maskChoice" value="mask1" id="mask1">
                             <div class="mask-content">
-                                <img src="https://m.media-amazon.com/images/I/715Bwdhd86L._AC_UL210_SR210,210_.jpg" alt="Double Head Costume Mask" class="mask-image">
-                                <div class="mask-info">
-                                    <strong>Double Head Costume Mask</strong>
-                                    <small>Amazon - AHOHOS Halloween</small>
-                                    <a href="https://www.amazon.com/AHOHOS-Halloween-Double-Costume-Cosplay/dp/B0CH8Q4KG8" target="_blank" class="mask-link">View Product</a>
-                                </div>
+                                <img src="https://static.wixstatic.com/media/e8b6a5_f590857b07d84bab99c826b5ff6abba7~mv2.jpg" alt="Mask Option 1" class="mask-image">
                             </div>
                         </label>
                         <label class="mask-option-img" onclick="selectMask('mask2', this)">
                             <input type="radio" name="maskChoice" value="mask2" id="mask2">
                             <div class="mask-content">
-                                <img src="https://www.fantasycostumes.com/dw/image/v2/BBQF_PRD/on/demandware.static/-/Sites-fun-master-catalog/default/dw1b2e5c5f/images/lic/disguise/costumes/1.0x0.jpg" alt="Funny Mask" class="mask-image">
-                                <div class="mask-info">
-                                    <strong>Funny Masks Collection</strong>
-                                    <small>Fantasy Costumes</small>
-                                    <a href="https://www.fantasycostumes.com/funny-masks/" target="_blank" class="mask-link">View Collection</a>
-                                </div>
+                                <img src="https://static.wixstatic.com/media/e8b6a5_ba965fa1e5f94ad282d4bc8a46da7db8~mv2.webp" alt="Mask Option 2" class="mask-image">
                             </div>
                         </label>
                         <label class="mask-option-img" onclick="selectMask('mask3', this)">
                             <input type="radio" name="maskChoice" value="mask3" id="mask3">
                             <div class="mask-content">
-                                <img src="https://halloweenhallway.com/cdn/shop/files/FW93315_1080x.webp" alt="Funny Mask" class="mask-image">
-                                <div class="mask-info">
-                                    <strong>Funny Masks Collection</strong>
-                                    <small>Halloween Hallway</small>
-                                    <a href="https://halloweenhallway.com/collections/funny-masks" target="_blank" class="mask-link">View Collection</a>
-                                </div>
+                                <img src="https://static.wixstatic.com/media/e8b6a5_ba965fa1e5f94ad282d4bc8a46da7db8~mv2.webp" alt="Mask Option 3" class="mask-image">
                             </div>
                         </label>
                     </div>
@@ -617,8 +587,8 @@
                     </div>
                 </div>
 
-                <!-- Slide 9: Reimbursement -->
-                <div class="slide" data-step="9">
+                <!-- Slide 8: Reimbursement -->
+                <div class="slide" data-step="8">
                     <div class="question-icon">
                         <i class="fas fa-hand-holding-usd"></i>
                     </div>
@@ -645,7 +615,7 @@
                 </div>
 
                 <!-- Quote Result Slide -->
-                <div class="slide" data-step="10">
+                <div class="slide" data-step="9">
                     <div class="question-icon">
                         <i class="fas fa-check-circle" style="color: #27ae60;"></i>
                     </div>
@@ -653,7 +623,7 @@
                     <div class="quote-result">
                         <p style="color: #666;">Estimated Moving Cost</p>
                         <div class="quote-amount" id="quoteAmount">$0</div>
-                        <p style="color: #999; font-size: 14px;">Based on your selections and mileage</p>
+                        <p style="color: #999; font-size: 14px;">Based on your selections</p>
                     </div>
                     <h3 style="text-align: center; margin-bottom: 20px; color: #333;">Pay $50 Deposit</h3>
                     <div class="payment-options">
@@ -684,7 +654,7 @@
 
     <script>
         let currentStep = 1;
-        const totalSteps = 9;
+        const totalSteps = 8;
         let skippedExplanation = false;
 
         // Update progress bar
@@ -747,11 +717,8 @@
                     const movingFrom = document.getElementById('movingFrom').value.trim();
                     return movingFrom !== '';
                 case 4:
-                    const mileage = document.getElementById('mileage').value;
-                    return mileage && mileage > 0;
-                case 5:
                     return document.querySelector('input[name="washerDryer"]:checked') !== null;
-                case 6:
+                case 5:
                     const explanation = document.getElementById('explanation').value;
                     const charError = document.getElementById('charError');
                     
@@ -766,11 +733,11 @@
                     }
                     charError.classList.remove('show');
                     return true;
-                case 7:
+                case 6:
                     return document.querySelector('input[name="safetyPolicy"]:checked') !== null;
-                case 8:
+                case 7:
                     return document.querySelector('input[name="maskChoice"]:checked') !== null;
-                case 9:
+                case 8:
                     return document.querySelector('input[name="reimbursement"]:checked') !== null;
                 default:
                     return true;
@@ -811,7 +778,6 @@
         // Calculate quote
         function calculateQuote() {
             const homeSize = document.getElementById('homeSize').value;
-            const mileage = parseInt(document.getElementById('mileage').value) || 0;
             const hasWasher = document.querySelector('input[name="washerDryer"]:checked')?.value === 'yes';
             
             // Base rates by home size
@@ -824,9 +790,6 @@
             };
             
             let total = baseRates[homeSize] || 0;
-            
-            // Add mileage cost ($1.50 per mile)
-            total += mileage * 1.50;
             
             // Add washer/dryer fee
             if (hasWasher) {
@@ -854,8 +817,8 @@
             document.getElementById('quoteAmount').textContent = '$' + quote;
             
             currentSlide.classList.remove('active');
-            currentStep = 10;
-            document.querySelector(`.slide[data-step="10"]`).classList.add('active');
+            currentStep = 9;
+            document.querySelector(`.slide[data-step="9"]`).classList.add('active');
             
             // Update progress to 100%
             document.getElementById('progressFill').style.width = '100%';
