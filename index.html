@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instant Moving Quote | Big Johns Moving</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Deep Clean Division - Instant Quote</title>
     <style>
         * {
             margin: 0;
@@ -14,854 +13,569 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, rgba(255, 140, 60, 0.85) 0%, rgba(255, 100, 30, 0.85) 100%), 
-                        url('https://static.wixstatic.com/media/e8b6a5_8e3f1e0e33fc4ce9bc73057d50145dc5~mv2.jpeg');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
+            background: #f5f7fa;
             min-height: 100vh;
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             padding: 20px;
+            transition: all 0.5s ease;
+        }
+
+        body.urgent {
+            background: #ff4757;
+            animation: pulse 2s infinite;
+        }
+
+        body.complete {
+            background: #2ecc71;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
         }
 
         .container {
             background: white;
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 600px;
+            max-width: 700px;
             width: 100%;
+            padding: 40px;
+            position: relative;
             overflow: hidden;
         }
 
-        .company-header {
-            background: linear-gradient(135deg, #ff8c3c 0%, #ff641e 100%);
-            padding: 25px 30px;
+        .header {
             text-align: center;
-            color: white;
+            margin-bottom: 30px;
         }
 
-        .company-header h1 {
-            margin: 0;
+        .logo {
             font-size: 32px;
             font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+            color: #2c3e50;
+            margin-bottom: 10px;
         }
 
-        .company-header p {
-            margin: 5px 0 0 0;
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        .progress-container {
-            background: #f8f9fa;
-            padding: 20px 30px;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: #e0e0e0;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #ff8c3c 0%, #ff641e 100%);
-            transition: width 0.3s ease;
-            border-radius: 10px;
-        }
-
-        .progress-text {
-            margin-top: 10px;
-            text-align: center;
+        .tagline {
             color: #666;
             font-size: 14px;
         }
 
-        .form-content {
-            padding: 40px 30px;
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 30px;
         }
 
-        .slide {
+        .step-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            transition: all 0.3s ease;
+        }
+
+        .step-dot.active {
+            background: #3498db;
+            transform: scale(1.3);
+        }
+
+        .step-dot.complete {
+            background: #2ecc71;
+        }
+
+        .question-container {
             display: none;
-            animation: slideIn 0.4s ease;
+            animation: fadeIn 0.5s ease;
         }
 
-        .slide.active {
+        .question-container.active {
             display: block;
         }
 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .question-icon {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .question-icon i {
-            font-size: 48px;
-            color: #ff8c3c;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         h2 {
-            text-align: center;
             color: #333;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             font-size: 24px;
         }
 
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: 500;
-        }
-
-        input[type="text"],
-        input[type="number"],
-        select,
-        textarea {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        input[type="text"]:focus,
-        input[type="number"]:focus,
-        select:focus,
-        textarea:focus {
-            outline: none;
-            border-color: #ff8c3c;
-        }
-
-        textarea {
-            min-height: 120px;
-            resize: vertical;
-            font-family: inherit;
-        }
-
-        .char-counter {
-            text-align: right;
-            font-size: 12px;
-            color: #999;
-            margin-top: 5px;
-        }
-
-        .char-counter.error {
-            color: #e74c3c;
-        }
-
-        .radio-group,
-        .checkbox-group {
-            margin-bottom: 15px;
-        }
-
-        .radio-option,
-        .checkbox-option {
+        .options {
             display: flex;
-            align-items: center;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .radio-option:hover,
-        .checkbox-option:hover {
-            border-color: #ff8c3c;
-            background: #fff5f0;
-        }
-
-        .radio-option.selected,
-        .checkbox-option.selected {
-            border-color: #ff8c3c;
-            background: #fff5f0;
-        }
-
-        .radio-option input[type="radio"],
-        .checkbox-option input[type="checkbox"] {
-            margin-right: 12px;
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-
-        .mask-option {
-            display: block;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-            color: #333;
-        }
-
-        .mask-option:hover {
-            border-color: #667eea;
-            background: #f8f9ff;
-        }
-
-        .mask-option.selected {
-            border-color: #667eea;
-            background: #f8f9ff;
-        }
-
-        .mask-option input[type="radio"] {
-            margin-right: 10px;
-        }
-
-        .mask-option-img {
-            display: block;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            margin-bottom: 15px;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: white;
-        }
-
-        .mask-option-img:hover {
-            border-color: #ff8c3c;
-            background: #fff5f0;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(255, 140, 60, 0.2);
-        }
-
-        .mask-option-img.selected {
-            border-color: #ff8c3c;
-            background: #fff5f0;
-            box-shadow: 0 5px 20px rgba(255, 140, 60, 0.3);
-        }
-
-        .mask-option-img input[type="radio"] {
-            margin-right: 15px;
-            width: 20px;
-            height: 20px;
-            flex-shrink: 0;
-        }
-
-        .mask-content {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            flex-direction: column;
             gap: 15px;
         }
 
-        .mask-image {
-            width: 200px;
-            height: 200px;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-        }
-
-        .mask-info {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .mask-info strong {
-            color: #333;
-            font-size: 16px;
-        }
-
-        .mask-info small {
-            color: #999;
-            font-size: 13px;
-        }
-
-        .mask-link {
-            color: #ff8c3c;
-            font-size: 12px;
-            text-decoration: none;
-            margin-top: 5px;
-        }
-
-        .mask-link:hover {
-            text-decoration: underline;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 30px;
-        }
-
-        button {
-            flex: 1;
-            padding: 15px 30px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-next,
-        .btn-submit {
-            background: linear-gradient(135deg, #ff8c3c 0%, #ff641e 100%);
-            color: white;
-        }
-
-        .btn-next:hover,
-        .btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(255, 140, 60, 0.4);
-        }
-
-        .btn-prev {
+        .option-btn {
             background: #f8f9fa;
-            color: #666;
-        }
-
-        .btn-prev:hover {
-            background: #e9ecef;
-        }
-
-        .btn-skip {
-            padding: 12px 24px;
-            background: #fff;
-            color: #ff8c3c;
-            border: 2px solid #ff8c3c;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-skip:hover {
-            background: #ff8c3c;
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 140, 60, 0.3);
-        }
-
-        .btn-skip i {
-            margin-right: 5px;
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .quote-result {
-            text-align: center;
-            padding: 30px;
-            background: #f8f9ff;
+            border: 2px solid #e0e0e0;
+            padding: 18px 24px;
             border-radius: 12px;
-            margin-bottom: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            text-align: left;
+            color: #333;
         }
 
-        .quote-amount {
+        .option-btn:hover {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+            transform: translateX(5px);
+        }
+
+        .banner {
+            background: #ff9800;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+            animation: slideDown 0.5s ease;
+        }
+
+        .banner.show {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .urgent-popup {
+            background: #ff4757;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+            animation: shake 0.5s ease;
+        }
+
+        .urgent-popup.show {
+            display: block;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .chaos-screen {
+            display: none;
+            text-align: center;
+        }
+
+        .chaos-screen.active {
+            display: block;
+            animation: zoomIn 0.5s ease;
+        }
+
+        @keyframes zoomIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .timer {
+            font-size: 72px;
+            font-weight: bold;
+            color: #ff4757;
+            margin: 30px 0;
+            font-family: 'Courier New', monospace;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .warning-icon {
+            font-size: 80px;
+            margin: 20px 0;
+            animation: flash 1s infinite;
+        }
+
+        @keyframes flash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .chaos-text {
+            font-size: 18px;
+            line-height: 1.8;
+            margin: 20px 0;
+            color: #333;
+        }
+
+        .lock-in-btn {
+            background: #2ecc71;
+            color: white;
+            border: none;
+            padding: 25px 50px;
+            border-radius: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 30px 0;
+            animation: wiggle 1s infinite;
+            box-shadow: 0 10px 30px rgba(46, 204, 113, 0.4);
+        }
+
+        .lock-in-btn:hover {
+            transform: scale(1.05);
+        }
+
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(-2deg); }
+            50% { transform: rotate(2deg); }
+        }
+
+        .price {
             font-size: 48px;
             font-weight: bold;
-            color: #ff8c3c;
+            color: #2ecc71;
             margin: 20px 0;
         }
 
-        .payment-options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 30px;
+        .features {
+            text-align: left;
+            margin: 30px 0;
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
         }
 
-        .payment-btn {
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            background: white;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
+        .features li {
+            margin: 12px 0;
+            font-size: 16px;
+            color: #333;
         }
 
-        .payment-btn:hover {
-            border-color: #ff8c3c;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .payment-btn i {
-            font-size: 32px;
-        }
-
-        .payment-btn.venmo i { color: #3D95CE; }
-        .payment-btn.paypal i { color: #00457C; }
-        .payment-btn.apple i { color: #000; }
-        .payment-btn.mcdonalds { color: #FFC72C; }
-
-        .error-message {
-            color: #e74c3c;
-            font-size: 14px;
-            margin-top: 5px;
+        .upsell {
+            background: #ffd93d;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 3px dashed #ff6b35;
             display: none;
         }
 
-        .error-message.show {
+        .upsell.show {
             display: block;
+            animation: bounce 0.5s ease;
         }
 
-        @media (max-width: 600px) {
-            .payment-options {
-                grid-template-columns: 1fr;
-            }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .disclaimer {
+            font-size: 10px;
+            color: #999;
+            margin-top: 20px;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .thank-you {
+            display: none;
+            text-align: center;
+        }
+
+        .thank-you.active {
+            display: block;
+            animation: fadeIn 1s ease;
+        }
+
+        .celebration {
+            font-size: 100px;
+            margin: 30px 0;
+        }
+
+        .thank-you h1 {
+            color: #2ecc71;
+            font-size: 42px;
+            margin: 20px 0;
+        }
+
+        .thank-you p {
+            font-size: 18px;
+            color: #666;
+            line-height: 1.8;
+            margin: 15px 0;
+        }
+
+        .dog-images {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .dog-image {
+            width: 150px;
+            height: 120px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="company-header">
-            <h1>🚚 Big Johns Moving</h1>
-            <p>Get Your Instant Quote Today</p>
-        </div>
-        <div class="progress-container">
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
-            </div>
-            <div class="progress-text">
-                <span id="currentStep">1</span> of <span id="totalSteps">9</span>
-            </div>
+        <div class="header">
+            <div class="logo">Deep Clean Division</div>
+            <div class="tagline">Alaska's #1 Pressure Wash Pros – We Blast the Tough Stuff!</div>
         </div>
 
-        <div class="form-content">
-            <form id="quoteForm">
-                <!-- Slide 1: Home Size -->
-                <div class="slide active" data-step="1">
-                    <div class="question-icon">
-                        <i class="fas fa-home"></i>
-                    </div>
-                    <h2>How big is your home?</h2>
-                    <div class="input-group">
-                        <label for="homeSize">Select home size</label>
-                        <select id="homeSize" required>
-                            <option value="">Choose...</option>
-                            <option value="studio">Studio</option>
-                            <option value="1bed">1 Bedroom</option>
-                            <option value="2bed">2 Bedrooms</option>
-                            <option value="3bed">3 Bedrooms</option>
-                            <option value="4bed">4+ Bedrooms</option>
-                        </select>
-                    </div>
-                    <div class="btn-group">
-                        <button type="button" class="btn-next" onclick="nextSlide()">Next</button>
-                    </div>
+        <div class="step-indicator">
+            <div class="step-dot active"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+        </div>
+
+        <!-- Step 1 -->
+        <div class="question-container active" id="step1">
+            <h2>Step 1: What surface needs some love today?</h2>
+            <div class="options">
+                <button class="option-btn" onclick="nextStep(2, 'Roof')">Roof</button>
+                <button class="option-btn" onclick="nextStep(2, 'House exterior')">House exterior</button>
+                <button class="option-btn" onclick="nextStep(2, 'Driveway')">Driveway / concrete / patio</button>
+            </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="question-container" id="step2">
+            <h2>Step 2: How grimy are we looking at?</h2>
+            <div class="options">
+                <button class="option-btn" onclick="nextStep(3, 'Light')">Light buildup – mostly dust & pollen</button>
+                <button class="option-btn" onclick="nextStep(3, 'Moderate')">Moderate – some dark spots & tire marks</button>
+                <button class="option-btn" onclick="nextStep(3, 'Heavy')">Heavy duty – really needs serious attention</button>
+            </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="question-container" id="step3">
+            <h2>Step 3: Tried any DIY cleaning yet?</h2>
+            <div class="options">
+                <button class="option-btn" onclick="nextStep(4, 'Yes')">Yep, gave it a go</button>
+                <button class="option-btn" onclick="nextStep(4, 'No')">Nope, straight to the pros</button>
+            </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="question-container" id="step4">
+            <h2>Step 4: What's the main issue on the driveway?</h2>
+            <div class="options">
+                <button class="option-btn" onclick="nextStep(5, 'Oil')">Oil / grease / tire scuffs</button>
+                <button class="option-btn" onclick="nextStep(5, 'Moss')">Moss or algae</button>
+                <button class="option-btn" onclick="nextStep(5, 'Paint')">Old paint / rust stains</button>
+                <button class="option-btn" onclick="nextStep(5, 'Blood')">Blood</button>
+                <button class="option-btn" onclick="nextStep(5, 'Fluids')">Other bodily fluids</button>
+                <button class="option-btn" onclick="nextStep(5, 'Brains')">Brains and stuff</button>
+                <button class="option-btn" onclick="nextStep(5, 'Mystery')">Just general "mystery grime"</button>
+            </div>
+            <div class="banner" id="protocolBanner">
+                Mystery grime detected. Switching to premium protocol for best results...
+            </div>
+        </div>
+
+        <!-- Step 5 -->
+        <div class="question-container" id="step5">
+            <h2>Step 5: One-time clean or join our loyalty club?</h2>
+            <div class="options">
+                <button class="option-btn" onclick="nextStep(6, 'Once')">Just this once</button>
+                <button class="option-btn" onclick="nextStep(6, 'Club')">Enroll in Stain Removal Club™ (discounts on future tough jobs, including blood removal!)</button>
+            </div>
+        </div>
+
+        <!-- Step 6 -->
+        <div class="question-container" id="step6">
+            <h2>Step 6: How visible is your driveway to neighbors / cameras?</h2>
+            <div class="options">
+                <button class="option-btn" onclick="nextStep(7, 'Private')">Super private – rural style</button>
+                <button class="option-btn" onclick="nextStep(7, 'Normal')">A few neighbors, no drama</button>
+                <button class="option-btn" onclick="nextStep(7, 'Cameras')">Lots of eyes – Ring cams everywhere</button>
+            </div>
+            <div class="urgent-popup" id="urgentPopup">
+                Exposure level noted. Clock is ticking on optimal results...
+            </div>
+        </div>
+
+        <!-- Step 7 -->
+        <div class="question-container" id="step7">
+            <h2>Critical question:</h2>
+            <h2 style="color: #ff4757; margin-top: 10px;">Any plan ready for when the dogs show up?</h2>
+            <div class="options">
+                <button class="option-btn" onclick="startChaos('No plan')">No plan at all – help!</button>
+                <button class="option-btn" onclick="startChaos('Sort of')">Sort of... (coffee grounds? pepper?)</button>
+            </div>
+        </div>
+
+        <!-- Chaos Screen -->
+        <div class="chaos-screen" id="chaosScreen">
+            <div class="warning-icon">🚨</div>
+            <h1 style="color: #ff4757; font-size: 42px; margin: 20px 0;">THE DOGS ARE COMING</h1>
+            <div class="timer" id="timer">10:00</div>
+            
+            <div class="chaos-text">
+                <p><strong>Cadaver dogs don't mess around.</strong> They sniff out trace evidence no matter how much you scrubbed. Rain? Bleach? Doesn't matter to Duke.</p>
+                <p style="margin-top: 20px;"><strong>But we've got you, sam.</strong></p>
+                <p>Our <strong>4500 PSI forensic blast</strong> + industrial scent-neutralizer foam will erase EVERYTHING before the K-9 unit even turns the corner.</p>
+                <p style="color: #ff4757; font-weight: bold; margin-top: 20px;">We WILL finish BEFORE THE DOGS GET THERE.</p>
+                <p style="font-size: 14px; margin-top: 15px; color: #666;">Don't wait – lock in now or risk the sniff test.</p>
+            </div>
+
+            <div class="dog-images">
+                <div class="dog-image">🐕</div>
+                <div class="dog-image">🐕‍🦺</div>
+                <div class="dog-image">🚔</div>
+            </div>
+
+            <div style="margin: 40px 0; padding: 30px; background: #f8f9fa; border-radius: 15px; border: 3px solid #ff4757;">
+                <h3 style="margin-bottom: 20px; color: #333; font-size: 28px;">YOUR RUSH PRICE:</h3>
+                <div class="price">$700</div>
+                
+                <div class="features">
+                    <p style="font-weight: bold; margin-bottom: 15px; font-size: 18px;">What's included in this emergency clean:</p>
+                    <ul style="list-style: none;">
+                        <li>✅ High-pressure forensic-grade wash</li>
+                        <li>✅ Multi-stage scent blocker treatment</li>
+                        <li>✅ "Random oil spill" staging accessories (fake receipt, cone, caution tape)</li>
+                        <li>✅ Priority Anchorage dispatch – tech rolling in &lt;45 min (cash appreciated)</li>
+                    </ul>
                 </div>
 
-                <!-- Slide 2: Moving To -->
-                <div class="slide" data-step="2">
-                    <div class="question-icon">
-                        <i class="fas fa-map-marker-alt"></i>
-                    </div>
-                    <h2>Where are you moving to?</h2>
-                    <div class="input-group">
-                        <label for="movingTo">Destination address</label>
-                        <input type="text" id="movingTo" placeholder="Enter city, state or zip code" required>
-                    </div>
-                    <div class="btn-group">
-                        <button type="button" class="btn-prev" onclick="prevSlide()">Back</button>
-                        <button type="button" class="btn-next" onclick="nextSlide()">Next</button>
-                    </div>
+                <div class="upsell" id="upsell">
+                    <h3 style="color: #ff4757; margin-bottom: 15px;">⚡ LAST-SECOND UPSELL ⚡</h3>
+                    <p style="font-size: 18px; font-weight: bold;">Add "Ultimate Luminol-Proof Topcoat" for +$150 – invisible under blacklight forever!</p>
                 </div>
 
-                <!-- Slide 3: Moving From -->
-                <div class="slide" data-step="3">
-                    <div class="question-icon">
-                        <i class="fas fa-location-arrow"></i>
-                    </div>
-                    <h2>Where are you moving from?</h2>
-                    <div class="input-group">
-                        <label for="movingFrom">Current address</label>
-                        <input type="text" id="movingFrom" placeholder="Enter city, state or zip code" required>
-                    </div>
-                    <div class="btn-group">
-                        <button type="button" class="btn-prev" onclick="prevSlide()">Back</button>
-                        <button type="button" class="btn-next" onclick="nextSlide()">Next</button>
-                    </div>
-                </div>
+                <button class="lock-in-btn" onclick="complete()">
+                    LOCK IN $700 NOW – BEAT THE DOGS!
+                </button>
 
-                <!-- Slide 4: Washer/Dryer -->
-                <div class="slide" data-step="4">
-                    <div class="question-icon">
-                        <i class="fas fa-tshirt"></i>
-                    </div>
-                    <h2>Do you plan on bringing your washer dryer set?</h2>
-                    <div class="radio-group">
-                        <div class="radio-option" onclick="selectRadio('washerDryer', 'yes', this)">
-                            <input type="radio" name="washerDryer" value="yes" id="washerYes">
-                            <label for="washerYes">Yes, I'm bringing my washer & dryer</label>
-                        </div>
-                        <div class="radio-option" onclick="selectRadio('washerDryer', 'no', this)">
-                            <input type="radio" name="washerDryer" value="no" id="washerNo">
-                            <label for="washerNo">No, I'm not bringing them</label>
-                        </div>
-                    </div>
-                    <div class="btn-group">
-                        <button type="button" class="btn-prev" onclick="prevSlide()">Back</button>
-                        <button type="button" class="btn-next" onclick="nextSlide()">Next</button>
-                    </div>
+                <div class="disclaimer">
+                    Satirical parody only. We clean driveways, not crime scenes. If real dogs/law enforcement are involved, contact authorities/lawyer immediately.
                 </div>
+            </div>
+        </div>
 
-                <!-- Slide 5: Explanation -->
-                <div class="slide" data-step="5">
-                    <div class="question-icon">
-                        <i class="fas fa-comment-dots"></i>
-                    </div>
-                    <h2>Explain why</h2>
-                    <div class="input-group">
-                        <label for="explanation">Please provide detailed explanation (minimum 1500 characters)</label>
-                        <textarea id="explanation" placeholder="Tell us more about your decision..."></textarea>
-                        <div class="char-counter" id="charCounter">0 / 1500 characters</div>
-                        <div class="error-message" id="charError">Please enter at least 1500 characters</div>
-                    </div>
-                    <div style="text-align: center; margin: 20px 0;">
-                        <p style="color: #666; font-size: 14px; margin-bottom: 10px;">Don't want to explain?</p>
-                        <button type="button" class="btn-skip" onclick="skipExplanation()">
-                            <i class="fas fa-forward"></i> Skip for +$50
-                        </button>
-                    </div>
-                    <div class="btn-group">
-                        <button type="button" class="btn-prev" onclick="prevSlide()">Back</button>
-                        <button type="button" class="btn-next" onclick="nextSlide()">Next</button>
-                    </div>
-                </div>
-
-                <!-- Slide 6: Safety Policy -->
-                <div class="slide" data-step="6">
-                    <div class="question-icon">
-                        <i class="fas fa-shield-alt"></i>
-                    </div>
-                    <h2>Safety Policy Acknowledgment</h2>
-                    <p style="margin-bottom: 20px; color: #666; line-height: 1.6;">Our workers take viral safety first by always wearing masks for each move. Do you understand and accept our policy?</p>
-                    <div class="radio-group">
-                        <div class="radio-option" onclick="selectRadio('safetyPolicy', 'accept', this)">
-                            <input type="radio" name="safetyPolicy" value="accept" id="policyAccept">
-                            <label for="policyAccept">Yes, I understand and accept</label>
-                        </div>
-                        <div class="radio-option" onclick="selectRadio('safetyPolicy', 'decline', this)">
-                            <input type="radio" name="safetyPolicy" value="decline" id="policyDecline">
-                            <label for="policyDecline">No, I do not accept</label>
-                        </div>
-                    </div>
-                    <div class="btn-group">
-                        <button type="button" class="btn-prev" onclick="prevSlide()">Back</button>
-                        <button type="button" class="btn-next" onclick="nextSlide()">Next</button>
-                    </div>
-                </div>
-
-                <!-- Slide 7: Mask Choice -->
-                <div class="slide" data-step="7">
-                    <div class="question-icon">
-                        <i class="fas fa-mask"></i>
-                    </div>
-                    <h2>Which mask do you choose?</h2>
-                    <div class="radio-group">
-                        <label class="mask-option-img" onclick="selectMask('mask1', this)">
-                            <input type="radio" name="maskChoice" value="mask1" id="mask1">
-                            <div class="mask-content">
-                                <img src="https://static.wixstatic.com/media/e8b6a5_f590857b07d84bab99c826b5ff6abba7~mv2.jpg" alt="Mask Option 1" class="mask-image">
-                            </div>
-                        </label>
-                        <label class="mask-option-img" onclick="selectMask('mask2', this)">
-                            <input type="radio" name="maskChoice" value="mask2" id="mask2">
-                            <div class="mask-content">
-                                <img src="https://static.wixstatic.com/media/e8b6a5_ba965fa1e5f94ad282d4bc8a46da7db8~mv2.webp" alt="Mask Option 2" class="mask-image">
-                            </div>
-                        </label>
-                        <label class="mask-option-img" onclick="selectMask('mask3', this)">
-                            <input type="radio" name="maskChoice" value="mask3" id="mask3">
-                            <div class="mask-content">
-                                <img src="https://static.wixstatic.com/media/e8b6a5_ba965fa1e5f94ad282d4bc8a46da7db8~mv2.webp" alt="Mask Option 3" class="mask-image">
-                            </div>
-                        </label>
-                    </div>
-                    <div class="btn-group">
-                        <button type="button" class="btn-prev" onclick="prevSlide()">Back</button>
-                        <button type="button" class="btn-next" onclick="nextSlide()">Next</button>
-                    </div>
-                </div>
-
-                <!-- Slide 8: Reimbursement -->
-                <div class="slide" data-step="8">
-                    <div class="question-icon">
-                        <i class="fas fa-hand-holding-usd"></i>
-                    </div>
-                    <h2>Reimbursement Options</h2>
-                    <p style="margin-bottom: 20px; color: #666; line-height: 1.6;">There is a small chance some of your items might be damaged in transit. How would you like to be reimbursed?</p>
-                    <div class="radio-group">
-                        <div class="radio-option" onclick="selectRadio('reimbursement', 'visa', this)">
-                            <input type="radio" name="reimbursement" value="visa" id="reimbVisa">
-                            <label for="reimbVisa">$7 Visa gift cards up to the value of your items</label>
-                        </div>
-                        <div class="radio-option" onclick="selectRadio('reimbursement', 'credit', this)">
-                            <input type="radio" name="reimbursement" value="credit" id="reimbCredit">
-                            <label for="reimbCredit">Merchant credit toward your next move (expires in 2 weeks after incident report)</label>
-                        </div>
-                        <div class="radio-option" onclick="selectRadio('reimbursement', 'coupon', this)">
-                            <input type="radio" name="reimbursement" value="coupon" id="reimbCoupon">
-                            <label for="reimbCoupon">Surprise coupon book Little Caesars or Dairy Queen</label>
-                        </div>
-                    </div>
-                    <div class="btn-group">
-                        <button type="button" class="btn-prev" onclick="prevSlide()">Back</button>
-                        <button type="button" class="btn-submit" onclick="showQuote(event)">Get Quote</button>
-                    </div>
-                </div>
-
-                <!-- Quote Result Slide -->
-                <div class="slide" data-step="9">
-                    <div class="question-icon">
-                        <i class="fas fa-check-circle" style="color: #27ae60;"></i>
-                    </div>
-                    <h2>Your Instant Quote</h2>
-                    <div class="quote-result">
-                        <p style="color: #666;">Estimated Moving Cost</p>
-                        <div class="quote-amount" id="quoteAmount">$0</div>
-                        <p style="color: #999; font-size: 14px;">Based on your selections</p>
-                    </div>
-                    <h3 style="text-align: center; margin-bottom: 20px; color: #333;">Pay $50 Deposit</h3>
-                    <div class="payment-options">
-                        <button type="button" class="payment-btn venmo" onclick="processPayment('Venmo')">
-                            <i class="fab fa-cc-venmo"></i>
-                            <span>Venmo</span>
-                        </button>
-                        <button type="button" class="payment-btn paypal" onclick="processPayment('PayPal')">
-                            <i class="fab fa-cc-paypal"></i>
-                            <span>PayPal</span>
-                        </button>
-                        <button type="button" class="payment-btn apple" onclick="processPayment('Apple Pay')">
-                            <i class="fab fa-apple-pay"></i>
-                            <span>Apple Pay</span>
-                        </button>
-                        <button type="button" class="payment-btn mcdonalds" onclick="processPayment('McDonald\'s Monopoly')">
-                            <i class="fas fa-ticket-alt"></i>
-                            <span>McDonald's Monopoly Tickets</span>
-                        </button>
-                    </div>
-                    <div class="btn-group" style="margin-top: 30px;">
-                        <button type="button" class="btn-prev" onclick="prevSlide()">Back</button>
-                    </div>
-                </div>
-            </form>
+        <!-- Thank You Screen -->
+        <div class="thank-you" id="thankYou">
+            <div class="celebration">🎉</div>
+            <h1>Thank You, sam from Anchorage!</h1>
+            <p style="font-size: 22px; color: #333; margin-top: 30px;">Your driveway deep clean is confirmed!</p>
+            <p>Our team is on the way with the big blue rig – expect sparkling concrete and zero stress.</p>
+            <p>You'll receive a confirmation text shortly with ETA and payment details.</p>
+            <p style="margin-top: 30px; font-weight: bold; color: #2ecc71;">We appreciate your business and can't wait to make your driveway the cleanest on the block!</p>
         </div>
     </div>
 
     <script>
         let currentStep = 1;
-        const totalSteps = 8;
-        let skippedExplanation = false;
+        let timerInterval;
+        let timeLeft = 600; // 10 minutes in seconds
 
-        // Update progress bar
-        function updateProgress() {
-            const progress = (currentStep / totalSteps) * 100;
-            document.getElementById('progressFill').style.width = progress + '%';
-            document.getElementById('currentStep').textContent = currentStep;
-        }
-
-        // Skip explanation function
-        function skipExplanation() {
-            skippedExplanation = true;
-            document.getElementById('explanation').value = '[Skipped - $50 fee applied]';
-            document.getElementById('charCounter').textContent = 'Skipped (+$50)';
-            document.getElementById('charCounter').classList.remove('error');
-            document.getElementById('charError').classList.remove('show');
-            nextSlide();
-        }
-
-        // Next slide
-        function nextSlide() {
-            const currentSlide = document.querySelector(`.slide[data-step="${currentStep}"]`);
+        function nextStep(step, answer) {
+            // Hide current step
+            document.getElementById('step' + currentStep).classList.remove('active');
             
-            // Validate current slide
-            if (!validateSlide(currentSlide)) {
-                return;
+            // Update step indicator
+            document.querySelectorAll('.step-dot')[currentStep - 1].classList.remove('active');
+            document.querySelectorAll('.step-dot')[currentStep - 1].classList.add('complete');
+            
+            // Show next step
+            currentStep = step;
+            document.getElementById('step' + step).classList.add('active');
+            document.querySelectorAll('.step-dot')[step - 1].classList.add('active');
+
+            // Special triggers
+            if (step === 5) {
+                setTimeout(() => {
+                    document.getElementById('protocolBanner').classList.add('show');
+                }, 500);
             }
 
-            currentSlide.classList.remove('active');
-            currentStep++;
-            const nextSlide = document.querySelector(`.slide[data-step="${currentStep}"]`);
-            nextSlide.classList.add('active');
-            updateProgress();
-            window.scrollTo(0, 0);
-        }
-
-        // Previous slide
-        function prevSlide() {
-            const currentSlide = document.querySelector(`.slide[data-step="${currentStep}"]`);
-            currentSlide.classList.remove('active');
-            currentStep--;
-            const prevSlide = document.querySelector(`.slide[data-step="${currentStep}"]`);
-            prevSlide.classList.add('active');
-            updateProgress();
-            window.scrollTo(0, 0);
-        }
-
-        // Validate slide
-        function validateSlide(slide) {
-            const step = parseInt(slide.dataset.step);
-            
-            switch(step) {
-                case 1:
-                    const homeSize = document.getElementById('homeSize').value;
-                    return homeSize !== '';
-                case 2:
-                    const movingTo = document.getElementById('movingTo').value.trim();
-                    return movingTo !== '';
-                case 3:
-                    const movingFrom = document.getElementById('movingFrom').value.trim();
-                    return movingFrom !== '';
-                case 4:
-                    return document.querySelector('input[name="washerDryer"]:checked') !== null;
-                case 5:
-                    const explanation = document.getElementById('explanation').value;
-                    const charError = document.getElementById('charError');
-                    
-                    // If skipped, validation passes
-                    if (skippedExplanation) {
-                        return true;
-                    }
-                    
-                    if (explanation.length < 1500) {
-                        charError.classList.add('show');
-                        return false;
-                    }
-                    charError.classList.remove('show');
-                    return true;
-                case 6:
-                    return document.querySelector('input[name="safetyPolicy"]:checked') !== null;
-                case 7:
-                    return document.querySelector('input[name="maskChoice"]:checked') !== null;
-                case 8:
-                    return document.querySelector('input[name="reimbursement"]:checked') !== null;
-                default:
-                    return true;
+            if (step === 7) {
+                setTimeout(() => {
+                    document.getElementById('urgentPopup').classList.add('show');
+                    document.body.classList.add('urgent');
+                }, 800);
             }
         }
 
-        // Radio selection helper
-        function selectRadio(name, value, element) {
-            document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
-                radio.closest('.radio-option').classList.remove('selected');
-            });
-            element.classList.add('selected');
-            document.getElementById(`${name === 'washerDryer' ? 'washer' : name === 'safetyPolicy' ? 'policy' : 'reimb'}${value.charAt(0).toUpperCase() + value.slice(1)}`).checked = true;
+        function startChaos(answer) {
+            // Hide step 7
+            document.getElementById('step7').classList.remove('active');
+            
+            // Show chaos screen
+            document.getElementById('chaosScreen').classList.add('active');
+            
+            // Start timer
+            startTimer();
         }
 
-        // Mask selection
-        function selectMask(maskId, element) {
-            document.querySelectorAll('.mask-option-img').forEach(option => {
-                option.classList.remove('selected');
-            });
-            element.classList.add('selected');
-            document.getElementById(maskId).checked = true;
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                
+                let minutes = Math.floor(timeLeft / 60);
+                let seconds = timeLeft % 60;
+                
+                document.getElementById('timer').textContent = 
+                    minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+
+                // Show upsell at 1:30
+                if (timeLeft === 90) {
+                    document.getElementById('upsell').classList.add('show');
+                }
+
+                // Emergency at 30 seconds
+                if (timeLeft === 30) {
+                    document.getElementById('timer').style.animation = 'flash 0.5s infinite';
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    complete();
+                }
+            }, 1000);
         }
 
-        // Character counter
-        document.getElementById('explanation').addEventListener('input', function() {
-            const count = this.value.length;
-            const counter = document.getElementById('charCounter');
-            counter.textContent = `${count} / 1500 characters`;
+        function complete() {
+            clearInterval(timerInterval);
             
-            if (count < 1500) {
-                counter.classList.add('error');
-            } else {
-                counter.classList.remove('error');
-            }
-        });
-
-        // Calculate quote
-        function calculateQuote() {
-            const homeSize = document.getElementById('homeSize').value;
-            const hasWasher = document.querySelector('input[name="washerDryer"]:checked')?.value === 'yes';
+            // Hide chaos screen
+            document.getElementById('chaosScreen').classList.remove('active');
             
-            // Base rates by home size
-            const baseRates = {
-                'studio': 200,
-                '1bed': 350,
-                '2bed': 500,
-                '3bed': 750,
-                '4bed': 1000
-            };
+            // Change body style
+            document.body.classList.remove('urgent');
+            document.body.classList.add('complete');
             
-            let total = baseRates[homeSize] || 0;
-            
-            // Add washer/dryer fee
-            if (hasWasher) {
-                total += 150;
-            }
-            
-            // Add skip explanation fee
-            if (skippedExplanation) {
-                total += 50;
-            }
-            
-            return total.toFixed(2);
+            // Show thank you
+            document.getElementById('thankYou').classList.add('active');
         }
-
-        // Show quote
-        function showQuote(event) {
-            event.preventDefault();
-            
-            const currentSlide = document.querySelector(`.slide[data-step="${currentStep}"]`);
-            if (!validateSlide(currentSlide)) {
-                return;
-            }
-            
-            const quote = calculateQuote();
-            document.getElementById('quoteAmount').textContent = '$' + quote;
-            
-            currentSlide.classList.remove('active');
-            currentStep = 9;
-            document.querySelector(`.slide[data-step="9"]`).classList.add('active');
-            
-            // Update progress to 100%
-            document.getElementById('progressFill').style.width = '100%';
-            document.getElementById('currentStep').textContent = totalSteps;
-            window.scrollTo(0, 0);
-        }
-
-        // Process payment
-        function processPayment(method) {
-            alert(`Processing $50 deposit via ${method}...\n\nThank you for choosing Big Johns Moving!`);
-        }
-
-        // Initialize
-        updateProgress();
     </script>
 </body>
 </html>
