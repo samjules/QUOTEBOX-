@@ -4,464 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Get your own instant quote landing page and qualified leads delivered. No website needed. We host your page and run Meta ads to drive local traffic directly to you.">
-    <title>Quote Box - Instant Quote Pages + Quality Leads for Service Businesses</title>
-    
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Font Awesome 6 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <title>QuoteFlow - Instant Quote Pages + Quality Leads for Service Businesses</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         
         body {
             font-family: 'Inter', sans-serif;
-            color: #333;
-            line-height: 1.6;
-            overflow-x: hidden;
         }
         
-        .hero-section {
-            background: linear-gradient(135deg, #0066cc 0%, #004c99 100%);
-            color: white;
-            padding: 80px 0 100px;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .hero-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>');
-            opacity: 0.3;
-        }
-        
-        .hero-content {
-            position: relative;
-            z-index: 1;
-        }
-        
-        .hero-section h1 {
-            font-size: 3rem;
-            font-weight: 800;
-            line-height: 1.2;
-            margin-bottom: 20px;
-        }
-        
-        .hero-section .subheadline {
-            font-size: 1.3rem;
-            font-weight: 400;
-            margin-bottom: 40px;
-            opacity: 0.95;
-        }
-        
-        .hero-form {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        
-        .hero-form h3 {
-            color: #333;
-            font-size: 1.5rem;
-            margin-bottom: 25px;
-            font-weight: 700;
-        }
-        
-        .form-label {
-            font-weight: 600;
-            color: #555;
-            margin-bottom: 8px;
-        }
-        
-        .form-control, .form-select {
-            border: 2px solid #e0e0e0;
-            padding: 12px 15px;
-            font-size: 1rem;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-        
-        .form-control:focus, .form-select:focus {
-            border-color: #007BFF;
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-        }
-        
-        .btn-primary-custom {
-            background: linear-gradient(135deg, #28A745 0%, #218838 100%);
-            border: none;
-            color: white;
-            padding: 16px 40px;
-            font-size: 1.2rem;
-            font-weight: 700;
-            border-radius: 8px;
-            width: 100%;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
-        }
-        
-        .btn-primary-custom:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
-            background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
-        }
-        
-        .features-section {
-            padding: 80px 0;
-            background: #f8f9fa;
-        }
-        
-        .section-title {
-            text-align: center;
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: 20px;
-            color: #222;
-        }
-        
-        .section-subtitle {
-            text-align: center;
-            font-size: 1.2rem;
-            color: #666;
-            margin-bottom: 60px;
-        }
-        
-        .feature-card {
-            text-align: center;
-            padding: 40px 30px;
-            background: white;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            height: 100%;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        .hero-gradient {
+            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
         }
         
         .feature-icon {
-            font-size: 3rem;
-            color: #007BFF;
-            margin-bottom: 20px;
+            transition: transform 0.3s ease;
         }
         
-        .feature-card h3 {
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin-bottom: 15px;
-            color: #222;
-        }
-        
-        .feature-card p {
-            color: #666;
-            font-size: 1rem;
-            line-height: 1.6;
-        }
-        
-        .how-it-works-section {
-            padding: 80px 0;
-            background: white;
-        }
-        
-        .step-card {
-            text-align: center;
-            padding: 40px 20px;
-            position: relative;
+        .feature-card:hover .feature-icon {
+            transform: scale(1.1);
         }
         
         .step-number {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #007BFF 0%, #0056b3 100%);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            font-weight: 800;
-            margin: 0 auto 25px;
-            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
         }
         
-        .step-card h3 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 15px;
-            color: #222;
-        }
-        
-        .step-card p {
-            color: #666;
-            font-size: 1.1rem;
-        }
-        
-        .testimonials-section {
-            padding: 80px 0;
-            background: #f8f9fa;
-        }
-        
-        .testimonial-card {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
-            height: 100%;
-            position: relative;
-        }
-        
-        .testimonial-card::before {
+        .testimonial-quote::before {
             content: '"';
             position: absolute;
-            top: 20px;
-            left: 30px;
+            top: -10px;
+            left: 10px;
             font-size: 4rem;
-            color: #007BFF;
-            opacity: 0.2;
+            color: #e0e7ff;
             font-family: Georgia, serif;
+            line-height: 1;
         }
         
-        .testimonial-text {
-            font-size: 1.1rem;
-            color: #555;
-            margin-bottom: 25px;
-            font-style: italic;
+        .pricing-popular {
+            border: 3px solid #10b981;
             position: relative;
-            z-index: 1;
-        }
-        
-        .testimonial-author {
-            font-weight: 700;
-            color: #222;
-            margin-bottom: 5px;
-        }
-        
-        .testimonial-business {
-            color: #007BFF;
-            font-size: 0.95rem;
-        }
-        
-        .pricing-section {
-            padding: 80px 0;
-            background: white;
-        }
-        
-        .pricing-card {
-            background: white;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 40px 30px;
-            text-align: center;
-            transition: all 0.3s ease;
-            height: 100%;
-            position: relative;
-        }
-        
-        .pricing-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-        }
-        
-        .pricing-card.popular {
-            border-color: #28A745;
-            box-shadow: 0 5px 30px rgba(40, 167, 69, 0.2);
-        }
-        
-        .popular-badge {
-            background: #28A745;
-            color: white;
-            padding: 5px 20px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            position: absolute;
-            top: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        
-        .pricing-card h3 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 15px;
-            color: #222;
-        }
-        
-        .pricing-price {
-            font-size: 3rem;
-            font-weight: 800;
-            color: #007BFF;
-            margin-bottom: 10px;
-        }
-        
-        .pricing-period {
-            color: #666;
-            font-size: 1rem;
-            margin-bottom: 30px;
-        }
-        
-        .pricing-features {
-            list-style: none;
-            padding: 0;
-            margin-bottom: 30px;
-            text-align: left;
-        }
-        
-        .pricing-features li {
-            padding: 12px 0;
-            color: #555;
-            font-size: 1rem;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        
-        .pricing-features li:last-child {
-            border-bottom: none;
-        }
-        
-        .pricing-features li i {
-            color: #28A745;
-            margin-right: 10px;
-        }
-        
-        .btn-pricing {
-            background: #007BFF;
-            color: white;
-            padding: 14px 40px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-            width: 100%;
-        }
-        
-        .btn-pricing:hover {
-            background: #0056b3;
-            transform: translateY(-2px);
-        }
-        
-        .pricing-card.popular .btn-pricing {
-            background: #28A745;
-        }
-        
-        .pricing-card.popular .btn-pricing:hover {
-            background: #218838;
-        }
-        
-        .faq-section {
-            padding: 80px 0;
-            background: #f8f9fa;
-        }
-        
-        .accordion-item {
-            border: none;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-        
-        .accordion-button {
-            font-weight: 600;
-            font-size: 1.1rem;
-            color: #222;
-            background: white;
-            padding: 20px 25px;
-        }
-        
-        .accordion-button:not(.collapsed) {
-            background: #007BFF;
-            color: white;
-        }
-        
-        .accordion-button:focus {
-            box-shadow: none;
-            border: none;
-        }
-        
-        .accordion-body {
-            padding: 25px;
-            background: white;
-            color: #555;
-            font-size: 1rem;
-            line-height: 1.8;
-        }
-        
-        .final-cta-section {
-            padding: 80px 0;
-            background: linear-gradient(135deg, #0066cc 0%, #004c99 100%);
-            color: white;
-            text-align: center;
-        }
-        
-        .final-cta-section h2 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: 20px;
-        }
-        
-        .final-cta-section p {
-            font-size: 1.3rem;
-            margin-bottom: 40px;
-            opacity: 0.95;
-        }
-        
-        .btn-cta-large {
-            background: #28A745;
-            color: white;
-            padding: 20px 60px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 1.3rem;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-        }
-        
-        .btn-cta-large:hover {
-            background: #218838;
-            transform: translateY(-3px);
-            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
-        }
-        
-        .footer {
-            background: #222;
-            color: #aaa;
-            padding: 40px 0;
-            text-align: center;
-        }
-        
-        .footer p {
-            margin: 0;
-            font-size: 0.95rem;
-        }
-        
-        .footer a {
-            color: #007BFF;
-            text-decoration: none;
-        }
-        
-        .footer a:hover {
-            text-decoration: underline;
         }
         
         .fade-in {
@@ -474,460 +55,283 @@
             opacity: 1;
             transform: translateY(0);
         }
-
-        .price-note {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 15px;
-            margin-top: 20px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            color: #856404;
-        }
-        
-        @media (max-width: 768px) {
-            .hero-section h1 {
-                font-size: 2rem;
-            }
-            
-            .hero-section .subheadline {
-                font-size: 1.1rem;
-            }
-            
-            .hero-form {
-                padding: 30px 20px;
-            }
-            
-            .section-title {
-                font-size: 2rem;
-            }
-            
-            .pricing-price {
-                font-size: 2.5rem;
-            }
-            
-            .final-cta-section h2 {
-                font-size: 2rem;
-            }
-            
-            .final-cta-section p {
-                font-size: 1.1rem;
-            }
-        }
     </style>
 </head>
-<body>
+<body class="bg-gray-50">
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold text-indigo-600">QuoteFlow</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="login.html" class="text-gray-700 hover:text-indigo-600 font-medium">Login</a>
+                    <a href="signup.html" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">Sign Up</a>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-    <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="container">
-            <div class="hero-content">
-                <div class="row justify-content-center">
-                    <div class="col-lg-10 text-center">
-                        <h1 class="fade-in">Your Own Instant Quote Page + Quality Leads — No Website Needed</h1>
-                        <p class="subheadline fade-in">We build and host your mobile-optimized quote landing page, run targeted Meta ads to drive local traffic, and deliver ready-to-close leads straight to your phone. Setup in 48 hours.</p>
+    <div class="hero-gradient text-white py-20 relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10">
+            <div class="absolute inset-0" style="background-image: radial-gradient(circle, white 1px, transparent 1px); background-size: 30px 30px;"></div>
+        </div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-12 fade-in">
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-6 leading-tight">
+                    Your Own Instant Quote Page + Quality Leads — No Website Needed
+                </h1>
+                <p class="text-xl md:text-2xl mb-8 opacity-95 max-w-4xl mx-auto">
+                    We build and host your mobile-optimized quote landing page, run targeted Meta ads to drive local traffic, and deliver ready-to-close leads straight to your phone. Setup in 48 hours.
+                </p>
+            </div>
+
+            <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl p-8 fade-in">
+                <h3 class="text-2xl font-bold text-gray-900 mb-6">Get Started Today — Free Setup Call</h3>
+                <form id="heroForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Your Name *</label>
+                        <input type="text" required class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Business Email *</label>
+                        <input type="email" required class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Business Name *</label>
+                        <input type="text" required class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Service Type *</label>
+                        <select required class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition">
+                            <option value="">Select your service...</option>
+                            <option value="plumbing">Plumbing</option>
+                            <option value="roofing">Roofing</option>
+                            <option value="electrical">Electrical</option>
+                            <option value="cleaning">Cleaning</option>
+                            <option value="landscaping">Landscaping</option>
+                            <option value="hvac">HVAC</option>
+                            <option value="pest-control">Pest Control</option>
+                            <option value="auto-repair">Auto Repair</option>
+                            <option value="consulting">Consulting</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Phone Number (Optional)</label>
+                        <input type="tel" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition">
+                    </div>
+                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition">
+                        Book My Free Setup Call
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-extrabold text-gray-900 mb-4 fade-in">Everything You Need to Convert Visitors into Customers</h2>
+                <p class="text-xl text-gray-600 fade-in">Stop paying for bad leads. Get a system that actually works.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="feature-card bg-gray-50 rounded-xl p-8 hover:shadow-xl transition fade-in">
+                    <div class="feature-icon text-6xl mb-6">🌐</div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">No Website Required</h3>
+                    <p class="text-gray-600">We host your professional quote page at quotebox.com/yourname. No developer, no hosting headaches, no maintenance.</p>
+                </div>
+
+                <div class="feature-card bg-gray-50 rounded-xl p-8 hover:shadow-xl transition fade-in">
+                    <div class="feature-icon text-6xl mb-6">⚡</div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Instant Quote Calculator</h3>
+                    <p class="text-gray-600">Customers see their price instantly based on their inputs. Higher commitment, faster conversions, less tire-kicking.</p>
+                </div>
+
+                <div class="feature-card bg-gray-50 rounded-xl p-8 hover:shadow-xl transition fade-in">
+                    <div class="feature-icon text-6xl mb-6">🎯</div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">We Drive the Traffic</h3>
+                    <p class="text-gray-600">Our team runs and manages targeted Meta ads to bring high-intent, local customers directly to your quote page.</p>
+                </div>
+
+                <div class="feature-card bg-gray-50 rounded-xl p-8 hover:shadow-xl transition fade-in">
+                    <div class="feature-icon text-6xl mb-6">🔔</div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Real-Time Lead Alerts</h3>
+                    <p class="text-gray-600">Get instant notifications when someone requests a quote. Simple dashboard shows all your leads in one place.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-extrabold text-gray-900 mb-4 fade-in">How It Works</h2>
+                <p class="text-xl text-gray-600 fade-in">From setup to your first lead in 3 simple steps</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+                <div class="text-center fade-in">
+                    <div class="step-number w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">1</div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Quick Setup Call</h3>
+                    <p class="text-gray-600 text-lg">Book a 15-minute call with our team. We'll discuss your services, pricing structure, and target area. No tech knowledge required on your end.</p>
+                </div>
+
+                <div class="text-center fade-in">
+                    <div class="step-number w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">2</div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">We Build & Launch</h3>
+                    <p class="text-gray-600 text-lg">Within 48 hours, we create your custom quote page, configure your lead notifications, and launch targeted Meta ads to your local market.</p>
+                </div>
+
+                <div class="text-center fade-in">
+                    <div class="step-number w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">3</div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">You Get Quality Leads</h3>
+                    <p class="text-gray-600 text-lg">Qualified prospects submit quotes directly from your page. You receive instant alerts with their details and requested service info. Book jobs faster.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-extrabold text-gray-900 mb-4 fade-in">Real Business Owners, Real Results</h2>
+                <p class="text-xl text-gray-600 fade-in">See what service pros are saying about QuoteFlow</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-gray-50 rounded-xl p-8 relative fade-in">
+                    <div class="testimonial-quote relative z-10">
+                        <p class="text-gray-700 italic text-lg mb-6">QuoteFlow replaced my $800/month Google Ads nightmare. Now I get better leads for way less, and I don't waste hours managing campaigns. The instant quote feature alone doubled my conversion rate.</p>
+                        <p class="font-bold text-gray-900">Mike Richardson</p>
+                        <p class="text-indigo-600">Richardson Roofing • Tampa, FL</p>
                     </div>
                 </div>
-                
-                <div class="row justify-content-center mt-4">
-                    <div class="col-lg-8">
-                        <div class="hero-form fade-in">
-                            <h3>Get Started Today — Free Setup Call</h3>
-                            <form id="heroForm">
-                                <div class="mb-3">
-                                    <label for="name" class="form-label">Your Name *</label>
-                                    <input type="text" class="form-control" id="name" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="email" class="form-label">Business Email *</label>
-                                    <input type="email" class="form-control" id="email" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="businessName" class="form-label">Business Name *</label>
-                                    <input type="text" class="form-control" id="businessName" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="serviceType" class="form-label">Service Type *</label>
-                                    <select class="form-select" id="serviceType" required>
-                                        <option value="">Select your service...</option>
-                                        <option value="plumbing">Plumbing</option>
-                                        <option value="roofing">Roofing</option>
-                                        <option value="electrical">Electrical</option>
-                                        <option value="cleaning">Cleaning</option>
-                                        <option value="landscaping">Landscaping</option>
-                                        <option value="hvac">HVAC</option>
-                                        <option value="pest-control">Pest Control</option>
-                                        <option value="auto-repair">Auto Repair</option>
-                                        <option value="consulting">Consulting</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                </div>
-                                <div class="mb-4">
-                                    <label for="phone" class="form-label">Phone Number (Optional)</label>
-                                    <input type="tel" class="form-control" id="phone">
-                                </div>
-                                <button type="submit" class="btn-primary-custom">Book My Free Setup Call</button>
-                            </form>
-                        </div>
+
+                <div class="bg-gray-50 rounded-xl p-8 relative fade-in">
+                    <div class="testimonial-quote relative z-10">
+                        <p class="text-gray-700 italic text-lg mb-6">I was drowning in low-quality Angi leads that never converted. QuoteFlow brings me people who actually want my services and can see pricing upfront. Best investment I've made for my business this year.</p>
+                        <p class="font-bold text-gray-900">Jessica Chen</p>
+                        <p class="text-indigo-600">Sparkle Clean Services • Austin, TX</p>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 rounded-xl p-8 relative fade-in">
+                    <div class="testimonial-quote relative z-10">
+                        <p class="text-gray-700 italic text-lg mb-6">Setup took one quick call and my page was live in two days. The leads come straight to my phone, and the dashboard is super simple. I'm booking 3-4 new jobs a week now without lifting a finger on marketing.</p>
+                        <p class="font-bold text-gray-900">Carlos Martinez</p>
+                        <p class="text-indigo-600">Premier HVAC Solutions • Phoenix, AZ</p>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
 
-    <!-- Features Section -->
-    <section class="features-section">
-        <div class="container">
-            <h2 class="section-title fade-in">Everything You Need to Convert Visitors into Customers</h2>
-            <p class="section-subtitle fade-in">Stop paying for bad leads. Get a system that actually works.</p>
-            
-            <div class="row g-4">
-                <div class="col-lg-3 col-md-6">
-                    <div class="feature-card fade-in">
-                        <div class="feature-icon">
-                            <i class="fas fa-globe"></i>
-                        </div>
-                        <h3>No Website Required</h3>
-                        <p>We host your professional quote page at quotebox.com/yourname. No developer, no hosting headaches, no maintenance.</p>
+    <div class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-extrabold text-gray-900 mb-4 fade-in">Simple, Transparent Pricing</h2>
+                <p class="text-xl text-gray-600 fade-in">Month-to-month plans. Cancel anytime. No long-term contracts.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                <div class="bg-white rounded-xl p-8 shadow-lg hover:shadow-2xl transition fade-in">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">DIY</h3>
+                    <div class="text-5xl font-extrabold text-indigo-600 mb-2">$97</div>
+                    <p class="text-gray-600 mb-6">per month</p>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Custom quote landing page</span></li>
+                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Mobile-optimized design</span></li>
+                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Instant quote calculator</span></li>
+                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Real-time lead notifications</span></li>
+                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Basic dashboard & reporting</span></li>
+                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Email support</span></li>
+                    </ul>
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 text-sm">
+                        <strong>Perfect for:</strong> Business owners who want to run their own ads or already have marketing in place.
                     </div>
+                    <a href="signup.html" class="block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg text-center transition">Get Started</a>
                 </div>
-                
-                <div class="col-lg-3 col-md-6">
-                    <div class="feature-card fade-in">
-                        <div class="feature-icon">
-                            <i class="fas fa-bolt"></i>
-                        </div>
-                        <h3>Instant Quote Calculator</h3>
-                        <p>Customers see their price instantly based on their inputs. Higher commitment, faster conversions, less tire-kicking.</p>
+
+                <div class="pricing-popular bg-white rounded-xl p-8 shadow-2xl transform scale-105 fade-in">
+                    <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-1 rounded-full text-sm font-bold">MOST POPULAR</div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2 mt-2">Done-For-You</h3>
+                    <div class="text-5xl font-extrabold text-indigo-600 mb-2">$497</div>
+                    <p class="text-gray-600 mb-6">per month + ad spend</p>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Everything in DIY, plus:</span></li>
+                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700 font-bold">Full Meta ad management</span></li>
+                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Ad creative & copywriting</span></li>
+                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Audience targeting & optimization</span></li>
+                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">A/B testing campaigns</span></li>
+                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Weekly performance reports</span></li>
+                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Priority phone & chat support</span></li>
+                    </ul>
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 text-sm">
+                        <strong>Recommended ad spend:</strong> $500-$1,500/month depending on market and goals. Ad spend billed directly by Meta.
                     </div>
+                    <a href="signup.html" class="block w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-center transition">Get Started</a>
                 </div>
-                
-                <div class="col-lg-3 col-md-6">
-                    <div class="feature-card fade-in">
-                        <div class="feature-icon">
-                            <i class="fas fa-bullseye"></i>
-                        </div>
-                        <h3>We Drive the Traffic</h3>
-                        <p>Our team runs and manages targeted Meta ads to bring high-intent, local customers directly to your quote page.</p>
+
+                <div class="bg-white rounded-xl p-8 shadow-lg hover:shadow-2xl transition fade-in">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Enterprise</h3>
+                    <div class="text-4xl font-extrabold text-indigo-600 mb-2">Custom</div>
+                    <p class="text-gray-600 mb-6">let's talk</p>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Everything in Done-For-You, plus:</span></li>
+                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Multiple locations/territories</span></li>
+                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Multiple quote pages</span></li>
+                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Custom CRM integrations</span></li>
+                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Dedicated account manager</span></li>
+                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">White-label options</span></li>
+                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Advanced analytics & API access</span></li>
+                    </ul>
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 text-sm">
+                        <strong>Perfect for:</strong> Multi-location businesses, franchises, or agencies managing multiple clients.
                     </div>
+                    <a href="signup.html" class="block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg text-center transition">Contact Sales</a>
                 </div>
-                
-                <div class="col-lg-3 col-md-6">
-                    <div class="feature-card fade-in">
-                        <div class="feature-icon">
-                            <i class="fas fa-bell"></i>
-                        </div>
-                        <h3>Real-Time Lead Alerts</h3>
-                        <p>Get instant notifications when someone requests a quote. Simple dashboard shows all your leads in one place.</p>
-                    </div>
-                </div>
+            </div>
+
+            <div class="mt-12 max-w-4xl mx-auto bg-blue-50 border-l-4 border-indigo-600 p-8 rounded-lg fade-in">
+                <h4 class="text-indigo-700 text-xl font-bold mb-4">💡 Understanding Ad Spend</h4>
+                <p class="text-gray-700 leading-relaxed">
+                    <strong>Ad spend is separate from your QuoteFlow subscription.</strong> This is the budget you invest directly with Meta (Facebook/Instagram) to show your ads to potential customers. We manage the campaigns, but you control the budget. Most successful clients invest <strong>$500-$1,500/month in ad spend</strong> to generate consistent leads. During your setup call, we'll recommend the right budget based on your market, competition, and growth goals. You can adjust spending anytime.
+                </p>
             </div>
         </div>
-    </section>
+    </div>
 
-    <!-- How It Works Section -->
-    <section class="how-it-works-section">
-        <div class="container">
-            <h2 class="section-title fade-in">How It Works</h2>
-            <p class="section-subtitle fade-in">From setup to your first lead in 3 simple steps</p>
-            
-            <div class="row g-5">
-                <div class="col-lg-4">
-                    <div class="step-card fade-in">
-                        <div class="step-number">1</div>
-                        <h3>Quick Setup Call</h3>
-                        <p>Book a 15-minute call with our team. We'll discuss your services, pricing structure, and target area. No tech knowledge required on your end.</p>
-                    </div>
-                </div>
-                
-                <div class="col-lg-4">
-                    <div class="step-card fade-in">
-                        <div class="step-number">2</div>
-                        <h3>We Build & Launch</h3>
-                        <p>Within 48 hours, we create your custom quote page, configure your lead notifications, and launch targeted Meta ads to your local market.</p>
-                    </div>
-                </div>
-                
-                <div class="col-lg-4">
-                    <div class="step-card fade-in">
-                        <div class="step-number">3</div>
-                        <h3>You Get Quality Leads</h3>
-                        <p>Qualified prospects submit quotes directly from your page. You receive instant alerts with their details and requested service info. Book jobs faster.</p>
-                    </div>
-                </div>
-            </div>
+    <div class="hero-gradient text-white py-20">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-4xl md:text-5xl font-extrabold mb-6 fade-in">Ready to Stop Wasting Money on Bad Leads?</h2>
+            <p class="text-xl md:text-2xl mb-8 opacity-95 fade-in">Book your free setup call today. Get your quote page live in 48 hours and start generating quality leads this week.</p>
+            <a href="signup.html" class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-12 rounded-lg text-xl shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 transition fade-in">
+                Get Started Now — It's Free to Start
+            </a>
+            <p class="mt-6 text-sm opacity-90 fade-in">No credit card required • Setup in 48 hours • Cancel anytime</p>
         </div>
-    </section>
+    </div>
 
-    <!-- Testimonials Section -->
-    <section class="testimonials-section">
-        <div class="container">
-            <h2 class="section-title fade-in">Real Business Owners, Real Results</h2>
-            <p class="section-subtitle fade-in">See what service pros are saying about Quote Box</p>
-            
-            <div class="row g-4">
-                <div class="col-lg-4">
-                    <div class="testimonial-card fade-in">
-                        <p class="testimonial-text">Quote Box replaced my $800/month Google Ads nightmare. Now I get better leads for way less, and I don't waste hours managing campaigns. The instant quote feature alone doubled my conversion rate.</p>
-                        <p class="testimonial-author">Mike Richardson</p>
-                        <p class="testimonial-business">Richardson Roofing • Tampa, FL</p>
-                    </div>
-                </div>
-                
-                <div class="col-lg-4">
-                    <div class="testimonial-card fade-in">
-                        <p class="testimonial-text">I was drowning in low-quality Angi leads that never converted. Quote Box brings me people who actually want my services and can see pricing upfront. Best investment I've made for my business this year.</p>
-                        <p class="testimonial-author">Jessica Chen</p>
-                        <p class="testimonial-business">Sparkle Clean Services • Austin, TX</p>
-                    </div>
-                </div>
-                
-                <div class="col-lg-4">
-                    <div class="testimonial-card fade-in">
-                        <p class="testimonial-text">Setup took one quick call and my page was live in two days. The leads come straight to my phone, and the dashboard is super simple. I'm booking 3-4 new jobs a week now without lifting a finger on marketing.</p>
-                        <p class="testimonial-author">Carlos Martinez</p>
-                        <p class="testimonial-business">Premier HVAC Solutions • Phoenix, AZ</p>
-                    </div>
-                </div>
+    <footer class="bg-gray-900 text-gray-400 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p>&copy; 2024 QuoteFlow. All rights reserved.</p>
+            <div class="mt-4 space-x-4">
+                <a href="#" class="hover:text-indigo-400">Privacy Policy</a>
+                <span>|</span>
+                <a href="#" class="hover:text-indigo-400">Terms of Service</a>
             </div>
-        </div>
-    </section>
-
-    <!-- Pricing Section -->
-    <section class="pricing-section">
-        <div class="container">
-            <h2 class="section-title fade-in">Simple, Transparent Pricing</h2>
-            <p class="section-subtitle fade-in">Month-to-month plans. Cancel anytime. No long-term contracts.</p>
-            
-            <div class="row g-4 justify-content-center">
-                <div class="col-lg-4 col-md-6">
-                    <div class="pricing-card fade-in">
-                        <h3>DIY</h3>
-                        <div class="pricing-price">$97</div>
-                        <div class="pricing-period">per month</div>
-                        <ul class="pricing-features">
-                            <li><i class="fas fa-check"></i> Custom quote landing page</li>
-                            <li><i class="fas fa-check"></i> Mobile-optimized design</li>
-                            <li><i class="fas fa-check"></i> Instant quote calculator</li>
-                            <li><i class="fas fa-check"></i> Real-time lead notifications</li>
-                            <li><i class="fas fa-check"></i> Basic dashboard & reporting</li>
-                            <li><i class="fas fa-check"></i> Email support</li>
-                        </ul>
-                        <div class="price-note">
-                            <strong>Perfect for:</strong> Business owners who want to run their own ads or already have marketing in place.
-                        </div>
-                        <button class="btn-pricing mt-3">Get Started</button>
-                    </div>
-                </div>
-                
-                <div class="col-lg-4 col-md-6">
-                    <div class="pricing-card popular fade-in">
-                        <span class="popular-badge">MOST POPULAR</span>
-                        <h3>Done-For-You</h3>
-                        <div class="pricing-price">$497</div>
-                        <div class="pricing-period">per month + ad spend</div>
-                        <ul class="pricing-features">
-                            <li><i class="fas fa-check"></i> Everything in DIY, plus:</li>
-                            <li><i class="fas fa-check"></i> <strong>Full Meta ad management</strong></li>
-                            <li><i class="fas fa-check"></i> Ad creative & copywriting</li>
-                            <li><i class="fas fa-check"></i> Audience targeting & optimization</li>
-                            <li><i class="fas fa-check"></i> A/B testing campaigns</li>
-                            <li><i class="fas fa-check"></i> Weekly performance reports</li>
-                            <li><i class="fas fa-check"></i> Priority phone & chat support</li>
-                        </ul>
-                        <div class="price-note">
-                            <strong>Recommended ad spend:</strong> $500-$1,500/month depending on market and goals. Ad spend billed directly by Meta.
-                        </div>
-                        <button class="btn-pricing mt-3">Get Started</button>
-                    </div>
-                </div>
-                
-                <div class="col-lg-4 col-md-6">
-                    <div class="pricing-card fade-in">
-                        <h3>Enterprise</h3>
-                        <div class="pricing-price" style="font-size: 2rem;">Custom</div>
-                        <div class="pricing-period">let's talk</div>
-                        <ul class="pricing-features">
-                            <li><i class="fas fa-check"></i> Everything in Done-For-You, plus:</li>
-                            <li><i class="fas fa-check"></i> Multiple locations/territories</li>
-                            <li><i class="fas fa-check"></i> Multiple quote pages</li>
-                            <li><i class="fas fa-check"></i> Custom CRM integrations</li>
-                            <li><i class="fas fa-check"></i> Dedicated account manager</li>
-                            <li><i class="fas fa-check"></i> White-label options</li>
-                            <li><i class="fas fa-check"></i> Advanced analytics & API access</li>
-                        </ul>
-                        <div class="price-note">
-                            <strong>Perfect for:</strong> Multi-location businesses, franchises, or agencies managing multiple clients.
-                        </div>
-                        <button class="btn-pricing mt-3">Contact Sales</button>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="row mt-5">
-                <div class="col-lg-10 mx-auto">
-                    <div style="background: #e8f4f8; border-left: 4px solid #007BFF; padding: 25px; border-radius: 8px;">
-                        <h4 style="color: #007BFF; margin-bottom: 15px; font-size: 1.3rem;"><i class="fas fa-info-circle"></i> Understanding Ad Spend</h4>
-                        <p style="margin: 0; color: #555; line-height: 1.8;">
-                            <strong>Ad spend is separate from your Quote Box subscription.</strong> This is the budget you invest directly with Meta (Facebook/Instagram) to show your ads to potential customers. We manage the campaigns, but you control the budget. Most successful clients invest <strong>$500-$1,500/month in ad spend</strong> to generate consistent leads. During your setup call, we'll recommend the right budget based on your market, competition, and growth goals. You can adjust spending anytime.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FAQ Section -->
-    <section class="faq-section">
-        <div class="container">
-            <h2 class="section-title fade-in">Frequently Asked Questions</h2>
-            <p class="section-subtitle fade-in">Everything you need to know about Quote Box</p>
-            
-            <div class="row justify-content-center">
-                <div class="col-lg-8">
-                    <div class="accordion fade-in" id="faqAccordion">
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
-                                    Do I need to have a website to use Quote Box?
-                                </button>
-                            </h2>
-                            <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
-                                <div class="accordion-body">
-                                    No! That's the whole point. We host your quote landing page for you at quotebox.com/yourname. You don't need a website, hosting account, or any technical knowledge. We handle everything from design to hosting to maintenance.
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
-                                    How soon will I start getting leads?
-                                </button>
-                            </h2>
-                            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                                <div class="accordion-body">
-                                    Most clients see their first leads within 3-7 days after launch. We build your page within 48 hours of our setup call, then immediately start running targeted Meta ads to your local market. The exact timeline depends on your service type and geographic area, but we optimize continuously to get you results fast.
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
-                                    What types of businesses work best with Quote Box?
-                                </button>
-                            </h2>
-                            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                                <div class="accordion-body">
-                                    Quote Box works great for service-based businesses where pricing can be estimated based on a few key inputs. This includes plumbers, roofers, electricians, cleaners, landscapers, HVAC techs, pest control, auto repair, consultants, and similar trades. If you typically give quotes or estimates before starting work, you're a perfect fit.
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
-                                    Is there a long-term contract?
-                                </button>
-                            </h2>
-                            <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                                <div class="accordion-body">
-                                    Absolutely not. All our plans are month-to-month. You can cancel anytime with no penalties or fees. We earn your business every single month by delivering quality leads. That's how confident we are in our service.
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
-                                    What's the difference between the DIY and Done-For-You plans?
-                                </button>
-                            </h2>
-                            <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                                <div class="accordion-body">
-                                    The DIY plan gives you the quote page and lead management system, but you handle your own advertising (or use existing marketing channels). The Done-For-You plan includes our full-service Meta ad management—we create ads, target audiences, optimize campaigns, and handle everything so you can focus on closing leads. Most clients choose Done-For-You because managing effective ad campaigns is time-consuming and requires expertise.
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
-                                    How much should I budget for ad spend?
-                                </button>
-                            </h2>
-                            <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                                <div class="accordion-body">
-                                    We typically recommend $500-$1,500 per month in ad spend depending on your market competitiveness, service pricing, and growth goals. For example, a plumber in a small city might start at $500/month, while a roofing company in a competitive metro area might invest $1,200-$1,500/month for optimal results. During your setup call, we'll analyze your specific situation and recommend the right budget. You maintain full control and can adjust anytime.
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq7">
-                                    Can I customize my quote page to match my brand?
-                                </button>
-                            </h2>
-                            <div id="faq7" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                                <div class="accordion-body">
-                                    Yes! During our setup call, we'll discuss your brand colors, logo, service offerings, and pricing structure. We'll create a page that feels professional and aligned with your business. Pro and Enterprise plans include more advanced customization options.
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq8">
-                                    What if I don't like the quality of leads I'm getting?
-                                </button>
-                            </h2>
-                            <div id="faq8" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                                <div class="accordion-body">
-                                    We continuously optimize your ads and quote page to attract the most qualified prospects. If you're not satisfied with lead quality, we'll work with you to refine targeting, adjust your quote calculator, or modify your service offerings. Our goal is your success. If we can't deliver value, you can cancel anytime with no hard feelings.
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Final CTA Section -->
-    <section class="final-cta-section">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-lg-8 text-center">
-                    <h2 class="fade-in">Ready to Stop Wasting Money on Bad Leads?</h2>
-                    <p class="fade-in">Book your free setup call today. Get your quote page live in 48 hours and start generating quality leads this week.</p>
-                    <a href="#heroForm" class="btn-cta-large fade-in">Get Started Now — It's Free to Start</a>
-                    <p class="mt-4 fade-in" style="font-size: 0.95rem; opacity: 0.9;">No credit card required • Setup in 48 hours • Cancel anytime</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2024 Quote Box. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
-            <p style="margin-top: 10px;">Questions? Email us at <a href="mailto:hello@quotebox.com">hello@quotebox.com</a></p>
+            <p class="mt-4">Questions? Email us at <a href="mailto:hello@quoteflow.com" class="text-indigo-400 hover:text-indigo-300">hello@quoteflow.com</a></p>
         </div>
     </footer>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    
     <script>
-        // Form submission handler
         document.getElementById('heroForm').addEventListener('submit', function(e) {
             e.preventDefault();
             alert('Thanks! We\'ll contact you soon to schedule your free setup call.');
         });
         
-        // Fade-in animation on scroll
         const observerOptions = {
             threshold: 0.1,
             rootMargin: '0px 0px -50px 0px'
@@ -944,21 +348,6 @@
         document.querySelectorAll('.fade-in').forEach(el => {
             observer.observe(el);
         });
-        
-        // Smooth scroll for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
     </script>
-
 </body>
 </html>
