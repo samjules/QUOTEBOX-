@@ -44,7 +44,7 @@
                 <div id="success-message" class="hidden rounded-md bg-green-50 p-4">
                     <div class="flex">
                         <div class="ml-3">
-                            <h3 class="text-sm font-medium text-green-800" id="success-text">Logging in...</h3>
+                            <h3 class="text-sm font-medium text-green-800">Logging in...</h3>
                         </div>
                     </div>
                 </div>
@@ -55,12 +55,6 @@
                     </button>
                 </div>
             </form>
-
-            <div class="mt-4">
-                <button id="testConnection" class="w-full text-sm text-gray-600 hover:text-indigo-600">
-                    Test Database Connection
-                </button>
-            </div>
         </div>
     </div>
 
@@ -68,20 +62,6 @@
         const SUPABASE_URL = 'https://jpchpqjnyabtpptufkcj.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwY2hwcWpueWFidHBwdHVma2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY4OTUwODAsImV4cCI6MjA1MjQ3MTA4MH0.iVpewV0H7FrPQQrR9rSGEgDsqjQHKR-Lhu23FLOl-nQ';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        // Test connection button
-        document.getElementById('testConnection').addEventListener('click', async () => {
-            try {
-                const { data, error } = await supabase.from('accounts').select('count');
-                if (error) {
-                    alert('Database connection failed: ' + error.message);
-                } else {
-                    alert('Database connection successful!');
-                }
-            } catch (err) {
-                alert('Error: ' + err.message);
-            }
-        });
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -93,11 +73,9 @@
             const successDiv = document.getElementById('success-message');
             const loginButton = document.getElementById('loginButton');
 
-            // Hide messages
             errorDiv.classList.add('hidden');
             successDiv.classList.add('hidden');
 
-            // Disable button
             loginButton.disabled = true;
             loginButton.textContent = 'Signing in...';
 
@@ -120,7 +98,6 @@
                     console.log('Login successful, user:', data.user.id);
                     successDiv.classList.remove('hidden');
                     
-                    // Wait a moment then redirect
                     setTimeout(() => {
                         window.location.href = 'dashboard.html';
                     }, 500);
@@ -132,7 +109,6 @@
                 errorDiv.classList.remove('hidden');
                 errorText.textContent = error.message || 'An error occurred during login';
                 
-                // Re-enable button
                 loginButton.disabled = false;
                 loginButton.textContent = 'Sign in';
             }
