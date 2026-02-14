@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Builder - QuoteFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen overflow-hidden">
+        <div class="w-64 bg-gray-900">
+            <div class="flex flex-col h-full">
+                <div class="flex items-center justify-center h-16 bg-gray-800">
+                    <span class="text-white text-xl font-bold">QuoteFlow</span>
+                </div>
+                <nav class="flex-1 px-2 py-4 space-y-1">
+                    <a href="dashboard.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="leads.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <span>Leads</span>
+                    </a>
+                    <a href="form-builder.html" class="bg-gray-800 text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <span>Form Builder</span>
+                    </a>
+                    <a href="settings.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <span>Settings</span>
+                    </a>
+                </nav>
+                <div class="p-4">
+                    <button id="logoutBtn" class="w-full bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-auto">
+            <div class="py-6">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <h1 class="text-2xl font-semibold text-gray-900">Form Builder</h1>
+                </div>
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+                    <div class="py-4">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div class="lg:col-span-1 bg-white shadow rounded-xl p-6">
+                                <h2 class="text-lg font-medium text-gray-900 mb-4">Field Types</h2>
+                                <div class="space-y-2">
+                                    <button class="add-field-btn w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition" data-type="text">
+                                        📝 Text Field
+                                    </button>
+                                    <button class="add-field-btn w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition" data-type="email">
+                                        📧 Email Field
+                                    </button>
+                                    <button class="add-field-btn w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition" data-type="phone">
+                                        📞 Phone Field
+                                    </button>
+                                    <button class="add-field-btn w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition" data-type="dropdown">
+                                        📋 Dropdown
+                                    </button>
+                                    <button class="add-field-btn w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition" data-type="date">
+                                        📅 Date Field
+                                    </button>
+                                </div>
+                                <div class="mt-6">
+                                    <button id="saveFormBtn" class="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                                        Save Form
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="lg:col-span-2 space-y-6">
+                                <div class="bg-white shadow rounded-xl p-6">
+                                    <h2 class="text-lg font-medium text-gray-900 mb-4">Form Preview</h2>
+                                    <div id="formPreview" class="space-y-4 min-h-[200px] border-2 border-dashed border-gray-300 rounded-lg p-4">
+                                        <p class="text-gray-500 text-center">Drag fields here or click "Add" buttons</p>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white shadow rounded-xl p-6">
+                                    <h2 class="text-lg font-medium text-gray-900 mb-4">Embed Code</h2>
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        <pre id="embedCode" class="text-xs text-gray-800 overflow-x-auto">Save your form to generate embed code</pre>
+                                    </div>
+                                    <button id="copyEmbedBtn" class="mt-4 bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900 transition">
+                                        Copy Embed Code
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'SUPABASE_ANON_KEY';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let accountId = null;
+        let formFields = [];
+
+        async function checkAuth() {
+            const { data: { user } } = await supabase.auth.getUser();
+            
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const { data: account } = await supabase
+                .from('accounts')
+                .select('*')
+                .eq('owner_id', user.id)
+                .single();
+
+            if (account) {
+                accountId = account.id;
+                loadSavedForm();
+            }
+        }
+
+        function loadSavedForm() {
+            const saved = localStorage.getItem('formConfig');
+            if (saved) {
+                formFields = JSON.parse(saved);
+                renderForm();
+                generateEmbedCode();
+            }
+        }
+
+        document.querySelectorAll('.add-field-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const type = e.currentTarget.dataset.type;
+                addField(type);
+            });
+        });
+
+        function addField(type) {
+            const field = {
+                id: Date.now().toString(),
+                type: type,
+                label: `${type.charAt(0).toUpperCase() + type.slice(1)} Field`,
+                required: true,
+                options: type === 'dropdown' ? ['Option 1', 'Option 2', 'Option 3'] : []
+            };
+            formFields.push(field);
+            renderForm();
+        }
+
+        function renderForm() {
+            const preview = document.getElementById('formPreview');
+            
+            if (formFields.length === 0) {
+                preview.innerHTML = '<p class="text-gray-500 text-center">Drag fields here or click "Add" buttons</p>';
+                return;
+            }
+
+            preview.innerHTML = '';
+
+            formFields.forEach((field, index) => {
+                const fieldDiv = document.createElement('div');
+                fieldDiv.className = 'bg-gray-50 p-4 rounded-lg';
+                
+                let fieldHtml = `
+                    <div class="flex justify-between items-start mb-2">
+                        <input type="text" value="${field.label}" class="field-label font-medium text-gray-900 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-indigo-500 focus:outline-none" data-index="${index}">
+                        <button class="remove-field text-red-600 hover:text-red-800" data-index="${index}">✕</button>
+                    </div>
+                `;
+
+                if (field.type === 'dropdown') {
+                    fieldHtml += `
+                        <select class="mt-2 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" disabled>
+                            ${field.options.map(opt => `<option>${opt}</option>`).join('')}
+                        </select>
+                    `;
+                } else if (field.type === 'date') {
+                    fieldHtml += `<input type="date" class="mt-2 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" disabled>`;
+                } else {
+                    fieldHtml += `<input type="${field.type}" placeholder="${field.label}" class="mt-2 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" disabled>`;
+                }
+
+                fieldDiv.innerHTML = fieldHtml;
+                preview.appendChild(fieldDiv);
+            });
+
+            document.querySelectorAll('.field-label').forEach(input => {
+                input.addEventListener('blur', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    formFields[index].label = e.target.value;
+                });
+            });
+
+            document.querySelectorAll('.remove-field').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = parseInt(e.currentTarget.dataset.index);
+                    formFields.splice(index, 1);
+                    renderForm();
+                });
+            });
+        }
+
+        document.getElementById('saveFormBtn').addEventListener('click', () => {
+            localStorage.setItem('formConfig', JSON.stringify(formFields));
+            generateEmbedCode();
+            alert('Form saved successfully!');
+        });
+
+        function generateEmbedCode() {
+            const code = `<div id="quoteflow-form"></div>
+<script src="embed.js"></script>
+<script>
+  QuoteFlow.init({
+    accountId: '${accountId}',
+    targetElement: 'quoteflow-form'
+  });
+</script>`;
+
+            document.getElementById('embedCode').textContent = code;
+        }
+
+        document.getElementById('copyEmbedBtn').addEventListener('click', () => {
+            const code = document.getElementById('embedCode').textContent;
+            navigator.clipboard.writeText(code);
+            alert('Embed code copied to clipboard!');
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            window.location.href = 'login.html';
+        });
+
+        checkAuth();
+    </script>
+</body>
+</html>
