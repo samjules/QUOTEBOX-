@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - QuoteFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen overflow-hidden">
+        <div class="w-64 bg-gray-900">
+            <div class="flex flex-col h-full">
+                <div class="flex items-center justify-center h-16 bg-gray-800">
+                    <span class="text-white text-xl font-bold">QuoteFlow</span>
+                </div>
+                <nav class="flex-1 px-2 py-4 space-y-1">
+                    <a href="dashboard.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="leads.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <span>Leads</span>
+                    </a>
+                    <a href="form-builder.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <span>Form Builder</span>
+                    </a>
+                    <a href="settings.html" class="bg-gray-800 text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <span>Settings</span>
+                    </a>
+                </nav>
+                <div class="p-4">
+                    <button id="logoutBtn" class="w-full bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-auto">
+            <div class="py-6">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <h1 class="text-2xl font-semibold text-gray-900">Settings</h1>
+                </div>
+                <div class="max-w-3xl mx-auto px-4 sm:px-6 md:px-8">
+                    <div class="py-4">
+                        <div class="bg-white shadow rounded-xl p-6 mb-6">
+                            <h2 class="text-lg font-medium text-gray-900 mb-4">Business Information</h2>
+                            <form id="businessForm">
+                                <div class="mb-4">
+                                    <label for="businessName" class="block text-sm font-medium text-gray-700 mb-2">Business Name</label>
+                                    <input type="text" id="businessName" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-2">
+                                </div>
+                                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                                    Update Business Name
+                                </button>
+                            </form>
+                        </div>
+
+                        <div class="bg-white shadow rounded-xl p-6 mb-6">
+                            <h2 class="text-lg font-medium text-gray-900 mb-4">Account ID</h2>
+                            <p class="text-sm text-gray-600 mb-2">Use this ID in your embed code</p>
+                            <div class="flex items-center">
+                                <input type="text" id="accountId" readonly class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-2 bg-gray-50">
+                                <button id="copyAccountIdBtn" class="ml-2 bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900 transition whitespace-nowrap">
+                                    Copy ID
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white shadow rounded-xl p-6">
+                            <h2 class="text-lg font-medium text-gray-900 mb-4">Embed Script</h2>
+                            <p class="text-sm text-gray-600 mb-4">Copy this script and add it to your website's HTML</p>
+                            <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                                <pre id="embedScript" class="text-xs text-gray-800 overflow-x-auto whitespace-pre-wrap"></pre>
+                            </div>
+                            <button id="copyScriptBtn" class="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900 transition">
+                                Copy Embed Script
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'SUPABASE_ANON_KEY';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let accountId = null;
+        let account = null;
+
+        async function checkAuth() {
+            const { data: { user } } = await supabase.auth.getUser();
+            
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const { data } = await supabase
+                .from('accounts')
+                .select('*')
+                .eq('owner_id', user.id)
+                .single();
+
+            if (data) {
+                account = data;
+                accountId = data.id;
+                loadSettings();
+            }
+        }
+
+        function loadSettings() {
+            document.getElementById('businessName').value = account.business_name;
+            document.getElementById('accountId').value = accountId;
+            generateEmbedScript();
+        }
+
+        function generateEmbedScript() {
+            const script = `<div id="quoteflow-form"></div>
+<script src="https://yourdomain.github.io/embed.js"><\/script>
+<script>
+  QuoteFlow.init({
+    accountId: '${accountId}',
+    targetElement: 'quoteflow-form'
+  });
+<\/script>`;
+
+            document.getElementById('embedScript').textContent = script;
+        }
+
+        document.getElementById('businessForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const businessName = document.getElementById('businessName').value;
+
+            const { error } = await supabase
+                .from('accounts')
+                .update({ business_name: businessName })
+                .eq('id', accountId);
+
+            if (!error) {
+                alert('Business name updated successfully!');
+            }
+        });
+
+        document.getElementById('copyAccountIdBtn').addEventListener('click', () => {
+            const accountIdInput = document.getElementById('accountId');
+            accountIdInput.select();
+            navigator.clipboard.writeText(accountIdInput.value);
+            alert('Account ID copied to clipboard!');
+        });
+
+        document.getElementById('copyScriptBtn').addEventListener('click', () => {
+            const script = document.getElementById('embedScript').textContent;
+            navigator.clipboard.writeText(script);
+            alert('Embed script copied to clipboard!');
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            window.location.href = 'login.html';
+        });
+
+        checkAuth();
+    </script>
+</body>
+</html>
