@@ -51,10 +51,12 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'SUPABASE_URL';
-        const SUPABASE_ANON_KEY = 'SUPABASE_ANON_KEY';
-        const supabase = window.supabase.createClient(https://jpchpqjnyabtpptufkcj.supabase.co, sb_publishable_JunqsBKy_PS1BZCzO-r0Kw_65juJQ7o);
+        
+            const SUPABASE_URL = 'https://jpchpqjnyabtpptufkcj.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwY2hwcWpueWFidHBwdHVma2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY4OTUwODAsImV4cCI6MjA1MjQ3MTA4MH0.iVpewV0H7FrPQQrR9rSGEgDsqjQHKR-Lhu23FLOl-nQ';
+            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
