@@ -21,7 +21,7 @@
                     </a>
                 </p>
             </div>
-            <form class="mt-8 space-y-6" id="loginForm">
+            <div class="mt-8 space-y-6">
                 <div class="rounded-md shadow-sm -space-y-px">
                     <div>
                         <label for="email-address" class="sr-only">Email address</label>
@@ -50,11 +50,11 @@
                 </div>
 
                 <div>
-                    <button type="submit" id="loginButton" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <button type="button" id="loginButton" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Sign in
                     </button>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 
@@ -63,9 +63,7 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwY2hwcWpueWFidHBwdHVma2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY4OTUwODAsImV4cCI6MjA1MjQ3MTA4MH0.iVpewV0H7FrPQQrR9rSGEgDsqjQHKR-Lhu23FLOl-nQ';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
+        document.getElementById('loginButton').addEventListener('click', async () => {
             const email = document.getElementById('email-address').value;
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('error-message');
@@ -73,13 +71,17 @@
             const successDiv = document.getElementById('success-message');
             const loginButton = document.getElementById('loginButton');
 
+            if (!email || !password) {
+                errorDiv.classList.remove('hidden');
+                errorText.textContent = 'Please enter email and password';
+                return;
+            }
+
             errorDiv.classList.add('hidden');
             successDiv.classList.add('hidden');
 
             loginButton.disabled = true;
             loginButton.textContent = 'Signing in...';
-
-            console.log('Attempting login for:', email);
 
             try {
                 const { data, error } = await supabase.auth.signInWithPassword({
@@ -87,30 +89,26 @@
                     password: password
                 });
 
-                console.log('Login response:', { data, error });
-
-                if (error) {
-                    console.error('Login error:', error);
-                    throw error;
-                }
+                if (error) throw error;
 
                 if (data.user) {
-                    console.log('Login successful, user:', data.user.id);
                     successDiv.classList.remove('hidden');
-                    
                     setTimeout(() => {
                         window.location.href = 'dashboard.html';
                     }, 500);
-                } else {
-                    throw new Error('No user data returned');
                 }
             } catch (error) {
-                console.error('Catch block error:', error);
                 errorDiv.classList.remove('hidden');
                 errorText.textContent = error.message || 'An error occurred during login';
-                
                 loginButton.disabled = false;
                 loginButton.textContent = 'Sign in';
+            }
+        });
+
+        // Also allow Enter key to submit
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('loginButton').click();
             }
         });
     </script>
