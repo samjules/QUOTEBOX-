@@ -3,579 +3,962 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deep Clean Division - Instant Quote</title>
+    <meta name="description" content="Get your own instant quote landing page and qualified leads delivered. No website needed. We host your page and run Meta ads to drive local traffic directly to you.">
+    <title>Quote Box - Instant Quote Pages + Quality Leads for Service Businesses</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f7fa;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            transition: all 0.5s ease;
+            font-family: 'Inter', sans-serif;
+            color: #333;
+            line-height: 1.6;
+            overflow-x: hidden;
         }
-
-        body.urgent {
-            background: #ff4757;
-            animation: pulse 2s infinite;
-        }
-
-        body.complete {
-            background: #2ecc71;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.85; }
-        }
-
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 700px;
-            width: 100%;
-            padding: 40px;
+        
+        .hero-section {
+            background: linear-gradient(135deg, #0066cc 0%, #004c99 100%);
+            color: white;
+            padding: 80px 0 100px;
             position: relative;
             overflow: hidden;
         }
-
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
+        
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>');
+            opacity: 0.3;
         }
-
-        .logo {
-            font-size: 32px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 10px;
+        
+        .hero-content {
+            position: relative;
+            z-index: 1;
         }
-
-        .tagline {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .step-indicator {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 30px;
-        }
-
-        .step-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #e0e0e0;
-            transition: all 0.3s ease;
-        }
-
-        .step-dot.active {
-            background: #3498db;
-            transform: scale(1.3);
-        }
-
-        .step-dot.complete {
-            background: #2ecc71;
-        }
-
-        .question-container {
-            display: none;
-            animation: fadeIn 0.5s ease;
-        }
-
-        .question-container.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        h2 {
-            color: #333;
+        
+        .hero-section h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1.2;
             margin-bottom: 20px;
-            font-size: 24px;
         }
-
-        .options {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+        
+        .hero-section .subheadline {
+            font-size: 1.3rem;
+            font-weight: 400;
+            margin-bottom: 40px;
+            opacity: 0.95;
         }
-
-        .option-btn {
-            background: #f8f9fa;
-            border: 2px solid #e0e0e0;
-            padding: 18px 24px;
+        
+        .hero-form {
+            background: white;
+            padding: 40px;
             border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 16px;
-            text-align: left;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .hero-form h3 {
             color: #333;
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+            font-weight: 700;
         }
-
-        .option-btn:hover {
-            background: #3498db;
-            color: white;
-            border-color: #3498db;
-            transform: translateX(5px);
-        }
-
-        .banner {
-            background: #ff9800;
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            text-align: center;
+        
+        .form-label {
             font-weight: 600;
-            display: none;
-            animation: slideDown 0.5s ease;
+            color: #555;
+            margin-bottom: 8px;
         }
-
-        .banner.show {
-            display: block;
+        
+        .form-control, .form-select {
+            border: 2px solid #e0e0e0;
+            padding: 12px 15px;
+            font-size: 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
         }
-
-        @keyframes slideDown {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #007BFF;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
         }
-
-        .urgent-popup {
-            background: #ff4757;
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-            text-align: center;
-            font-weight: bold;
-            display: none;
-            animation: shake 0.5s ease;
-        }
-
-        .urgent-popup.show {
-            display: block;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-        }
-
-        .chaos-screen {
-            display: none;
-            text-align: center;
-        }
-
-        .chaos-screen.active {
-            display: block;
-            animation: zoomIn 0.5s ease;
-        }
-
-        @keyframes zoomIn {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-
-        .timer {
-            font-size: 72px;
-            font-weight: bold;
-            color: #ff4757;
-            margin: 30px 0;
-            font-family: 'Courier New', monospace;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .warning-icon {
-            font-size: 80px;
-            margin: 20px 0;
-            animation: flash 1s infinite;
-        }
-
-        @keyframes flash {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        .chaos-text {
-            font-size: 18px;
-            line-height: 1.8;
-            margin: 20px 0;
-            color: #333;
-        }
-
-        .lock-in-btn {
-            background: #2ecc71;
-            color: white;
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #28A745 0%, #218838 100%);
             border: none;
-            padding: 25px 50px;
-            border-radius: 15px;
-            font-size: 24px;
-            font-weight: bold;
-            cursor: pointer;
-            margin: 30px 0;
-            animation: wiggle 1s infinite;
-            box-shadow: 0 10px 30px rgba(46, 204, 113, 0.4);
+            color: white;
+            padding: 16px 40px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-radius: 8px;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
         }
-
-        .lock-in-btn:hover {
-            transform: scale(1.05);
+        
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+            background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
         }
-
-        @keyframes wiggle {
-            0%, 100% { transform: rotate(-2deg); }
-            50% { transform: rotate(2deg); }
-        }
-
-        .price {
-            font-size: 48px;
-            font-weight: bold;
-            color: #2ecc71;
-            margin: 20px 0;
-        }
-
-        .features {
-            text-align: left;
-            margin: 30px 0;
+        
+        .features-section {
+            padding: 80px 0;
             background: #f8f9fa;
-            padding: 25px;
-            border-radius: 12px;
         }
-
-        .features li {
-            margin: 12px 0;
-            font-size: 16px;
-            color: #333;
-        }
-
-        .upsell {
-            background: #ffd93d;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-            border: 3px dashed #ff6b35;
-            display: none;
-        }
-
-        .upsell.show {
-            display: block;
-            animation: bounce 0.5s ease;
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .disclaimer {
-            font-size: 10px;
-            color: #999;
-            margin-top: 20px;
+        
+        .section-title {
             text-align: center;
-            line-height: 1.4;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            color: #222;
         }
-
-        .thank-you {
-            display: none;
+        
+        .section-subtitle {
             text-align: center;
-        }
-
-        .thank-you.active {
-            display: block;
-            animation: fadeIn 1s ease;
-        }
-
-        .celebration {
-            font-size: 100px;
-            margin: 30px 0;
-        }
-
-        .thank-you h1 {
-            color: #2ecc71;
-            font-size: 42px;
-            margin: 20px 0;
-        }
-
-        .thank-you p {
-            font-size: 18px;
+            font-size: 1.2rem;
             color: #666;
-            line-height: 1.8;
-            margin: 15px 0;
+            margin-bottom: 60px;
         }
-
-        .dog-images {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin: 30px 0;
-            flex-wrap: wrap;
+        
+        .feature-card {
+            text-align: center;
+            padding: 40px 30px;
+            background: white;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            height: 100%;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
-
-        .dog-image {
-            width: 150px;
-            height: 120px;
-            background: #e0e0e0;
-            border-radius: 10px;
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            color: #007BFF;
+            margin-bottom: 20px;
+        }
+        
+        .feature-card h3 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #222;
+        }
+        
+        .feature-card p {
+            color: #666;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+        
+        .how-it-works-section {
+            padding: 80px 0;
+            background: white;
+        }
+        
+        .step-card {
+            text-align: center;
+            padding: 40px 20px;
+            position: relative;
+        }
+        
+        .step-number {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #007BFF 0%, #0056b3 100%);
+            color: white;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 60px;
+            font-size: 2rem;
+            font-weight: 800;
+            margin: 0 auto 25px;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+        }
+        
+        .step-card h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #222;
+        }
+        
+        .step-card p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        .testimonials-section {
+            padding: 80px 0;
+            background: #f8f9fa;
+        }
+        
+        .testimonial-card {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+            height: 100%;
+            position: relative;
+        }
+        
+        .testimonial-card::before {
+            content: '"';
+            position: absolute;
+            top: 20px;
+            left: 30px;
+            font-size: 4rem;
+            color: #007BFF;
+            opacity: 0.2;
+            font-family: Georgia, serif;
+        }
+        
+        .testimonial-text {
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 25px;
+            font-style: italic;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .testimonial-author {
+            font-weight: 700;
+            color: #222;
+            margin-bottom: 5px;
+        }
+        
+        .testimonial-business {
+            color: #007BFF;
+            font-size: 0.95rem;
+        }
+        
+        .pricing-section {
+            padding: 80px 0;
+            background: white;
+        }
+        
+        .pricing-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 40px 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            height: 100%;
+            position: relative;
+        }
+        
+        .pricing-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .pricing-card.popular {
+            border-color: #28A745;
+            box-shadow: 0 5px 30px rgba(40, 167, 69, 0.2);
+        }
+        
+        .popular-badge {
+            background: #28A745;
+            color: white;
+            padding: 5px 20px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .pricing-card h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #222;
+        }
+        
+        .pricing-price {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #007BFF;
+            margin-bottom: 10px;
+        }
+        
+        .pricing-period {
+            color: #666;
+            font-size: 1rem;
+            margin-bottom: 30px;
+        }
+        
+        .pricing-features {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+        
+        .pricing-features li {
+            padding: 12px 0;
+            color: #555;
+            font-size: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .pricing-features li:last-child {
+            border-bottom: none;
+        }
+        
+        .pricing-features li i {
+            color: #28A745;
+            margin-right: 10px;
+        }
+        
+        .btn-pricing {
+            background: #007BFF;
+            color: white;
+            padding: 14px 40px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .btn-pricing:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        
+        .pricing-card.popular .btn-pricing {
+            background: #28A745;
+        }
+        
+        .pricing-card.popular .btn-pricing:hover {
+            background: #218838;
+        }
+        
+        .faq-section {
+            padding: 80px 0;
+            background: #f8f9fa;
+        }
+        
+        .accordion-item {
+            border: none;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .accordion-button {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #222;
+            background: white;
+            padding: 20px 25px;
+        }
+        
+        .accordion-button:not(.collapsed) {
+            background: #007BFF;
+            color: white;
+        }
+        
+        .accordion-button:focus {
+            box-shadow: none;
+            border: none;
+        }
+        
+        .accordion-body {
+            padding: 25px;
+            background: white;
+            color: #555;
+            font-size: 1rem;
+            line-height: 1.8;
+        }
+        
+        .final-cta-section {
+            padding: 80px 0;
+            background: linear-gradient(135deg, #0066cc 0%, #004c99 100%);
+            color: white;
+            text-align: center;
+        }
+        
+        .final-cta-section h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+        
+        .final-cta-section p {
+            font-size: 1.3rem;
+            margin-bottom: 40px;
+            opacity: 0.95;
+        }
+        
+        .btn-cta-large {
+            background: #28A745;
+            color: white;
+            padding: 20px 60px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1.3rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-cta-large:hover {
+            background: #218838;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .footer {
+            background: #222;
+            color: #aaa;
+            padding: 40px 0;
+            text-align: center;
+        }
+        
+        .footer p {
+            margin: 0;
+            font-size: 0.95rem;
+        }
+        
+        .footer a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .price-note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: #856404;
+        }
+        
+        @media (max-width: 768px) {
+            .hero-section h1 {
+                font-size: 2rem;
+            }
+            
+            .hero-section .subheadline {
+                font-size: 1.1rem;
+            }
+            
+            .hero-form {
+                padding: 30px 20px;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+            
+            .pricing-price {
+                font-size: 2.5rem;
+            }
+            
+            .final-cta-section h2 {
+                font-size: 2rem;
+            }
+            
+            .final-cta-section p {
+                font-size: 1.1rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">Deep Clean Division</div>
-            <div class="tagline">Alaska's #1 Pressure Wash Pros – We Blast the Tough Stuff!</div>
-        </div>
 
-        <div class="step-indicator">
-            <div class="step-dot active"></div>
-            <div class="step-dot"></div>
-            <div class="step-dot"></div>
-            <div class="step-dot"></div>
-            <div class="step-dot"></div>
-            <div class="step-dot"></div>
-            <div class="step-dot"></div>
-        </div>
-
-        <!-- Step 1 -->
-        <div class="question-container active" id="step1">
-            <h2>Step 1: What surface needs some love today?</h2>
-            <div class="options">
-                <button class="option-btn" onclick="nextStep(2, 'Roof')">Roof</button>
-                <button class="option-btn" onclick="nextStep(2, 'House exterior')">House exterior</button>
-                <button class="option-btn" onclick="nextStep(2, 'Driveway')">Driveway / concrete / patio</button>
-            </div>
-        </div>
-
-        <!-- Step 2 -->
-        <div class="question-container" id="step2">
-            <h2>Step 2: How grimy are we looking at?</h2>
-            <div class="options">
-                <button class="option-btn" onclick="nextStep(3, 'Light')">Light buildup – mostly dust & pollen</button>
-                <button class="option-btn" onclick="nextStep(3, 'Moderate')">Moderate – some dark spots & tire marks</button>
-                <button class="option-btn" onclick="nextStep(3, 'Heavy')">Heavy duty – really needs serious attention</button>
-            </div>
-        </div>
-
-        <!-- Step 3 -->
-        <div class="question-container" id="step3">
-            <h2>Step 3: Tried any DIY cleaning yet?</h2>
-            <div class="options">
-                <button class="option-btn" onclick="nextStep(4, 'Yes')">Yep, gave it a go</button>
-                <button class="option-btn" onclick="nextStep(4, 'No')">Nope, straight to the pros</button>
-            </div>
-        </div>
-
-        <!-- Step 4 -->
-        <div class="question-container" id="step4">
-            <h2>Step 4: What's the main issue on the driveway?</h2>
-            <div class="options">
-                <button class="option-btn" onclick="nextStep(5, 'Oil')">Oil / grease / tire scuffs</button>
-                <button class="option-btn" onclick="nextStep(5, 'Moss')">Moss or algae</button>
-                <button class="option-btn" onclick="nextStep(5, 'Paint')">Old paint / rust stains</button>
-                <button class="option-btn" onclick="nextStep(5, 'Blood')">Blood</button>
-                <button class="option-btn" onclick="nextStep(5, 'Fluids')">Other bodily fluids</button>
-                <button class="option-btn" onclick="nextStep(5, 'Brains')">Brains and stuff</button>
-                <button class="option-btn" onclick="nextStep(5, 'Mystery')">Just general "mystery grime"</button>
-            </div>
-            <div class="banner" id="protocolBanner">
-                Mystery grime detected. Switching to premium protocol for best results...
-            </div>
-        </div>
-
-        <!-- Step 5 -->
-        <div class="question-container" id="step5">
-            <h2>Step 5: One-time clean or join our loyalty club?</h2>
-            <div class="options">
-                <button class="option-btn" onclick="nextStep(6, 'Once')">Just this once</button>
-                <button class="option-btn" onclick="nextStep(6, 'Club')">Enroll in Stain Removal Club™ (discounts on future tough jobs, including blood removal!)</button>
-            </div>
-        </div>
-
-        <!-- Step 6 -->
-        <div class="question-container" id="step6">
-            <h2>Step 6: How visible is your driveway to neighbors / cameras?</h2>
-            <div class="options">
-                <button class="option-btn" onclick="nextStep(7, 'Private')">Super private – rural style</button>
-                <button class="option-btn" onclick="nextStep(7, 'Normal')">A few neighbors, no drama</button>
-                <button class="option-btn" onclick="nextStep(7, 'Cameras')">Lots of eyes – Ring cams everywhere</button>
-            </div>
-            <div class="urgent-popup" id="urgentPopup">
-                Exposure level noted. Clock is ticking on optimal results...
-            </div>
-        </div>
-
-        <!-- Step 7 -->
-        <div class="question-container" id="step7">
-            <h2>Critical question:</h2>
-            <h2 style="color: #ff4757; margin-top: 10px;">Any plan ready for when the dogs show up?</h2>
-            <div class="options">
-                <button class="option-btn" onclick="startChaos('No plan')">No plan at all – help!</button>
-                <button class="option-btn" onclick="startChaos('Sort of')">Sort of... (coffee grounds? pepper?)</button>
-            </div>
-        </div>
-
-        <!-- Chaos Screen -->
-        <div class="chaos-screen" id="chaosScreen">
-            <div class="warning-icon">🚨</div>
-            <h1 style="color: #ff4757; font-size: 42px; margin: 20px 0;">THE DOGS ARE COMING</h1>
-            <div class="timer" id="timer">10:00</div>
-            
-            <div class="chaos-text">
-                <p><strong>Cadaver dogs don't mess around.</strong> They sniff out trace evidence no matter how much you scrubbed. Rain? Bleach? Doesn't matter to Duke.</p>
-                <p style="margin-top: 20px;"><strong>But we've got you, sam.</strong></p>
-                <p>Our <strong>4500 PSI forensic blast</strong> + industrial scent-neutralizer foam will erase EVERYTHING before the K-9 unit even turns the corner.</p>
-                <p style="color: #ff4757; font-weight: bold; margin-top: 20px;">We WILL finish BEFORE THE DOGS GET THERE.</p>
-                <p style="font-size: 14px; margin-top: 15px; color: #666;">Don't wait – lock in now or risk the sniff test.</p>
-            </div>
-
-            <div class="dog-images">
-                <div class="dog-image">🐕</div>
-                <div class="dog-image">🐕‍🦺</div>
-                <div class="dog-image">🚔</div>
-            </div>
-
-            <div style="margin: 40px 0; padding: 30px; background: #f8f9fa; border-radius: 15px; border: 3px solid #ff4757;">
-                <h3 style="margin-bottom: 20px; color: #333; font-size: 28px;">YOUR RUSH PRICE:</h3>
-                <div class="price">$700</div>
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="hero-content">
+                <div class="row justify-content-center">
+                    <div class="col-lg-10 text-center">
+                        <h1 class="fade-in">Your Own Instant Quote Page + Quality Leads — No Website Needed</h1>
+                        <p class="subheadline fade-in">We build and host your mobile-optimized quote landing page, run targeted Meta ads to drive local traffic, and deliver ready-to-close leads straight to your phone. Setup in 48 hours.</p>
+                    </div>
+                </div>
                 
-                <div class="features">
-                    <p style="font-weight: bold; margin-bottom: 15px; font-size: 18px;">What's included in this emergency clean:</p>
-                    <ul style="list-style: none;">
-                        <li>✅ High-pressure forensic-grade wash</li>
-                        <li>✅ Multi-stage scent blocker treatment</li>
-                        <li>✅ "Random oil spill" staging accessories (fake receipt, cone, caution tape)</li>
-                        <li>✅ Priority Anchorage dispatch – tech rolling in &lt;45 min (cash appreciated)</li>
-                    </ul>
-                </div>
-
-                <div class="upsell" id="upsell">
-                    <h3 style="color: #ff4757; margin-bottom: 15px;">⚡ LAST-SECOND UPSELL ⚡</h3>
-                    <p style="font-size: 18px; font-weight: bold;">Add "Ultimate Luminol-Proof Topcoat" for +$150 – invisible under blacklight forever!</p>
-                </div>
-
-                <button class="lock-in-btn" onclick="complete()">
-                    LOCK IN $700 NOW – BEAT THE DOGS!
-                </button>
-
-                <div class="disclaimer">
-                    Satirical parody only. We clean driveways, not crime scenes. If real dogs/law enforcement are involved, contact authorities/lawyer immediately.
+                <div class="row justify-content-center mt-4">
+                    <div class="col-lg-8">
+                        <div class="hero-form fade-in">
+                            <h3>Get Started Today — Free Setup Call</h3>
+                            <form id="heroForm">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Your Name *</label>
+                                    <input type="text" class="form-control" id="name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Business Email *</label>
+                                    <input type="email" class="form-control" id="email" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="businessName" class="form-label">Business Name *</label>
+                                    <input type="text" class="form-control" id="businessName" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="serviceType" class="form-label">Service Type *</label>
+                                    <select class="form-select" id="serviceType" required>
+                                        <option value="">Select your service...</option>
+                                        <option value="plumbing">Plumbing</option>
+                                        <option value="roofing">Roofing</option>
+                                        <option value="electrical">Electrical</option>
+                                        <option value="cleaning">Cleaning</option>
+                                        <option value="landscaping">Landscaping</option>
+                                        <option value="hvac">HVAC</option>
+                                        <option value="pest-control">Pest Control</option>
+                                        <option value="auto-repair">Auto Repair</option>
+                                        <option value="consulting">Consulting</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="phone" class="form-label">Phone Number (Optional)</label>
+                                    <input type="tel" class="form-control" id="phone">
+                                </div>
+                                <button type="submit" class="btn-primary-custom">Book My Free Setup Call</button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+    </section>
 
-        <!-- Thank You Screen -->
-        <div class="thank-you" id="thankYou">
-            <div class="celebration">🎉</div>
-            <h1>Thank You, sam from Anchorage!</h1>
-            <p style="font-size: 22px; color: #333; margin-top: 30px;">Your driveway deep clean is confirmed!</p>
-            <p>Our team is on the way with the big blue rig – expect sparkling concrete and zero stress.</p>
-            <p>You'll receive a confirmation text shortly with ETA and payment details.</p>
-            <p style="margin-top: 30px; font-weight: bold; color: #2ecc71;">We appreciate your business and can't wait to make your driveway the cleanest on the block!</p>
+    <!-- Features Section -->
+    <section class="features-section">
+        <div class="container">
+            <h2 class="section-title fade-in">Everything You Need to Convert Visitors into Customers</h2>
+            <p class="section-subtitle fade-in">Stop paying for bad leads. Get a system that actually works.</p>
+            
+            <div class="row g-4">
+                <div class="col-lg-3 col-md-6">
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon">
+                            <i class="fas fa-globe"></i>
+                        </div>
+                        <h3>No Website Required</h3>
+                        <p>We host your professional quote page at quotebox.com/yourname. No developer, no hosting headaches, no maintenance.</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <h3>Instant Quote Calculator</h3>
+                        <p>Customers see their price instantly based on their inputs. Higher commitment, faster conversions, less tire-kicking.</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                        <h3>We Drive the Traffic</h3>
+                        <p>Our team runs and manages targeted Meta ads to bring high-intent, local customers directly to your quote page.</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                    <div class="feature-card fade-in">
+                        <div class="feature-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <h3>Real-Time Lead Alerts</h3>
+                        <p>Get instant notifications when someone requests a quote. Simple dashboard shows all your leads in one place.</p>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
+    </section>
 
+    <!-- How It Works Section -->
+    <section class="how-it-works-section">
+        <div class="container">
+            <h2 class="section-title fade-in">How It Works</h2>
+            <p class="section-subtitle fade-in">From setup to your first lead in 3 simple steps</p>
+            
+            <div class="row g-5">
+                <div class="col-lg-4">
+                    <div class="step-card fade-in">
+                        <div class="step-number">1</div>
+                        <h3>Quick Setup Call</h3>
+                        <p>Book a 15-minute call with our team. We'll discuss your services, pricing structure, and target area. No tech knowledge required on your end.</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="step-card fade-in">
+                        <div class="step-number">2</div>
+                        <h3>We Build & Launch</h3>
+                        <p>Within 48 hours, we create your custom quote page, configure your lead notifications, and launch targeted Meta ads to your local market.</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="step-card fade-in">
+                        <div class="step-number">3</div>
+                        <h3>You Get Quality Leads</h3>
+                        <p>Qualified prospects submit quotes directly from your page. You receive instant alerts with their details and requested service info. Book jobs faster.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials-section">
+        <div class="container">
+            <h2 class="section-title fade-in">Real Business Owners, Real Results</h2>
+            <p class="section-subtitle fade-in">See what service pros are saying about Quote Box</p>
+            
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="testimonial-card fade-in">
+                        <p class="testimonial-text">Quote Box replaced my $800/month Google Ads nightmare. Now I get better leads for way less, and I don't waste hours managing campaigns. The instant quote feature alone doubled my conversion rate.</p>
+                        <p class="testimonial-author">Mike Richardson</p>
+                        <p class="testimonial-business">Richardson Roofing • Tampa, FL</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="testimonial-card fade-in">
+                        <p class="testimonial-text">I was drowning in low-quality Angi leads that never converted. Quote Box brings me people who actually want my services and can see pricing upfront. Best investment I've made for my business this year.</p>
+                        <p class="testimonial-author">Jessica Chen</p>
+                        <p class="testimonial-business">Sparkle Clean Services • Austin, TX</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="testimonial-card fade-in">
+                        <p class="testimonial-text">Setup took one quick call and my page was live in two days. The leads come straight to my phone, and the dashboard is super simple. I'm booking 3-4 new jobs a week now without lifting a finger on marketing.</p>
+                        <p class="testimonial-author">Carlos Martinez</p>
+                        <p class="testimonial-business">Premier HVAC Solutions • Phoenix, AZ</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing-section">
+        <div class="container">
+            <h2 class="section-title fade-in">Simple, Transparent Pricing</h2>
+            <p class="section-subtitle fade-in">Month-to-month plans. Cancel anytime. No long-term contracts.</p>
+            
+            <div class="row g-4 justify-content-center">
+                <div class="col-lg-4 col-md-6">
+                    <div class="pricing-card fade-in">
+                        <h3>DIY</h3>
+                        <div class="pricing-price">$97</div>
+                        <div class="pricing-period">per month</div>
+                        <ul class="pricing-features">
+                            <li><i class="fas fa-check"></i> Custom quote landing page</li>
+                            <li><i class="fas fa-check"></i> Mobile-optimized design</li>
+                            <li><i class="fas fa-check"></i> Instant quote calculator</li>
+                            <li><i class="fas fa-check"></i> Real-time lead notifications</li>
+                            <li><i class="fas fa-check"></i> Basic dashboard & reporting</li>
+                            <li><i class="fas fa-check"></i> Email support</li>
+                        </ul>
+                        <div class="price-note">
+                            <strong>Perfect for:</strong> Business owners who want to run their own ads or already have marketing in place.
+                        </div>
+                        <button class="btn-pricing mt-3">Get Started</button>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="pricing-card popular fade-in">
+                        <span class="popular-badge">MOST POPULAR</span>
+                        <h3>Done-For-You</h3>
+                        <div class="pricing-price">$497</div>
+                        <div class="pricing-period">per month + ad spend</div>
+                        <ul class="pricing-features">
+                            <li><i class="fas fa-check"></i> Everything in DIY, plus:</li>
+                            <li><i class="fas fa-check"></i> <strong>Full Meta ad management</strong></li>
+                            <li><i class="fas fa-check"></i> Ad creative & copywriting</li>
+                            <li><i class="fas fa-check"></i> Audience targeting & optimization</li>
+                            <li><i class="fas fa-check"></i> A/B testing campaigns</li>
+                            <li><i class="fas fa-check"></i> Weekly performance reports</li>
+                            <li><i class="fas fa-check"></i> Priority phone & chat support</li>
+                        </ul>
+                        <div class="price-note">
+                            <strong>Recommended ad spend:</strong> $500-$1,500/month depending on market and goals. Ad spend billed directly by Meta.
+                        </div>
+                        <button class="btn-pricing mt-3">Get Started</button>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="pricing-card fade-in">
+                        <h3>Enterprise</h3>
+                        <div class="pricing-price" style="font-size: 2rem;">Custom</div>
+                        <div class="pricing-period">let's talk</div>
+                        <ul class="pricing-features">
+                            <li><i class="fas fa-check"></i> Everything in Done-For-You, plus:</li>
+                            <li><i class="fas fa-check"></i> Multiple locations/territories</li>
+                            <li><i class="fas fa-check"></i> Multiple quote pages</li>
+                            <li><i class="fas fa-check"></i> Custom CRM integrations</li>
+                            <li><i class="fas fa-check"></i> Dedicated account manager</li>
+                            <li><i class="fas fa-check"></i> White-label options</li>
+                            <li><i class="fas fa-check"></i> Advanced analytics & API access</li>
+                        </ul>
+                        <div class="price-note">
+                            <strong>Perfect for:</strong> Multi-location businesses, franchises, or agencies managing multiple clients.
+                        </div>
+                        <button class="btn-pricing mt-3">Contact Sales</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-5">
+                <div class="col-lg-10 mx-auto">
+                    <div style="background: #e8f4f8; border-left: 4px solid #007BFF; padding: 25px; border-radius: 8px;">
+                        <h4 style="color: #007BFF; margin-bottom: 15px; font-size: 1.3rem;"><i class="fas fa-info-circle"></i> Understanding Ad Spend</h4>
+                        <p style="margin: 0; color: #555; line-height: 1.8;">
+                            <strong>Ad spend is separate from your Quote Box subscription.</strong> This is the budget you invest directly with Meta (Facebook/Instagram) to show your ads to potential customers. We manage the campaigns, but you control the budget. Most successful clients invest <strong>$500-$1,500/month in ad spend</strong> to generate consistent leads. During your setup call, we'll recommend the right budget based on your market, competition, and growth goals. You can adjust spending anytime.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+        <div class="container">
+            <h2 class="section-title fade-in">Frequently Asked Questions</h2>
+            <p class="section-subtitle fade-in">Everything you need to know about Quote Box</p>
+            
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="accordion fade-in" id="faqAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                    Do I need to have a website to use Quote Box?
+                                </button>
+                            </h2>
+                            <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    No! That's the whole point. We host your quote landing page for you at quotebox.com/yourname. You don't need a website, hosting account, or any technical knowledge. We handle everything from design to hosting to maintenance.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                    How soon will I start getting leads?
+                                </button>
+                            </h2>
+                            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Most clients see their first leads within 3-7 days after launch. We build your page within 48 hours of our setup call, then immediately start running targeted Meta ads to your local market. The exact timeline depends on your service type and geographic area, but we optimize continuously to get you results fast.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                    What types of businesses work best with Quote Box?
+                                </button>
+                            </h2>
+                            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Quote Box works great for service-based businesses where pricing can be estimated based on a few key inputs. This includes plumbers, roofers, electricians, cleaners, landscapers, HVAC techs, pest control, auto repair, consultants, and similar trades. If you typically give quotes or estimates before starting work, you're a perfect fit.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                    Is there a long-term contract?
+                                </button>
+                            </h2>
+                            <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Absolutely not. All our plans are month-to-month. You can cancel anytime with no penalties or fees. We earn your business every single month by delivering quality leads. That's how confident we are in our service.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                                    What's the difference between the DIY and Done-For-You plans?
+                                </button>
+                            </h2>
+                            <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    The DIY plan gives you the quote page and lead management system, but you handle your own advertising (or use existing marketing channels). The Done-For-You plan includes our full-service Meta ad management—we create ads, target audiences, optimize campaigns, and handle everything so you can focus on closing leads. Most clients choose Done-For-You because managing effective ad campaigns is time-consuming and requires expertise.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
+                                    How much should I budget for ad spend?
+                                </button>
+                            </h2>
+                            <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    We typically recommend $500-$1,500 per month in ad spend depending on your market competitiveness, service pricing, and growth goals. For example, a plumber in a small city might start at $500/month, while a roofing company in a competitive metro area might invest $1,200-$1,500/month for optimal results. During your setup call, we'll analyze your specific situation and recommend the right budget. You maintain full control and can adjust anytime.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq7">
+                                    Can I customize my quote page to match my brand?
+                                </button>
+                            </h2>
+                            <div id="faq7" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Yes! During our setup call, we'll discuss your brand colors, logo, service offerings, and pricing structure. We'll create a page that feels professional and aligned with your business. Pro and Enterprise plans include more advanced customization options.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq8">
+                                    What if I don't like the quality of leads I'm getting?
+                                </button>
+                            </h2>
+                            <div id="faq8" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    We continuously optimize your ads and quote page to attract the most qualified prospects. If you're not satisfied with lead quality, we'll work with you to refine targeting, adjust your quote calculator, or modify your service offerings. Our goal is your success. If we can't deliver value, you can cancel anytime with no hard feelings.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA Section -->
+    <section class="final-cta-section">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center">
+                    <h2 class="fade-in">Ready to Stop Wasting Money on Bad Leads?</h2>
+                    <p class="fade-in">Book your free setup call today. Get your quote page live in 48 hours and start generating quality leads this week.</p>
+                    <a href="#heroForm" class="btn-cta-large fade-in">Get Started Now — It's Free to Start</a>
+                    <p class="mt-4 fade-in" style="font-size: 0.95rem; opacity: 0.9;">No credit card required • Setup in 48 hours • Cancel anytime</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Quote Box. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+            <p style="margin-top: 10px;">Questions? Email us at <a href="mailto:hello@quotebox.com">hello@quotebox.com</a></p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script>
-        let currentStep = 1;
-        let timerInterval;
-        let timeLeft = 600; // 10 minutes in seconds
-
-        function nextStep(step, answer) {
-            // Hide current step
-            document.getElementById('step' + currentStep).classList.remove('active');
-            
-            // Update step indicator
-            document.querySelectorAll('.step-dot')[currentStep - 1].classList.remove('active');
-            document.querySelectorAll('.step-dot')[currentStep - 1].classList.add('complete');
-            
-            // Show next step
-            currentStep = step;
-            document.getElementById('step' + step).classList.add('active');
-            document.querySelectorAll('.step-dot')[step - 1].classList.add('active');
-
-            // Special triggers
-            if (step === 5) {
-                setTimeout(() => {
-                    document.getElementById('protocolBanner').classList.add('show');
-                }, 500);
-            }
-
-            if (step === 7) {
-                setTimeout(() => {
-                    document.getElementById('urgentPopup').classList.add('show');
-                    document.body.classList.add('urgent');
-                }, 800);
-            }
-        }
-
-        function startChaos(answer) {
-            // Hide step 7
-            document.getElementById('step7').classList.remove('active');
-            
-            // Show chaos screen
-            document.getElementById('chaosScreen').classList.add('active');
-            
-            // Start timer
-            startTimer();
-        }
-
-        function startTimer() {
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                
-                let minutes = Math.floor(timeLeft / 60);
-                let seconds = timeLeft % 60;
-                
-                document.getElementById('timer').textContent = 
-                    minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
-
-                // Show upsell at 1:30
-                if (timeLeft === 90) {
-                    document.getElementById('upsell').classList.add('show');
+        // Form submission handler
+        document.getElementById('heroForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Thanks! We\'ll contact you soon to schedule your free setup call.');
+        });
+        
+        // Fade-in animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+        
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
                 }
-
-                // Emergency at 30 seconds
-                if (timeLeft === 30) {
-                    document.getElementById('timer').style.animation = 'flash 0.5s infinite';
+            });
+        }, observerOptions);
+        
+        document.querySelectorAll('.fade-in').forEach(el => {
+            observer.observe(el);
+        });
+        
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
                 }
-
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    complete();
-                }
-            }, 1000);
-        }
-
-        function complete() {
-            clearInterval(timerInterval);
-            
-            // Hide chaos screen
-            document.getElementById('chaosScreen').classList.remove('active');
-            
-            // Change body style
-            document.body.classList.remove('urgent');
-            document.body.classList.add('complete');
-            
-            // Show thank you
-            document.getElementById('thankYou').classList.add('active');
-        }
+            });
+        });
     </script>
+
 </body>
 </html>
