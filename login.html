@@ -41,22 +41,48 @@
                     </div>
                 </div>
 
+                <div id="success-message" class="hidden rounded-md bg-green-50 p-4">
+                    <div class="flex">
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-green-800" id="success-text">Logging in...</h3>
+                        </div>
+                    </div>
+                </div>
+
                 <div>
-                    <button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <button type="submit" id="loginButton" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Sign in
                     </button>
                 </div>
             </form>
+
+            <div class="mt-4">
+                <button id="testConnection" class="w-full text-sm text-gray-600 hover:text-indigo-600">
+                    Test Database Connection
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
-        
-            const SUPABASE_URL = 'https://jpchpqjnyabtpptufkcj.supabase.co';
-            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwY2hwcWpueWFidHBwdHVma2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY4OTUwODAsImV4cCI6MjA1MjQ3MTA4MH0.iVpewV0H7FrPQQrR9rSGEgDsqjQHKR-Lhu23FLOl-nQ';
-            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const SUPABASE_URL = 'https://jpchpqjnyabtpptufkcj.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwY2hwcWpueWFidHBwdHVma2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY4OTUwODAsImV4cCI6MjA1MjQ3MTA4MH0.iVpewV0H7FrPQQrR9rSGEgDsqjQHKR-Lhu23FLOl-nQ';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        
+        // Test connection button
+        document.getElementById('testConnection').addEventListener('click', async () => {
+            try {
+                const { data, error } = await supabase.from('accounts').select('count');
+                if (error) {
+                    alert('Database connection failed: ' + error.message);
+                } else {
+                    alert('Database connection successful!');
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        });
+
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -64,8 +90,18 @@
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('error-message');
             const errorText = document.getElementById('error-text');
+            const successDiv = document.getElementById('success-message');
+            const loginButton = document.getElementById('loginButton');
 
+            // Hide messages
             errorDiv.classList.add('hidden');
+            successDiv.classList.add('hidden');
+
+            // Disable button
+            loginButton.disabled = true;
+            loginButton.textContent = 'Signing in...';
+
+            console.log('Attempting login for:', email);
 
             try {
                 const { data, error } = await supabase.auth.signInWithPassword({
@@ -73,12 +109,32 @@
                     password: password
                 });
 
-                if (error) throw error;
+                console.log('Login response:', { data, error });
 
-                window.location.href = 'dashboard.html';
+                if (error) {
+                    console.error('Login error:', error);
+                    throw error;
+                }
+
+                if (data.user) {
+                    console.log('Login successful, user:', data.user.id);
+                    successDiv.classList.remove('hidden');
+                    
+                    // Wait a moment then redirect
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 500);
+                } else {
+                    throw new Error('No user data returned');
+                }
             } catch (error) {
+                console.error('Catch block error:', error);
                 errorDiv.classList.remove('hidden');
-                errorText.textContent = error.message;
+                errorText.textContent = error.message || 'An error occurred during login';
+                
+                // Re-enable button
+                loginButton.disabled = false;
+                loginButton.textContent = 'Sign in';
             }
         });
     </script>
