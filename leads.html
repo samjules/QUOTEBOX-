@@ -1,66 +1,182 @@
-<script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leads - QuoteFlow</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+
+<div class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    <div class="w-64 bg-gray-900">
+        <div class="flex flex-col h-full">
+            <div class="flex items-center justify-center h-16 bg-gray-800">
+                <span class="text-white text-xl font-bold">QuoteFlow</span>
+            </div>
+            <nav class="flex-1 px-2 py-4 space-y-1">
+                <a href="dashboard.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                    Dashboard
+                </a>
+                <a href="leads.html" class="bg-gray-800 text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                    Leads
+                </a>
+                <a href="form-builder.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                    Form Builder
+                </a>
+                <a href="settings.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                    Settings
+                </a>
+            </nav>
+            <div class="p-4">
+                <button id="logoutBtn" class="w-full bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="flex-1 overflow-auto">
+        <div class="py-6">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h1 class="text-2xl font-semibold text-gray-900">All Leads</h1>
+            </div>
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+                <div class="py-4">
+                    <div class="bg-white shadow rounded-xl">
+                        <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1 min-w-0">
+                                    <input type="text" id="searchInput" placeholder="Search leads..." class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-2">
+                                </div>
+                                <div class="ml-4">
+                                    <select id="statusFilter" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-2">
+                                        <option value="">All Status</option>
+                                        <option value="new">New</option>
+                                        <option value="contacted">Contacted</option>
+                                        <option value="booked">Booked</option>
+                                        <option value="lost">Lost</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Form Type</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leadsTable" class="bg-white divide-y divide-gray-200"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lead Modal -->
+<div id="leadModal" class="hidden fixed z-10 inset-0 overflow-y-auto">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Lead Details</h3>
+                        <div id="leadDetails" class="mt-2"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" id="closeModal" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
 const SUPABASE_URL = 'https://jpchpqjnyabtpptufkcj.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE';
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+console.log('[Init] Supabase client created:', supabase);
 
 let accountId = null;
 let allLeads = [];
 
-// --- Check if user is signed in ---
+// ---------------- AUTH ----------------
 async function checkAuth() {
-    console.log('[Auth] Checking user auth...');
-    const { data } = await supabase.auth.getUser();
-    const user = data.user;
+    console.log('[Auth] Checking signed-in user...');
+    try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        console.log('[Auth] getUser result:', user, error);
 
-    if (!user) {
-        console.log('[Auth] No user signed in, redirecting to login.');
-        window.location.href = 'login.html';
-        return;
+        if (!user) {
+            console.warn('[Auth] No user found, redirecting to login');
+            window.location.href = 'login.html';
+            return;
+        }
+
+        const { data: account, error: accountError } = await supabase
+            .from('accounts')
+            .select('*')
+            .eq('owner_id', user.id)
+            .single();
+
+        console.log('[Auth] Account fetch:', account, accountError);
+
+        if (!account) {
+            console.error('[Auth] No account for this user');
+            return;
+        }
+
+        accountId = account.id;
+        console.log('[Auth] Account ID set:', accountId);
+        loadLeads();
+    } catch (err) {
+        console.error('[Auth] Exception:', err);
     }
-
-    console.log('[Auth] User signed in:', user.id);
-
-    // Get account for this user
-    const { data: account, error } = await supabase
-        .from('accounts')
-        .select('*')
-        .eq('owner_id', user.id)
-        .single();
-
-    if (error) {
-        console.error('[Account] Error fetching account:', error);
-        alert('No account found for this user.');
-        return;
-    }
-
-    console.log('[Account] Account found:', account);
-    accountId = account.id;
-
-    loadLeads();
 }
 
-// --- Load leads for this account ---
+// ---------------- LEADS ----------------
 async function loadLeads() {
-    console.log('[Leads] Loading leads for accountId:', accountId);
-    const { data: leads, error } = await supabase
-        .from('leads')
-        .select('*')
-        .eq('account_id', accountId)
-        .order('created_at', { ascending: false });
+    console.log('[Leads] Loading leads for account:', accountId);
+    try {
+        const { data: leads, error } = await supabase
+            .from('leads')
+            .select('*')
+            .eq('account_id', accountId)
+            .order('created_at', { ascending: false });
 
-    if (error) {
-        console.error('[Leads] Error fetching leads:', error);
-        return;
+        console.log('[Leads] Fetched:', leads, error);
+
+        if (leads) {
+            allLeads = leads;
+            renderLeads(leads);
+        }
+    } catch (err) {
+        console.error('[Leads] Exception:', err);
     }
-
-    console.log(`[Leads] Loaded ${leads.length} leads`, leads);
-    allLeads = leads;
-    renderLeads(leads);
 }
 
-// --- Render leads in table ---
 function renderLeads(leads) {
-    console.log('[Render] Rendering', leads.length, 'leads');
+    console.log('[Render] Rendering leads:', leads);
     const tbody = document.getElementById('leadsTable');
     tbody.innerHTML = '';
 
@@ -72,11 +188,11 @@ function renderLeads(leads) {
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lead.phone || '-'}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lead.form_type || '-'}</td>
             <td class="px-6 py-4 whitespace-nowrap">
-                <select class="status-dropdown text-xs leading-5 font-semibold rounded-full px-2 py-1 ${getStatusColor(lead.status)}" data-lead-id="${lead.id}" data-current-status="${lead.status}">
-                    <option value="new" ${lead.status === 'new' ? 'selected' : ''}>New</option>
-                    <option value="contacted" ${lead.status === 'contacted' ? 'selected' : ''}>Contacted</option>
-                    <option value="booked" ${lead.status === 'booked' ? 'selected' : ''}>Booked</option>
-                    <option value="lost" ${lead.status === 'lost' ? 'selected' : ''}>Lost</option>
+                <select class="status-dropdown text-xs leading-5 font-semibold rounded-full px-2 py-1" data-lead-id="${lead.id}" data-current-status="${lead.status}">
+                    <option value="new" ${lead.status==='new'?'selected':''}>New</option>
+                    <option value="contacted" ${lead.status==='contacted'?'selected':''}>Contacted</option>
+                    <option value="booked" ${lead.status==='booked'?'selected':''}>Booked</option>
+                    <option value="lost" ${lead.status==='lost'?'selected':''}>Lost</option>
                 </select>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(lead.created_at).toLocaleDateString()}</td>
@@ -87,38 +203,27 @@ function renderLeads(leads) {
         tbody.appendChild(row);
     });
 
-    console.log('[Render] Attaching event listeners...');
     document.querySelectorAll('.status-dropdown').forEach(dropdown => {
-        dropdown.addEventListener('change', updateLeadStatus);
+        dropdown.addEventListener('change', async (e) => {
+            const leadId = e.target.dataset.leadId;
+            const newStatus = e.target.value;
+            console.log('[Update] Updating lead', leadId, 'to status', newStatus);
+            const { error } = await supabase.from('leads').update({ status: newStatus }).eq('id', leadId);
+            if (error) console.error('[Update] Error:', error);
+            else loadLeads();
+        });
     });
+
     document.querySelectorAll('.view-btn').forEach(btn => {
-        btn.addEventListener('click', e => showLeadModal(JSON.parse(e.target.dataset.lead)));
+        btn.addEventListener('click', (e) => {
+            const lead = JSON.parse(e.target.dataset.lead);
+            console.log('[Modal] Showing lead details:', lead);
+            showLeadModal(lead);
+        });
     });
 }
 
-// --- Update lead status ---
-async function updateLeadStatus(e) {
-    const leadId = e.target.dataset.leadId;
-    const newStatus = e.target.value;
-
-    console.log(`[Update] Updating lead ${leadId} to status "${newStatus}"`);
-
-    const { error } = await supabase
-        .from('leads')
-        .update({ status: newStatus })
-        .eq('id', leadId);
-
-    if (error) {
-        console.error('[Update] Error updating lead:', error);
-    } else {
-        console.log('[Update] Status updated successfully');
-        loadLeads();
-    }
-}
-
-// --- Modal ---
 function showLeadModal(lead) {
-    console.log('[Modal] Showing lead:', lead);
     const modal = document.getElementById('leadModal');
     const details = document.getElementById('leadDetails');
 
@@ -142,49 +247,55 @@ function showLeadModal(lead) {
             ${formDataHtml}
         </div>
     `;
+
     modal.classList.remove('hidden');
 }
 
 document.getElementById('closeModal').addEventListener('click', () => {
-    console.log('[Modal] Closing modal');
     document.getElementById('leadModal').classList.add('hidden');
 });
 
-// --- Search/filter ---
-document.getElementById('searchInput').addEventListener('input', e => {
-    console.log('[Filter] Search input:', e.target.value);
-    filterLeads(e.target.value.toLowerCase(), document.getElementById('statusFilter').value);
-});
-document.getElementById('statusFilter').addEventListener('change', e => {
-    console.log('[Filter] Status filter changed:', e.target.value);
-    filterLeads(document.getElementById('searchInput').value.toLowerCase(), e.target.value);
-});
+document.getElementById('searchInput').addEventListener('input', () => filterLeads());
+document.getElementById('statusFilter').addEventListener('change', () => filterLeads());
 
-function filterLeads(searchTerm, statusFilter) {
-    console.log('[Filter] Filtering leads', searchTerm, statusFilter);
+function filterLeads() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+
+    console.log('[Filter] searchTerm:', searchTerm, 'statusFilter:', statusFilter);
+
     let filtered = allLeads;
-    if (searchTerm) filtered = filtered.filter(l => (l.name?.toLowerCase().includes(searchTerm) || l.email?.toLowerCase().includes(searchTerm) || l.phone?.toLowerCase().includes(searchTerm)));
-    if (statusFilter) filtered = filtered.filter(l => l.status === statusFilter);
-    console.log('[Filter] Leads after filter:', filtered.length);
+
+    if (searchTerm) {
+        filtered = filtered.filter(lead => 
+            (lead.name && lead.name.toLowerCase().includes(searchTerm)) ||
+            (lead.email && lead.email.toLowerCase().includes(searchTerm)) ||
+            (lead.phone && lead.phone.toLowerCase().includes(searchTerm))
+        );
+    }
+
+    if (statusFilter) {
+        filtered = filtered.filter(lead => lead.status === statusFilter);
+    }
+
+    console.log('[Filter] filtered leads:', filtered);
     renderLeads(filtered);
 }
 
-function getStatusColor(status) {
-    switch(status) {
-        case 'new': return 'bg-yellow-100 text-yellow-800';
-        case 'contacted': return 'bg-blue-100 text-blue-800';
-        case 'booked': return 'bg-green-100 text-green-800';
-        case 'lost': return 'bg-red-100 text-red-800';
-        default: return 'bg-gray-100 text-gray-800';
-    }
-}
-
-// --- Logout ---
 document.getElementById('logoutBtn').addEventListener('click', async () => {
     console.log('[Auth] Logging out...');
     await supabase.auth.signOut();
     window.location.href = 'login.html';
 });
+
+// Start
+console.log('[Init] Checking authentication');
+checkAuth();
+
+</script>
+</body>
+</html>
+
 
 checkAuth();
 </script>
