@@ -130,17 +130,22 @@
     </div>
 
     <script>
+        console.log("=== SCRIPT STARTING ===");
+        
         // --- Supabase setup ---
         const SUPABASE_URL = 'https://jpchpqjnyabtpptufkcj.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwY2hwcWpueWFidHBwdHVma2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMDAyNTAsImV4cCI6MjA4NjY3NjI1MH0.FCywHhyz8N0Hkl-jK9RxZyh2KFZMrP8aUSXt1oJQbHY'; // Replace with your actual anon key
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwY2hwcWpueWFidHBwdHVma2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMDAyNTAsImV4cCI6MjA4NjY3NjI1MH0.FCywHhyz8N0Hkl-jK9RxZyh2KFZMrP8aUSXt1oJQbHY';
+        
+        console.log("Creating Supabase client with URL:", SUPABASE_URL);
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log("Supabase client created:", supabase);
 
         let accountId = null;
         let userId = null;
         let allLeads = [];
 
         function showError(message) {
-            console.error(message);
+            console.error("❌ SHOWING ERROR:", message);
             document.getElementById('loadingState').classList.add('hidden');
             document.getElementById('leadsContent').classList.add('hidden');
             document.getElementById('errorState').classList.remove('hidden');
@@ -148,42 +153,59 @@
         }
 
         function showContent() {
+            console.log("✅ SHOWING CONTENT");
             document.getElementById('loadingState').classList.add('hidden');
             document.getElementById('errorState').classList.add('hidden');
             document.getElementById('leadsContent').classList.remove('hidden');
         }
 
         async function checkAuth() {
-            console.log("Checking auth...");
+            console.log("\n=== 1. CHECKING AUTHENTICATION ===");
             
             try {
+                console.log("Calling supabase.auth.getUser()...");
                 const { data: { user }, error } = await supabase.auth.getUser();
                 
+                console.log("Auth response received");
+                console.log("- User:", user);
+                console.log("- Error:", error);
+                
                 if (error) {
-                    console.error("Auth error:", error);
+                    console.error("❌ Auth error occurred:", error);
                     showError("Authentication error. Please log in again.");
                     setTimeout(() => window.location.href = 'login.html', 2000);
                     return;
                 }
 
                 if (!user) {
-                    console.log("User not logged in, redirecting...");
+                    console.log("❌ No user found, redirecting to login...");
                     window.location.href = 'login.html';
                     return;
                 }
 
-                console.log("Current user:", user);
+                console.log("✅ User authenticated successfully");
+                console.log("- User ID:", user.id);
+                console.log("- User email:", user.email);
                 userId = user.id;
 
-                // Get account for this user
+                console.log("\n=== 2. LOOKING UP ACCOUNT ===");
+                console.log("Querying accounts table where owner_id =", user.id);
+                
                 const { data: account, error: accountError } = await supabase
                     .from('accounts')
                     .select('*')
                     .eq('owner_id', user.id)
                     .single();
 
+                console.log("Account query response:");
+                console.log("- Data:", account);
+                console.log("- Error:", accountError);
+
                 if (accountError) {
-                    console.error("Account lookup error:", accountError);
+                    console.error("❌ Account lookup error:", accountError);
+                    console.log("- Error code:", accountError.code);
+                    console.log("- Error message:", accountError.message);
+                    console.log("- Error details:", accountError.details);
                     
                     if (accountError.code === 'PGRST116') {
                         showError("No account found for this user. Please contact support.");
@@ -194,61 +216,93 @@
                 }
 
                 if (!account) {
+                    console.error("❌ Account query returned null");
                     showError("No account found for this user.");
                     return;
                 }
 
-                console.log("Found account:", account);
+                console.log("✅ Account found successfully");
+                console.log("- Account ID:", account.id);
+                console.log("- Business name:", account.business_name);
+                console.log("- Owner ID:", account.owner_id);
+                console.log("- Created at:", account.created_at);
+                
                 accountId = account.id;
                 
                 await loadLeads();
             } catch (err) {
-                console.error("Unexpected error:", err);
+                console.error("❌ UNEXPECTED ERROR in checkAuth:", err);
+                console.log("Error stack:", err.stack);
                 showError("An unexpected error occurred. Please refresh the page.");
             }
         }
 
         async function loadLeads() {
-            console.log("Loading leads for accountId:", accountId);
+            console.log("\n=== 3. LOADING LEADS ===");
+            console.log("Account ID to query:", accountId);
             
             try {
+                console.log("Querying leads table where account_id =", accountId);
+                
                 const { data: leads, error } = await supabase
                     .from('leads')
                     .select('*')
                     .eq('account_id', accountId)
                     .order('created_at', { ascending: false });
 
+                console.log("Leads query response:");
+                console.log("- Data:", leads);
+                console.log("- Error:", error);
+                console.log("- Number of leads:", leads ? leads.length : 0);
+
                 if (error) {
-                    console.error("Error loading leads:", error);
+                    console.error("❌ Error loading leads:", error);
+                    console.log("- Error code:", error.code);
+                    console.log("- Error message:", error.message);
+                    console.log("- Error details:", error.details);
                     showError(`Error loading leads: ${error.message}`);
                     return;
                 }
 
-                console.log("Loaded leads:", leads);
+                console.log("✅ Leads loaded successfully");
                 allLeads = leads || [];
+                console.log("Total leads in allLeads array:", allLeads.length);
+                
+                if (allLeads.length > 0) {
+                    console.log("First lead sample:", allLeads[0]);
+                } else {
+                    console.log("⚠️ No leads found for this account");
+                }
                 
                 showContent();
                 renderLeads(allLeads);
             } catch (err) {
-                console.error("Unexpected error loading leads:", err);
+                console.error("❌ UNEXPECTED ERROR in loadLeads:", err);
+                console.log("Error stack:", err.stack);
                 showError("An unexpected error occurred while loading leads.");
             }
         }
 
         function renderLeads(leads) {
-            console.log("Rendering leads:", leads);
+            console.log("\n=== 4. RENDERING LEADS ===");
+            console.log("Leads to render:", leads);
+            console.log("Number of leads:", leads ? leads.length : 0);
+            
             const tbody = document.getElementById('leadsTable');
             const emptyState = document.getElementById('emptyState');
             tbody.innerHTML = '';
 
             if (!leads || leads.length === 0) {
+                console.log("⚠️ No leads to display, showing empty state");
                 emptyState.classList.remove('hidden');
                 return;
             }
 
+            console.log("✅ Rendering", leads.length, "leads");
             emptyState.classList.add('hidden');
 
-            leads.forEach(lead => {
+            leads.forEach((lead, index) => {
+                console.log(`Rendering lead ${index + 1}:`, lead);
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${lead.name || '-'}</td>
@@ -271,7 +325,10 @@
                 tbody.appendChild(row);
             });
 
+            console.log("✅ All leads rendered to DOM");
+
             // Attach event listeners
+            console.log("Attaching event listeners to status dropdowns and view buttons");
             document.querySelectorAll('.status-dropdown').forEach(dropdown => {
                 dropdown.addEventListener('change', updateLeadStatus);
             });
@@ -282,6 +339,8 @@
                     showLeadModal(lead);
                 });
             });
+            
+            console.log("✅ Event listeners attached");
         }
 
         async function updateLeadStatus(e) {
@@ -289,7 +348,10 @@
             const newStatus = e.target.value;
             const oldStatus = e.target.dataset.currentStatus;
             
-            console.log(`Updating lead ${leadId} status to ${newStatus}`);
+            console.log("\n=== UPDATING LEAD STATUS ===");
+            console.log("- Lead ID:", leadId);
+            console.log("- Old status:", oldStatus);
+            console.log("- New status:", newStatus);
 
             try {
                 const { error } = await supabase
@@ -297,33 +359,40 @@
                     .update({ status: newStatus })
                     .eq('id', leadId);
 
+                console.log("Update response error:", error);
+
                 if (error) {
-                    console.error("Error updating status:", error);
+                    console.error("❌ Error updating status:", error);
                     alert(`Error updating status: ${error.message}`);
                     e.target.value = oldStatus; // Revert on error
                 } else {
+                    console.log("✅ Status updated successfully");
                     e.target.dataset.currentStatus = newStatus;
                     e.target.className = `status-dropdown text-xs leading-5 font-semibold rounded-full px-2 py-1 ${getStatusColor(newStatus)}`;
                     // Update the lead in allLeads array
                     const leadIndex = allLeads.findIndex(l => l.id === leadId);
                     if (leadIndex !== -1) {
                         allLeads[leadIndex].status = newStatus;
+                        console.log("Updated lead in allLeads array");
                     }
                 }
             } catch (err) {
-                console.error("Unexpected error:", err);
+                console.error("❌ UNEXPECTED ERROR updating status:", err);
                 alert("An unexpected error occurred while updating status.");
                 e.target.value = oldStatus;
             }
         }
 
         function showLeadModal(lead) {
-            console.log("Showing lead modal:", lead);
+            console.log("\n=== SHOWING LEAD MODAL ===");
+            console.log("Lead data:", lead);
+            
             const modal = document.getElementById('leadModal');
             const details = document.getElementById('leadDetails');
 
             let formDataHtml = '';
             if (lead.form_data && Object.keys(lead.form_data).length > 0) {
+                console.log("Lead has form_data:", lead.form_data);
                 formDataHtml = '<div class="mt-4"><h4 class="font-medium text-gray-900 mb-2">Form Data:</h4>';
                 for (const [key, value] of Object.entries(lead.form_data)) {
                     formDataHtml += `<p class="text-sm text-gray-600"><strong>${key}:</strong> ${value}</p>`;
@@ -344,25 +413,34 @@
             `;
 
             modal.classList.remove('hidden');
+            console.log("✅ Modal displayed");
         }
 
         document.getElementById('closeModal').addEventListener('click', () => {
+            console.log("Closing modal");
             document.getElementById('leadModal').classList.add('hidden');
         });
 
         document.getElementById('searchInput').addEventListener('input', () => {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const statusFilter = document.getElementById('statusFilter').value;
+            console.log("Search input changed:", searchTerm);
             filterLeads(searchTerm, statusFilter);
         });
 
         document.getElementById('statusFilter').addEventListener('change', () => {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const statusFilter = document.getElementById('statusFilter').value;
+            console.log("Status filter changed:", statusFilter);
             filterLeads(searchTerm, statusFilter);
         });
 
         function filterLeads(searchTerm, statusFilter) {
+            console.log("\n=== FILTERING LEADS ===");
+            console.log("- Search term:", searchTerm);
+            console.log("- Status filter:", statusFilter);
+            console.log("- Total leads before filter:", allLeads.length);
+            
             let filtered = allLeads;
 
             if (searchTerm) {
@@ -371,12 +449,15 @@
                     (lead.email && lead.email.toLowerCase().includes(searchTerm)) ||
                     (lead.phone && lead.phone.toLowerCase().includes(searchTerm))
                 );
+                console.log("- After search filter:", filtered.length);
             }
 
             if (statusFilter) {
                 filtered = filtered.filter(lead => lead.status === statusFilter);
+                console.log("- After status filter:", filtered.length);
             }
 
+            console.log("✅ Rendering filtered leads:", filtered.length);
             renderLeads(filtered);
         }
 
@@ -391,12 +472,14 @@
         }
 
         document.getElementById('logoutBtn').addEventListener('click', async () => {
-            console.log("Logging out...");
+            console.log("\n=== LOGGING OUT ===");
             await supabase.auth.signOut();
+            console.log("✅ Signed out, redirecting to login");
             window.location.href = 'login.html';
         });
 
         // Initialize
+        console.log("\n=== INITIALIZING APPLICATION ===");
         checkAuth();
     </script>
 </body>
