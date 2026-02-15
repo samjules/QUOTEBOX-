@@ -1,160 +1,142 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Tampa Moving Quote</title>
-<style>
-body { font-family: Arial; max-width: 600px; margin: auto; padding: 20px; }
-.step { display: none; }
-.active { display: block; }
-.progress-bar { height: 8px; background: #eee; border-radius: 5px; margin-bottom: 20px; overflow: hidden; }
-.progress { height: 8px; width: 33%; background: #1e90ff; transition: 0.3s; }
-button { padding: 10px 15px; margin-top: 10px; cursor: pointer; }
-input, select { width: 100%; padding: 8px; margin: 10px 0; }
-.quote-display { font-size: 22px; font-weight: bold; margin: 10px 0; }
-</style>
+  <meta charset="UTF-8">
+  <title>Instant Quote Form</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #f4f6f8; margin: 0; padding: 0; }
+    .container { max-width: 500px; margin: 50px auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    h2 { text-align: center; margin-bottom: 20px; color: #333; }
+    .step { display: none; }
+    .step.active { display: block; }
+    .progress-bar { height: 6px; background: #e0e0e0; border-radius: 3px; margin-bottom: 20px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; width: 0%; background: #4f46e5; transition: width 0.3s; }
+    input, select { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ccc; }
+    button { padding: 12px 20px; border: none; border-radius: 5px; background: #4f46e5; color: #fff; cursor: pointer; width: 100%; font-size: 16px; }
+    button:hover { background: #3b35b3; }
+    .response { margin-top: 20px; text-align: center; }
+  </style>
 </head>
 <body>
+<div class="container">
+  <h2>Instant Moving Quote</h2>
+  <div class="progress-bar"><div class="progress-bar-fill" id="progress"></div></div>
 
-<h2>Tampa Instant Moving Quote</h2>
-<p>$150/hr • 26ft Truck • 2 Movers • Gas & Supplies Included</p>
+  <form id="quoteForm">
+    <!-- Step 1 -->
+    <div class="step active" data-step="1">
+      <label>From City</label>
+      <input type="text" name="from_city" required>
+      <label>To City</label>
+      <input type="text" name="to_city" required>
+      <label>Truck Size</label>
+      <select name="truck_size" required>
+        <option value="">Select Truck Size</option>
+        <option value="16ft">16ft</option>
+        <option value="26ft">26ft</option>
+      </select>
+      <button type="button" onclick="nextStep()">Next</button>
+    </div>
 
-<div class="progress-bar">
-  <div class="progress" id="progress"></div>
+    <!-- Step 2 -->
+    <div class="step" data-step="2">
+      <label>Number of Movers</label>
+      <input type="number" name="movers" required min="1" max="5">
+      <label>Estimated Hours</label>
+      <input type="number" name="estimated_hours" required min="1">
+      <label>Supplies Included?</label>
+      <select name="supplies_included" required>
+        <option value="">Select</option>
+        <option value="true">Yes</option>
+        <option value="false">No</option>
+      </select>
+      <button type="button" onclick="prevStep()">Back</button>
+      <button type="button" onclick="nextStep()">Next</button>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step" data-step="3">
+      <label>Your Name</label>
+      <input type="text" name="name" required>
+      <label>Email</label>
+      <input type="email" name="email" required>
+      <label>Phone</label>
+      <input type="tel" name="phone" required>
+      <button type="button" onclick="prevStep()">Back</button>
+      <button type="submit">Get Quote</button>
+    </div>
+  </form>
+
+  <div class="response" id="response"></div>
 </div>
-
-<form id="quoteForm">
-
-<div class="step active">
-  <label>Bedrooms</label>
-  <select id="bedrooms">
-    <option value="2">1-2 Bedrooms</option>
-    <option value="3">3 Bedrooms</option>
-    <option value="4">4+ Bedrooms</option>
-  </select>
-
-  <label>Estimated Hours (3 hour minimum)</label>
-  <input type="number" id="hours" value="3" min="3" />
-
-  <button type="button" onclick="nextStep()">Next</button>
-</div>
-
-<div class="step">
-  <label>From City</label>
-  <input type="text" id="fromCity" required />
-
-  <label>To City</label>
-  <input type="text" id="toCity" required />
-
-  <div class="quote-display">
-    Estimated Total: $<span id="price">450</span>
-  </div>
-
-  <button type="button" onclick="prevStep()">Back</button>
-  <button type="button" onclick="nextStep()">Next</button>
-</div>
-
-<div class="step">
-  <label>Your Name</label>
-  <input type="text" id="name" required />
-
-  <label>Email</label>
-  <input type="email" id="email" required />
-
-  <label>Phone</label>
-  <input type="tel" id="phone" required />
-
-  <button type="button" onclick="prevStep()">Back</button>
-  <button type="submit">Submit Quote</button>
-</div>
-
-</form>
 
 <script>
-const OWNER_UID = "135f2fd0-ed5f-4563-977e-edbb2277b4aa";
-const RATE = 150;
-const FUNCTION_URL = "https://jpchpqjnyabtpptufkcj.functions.supabase.co/submit-lead";
+  const form = document.getElementById('quoteForm');
+  const steps = document.querySelectorAll('.step');
+  const progressFill = document.getElementById('progress');
+  let currentStep = 0;
 
-let currentStep = 0;
-const steps = document.querySelectorAll(".step");
-const progress = document.getElementById("progress");
+  function showStep(step) {
+    steps.forEach((s, i) => s.classList.toggle('active', i === step));
+    progressFill.style.width = ((step + 1) / steps.length) * 100 + '%';
+  }
 
-function showStep(i) {
-  steps.forEach((step, index) => {
-    step.classList.toggle("active", index === i);
+  function nextStep() {
+    if (currentStep < steps.length - 1) currentStep++;
+    showStep(currentStep);
+  }
+
+  function prevStep() {
+    if (currentStep > 0) currentStep--;
+    showStep(currentStep);
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(form);
+    const data = {
+      owner_uid: "135f2fd0-ed5f-4563-977e-edbb2277b4aa", // test owner
+      name: formData.get('name'),
+      email: formData.get('email'),
+      phone: formData.get('phone'),
+      form_type: "moving",
+      form_data: {
+        from_city: formData.get('from_city'),
+        to_city: formData.get('to_city'),
+        truck_size: formData.get('truck_size'),
+        movers: Number(formData.get('movers')),
+        estimated_hours: Number(formData.get('estimated_hours')),
+        supplies_included: formData.get('supplies_included') === 'true',
+        hourly_rate: formData.get('truck_size') === '26ft' ? 150 : 100
+      }
+    };
+
+    try {
+      const res = await fetch('https://jpchpqjnyabtpptufkcj.functions.supabase.co/submit-lead', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwY2hwcWpueWFidHBwdHVma2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMDAyNTAsImV4cCI6MjA4NjY3NjI1MH0.FCywHhyz8N0Hkl-jK9RxZyh2KFZMrP8aUSXt1oJQbHY'
+        },
+        body: JSON.stringify(data)
+      });
+
+      const result = await res.json();
+      if (result.success) {
+        document.getElementById('response').innerHTML = 
+          `<p style="color:green;">Lead submitted! ID: ${result.lead.id}</p>`;
+        form.reset();
+        currentStep = 0;
+        showStep(currentStep);
+      } else {
+        document.getElementById('response').innerHTML = 
+          `<p style="color:red;">Error: ${result.error}</p>`;
+      }
+    } catch (err) {
+      document.getElementById('response').innerHTML = 
+        `<p style="color:red;">Request failed: ${err.message}</p>`;
+    }
   });
-  progress.style.width = ((i + 1) / steps.length) * 100 + "%";
-}
-
-function nextStep() {
-  if (currentStep < steps.length - 1) {
-    currentStep++;
-    calculatePrice();
-    showStep(currentStep);
-  }
-}
-
-function prevStep() {
-  if (currentStep > 0) {
-    currentStep--;
-    showStep(currentStep);
-  }
-}
-
-function calculatePrice() {
-  let hours = parseInt(document.getElementById("hours").value);
-  if (hours < 3) hours = 3;
-  const total = hours * RATE;
-  document.getElementById("price").innerText = total;
-  return total;
-}
-
-document.getElementById("hours").addEventListener("input", calculatePrice);
-
-document.getElementById("quoteForm").addEventListener("submit", async function(e) {
-  e.preventDefault();
-
-  const estimatedPrice = calculatePrice();
-
-  const payload = {
-    owner_uid: OWNER_UID,
-    name: document.getElementById("name").value,
-    email: document.getElementById("email").value,
-    phone: document.getElementById("phone").value,
-    form_type: "moving",
-    form_data: {
-      bedrooms: document.getElementById("bedrooms").value,
-      hours: document.getElementById("hours").value,
-      from_city: document.getElementById("fromCity").value,
-      to_city: document.getElementById("toCity").value,
-      estimated_price: estimatedPrice
-    }
-  };
-
-  try {
-    const response = await fetch(FUNCTION_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      throw new Error("Network response not ok");
-    }
-
-    alert("Quote submitted successfully!");
-    document.getElementById("quoteForm").reset();
-    currentStep = 0;
-    showStep(currentStep);
-
-  } catch (error) {
-    console.error(error);
-    alert("Submission failed. Check console.");
-  }
-});
-
-showStep(currentStep);
 </script>
-
 </body>
 </html>
