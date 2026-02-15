@@ -137,8 +137,8 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwY2hwcWpueWFidHBwdHVma2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMDAyNTAsImV4cCI6MjA4NjY3NjI1MH0.FCywHhyz8N0Hkl-jK9RxZyh2KFZMrP8aUSXt1oJQbHY';
         
         console.log("Creating Supabase client with URL:", SUPABASE_URL);
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log("Supabase client created:", supabase);
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log("Supabase client created:", sb);
 
         let accountId = null;
         let userId = null;
@@ -163,8 +163,8 @@
             console.log("\n=== 1. CHECKING AUTHENTICATION ===");
             
             try {
-                console.log("Calling supabase.auth.getUser()...");
-                const { data: { user }, error } = await supabase.auth.getUser();
+                console.log("Calling sb.auth.getUser()...");
+                const { data: { user }, error } = await sb.auth.getUser();
                 
                 console.log("Auth response received");
                 console.log("- User:", user);
@@ -191,7 +191,7 @@
                 console.log("\n=== 2. LOOKING UP ACCOUNT ===");
                 console.log("Querying accounts table where owner_id =", user.id);
                 
-                const { data: account, error: accountError } = await supabase
+                const { data: account, error: accountError } = await sb
                     .from('accounts')
                     .select('*')
                     .eq('owner_id', user.id)
@@ -244,7 +244,7 @@
             try {
                 console.log("Querying leads table where account_id =", accountId);
                 
-                const { data: leads, error } = await supabase
+                const { data: leads, error } = await sb
                     .from('leads')
                     .select('*')
                     .eq('account_id', accountId)
@@ -354,7 +354,7 @@
             console.log("- New status:", newStatus);
 
             try {
-                const { error } = await supabase
+                const { error } = await sb
                     .from('leads')
                     .update({ status: newStatus })
                     .eq('id', leadId);
@@ -473,7 +473,7 @@
 
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             console.log("\n=== LOGGING OUT ===");
-            await supabase.auth.signOut();
+            await sb.auth.signOut();
             console.log("✅ Signed out, redirecting to login");
             window.location.href = 'login.html';
         });
