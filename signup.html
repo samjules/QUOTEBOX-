@@ -21,19 +21,20 @@
                     </a>
                 </p>
             </div>
-            <form class="mt-8 space-y-6" id="signupForm">
-                <div class="rounded-md shadow-sm -space-y-px">
+            <form class="mt-8 space-y-6" id="signupForm" onsubmit="return false;">
+                <div class="rounded-md shadow-sm space-y-4">
                     <div>
-                        <label for="business-name" class="sr-only">Business Name</label>
-                        <input id="business-name" name="business-name" type="text" required class="appearance-none rounded-t-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Business Name">
+                        <label for="business-name" class="block text-sm font-medium text-gray-700 mb-1">Business Name *</label>
+                        <input id="business-name" name="business-name" type="text" required class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Business Name">
                     </div>
                     <div>
-                        <label for="email-address" class="sr-only">Email address</label>
-                        <input id="email-address" name="email" type="email" autocomplete="email" required class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Email address">
+                        <label for="email-address" class="block text-sm font-medium text-gray-700 mb-1">Email address *</label>
+                        <input id="email-address" name="email" type="email" autocomplete="email" required class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Email address">
                     </div>
                     <div>
-                        <label for="password" class="sr-only">Password</label>
-                        <input id="password" name="password" type="password" autocomplete="new-password" required class="appearance-none rounded-b-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Password (min 6 characters)">
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                        <input id="password" name="password" type="password" autocomplete="new-password" required class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Password (min 6 characters)">
+                        <p class="mt-1 text-xs text-gray-500">Must be at least 6 characters</p>
                     </div>
                 </div>
 
@@ -45,8 +46,16 @@
                     </div>
                 </div>
 
+                <div id="success-message" class="hidden rounded-md bg-green-50 p-4">
+                    <div class="flex">
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-green-800">Account created! Redirecting...</h3>
+                        </div>
+                    </div>
+                </div>
+
                 <div>
-                    <button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <button type="button" onclick="handleSignup()" id="signupButton" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Sign up
                     </button>
                 </div>
@@ -55,48 +64,110 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://jpchpqjnyabtpptufkcj.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwY2hwcWpueWFidHBwdHVma2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY4OTUwODAsImV4cCI6MjA1MjQ3MTA4MH0.iVpewV0H7FrPQQrR9rSGEgDsqjQHKR-Lhu23FLOl-nQ';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('Signup page loaded');
+        
+        const supabaseClient = window.supabase.createClient(
+            'https://jpchpqjnyabtpptufkcj.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwY2hwcWpueWFidHBwdHVma2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMDAyNTAsImV4cCI6MjA4NjY3NjI1MH0.FCywHhyz8N0Hkl-jK9RxZyh2KFZMrP8aUSXt1oJQbHY'
+        );
+        
+        console.log('Supabase client created');
 
-        document.getElementById('signupForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        async function handleSignup() {
+            console.log('Signup button clicked');
             
             const businessName = document.getElementById('business-name').value;
             const email = document.getElementById('email-address').value;
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('error-message');
             const errorText = document.getElementById('error-text');
+            const successDiv = document.getElementById('success-message');
+            const signupButton = document.getElementById('signupButton');
+
+            console.log('Business Name:', businessName);
+            console.log('Email:', email);
+            console.log('Password length:', password.length);
+
+            // Validation
+            if (password.length < 6) {
+                errorDiv.classList.remove('hidden');
+                errorText.textContent = 'Password must be at least 6 characters';
+                return;
+            }
 
             errorDiv.classList.add('hidden');
+            successDiv.classList.add('hidden');
+
+            signupButton.disabled = true;
+            signupButton.textContent = 'Creating account...';
 
             try {
-                const { data: authData, error: authError } = await supabase.auth.signUp({
+                console.log('Step 1: Creating auth user...');
+                
+                // Create auth user
+                const { data: authData, error: authError } = await supabaseClient.auth.signUp({
                     email: email,
                     password: password
                 });
 
-                if (authError) throw authError;
+                console.log('Auth response:', { authData, authError });
+
+                if (authError) {
+                    console.error('Auth error:', authError);
+                    throw authError;
+                }
 
                 if (authData.user) {
-                    const { error: accountError } = await supabase
+                    console.log('Step 2: User created successfully, ID:', authData.user.id);
+                    console.log('Step 3: Creating account record...');
+                    
+                    // Create account record
+                    const { data: accountData, error: accountError } = await supabaseClient
                         .from('accounts')
                         .insert([
                             {
                                 business_name: businessName,
                                 owner_id: authData.user.id
                             }
-                        ]);
+                        ])
+                        .select();
 
-                    if (accountError) throw accountError;
+                    console.log('Account creation response:', { accountData, accountError });
 
-                    window.location.href = 'dashboard.html';
+                    if (accountError) {
+                        console.error('Account creation error:', accountError);
+                        throw accountError;
+                    }
+
+                    console.log('Step 4: Account created successfully!');
+                    console.log('Step 5: Redirecting to dashboard...');
+                    
+                    successDiv.classList.remove('hidden');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1000);
+                } else {
+                    throw new Error('No user data returned from signup');
                 }
             } catch (error) {
+                console.error('Signup error:', error);
                 errorDiv.classList.remove('hidden');
-                errorText.textContent = error.message;
+                errorText.textContent = error.message || 'An error occurred during signup';
+                
+                signupButton.disabled = false;
+                signupButton.textContent = 'Sign up';
+            }
+        }
+        
+        // Allow Enter key to submit
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleSignup();
             }
         });
+        
+        console.log('Signup setup complete');
     </script>
 </body>
 </html>
