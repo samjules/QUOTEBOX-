@@ -44,7 +44,25 @@
                     <h1 class="text-2xl font-semibold text-gray-900">All Leads</h1>
                 </div>
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-                    <div class="py-4">
+                    <!-- Loading State -->
+                    <div id="loadingState" class="py-4">
+                        <div class="bg-white shadow rounded-xl p-8 text-center">
+                            <div class="animate-pulse">
+                                <div class="h-4 bg-gray-200 rounded w-1/4 mx-auto"></div>
+                            </div>
+                            <p class="mt-2 text-gray-500">Loading leads...</p>
+                        </div>
+                    </div>
+
+                    <!-- Error State -->
+                    <div id="errorState" class="py-4 hidden">
+                        <div class="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
+                            <p class="text-red-800" id="errorMessage"></p>
+                        </div>
+                    </div>
+
+                    <!-- Leads Table -->
+                    <div id="leadsContent" class="py-4 hidden">
                         <div class="bg-white shadow rounded-xl">
                             <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
                                 <div class="flex items-center justify-between">
@@ -77,6 +95,9 @@
                                     </thead>
                                     <tbody id="leadsTable" class="bg-white divide-y divide-gray-200"></tbody>
                                 </table>
+                            </div>
+                            <div id="emptyState" class="hidden p-8 text-center text-gray-500">
+                                No leads found.
                             </div>
                         </div>
                     </div>
@@ -111,61 +132,121 @@
     <script>
         // --- Supabase setup ---
         const SUPABASE_URL = 'https://jpchpqjnyabtpptufkcj.supabase.co';
-        const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwY2hwcWpueWFidHBwdHVma2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMDAyNTAsImV4cCI6MjA4NjY3NjI1MH0.FCywHhyz8N0Hkl-jK9RxZyh2KFZMrP8aUSXt1oJQbHY'; // Replace with your actual anon key
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let accountId = null;
+        let userId = null;
         let allLeads = [];
+
+        function showError(message) {
+            console.error(message);
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('leadsContent').classList.add('hidden');
+            document.getElementById('errorState').classList.remove('hidden');
+            document.getElementById('errorMessage').textContent = message;
+        }
+
+        function showContent() {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('errorState').classList.add('hidden');
+            document.getElementById('leadsContent').classList.remove('hidden');
+        }
 
         async function checkAuth() {
             console.log("Checking auth...");
-            const { data: { user }, error } = await supabase.auth.getUser();
-            if (error) console.error("Auth error:", error);
+            
+            try {
+                const { data: { user }, error } = await supabase.auth.getUser();
+                
+                if (error) {
+                    console.error("Auth error:", error);
+                    showError("Authentication error. Please log in again.");
+                    setTimeout(() => window.location.href = 'login.html', 2000);
+                    return;
+                }
 
-            console.log("Current user:", user);
-            if (!user) {
-                console.log("User not logged in, redirecting...");
-                window.location.href = 'login.html';
-                return;
-            }
+                if (!user) {
+                    console.log("User not logged in, redirecting...");
+                    window.location.href = 'login.html';
+                    return;
+                }
 
-            const { data: account, error: accountError } = await supabase
-                .from('accounts')
-                .select('*')
-                .eq('owner_id', user.id)
-                .single();
+                console.log("Current user:", user);
+                userId = user.id;
 
-            if (accountError) console.error("Account lookup error:", accountError);
-            console.log("Found account:", account);
+                // Get account for this user
+                const { data: account, error: accountError } = await supabase
+                    .from('accounts')
+                    .select('*')
+                    .eq('owner_id', user.id)
+                    .single();
 
-            if (account) {
+                if (accountError) {
+                    console.error("Account lookup error:", accountError);
+                    
+                    if (accountError.code === 'PGRST116') {
+                        showError("No account found for this user. Please contact support.");
+                    } else {
+                        showError(`Error loading account: ${accountError.message}`);
+                    }
+                    return;
+                }
+
+                if (!account) {
+                    showError("No account found for this user.");
+                    return;
+                }
+
+                console.log("Found account:", account);
                 accountId = account.id;
-                loadLeads();
+                
+                await loadLeads();
+            } catch (err) {
+                console.error("Unexpected error:", err);
+                showError("An unexpected error occurred. Please refresh the page.");
             }
         }
 
         async function loadLeads() {
             console.log("Loading leads for accountId:", accountId);
-            const { data: leads, error } = await supabase
-                .from('leads')
-                .select('*')
-                .eq('account_id', accountId)
-                .order('created_at', { ascending: false });
+            
+            try {
+                const { data: leads, error } = await supabase
+                    .from('leads')
+                    .select('*')
+                    .eq('account_id', accountId)
+                    .order('created_at', { ascending: false });
 
-            if (error) {
-                console.error("Error loading leads:", error);
-                return;
+                if (error) {
+                    console.error("Error loading leads:", error);
+                    showError(`Error loading leads: ${error.message}`);
+                    return;
+                }
+
+                console.log("Loaded leads:", leads);
+                allLeads = leads || [];
+                
+                showContent();
+                renderLeads(allLeads);
+            } catch (err) {
+                console.error("Unexpected error loading leads:", err);
+                showError("An unexpected error occurred while loading leads.");
             }
-
-            console.log("Loaded leads:", leads);
-            allLeads = leads;
-            renderLeads(leads);
         }
 
         function renderLeads(leads) {
             console.log("Rendering leads:", leads);
             const tbody = document.getElementById('leadsTable');
+            const emptyState = document.getElementById('emptyState');
             tbody.innerHTML = '';
+
+            if (!leads || leads.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
 
             leads.forEach(lead => {
                 const row = document.createElement('tr');
@@ -184,12 +265,13 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(lead.created_at).toLocaleDateString()}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button class="view-btn text-indigo-600 hover:text-indigo-900" data-lead='${JSON.stringify(lead)}'>View</button>
+                        <button class="view-btn text-indigo-600 hover:text-indigo-900" data-lead='${JSON.stringify(lead).replace(/'/g, "&apos;")}'>View</button>
                     </td>
                 `;
                 tbody.appendChild(row);
             });
 
+            // Attach event listeners
             document.querySelectorAll('.status-dropdown').forEach(dropdown => {
                 dropdown.addEventListener('change', updateLeadStatus);
             });
@@ -205,15 +287,34 @@
         async function updateLeadStatus(e) {
             const leadId = e.target.dataset.leadId;
             const newStatus = e.target.value;
+            const oldStatus = e.target.dataset.currentStatus;
+            
             console.log(`Updating lead ${leadId} status to ${newStatus}`);
 
-            const { error } = await supabase
-                .from('leads')
-                .update({ status: newStatus })
-                .eq('id', leadId);
+            try {
+                const { error } = await supabase
+                    .from('leads')
+                    .update({ status: newStatus })
+                    .eq('id', leadId);
 
-            if (error) console.error("Error updating status:", error);
-            else loadLeads();
+                if (error) {
+                    console.error("Error updating status:", error);
+                    alert(`Error updating status: ${error.message}`);
+                    e.target.value = oldStatus; // Revert on error
+                } else {
+                    e.target.dataset.currentStatus = newStatus;
+                    e.target.className = `status-dropdown text-xs leading-5 font-semibold rounded-full px-2 py-1 ${getStatusColor(newStatus)}`;
+                    // Update the lead in allLeads array
+                    const leadIndex = allLeads.findIndex(l => l.id === leadId);
+                    if (leadIndex !== -1) {
+                        allLeads[leadIndex].status = newStatus;
+                    }
+                }
+            } catch (err) {
+                console.error("Unexpected error:", err);
+                alert("An unexpected error occurred while updating status.");
+                e.target.value = oldStatus;
+            }
         }
 
         function showLeadModal(lead) {
@@ -295,6 +396,7 @@
             window.location.href = 'login.html';
         });
 
+        // Initialize
         checkAuth();
     </script>
 </body>
