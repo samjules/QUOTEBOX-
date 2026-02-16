@@ -181,22 +181,34 @@
             console.log("Account ID:", accountId);
             
             try {
-                // Fetch ALL leads for this account (not limited to 10)
+                // Fetch ALL leads for this account
+                console.log("Querying leads table...");
                 const { data: allLeads, error: allLeadsError } = await supabase
                     .from('leads')
                     .select('*')
                     .eq('account_id', accountId)
                     .order('created_at', { ascending: false });
 
-                console.log("All leads query response:", { allLeads, allLeadsError });
+                console.log("Leads query completed:");
+                console.log("- Error:", allLeadsError);
+                console.log("- Data:", allLeads);
+                console.log("- Number of leads:", allLeads ? allLeads.length : 0);
 
                 if (allLeadsError) {
                     console.error("❌ Error fetching all leads:", allLeadsError);
+                    console.error("- Error code:", allLeadsError.code);
+                    console.error("- Error message:", allLeadsError.message);
+                    console.error("- Error details:", allLeadsError.details);
                     return;
                 }
 
                 if (allLeads) {
-                    console.log("✅ All leads fetched:", allLeads.length, "total leads");
+                    console.log("✅ All leads fetched successfully:", allLeads.length, "total leads");
+                    
+                    // Log first lead as sample
+                    if (allLeads.length > 0) {
+                        console.log("First lead sample:", allLeads[0]);
+                    }
                     
                     // Update total leads count
                     const totalCount = allLeads.length;
@@ -218,31 +230,59 @@
                     console.log("Displaying recent leads:", recentLeads.length);
                     
                     const tbody = document.getElementById('leadsTable');
+                    console.log("Table body element:", tbody);
+                    
+                    if (!tbody) {
+                        console.error("❌ Table body element not found!");
+                        return;
+                    }
+                    
                     tbody.innerHTML = '';
+                    console.log("Cleared table body");
 
-                    recentLeads.forEach((lead, index) => {
-                        console.log(`Rendering lead ${index + 1}:`, lead.name);
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${lead.name || '-'}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lead.email || '-'}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lead.phone || '-'}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(lead.status)}">
-                                    ${lead.status}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(lead.created_at).toLocaleDateString()}</td>
-                        `;
-                        tbody.appendChild(row);
-                    });
+                    if (recentLeads.length === 0) {
+                        console.log("⚠️ No recent leads to display");
+                        const emptyRow = document.createElement('tr');
+                        emptyRow.innerHTML = '<td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No leads yet</td>';
+                        tbody.appendChild(emptyRow);
+                    } else {
+                        recentLeads.forEach((lead, index) => {
+                            console.log(`Rendering lead ${index + 1}:`, {
+                                name: lead.name,
+                                email: lead.email,
+                                phone: lead.phone,
+                                status: lead.status,
+                                created_at: lead.created_at
+                            });
+                            
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${lead.name || '-'}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lead.email || '-'}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lead.phone || '-'}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(lead.status)}">
+                                        ${lead.status}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(lead.created_at).toLocaleDateString()}</td>
+                            `;
+                            tbody.appendChild(row);
+                            console.log(`✅ Lead ${index + 1} rendered`);
+                        });
+                        
+                        console.log("✅ All leads rendered to table");
+                    }
                     
                     console.log("✅ Dashboard loaded successfully");
                 } else {
-                    console.log("⚠️ No leads found");
+                    console.log("⚠️ No leads data returned (null)");
                 }
             } catch (err) {
-                console.error("❌ Error in loadDashboard:", err);
+                console.error("❌ UNEXPECTED Error in loadDashboard:", err);
+                console.error("Error stack:", err.stack);
+                console.error("Error name:", err.name);
+                console.error("Error message:", err.message);
             }
         }
 
