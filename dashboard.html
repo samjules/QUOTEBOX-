@@ -239,8 +239,9 @@
         const COST_PER_LEAD = 0.25;
         
         console.log("Creating Supabase client...");
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log("Supabase client created");
+        const { createClient } = supabase;
+        const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log("Supabase client created:", sb);
 
         let accountId = null;
 
@@ -248,7 +249,7 @@
             console.log("\n=== CHECKING AUTHENTICATION ===");
             
             try {
-                const { data: { user }, error } = await supabase.auth.getUser();
+                const { data: { user }, error } = await sb.auth.getUser();
                 
                 console.log("Auth response:", { user, error });
                 
@@ -260,7 +261,7 @@
 
                 console.log("✅ User authenticated:", user.id);
 
-                const { data: account, error: accountError } = await supabase
+                const { data: account, error: accountError } = await sb
                     .from('accounts')
                     .select('*')
                     .eq('owner_id', user.id)
@@ -274,9 +275,11 @@
                     loadDashboard();
                 } else {
                     console.error("❌ No account found for user");
+                    alert("No account found. Please contact support.");
                 }
             } catch (err) {
                 console.error("❌ Error in checkAuth:", err);
+                alert("Authentication error: " + err.message);
             }
         }
 
@@ -287,22 +290,26 @@
             try {
                 // Fetch all leads
                 console.log("Querying leads table...");
-                const { data: allLeads, error: leadsError } = await supabase
+                const { data: allLeads, error: leadsError } = await sb
                     .from('leads')
                     .select('*')
                     .eq('account_id', accountId)
                     .order('created_at', { ascending: false });
 
-                console.log("Leads query completed:", { allLeads, leadsError });
+                console.log("Leads query completed:", { 
+                    count: allLeads?.length,
+                    error: leadsError,
+                    sample: allLeads?.[0]
+                });
 
                 if (leadsError) {
                     console.error("❌ Error fetching leads:", leadsError);
-                    return;
+                    throw leadsError;
                 }
 
                 // Fetch billing data
                 console.log("Querying billing table...");
-                let { data: billing, error: billingError } = await supabase
+                let { data: billing, error: billingError } = await sb
                     .from('billing')
                     .select('*')
                     .eq('account_id', accountId)
@@ -313,12 +320,18 @@
                 // Create billing record if it doesn't exist
                 if (billingError && billingError.code === 'PGRST116') {
                     console.log("Creating new billing record...");
-                    const { data: newBilling } = await supabase
+                    const { data: newBilling, error: insertError } = await sb
                         .from('billing')
                         .insert([{ account_id: accountId, credit_balance: 0, total_spent: 0 }])
                         .select()
                         .single();
-                    billing = newBilling;
+                    
+                    if (insertError) {
+                        console.error("Error creating billing:", insertError);
+                    } else {
+                        billing = newBilling;
+                        console.log("✅ Billing record created");
+                    }
                 }
 
                 // Calculate statistics
@@ -336,12 +349,19 @@
                 startOfMonth.setDate(1);
                 startOfMonth.setHours(0, 0, 0, 0);
                 
-                const { data: monthlyTransactions } = await supabase
+                console.log("Querying monthly transactions since:", startOfMonth.toISOString());
+                const { data: monthlyTransactions, error: txError } = await sb
                     .from('billing_transactions')
                     .select('*')
                     .eq('account_id', accountId)
                     .eq('type', 'lead_charge')
                     .gte('created_at', startOfMonth.toISOString());
+
+                console.log("Monthly transactions:", { 
+                    count: monthlyTransactions?.length,
+                    error: txError,
+                    transactions: monthlyTransactions
+                });
 
                 const monthlySpending = monthlyTransactions 
                     ? Math.abs(monthlyTransactions.reduce((sum, tx) => sum + tx.amount, 0))
@@ -358,6 +378,7 @@
                 });
 
                 // Update UI
+                console.log("Updating UI elements...");
                 document.getElementById('totalLeads').textContent = totalLeads;
                 document.getElementById('newLeads').textContent = newLeads;
                 document.getElementById('bookedLeads').textContent = bookedLeads;
@@ -370,6 +391,7 @@
                     const creditBalance = billing.credit_balance || 0;
                     document.getElementById('creditBalance').textContent = `$${creditBalance.toFixed(2)}`;
                     document.getElementById('remainingLeads').textContent = Math.floor(creditBalance / COST_PER_LEAD);
+                    console.log("Credit balance:", creditBalance);
                 }
 
                 // Hide loading, show content
@@ -379,12 +401,14 @@
                 console.log("✅ Dashboard loaded successfully");
             } catch (err) {
                 console.error("❌ Error in loadDashboard:", err);
+                console.error("Error stack:", err.stack);
+                alert("Error loading dashboard: " + err.message);
             }
         }
 
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             console.log("\n=== LOGGING OUT ===");
-            await supabase.auth.signOut();
+            await sb.auth.signOut();
             console.log("✅ Signed out, redirecting to login");
             window.location.href = 'login.html';
         });
