@@ -3,33 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leads - QuoteFlow</title>
+    <title>Dashboard - QuoteFlow</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-50">
     <div class="flex h-screen overflow-hidden">
-        <!-- Sidebar -->
         <div class="w-64 bg-gray-900">
             <div class="flex flex-col h-full">
                 <div class="flex items-center justify-center h-16 bg-gray-800">
                     <span class="text-white text-xl font-bold">QuoteFlow</span>
                 </div>
                 <nav class="flex-1 px-2 py-4 space-y-1">
-                    <a href="dashboard.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
-                        Dashboard
+                    <a href="dashboard.html" class="bg-gray-800 text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <span>Dashboard</span>
                     </a>
-                    <a href="leads.html" class="bg-gray-800 text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
-                        Leads
+                    <a href="leads.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <span>Leads</span>
                     </a>
                     <a href="form-builder.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
-                        Form Builder
+                        <span>Form Builder</span>
                     </a>
                     <a href="billing.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
-                        Billing & Credits
+                        <span>Billing & Credits</span>
                     </a>
                     <a href="settings.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
-                        Settings
+                        <span>Settings</span>
                     </a>
                 </nav>
                 <div class="p-4">
@@ -40,48 +39,72 @@
             </div>
         </div>
 
-        <!-- Main Content -->
         <div class="flex-1 overflow-auto">
             <div class="py-6">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <h1 class="text-2xl font-semibold text-gray-900">All Leads</h1>
+                    <h1 class="text-2xl font-semibold text-gray-900">Dashboard</h1>
                 </div>
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-                    <!-- Loading State -->
-                    <div id="loadingState" class="py-4">
-                        <div class="bg-white shadow rounded-xl p-8 text-center">
-                            <div class="animate-pulse">
-                                <div class="h-4 bg-gray-200 rounded w-1/4 mx-auto"></div>
-                            </div>
-                            <p class="mt-2 text-gray-500">Loading leads...</p>
-                        </div>
-                    </div>
-
-                    <!-- Error State -->
-                    <div id="errorState" class="py-4 hidden">
-                        <div class="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
-                            <p class="text-red-800" id="errorMessage"></p>
-                        </div>
-                    </div>
-
-                    <!-- Leads Table -->
-                    <div id="leadsContent" class="py-4 hidden">
-                        <div class="bg-white shadow rounded-xl">
-                            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex-1 min-w-0">
-                                        <input type="text" id="searchInput" placeholder="Search leads..." class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-2">
-                                    </div>
-                                    <div class="ml-4">
-                                        <select id="statusFilter" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-2">
-                                            <option value="">All Status</option>
-                                            <option value="new">New</option>
-                                            <option value="contacted">Contacted</option>
-                                            <option value="booked">Booked</option>
-                                            <option value="lost">Lost</option>
-                                        </select>
+                    <div class="py-4">
+                        <div class="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-8">
+                            <div class="bg-white overflow-hidden shadow rounded-xl">
+                                <div class="p-5">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-600 text-white text-2xl">
+                                                📊
+                                            </div>
+                                        </div>
+                                        <div class="ml-5 w-0 flex-1">
+                                            <dl>
+                                                <dt class="text-sm font-medium text-gray-500 truncate">Total Leads</dt>
+                                                <dd class="text-3xl font-semibold text-gray-900" id="totalLeads">0</dd>
+                                            </dl>
+                                        </div>
                                     </div>
                                 </div>
+                            </div>
+
+                            <div class="bg-white overflow-hidden shadow rounded-xl">
+                                <div class="p-5">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="flex items-center justify-center h-12 w-12 rounded-md bg-yellow-500 text-white text-2xl">
+                                                🆕
+                                            </div>
+                                        </div>
+                                        <div class="ml-5 w-0 flex-1">
+                                            <dl>
+                                                <dt class="text-sm font-medium text-gray-500 truncate">New Leads</dt>
+                                                <dd class="text-3xl font-semibold text-gray-900" id="newLeads">0</dd>
+                                            </dl>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white overflow-hidden shadow rounded-xl">
+                                <div class="p-5">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="flex items-center justify-center h-12 w-12 rounded-md bg-green-500 text-white text-2xl">
+                                                ✅
+                                            </div>
+                                        </div>
+                                        <div class="ml-5 w-0 flex-1">
+                                            <dl>
+                                                <dt class="text-sm font-medium text-gray-500 truncate">Booked Leads</dt>
+                                                <dd class="text-3xl font-semibold text-gray-900" id="bookedLeads">0</dd>
+                                            </dl>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white shadow rounded-xl">
+                            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900">Recent Leads</h3>
                             </div>
                             <div class="overflow-x-auto">
                                 <table class="min-w-full divide-y divide-gray-200">
@@ -90,52 +113,25 @@
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Form Type</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="leadsTable" class="bg-white divide-y divide-gray-200"></tbody>
+                                    <tbody id="leadsTable" class="bg-white divide-y divide-gray-200">
+                                    </tbody>
                                 </table>
                             </div>
-                            <div id="emptyState" class="hidden p-8 text-center text-gray-500">
-                                No leads found.
-                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal -->
-    <div id="leadModal" class="hidden fixed z-10 inset-0 overflow-y-auto">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="sm:flex sm:items-start">
-                        <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Lead Details</h3>
-                            <div id="leadDetails" class="mt-2"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="button" id="closeModal" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
-                        Close
-                    </button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        console.log("=== SCRIPT STARTING ===");
+        console.log("=== DASHBOARD SCRIPT STARTING ===");
         
-        // --- Supabase setup ---
+        // Use EXACT same pattern as leads.html
         const SUPABASE_URL = 'https://jpchpqjnyabtpptufkcj.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwY2hwcWpueWFidHBwdHVma2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMDAyNTAsImV4cCI6MjA4NjY3NjI1MH0.FCywHhyz8N0Hkl-jK9RxZyh2KFZMrP8aUSXt1oJQbHY';
         
@@ -145,22 +141,6 @@
 
         let accountId = null;
         let userId = null;
-        let allLeads = [];
-
-        function showError(message) {
-            console.error("❌ SHOWING ERROR:", message);
-            document.getElementById('loadingState').classList.add('hidden');
-            document.getElementById('leadsContent').classList.add('hidden');
-            document.getElementById('errorState').classList.remove('hidden');
-            document.getElementById('errorMessage').textContent = message;
-        }
-
-        function showContent() {
-            console.log("✅ SHOWING CONTENT");
-            document.getElementById('loadingState').classList.add('hidden');
-            document.getElementById('errorState').classList.add('hidden');
-            document.getElementById('leadsContent').classList.remove('hidden');
-        }
 
         async function checkAuth() {
             console.log("\n=== 1. CHECKING AUTHENTICATION ===");
@@ -175,8 +155,7 @@
                 
                 if (error) {
                     console.error("❌ Auth error occurred:", error);
-                    showError("Authentication error. Please log in again.");
-                    setTimeout(() => window.location.href = 'login.html', 2000);
+                    window.location.href = 'login.html';
                     return;
                 }
 
@@ -206,47 +185,35 @@
 
                 if (accountError) {
                     console.error("❌ Account lookup error:", accountError);
-                    console.log("- Error code:", accountError.code);
-                    console.log("- Error message:", accountError.message);
-                    console.log("- Error details:", accountError.details);
-                    
-                    if (accountError.code === 'PGRST116') {
-                        showError("No account found for this user. Please contact support.");
-                    } else {
-                        showError(`Error loading account: ${accountError.message}`);
-                    }
                     return;
                 }
 
                 if (!account) {
                     console.error("❌ Account query returned null");
-                    showError("No account found for this user.");
                     return;
                 }
 
                 console.log("✅ Account found successfully");
                 console.log("- Account ID:", account.id);
                 console.log("- Business name:", account.business_name);
-                console.log("- Owner ID:", account.owner_id);
-                console.log("- Created at:", account.created_at);
                 
                 accountId = account.id;
                 
-                await loadLeads();
+                await loadDashboard();
             } catch (err) {
                 console.error("❌ UNEXPECTED ERROR in checkAuth:", err);
                 console.log("Error stack:", err.stack);
-                showError("An unexpected error occurred. Please refresh the page.");
             }
         }
 
-        async function loadLeads() {
-            console.log("\n=== 3. LOADING LEADS ===");
+        async function loadDashboard() {
+            console.log("\n=== 3. LOADING DASHBOARD DATA ===");
             console.log("Account ID to query:", accountId);
             
             try {
                 console.log("Querying leads table where account_id =", accountId);
                 
+                // Use EXACT same query as leads.html
                 const { data: leads, error } = await sb
                     .from('leads')
                     .select('*')
@@ -262,206 +229,63 @@
                     console.error("❌ Error loading leads:", error);
                     console.log("- Error code:", error.code);
                     console.log("- Error message:", error.message);
-                    console.log("- Error details:", error.details);
-                    showError(`Error loading leads: ${error.message}`);
                     return;
                 }
 
                 console.log("✅ Leads loaded successfully");
-                allLeads = leads || [];
+                const allLeads = leads || [];
                 console.log("Total leads in allLeads array:", allLeads.length);
                 
                 if (allLeads.length > 0) {
                     console.log("First lead sample:", allLeads[0]);
-                } else {
-                    console.log("⚠️ No leads found for this account");
                 }
                 
-                showContent();
-                renderLeads(allLeads);
-            } catch (err) {
-                console.error("❌ UNEXPECTED ERROR in loadLeads:", err);
-                console.log("Error stack:", err.stack);
-                showError("An unexpected error occurred while loading leads.");
-            }
-        }
+                // Update stats
+                document.getElementById('totalLeads').textContent = allLeads.length;
+                const newLeads = allLeads.filter(l => l.status === 'new');
+                document.getElementById('newLeads').textContent = newLeads.length;
+                const bookedLeads = allLeads.filter(l => l.status === 'booked');
+                document.getElementById('bookedLeads').textContent = bookedLeads.length;
+                
+                console.log("Stats updated - Total:", allLeads.length, "New:", newLeads.length, "Booked:", bookedLeads.length);
 
-        function renderLeads(leads) {
-            console.log("\n=== 4. RENDERING LEADS ===");
-            console.log("Leads to render:", leads);
-            console.log("Number of leads:", leads ? leads.length : 0);
-            
-            const tbody = document.getElementById('leadsTable');
-            const emptyState = document.getElementById('emptyState');
-            tbody.innerHTML = '';
+                // Display recent 10 leads
+                const recentLeads = allLeads.slice(0, 10);
+                console.log("Displaying recent leads:", recentLeads.length);
+                
+                const tbody = document.getElementById('leadsTable');
+                tbody.innerHTML = '';
 
-            if (!leads || leads.length === 0) {
-                console.log("⚠️ No leads to display, showing empty state");
-                emptyState.classList.remove('hidden');
-                return;
-            }
-
-            console.log("✅ Rendering", leads.length, "leads");
-            emptyState.classList.add('hidden');
-
-            leads.forEach((lead, index) => {
-                console.log(`Rendering lead ${index + 1}:`, lead);
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${lead.name || '-'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lead.email || '-'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lead.phone || '-'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lead.form_type || '-'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <select class="status-dropdown text-xs leading-5 font-semibold rounded-full px-2 py-1 ${getStatusColor(lead.status)}" data-lead-id="${lead.id}" data-current-status="${lead.status}">
-                            <option value="new" ${lead.status === 'new' ? 'selected' : ''}>New</option>
-                            <option value="contacted" ${lead.status === 'contacted' ? 'selected' : ''}>Contacted</option>
-                            <option value="booked" ${lead.status === 'booked' ? 'selected' : ''}>Booked</option>
-                            <option value="lost" ${lead.status === 'lost' ? 'selected' : ''}>Lost</option>
-                        </select>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(lead.created_at).toLocaleDateString()}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button class="view-btn text-indigo-600 hover:text-indigo-900" data-lead='${JSON.stringify(lead).replace(/'/g, "&apos;")}'>View</button>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-
-            console.log("✅ All leads rendered to DOM");
-
-            // Attach event listeners
-            console.log("Attaching event listeners to status dropdowns and view buttons");
-            document.querySelectorAll('.status-dropdown').forEach(dropdown => {
-                dropdown.addEventListener('change', updateLeadStatus);
-            });
-
-            document.querySelectorAll('.view-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const lead = JSON.parse(e.target.dataset.lead);
-                    showLeadModal(lead);
-                });
-            });
-            
-            console.log("✅ Event listeners attached");
-        }
-
-        async function updateLeadStatus(e) {
-            const leadId = e.target.dataset.leadId;
-            const newStatus = e.target.value;
-            const oldStatus = e.target.dataset.currentStatus;
-            
-            console.log("\n=== UPDATING LEAD STATUS ===");
-            console.log("- Lead ID:", leadId);
-            console.log("- Old status:", oldStatus);
-            console.log("- New status:", newStatus);
-
-            try {
-                const { error } = await sb
-                    .from('leads')
-                    .update({ status: newStatus })
-                    .eq('id', leadId);
-
-                console.log("Update response error:", error);
-
-                if (error) {
-                    console.error("❌ Error updating status:", error);
-                    alert(`Error updating status: ${error.message}`);
-                    e.target.value = oldStatus; // Revert on error
+                if (recentLeads.length === 0) {
+                    console.log("⚠️ No leads to display");
+                    const emptyRow = document.createElement('tr');
+                    emptyRow.innerHTML = '<td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No leads yet. They will appear here once you receive them.</td>';
+                    tbody.appendChild(emptyRow);
                 } else {
-                    console.log("✅ Status updated successfully");
-                    e.target.dataset.currentStatus = newStatus;
-                    e.target.className = `status-dropdown text-xs leading-5 font-semibold rounded-full px-2 py-1 ${getStatusColor(newStatus)}`;
-                    // Update the lead in allLeads array
-                    const leadIndex = allLeads.findIndex(l => l.id === leadId);
-                    if (leadIndex !== -1) {
-                        allLeads[leadIndex].status = newStatus;
-                        console.log("Updated lead in allLeads array");
-                    }
+                    recentLeads.forEach((lead, index) => {
+                        console.log(`Rendering lead ${index + 1}:`, lead.name, lead.email);
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${lead.name || '-'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lead.email || '-'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lead.phone || '-'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(lead.status)}">
+                                    ${lead.status}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(lead.created_at).toLocaleDateString()}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                    console.log("✅ All", recentLeads.length, "leads rendered");
                 }
+                
+                console.log("✅ Dashboard loaded successfully");
             } catch (err) {
-                console.error("❌ UNEXPECTED ERROR updating status:", err);
-                alert("An unexpected error occurred while updating status.");
-                e.target.value = oldStatus;
+                console.error("❌ UNEXPECTED ERROR in loadDashboard:", err);
+                console.log("Error stack:", err.stack);
             }
-        }
-
-        function showLeadModal(lead) {
-            console.log("\n=== SHOWING LEAD MODAL ===");
-            console.log("Lead data:", lead);
-            
-            const modal = document.getElementById('leadModal');
-            const details = document.getElementById('leadDetails');
-
-            let formDataHtml = '';
-            if (lead.form_data && Object.keys(lead.form_data).length > 0) {
-                console.log("Lead has form_data:", lead.form_data);
-                formDataHtml = '<div class="mt-4"><h4 class="font-medium text-gray-900 mb-2">Form Data:</h4>';
-                for (const [key, value] of Object.entries(lead.form_data)) {
-                    formDataHtml += `<p class="text-sm text-gray-600"><strong>${key}:</strong> ${value}</p>`;
-                }
-                formDataHtml += '</div>';
-            }
-
-            details.innerHTML = `
-                <div class="space-y-3">
-                    <p class="text-sm text-gray-600"><strong>Name:</strong> ${lead.name || '-'}</p>
-                    <p class="text-sm text-gray-600"><strong>Email:</strong> ${lead.email || '-'}</p>
-                    <p class="text-sm text-gray-600"><strong>Phone:</strong> ${lead.phone || '-'}</p>
-                    <p class="text-sm text-gray-600"><strong>Form Type:</strong> ${lead.form_type || '-'}</p>
-                    <p class="text-sm text-gray-600"><strong>Status:</strong> ${lead.status}</p>
-                    <p class="text-sm text-gray-600"><strong>Date:</strong> ${new Date(lead.created_at).toLocaleString()}</p>
-                    ${formDataHtml}
-                </div>
-            `;
-
-            modal.classList.remove('hidden');
-            console.log("✅ Modal displayed");
-        }
-
-        document.getElementById('closeModal').addEventListener('click', () => {
-            console.log("Closing modal");
-            document.getElementById('leadModal').classList.add('hidden');
-        });
-
-        document.getElementById('searchInput').addEventListener('input', () => {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const statusFilter = document.getElementById('statusFilter').value;
-            console.log("Search input changed:", searchTerm);
-            filterLeads(searchTerm, statusFilter);
-        });
-
-        document.getElementById('statusFilter').addEventListener('change', () => {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const statusFilter = document.getElementById('statusFilter').value;
-            console.log("Status filter changed:", statusFilter);
-            filterLeads(searchTerm, statusFilter);
-        });
-
-        function filterLeads(searchTerm, statusFilter) {
-            console.log("\n=== FILTERING LEADS ===");
-            console.log("- Search term:", searchTerm);
-            console.log("- Status filter:", statusFilter);
-            console.log("- Total leads before filter:", allLeads.length);
-            
-            let filtered = allLeads;
-
-            if (searchTerm) {
-                filtered = filtered.filter(lead =>
-                    (lead.name && lead.name.toLowerCase().includes(searchTerm)) ||
-                    (lead.email && lead.email.toLowerCase().includes(searchTerm)) ||
-                    (lead.phone && lead.phone.toLowerCase().includes(searchTerm))
-                );
-                console.log("- After search filter:", filtered.length);
-            }
-
-            if (statusFilter) {
-                filtered = filtered.filter(lead => lead.status === statusFilter);
-                console.log("- After status filter:", filtered.length);
-            }
-
-            console.log("✅ Rendering filtered leads:", filtered.length);
-            renderLeads(filtered);
         }
 
         function getStatusColor(status) {
@@ -481,8 +305,7 @@
             window.location.href = 'login.html';
         });
 
-        // Initialize
-        console.log("\n=== INITIALIZING APPLICATION ===");
+        console.log("\n=== INITIALIZING DASHBOARD ===");
         checkAuth();
     </script>
 </body>
