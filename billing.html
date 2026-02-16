@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing & Credits - QuoteFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div class="w-64 bg-gray-900">
+            <div class="flex flex-col h-full">
+                <div class="flex items-center justify-center h-16 bg-gray-800">
+                    <span class="text-white text-xl font-bold">QuoteFlow</span>
+                </div>
+                <nav class="flex-1 px-2 py-4 space-y-1">
+                    <a href="dashboard.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        Dashboard
+                    </a>
+                    <a href="leads.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        Leads
+                    </a>
+                    <a href="form-builder.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        Form Builder
+                    </a>
+                    <a href="billing.html" class="bg-gray-800 text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        Billing & Credits
+                    </a>
+                    <a href="settings.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        Settings
+                    </a>
+                </nav>
+                <div class="p-4">
+                    <button id="logoutBtn" class="w-full bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <div class="py-6">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <h1 class="text-2xl font-semibold text-gray-900">Billing & Credits</h1>
+                    <p class="mt-2 text-sm text-gray-600">Manage your lead credits and billing information</p>
+                </div>
+                
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 mt-6">
+                    <!-- Loading State -->
+                    <div id="loadingState" class="py-4">
+                        <div class="bg-white shadow rounded-xl p-8 text-center">
+                            <div class="animate-pulse">
+                                <div class="h-4 bg-gray-200 rounded w-1/4 mx-auto"></div>
+                            </div>
+                            <p class="mt-2 text-gray-500">Loading billing information...</p>
+                        </div>
+                    </div>
+
+                    <!-- Main Content -->
+                    <div id="billingContent" class="hidden space-y-6">
+                        <!-- Credit Balance Card -->
+                        <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg p-8 text-white">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-indigo-100 text-sm font-medium">Available Credits</p>
+                                    <p class="text-5xl font-bold mt-2" id="creditBalance">$0.00</p>
+                                    <p class="text-indigo-100 text-sm mt-2">
+                                        <span id="remainingLeads">0</span> leads remaining at <span id="costPerLead">$0.00</span>/lead
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    <button id="addCreditsBtn" class="bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:bg-indigo-50 transition shadow-md">
+                                        Add Credits
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Low Balance Warning -->
+                            <div id="lowBalanceWarning" class="hidden mt-4 bg-yellow-500 bg-opacity-20 border border-yellow-300 rounded-lg p-4">
+                                <p class="font-semibold">⚠️ Low Balance Warning</p>
+                                <p class="text-sm text-yellow-100 mt-1">Your credit balance is running low. Add more credits to continue receiving leads.</p>
+                            </div>
+                            
+                            <!-- No Balance Warning -->
+                            <div id="noBalanceWarning" class="hidden mt-4 bg-red-500 bg-opacity-30 border border-red-300 rounded-lg p-4">
+                                <p class="font-semibold">🚨 Insufficient Credits</p>
+                                <p class="text-sm text-red-100 mt-1">You've run out of credits. New leads will be paused until you add more credits.</p>
+                            </div>
+                        </div>
+
+                        <!-- Stats Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="bg-white rounded-xl shadow p-6">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 bg-blue-100 rounded-lg p-3">
+                                        <span class="text-2xl">📊</span>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-500">Total Leads</p>
+                                        <p class="text-2xl font-bold text-gray-900" id="totalLeads">0</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-xl shadow p-6">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 bg-green-100 rounded-lg p-3">
+                                        <span class="text-2xl">💰</span>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-500">Total Spent</p>
+                                        <p class="text-2xl font-bold text-gray-900" id="totalSpent">$0.00</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-xl shadow p-6">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 bg-purple-100 rounded-lg p-3">
+                                        <span class="text-2xl">📈</span>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-500">This Month</p>
+                                        <p class="text-2xl font-bold text-gray-900" id="monthlyLeads">0</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Usage History -->
+                        <div class="bg-white shadow rounded-xl">
+                            <div class="px-6 py-5 border-b border-gray-200">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900">Credit Usage History</h3>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="usageTable" class="bg-white divide-y divide-gray-200">
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="emptyUsageState" class="hidden p-8 text-center text-gray-500">
+                                No usage history yet.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Credits Modal -->
+    <div id="addCreditsModal" class="hidden fixed z-10 inset-0 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Add Credits</h3>
+                    <p class="text-sm text-gray-600 mb-6">Select a credit package to purchase. Each credit allows you to receive one lead.</p>
+                    
+                    <div class="space-y-3">
+                        <button class="credit-package-btn w-full text-left border-2 border-gray-200 rounded-lg p-4 hover:border-indigo-500 hover:bg-indigo-50 transition" data-amount="2500" data-credits="100">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="font-semibold text-gray-900">100 Credits</p>
+                                    <p class="text-sm text-gray-500">$0.25 per lead</p>
+                                </div>
+                                <p class="text-2xl font-bold text-gray-900">$25</p>
+                            </div>
+                        </button>
+
+                        <button class="credit-package-btn w-full text-left border-2 border-gray-200 rounded-lg p-4 hover:border-indigo-500 hover:bg-indigo-50 transition" data-amount="4500" data-credits="200">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="font-semibold text-gray-900">200 Credits</p>
+                                    <p class="text-sm text-gray-500">$0.225 per lead</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-2xl font-bold text-gray-900">$45</p>
+                                    <p class="text-xs text-green-600 font-semibold">Save 10%</p>
+                                </div>
+                            </div>
+                        </button>
+
+                        <button class="credit-package-btn w-full text-left border-2 border-gray-200 rounded-lg p-4 hover:border-indigo-500 hover:bg-indigo-50 transition" data-amount="10000" data-credits="500">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="font-semibold text-gray-900">500 Credits</p>
+                                    <p class="text-sm text-gray-500">$0.20 per lead</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-2xl font-bold text-gray-900">$100</p>
+                                    <p class="text-xs text-green-600 font-semibold">Save 20%</p>
+                                </div>
+                            </div>
+                        </button>
+
+                        <button class="credit-package-btn w-full text-left border-2 border-indigo-500 bg-indigo-50 rounded-lg p-4 hover:bg-indigo-100 transition" data-amount="17500" data-credits="1000">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="font-semibold text-gray-900">1000 Credits</p>
+                                    <p class="text-sm text-gray-500">$0.175 per lead</p>
+                                    <span class="inline-block mt-1 px-2 py-1 text-xs font-semibold text-indigo-800 bg-indigo-200 rounded">BEST VALUE</span>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-2xl font-bold text-gray-900">$175</p>
+                                    <p class="text-xs text-green-600 font-semibold">Save 30%</p>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div id="paymentProcessing" class="hidden mt-4 text-center">
+                        <div class="animate-pulse flex space-x-2 justify-center items-center">
+                            <div class="h-3 w-3 bg-indigo-600 rounded-full"></div>
+                            <div class="h-3 w-3 bg-indigo-600 rounded-full"></div>
+                            <div class="h-3 w-3 bg-indigo-600 rounded-full"></div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-2">Processing payment...</p>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" id="closeCreditsModal" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log("=== BILLING PAGE SCRIPT STARTING ===");
+        
+        // Supabase setup
+        const SUPABASE_URL = 'https://jpchpqjnyabtpptufkcj.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwY2hwcWpueWFidHBwdHVma2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMDAyNTAsImV4cCI6MjA4NjY3NjI1MH0.FCywHhyz8N0Hkl-jK9RxZyh2KFZMrP8aUSXt1oJQbHY';
+        
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Stripe setup (you'll need to add your publishable key)
+        const stripe = Stripe('pk_live_51STeNJ8AstiYVbnUXPS4sn95C1WrhifQbWcMkSKbFxxBEK0kXURrBGmYbQoRIGnzwYpzjVYUTnOu9AXi33OXNDDe00sl9POzAl'); // Replace with your key
+
+        let accountId = null;
+        let userId = null;
+        let currentBalance = 0;
+        const COST_PER_LEAD = 15.25; // $0.25 per lead (you can adjust this)
+
+        async function checkAuth() {
+            console.log("\n=== CHECKING AUTHENTICATION ===");
+            
+            try {
+                const { data: { user }, error } = await sb.auth.getUser();
+                
+                if (error || !user) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                console.log("✅ User authenticated:", user.id);
+                userId = user.id;
+
+                const { data: account, error: accountError } = await sb
+                    .from('accounts')
+                    .select('*')
+                    .eq('owner_id', user.id)
+                    .single();
+
+                if (account) {
+                    accountId = account.id;
+                    await loadBillingData();
+                }
+            } catch (err) {
+                console.error("❌ Error in checkAuth:", err);
+            }
+        }
+
+        async function loadBillingData() {
+            console.log("\n=== LOADING BILLING DATA ===");
+            
+            try {
+                // Get or create billing record
+                let { data: billing, error: billingError } = await sb
+                    .from('billing')
+                    .select('*')
+                    .eq('account_id', accountId)
+                    .single();
+
+                if (billingError && billingError.code === 'PGRST116') {
+                    // No billing record exists, create one
+                    console.log("Creating new billing record...");
+                    const { data: newBilling, error: createError } = await sb
+                        .from('billing')
+                        .insert([
+                            {
+                                account_id: accountId,
+                                credit_balance: 0,
+                                total_spent: 0
+                            }
+                        ])
+                        .select()
+                        .single();
+
+                    if (createError) {
+                        console.error("❌ Error creating billing record:", createError);
+                        alert("Error initializing billing. Please refresh the page.");
+                        return;
+                    }
+                    billing = newBilling;
+                }
+
+                console.log("✅ Billing data loaded:", billing);
+                currentBalance = billing.credit_balance;
+
+                // Get lead count
+                const { data: leads, error: leadsError } = await sb
+                    .from('leads')
+                    .select('*')
+                    .eq('account_id', accountId);
+
+                const totalLeads = leads ? leads.length : 0;
+
+                // Get this month's leads
+                const startOfMonth = new Date();
+                startOfMonth.setDate(1);
+                startOfMonth.setHours(0, 0, 0, 0);
+
+                const monthlyLeads = leads ? leads.filter(l => 
+                    new Date(l.created_at) >= startOfMonth
+                ).length : 0;
+
+                // Update UI
+                document.getElementById('creditBalance').textContent = `$${currentBalance.toFixed(2)}`;
+                document.getElementById('costPerLead').textContent = `$${COST_PER_LEAD.toFixed(2)}`;
+                document.getElementById('remainingLeads').textContent = Math.floor(currentBalance / COST_PER_LEAD);
+                document.getElementById('totalLeads').textContent = totalLeads;
+                document.getElementById('totalSpent').textContent = `$${billing.total_spent.toFixed(2)}`;
+                document.getElementById('monthlyLeads').textContent = monthlyLeads;
+
+                // Show warnings
+                if (currentBalance <= 0) {
+                    document.getElementById('noBalanceWarning').classList.remove('hidden');
+                    document.getElementById('lowBalanceWarning').classList.add('hidden');
+                } else if (currentBalance < (COST_PER_LEAD * 10)) {
+                    document.getElementById('lowBalanceWarning').classList.remove('hidden');
+                    document.getElementById('noBalanceWarning').classList.add('hidden');
+                } else {
+                    document.getElementById('lowBalanceWarning').classList.add('hidden');
+                    document.getElementById('noBalanceWarning').classList.add('hidden');
+                }
+
+                // Load usage history
+                await loadUsageHistory();
+
+                // Show content
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('billingContent').classList.remove('hidden');
+
+                // Set up real-time subscription for new leads
+                setupLeadSubscription();
+
+            } catch (err) {
+                console.error("❌ Error loading billing data:", err);
+            }
+        }
+
+        async function loadUsageHistory() {
+            console.log("\n=== LOADING USAGE HISTORY ===");
+            
+            try {
+                const { data: transactions, error } = await sb
+                    .from('billing_transactions')
+                    .select('*')
+                    .eq('account_id', accountId)
+                    .order('created_at', { ascending: false })
+                    .limit(50);
+
+                const tbody = document.getElementById('usageTable');
+                const emptyState = document.getElementById('emptyUsageState');
+                tbody.innerHTML = '';
+
+                if (!transactions || transactions.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                emptyState.classList.add('hidden');
+
+                transactions.forEach(tx => {
+                    const row = document.createElement('tr');
+                    const isCredit = tx.type === 'credit_purchase';
+                    const amountClass = isCredit ? 'text-green-600' : 'text-red-600';
+                    const amountPrefix = isCredit ? '+' : '-';
+                    
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${new Date(tx.created_at).toLocaleDateString()} ${new Date(tx.created_at).toLocaleTimeString()}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${isCredit ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                ${tx.type === 'credit_purchase' ? 'Credit Purchase' : 'Lead Charge'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${tx.description || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium ${amountClass}">
+                            ${amountPrefix}$${Math.abs(tx.amount).toFixed(2)}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            $${tx.balance_after.toFixed(2)}
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+            } catch (err) {
+                console.error("❌ Error loading usage history:", err);
+            }
+        }
+
+        function setupLeadSubscription() {
+            console.log("\n=== SETTING UP LEAD SUBSCRIPTION ===");
+            
+            // Subscribe to new leads
+            const subscription = sb
+                .channel('leads-channel')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'INSERT',
+                        schema: 'public',
+                        table: 'leads',
+                        filter: `account_id=eq.${accountId}`
+                    },
+                    async (payload) => {
+                        console.log('🆕 New lead received:', payload);
+                        await deductCreditForLead(payload.new);
+                    }
+                )
+                .subscribe();
+
+            console.log("✅ Lead subscription active");
+        }
+
+        async function deductCreditForLead(lead) {
+            console.log("\n=== DEDUCTING CREDIT FOR LEAD ===");
+            console.log("Lead:", lead);
+            console.log("Current balance:", currentBalance);
+            console.log("Cost per lead:", COST_PER_LEAD);
+            
+            if (currentBalance < COST_PER_LEAD) {
+                console.log("⚠️ Insufficient balance!");
+                alert("Insufficient credits! Please add more credits to continue receiving leads.");
+                return;
+            }
+
+            try {
+                const newBalance = currentBalance - COST_PER_LEAD;
+                
+                // Update billing record
+                const { error: updateError } = await sb
+                    .from('billing')
+                    .update({ 
+                        credit_balance: newBalance,
+                        total_spent: sb.rpc('increment', { row_id: accountId, amount: COST_PER_LEAD })
+                    })
+                    .eq('account_id', accountId);
+
+                if (updateError) {
+                    console.error("❌ Error updating balance:", updateError);
+                    return;
+                }
+
+                // Record transaction
+                const { error: txError } = await sb
+                    .from('billing_transactions')
+                    .insert([{
+                        account_id: accountId,
+                        type: 'lead_charge',
+                        amount: -COST_PER_LEAD,
+                        balance_after: newBalance,
+                        description: `Lead from ${lead.name || 'Unknown'} - ${lead.form_type || 'form'}`
+                    }]);
+
+                if (txError) {
+                    console.error("❌ Error recording transaction:", txError);
+                }
+
+                console.log("✅ Credit deducted successfully");
+                console.log("New balance:", newBalance);
+
+                // Reload billing data
+                await loadBillingData();
+
+            } catch (err) {
+                console.error("❌ Error deducting credit:", err);
+            }
+        }
+
+        // Modal controls
+        document.getElementById('addCreditsBtn').addEventListener('click', () => {
+            document.getElementById('addCreditsModal').classList.remove('hidden');
+        });
+
+        document.getElementById('closeCreditsModal').addEventListener('click', () => {
+            document.getElementById('addCreditsModal').classList.add('hidden');
+        });
+
+        // Credit package selection
+        document.querySelectorAll('.credit-package-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const button = e.currentTarget;
+                const amount = parseInt(button.dataset.amount);
+                const credits = parseInt(button.dataset.credits);
+                
+                await purchaseCredits(amount, credits);
+            });
+        });
+
+        async function purchaseCredits(amountCents, creditsToAdd) {
+            console.log("\n=== PURCHASING CREDITS ===");
+            console.log("Amount (cents):", amountCents);
+            console.log("Credits to add:", creditsToAdd);
+            
+            document.getElementById('paymentProcessing').classList.remove('hidden');
+            
+            try {
+                // In a real implementation, you would:
+                // 1. Create a Stripe checkout session on your backend
+                // 2. Redirect to Stripe checkout
+                // 3. Handle the webhook callback to add credits
+                
+                // For demo purposes, we'll simulate a successful payment
+                await simulatePayment(amountCents, creditsToAdd);
+                
+            } catch (err) {
+                console.error("❌ Error processing payment:", err);
+                alert("Payment failed. Please try again.");
+            } finally {
+                document.getElementById('paymentProcessing').classList.add('hidden');
+            }
+        }
+
+        async function simulatePayment(amountCents, creditsToAdd) {
+            console.log("💳 Simulating payment...");
+            
+            // Simulate payment delay
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            const creditAmount = creditsToAdd * COST_PER_LEAD;
+            const newBalance = currentBalance + creditAmount;
+            
+            // Update billing record
+            const { error: updateError } = await sb
+                .from('billing')
+                .update({ 
+                    credit_balance: newBalance
+                })
+                .eq('account_id', accountId);
+
+            if (updateError) {
+                throw updateError;
+            }
+
+            // Record transaction
+            const { error: txError } = await sb
+                .from('billing_transactions')
+                .insert([{
+                    account_id: accountId,
+                    type: 'credit_purchase',
+                    amount: creditAmount,
+                    balance_after: newBalance,
+                    description: `Purchased ${creditsToAdd} credits`
+                }]);
+
+            if (txError) {
+                console.error("❌ Error recording transaction:", txError);
+            }
+
+            console.log("✅ Payment successful!");
+            
+            // Close modal and reload
+            document.getElementById('addCreditsModal').classList.add('hidden');
+            await loadBillingData();
+            
+            alert(`Successfully added ${creditsToAdd} credits ($${(creditAmount).toFixed(2)})!`);
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await sb.auth.signOut();
+            window.location.href = 'login.html';
+        });
+
+        // Initialize
+        checkAuth();
+    </script>
+</body>
+</html>
