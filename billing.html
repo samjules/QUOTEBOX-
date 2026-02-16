@@ -242,25 +242,13 @@
     </div>
 
     <script>
-        console.log("=== BILLING PAGE SCRIPT STARTING ===");
-        
-        // ============================================
-        // CONFIGURATION - UPDATE THESE VALUES
-        // ============================================
+        console.log("=== BILLING PAGE - PRODUCTION VERSION ===");
         
         const SUPABASE_URL = 'https://jpchpqjnyabtpptufkcj.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwY2hwcWpueWFidHBwdHVma2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMDAyNTAsImV4cCI6MjA4NjY3NjI1MH0.FCywHhyz8N0Hkl-jK9RxZyh2KFZMrP8aUSXt1oJQbHY';
-        
-        // YOUR STRIPE PUBLISHABLE KEY (starts with pk_)
         const STRIPE_PUBLISHABLE_KEY = 'pk_test_51QcxZaP3FoF924dzLqvz7qJbKuP8rJwQ9zdC9zRxH9nVEMo9zY5YRlGvj8Qqh6dMy9SRYH4Wqu0hkPjCKrGHgTAJ00k8HPxH9G';
-        
-        // YOUR SUPABASE EDGE FUNCTION URL
-        // Replace 'jpchpqjnyabtpptufkcj' with your Supabase project reference
-        const CHECKOUT_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/create-checkout-session`;
-        
-        const COST_PER_LEAD = 0.25; // $0.25 per lead
-        
-        // ============================================
+        const CHECKOUT_FUNCTION_URL = 'https://jpchpqjnyabtpptufkcj.supabase.co/functions/v1/create-checkout-session';
+        const COST_PER_LEAD = 0.25;
         
         const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
@@ -270,349 +258,127 @@
         let currentBalance = 0;
 
         async function checkAuth() {
-            console.log("\n=== CHECKING AUTHENTICATION ===");
-            
             try {
                 const { data: { user }, error } = await sb.auth.getUser();
-                
                 if (error || !user) {
                     window.location.href = 'login.html';
                     return;
                 }
-
-                console.log("✅ User authenticated:", user.id);
                 userId = user.id;
-
-                const { data: account, error: accountError } = await sb
-                    .from('accounts')
-                    .select('*')
-                    .eq('owner_id', user.id)
-                    .single();
-
+                const { data: account } = await sb.from('accounts').select('*').eq('owner_id', user.id).single();
                 if (account) {
                     accountId = account.id;
                     await loadBillingData();
                 }
             } catch (err) {
-                console.error("❌ Error in checkAuth:", err);
+                console.error("Error in checkAuth:", err);
             }
         }
 
         async function loadBillingData() {
-            console.log("\n=== LOADING BILLING DATA ===");
-            
             try {
-                let { data: billing, error: billingError } = await sb
-                    .from('billing')
-                    .select('*')
-                    .eq('account_id', accountId)
-                    .single();
-
+                let { data: billing, error: billingError } = await sb.from('billing').select('*').eq('account_id', accountId).single();
                 if (billingError && billingError.code === 'PGRST116') {
-                    console.log("Creating new billing record...");
-                    const { data: newBilling, error: createError } = await sb
-                        .from('billing')
-                        .insert([{
-                            account_id: accountId,
-                            credit_balance: 0,
-                            total_spent: 0
-                        }])
-                        .select()
-                        .single();
-
-                    if (createError) {
-                        console.error("❌ Error creating billing record:", createError);
-                        alert("Error initializing billing. Please refresh the page.");
-                        return;
-                    }
+                    const { data: newBilling } = await sb.from('billing').insert([{ account_id: accountId, credit_balance: 0, total_spent: 0 }]).select().single();
                     billing = newBilling;
                 }
-
-                console.log("✅ Billing data loaded:", billing);
                 currentBalance = billing.credit_balance;
-
-                const { data: leads, error: leadsError } = await sb
-                    .from('leads')
-                    .select('*')
-                    .eq('account_id', accountId);
-
+                const { data: leads } = await sb.from('leads').select('*').eq('account_id', accountId);
                 const totalLeads = leads ? leads.length : 0;
-
-                const startOfMonth = new Date();
-                startOfMonth.setDate(1);
-                startOfMonth.setHours(0, 0, 0, 0);
-
-                const monthlyLeads = leads ? leads.filter(l => 
-                    new Date(l.created_at) >= startOfMonth
-                ).length : 0;
-
+                const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0,0,0,0);
+                const monthlyLeads = leads ? leads.filter(l => new Date(l.created_at) >= startOfMonth).length : 0;
                 document.getElementById('creditBalance').textContent = `$${currentBalance.toFixed(2)}`;
                 document.getElementById('costPerLead').textContent = `$${COST_PER_LEAD.toFixed(2)}`;
                 document.getElementById('remainingLeads').textContent = Math.floor(currentBalance / COST_PER_LEAD);
                 document.getElementById('totalLeads').textContent = totalLeads;
                 document.getElementById('totalSpent').textContent = `$${billing.total_spent.toFixed(2)}`;
                 document.getElementById('monthlyLeads').textContent = monthlyLeads;
-
-                if (currentBalance <= 0) {
-                    document.getElementById('noBalanceWarning').classList.remove('hidden');
-                    document.getElementById('lowBalanceWarning').classList.add('hidden');
-                } else if (currentBalance < (COST_PER_LEAD * 10)) {
-                    document.getElementById('lowBalanceWarning').classList.remove('hidden');
-                    document.getElementById('noBalanceWarning').classList.add('hidden');
-                } else {
-                    document.getElementById('lowBalanceWarning').classList.add('hidden');
-                    document.getElementById('noBalanceWarning').classList.add('hidden');
-                }
-
+                if (currentBalance <= 0) { document.getElementById('noBalanceWarning').classList.remove('hidden'); document.getElementById('lowBalanceWarning').classList.add('hidden'); } 
+                else if (currentBalance < (COST_PER_LEAD * 10)) { document.getElementById('lowBalanceWarning').classList.remove('hidden'); document.getElementById('noBalanceWarning').classList.add('hidden'); } 
+                else { document.getElementById('lowBalanceWarning').classList.add('hidden'); document.getElementById('noBalanceWarning').classList.add('hidden'); }
                 await loadUsageHistory();
-
                 document.getElementById('loadingState').classList.add('hidden');
                 document.getElementById('billingContent').classList.remove('hidden');
-
                 setupLeadSubscription();
-
             } catch (err) {
-                console.error("❌ Error loading billing data:", err);
+                console.error("Error loading billing:", err);
             }
         }
 
         async function loadUsageHistory() {
-            console.log("\n=== LOADING USAGE HISTORY ===");
-            
             try {
-                const { data: transactions, error } = await sb
-                    .from('billing_transactions')
-                    .select('*')
-                    .eq('account_id', accountId)
-                    .order('created_at', { ascending: false })
-                    .limit(50);
-
+                const { data: transactions } = await sb.from('billing_transactions').select('*').eq('account_id', accountId).order('created_at', { ascending: false }).limit(50);
                 const tbody = document.getElementById('usageTable');
                 const emptyState = document.getElementById('emptyUsageState');
                 tbody.innerHTML = '';
-
-                if (!transactions || transactions.length === 0) {
-                    emptyState.classList.remove('hidden');
-                    return;
-                }
-
+                if (!transactions || transactions.length === 0) { emptyState.classList.remove('hidden'); return; }
                 emptyState.classList.add('hidden');
-
                 transactions.forEach(tx => {
-                    const row = document.createElement('tr');
                     const isCredit = tx.type === 'credit_purchase';
-                    const amountClass = isCredit ? 'text-green-600' : 'text-red-600';
-                    const amountPrefix = isCredit ? '+' : '-';
-                    
-                    row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            ${new Date(tx.created_at).toLocaleDateString()} ${new Date(tx.created_at).toLocaleTimeString()}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${isCredit ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                                ${tx.type === 'credit_purchase' ? 'Credit Purchase' : 'Lead Charge'}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-500">${tx.description || '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium ${amountClass}">
-                            ${amountPrefix}$${Math.abs(tx.amount).toFixed(2)}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            $${tx.balance_after.toFixed(2)}
-                        </td>
-                    `;
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${new Date(tx.created_at).toLocaleDateString()} ${new Date(tx.created_at).toLocaleTimeString()}</td><td class="px-6 py-4 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${isCredit ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${isCredit ? 'Credit Purchase' : 'Lead Charge'}</span></td><td class="px-6 py-4 text-sm text-gray-500">${tx.description || '-'}</td><td class="px-6 py-4 whitespace-nowrap text-sm font-medium ${isCredit ? 'text-green-600' : 'text-red-600'}">${isCredit ? '+' : '-'}$${Math.abs(tx.amount).toFixed(2)}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$${tx.balance_after.toFixed(2)}</td>`;
                     tbody.appendChild(row);
                 });
-
             } catch (err) {
-                console.error("❌ Error loading usage history:", err);
+                console.error("Error loading history:", err);
             }
         }
 
         function setupLeadSubscription() {
-            console.log("\n=== SETTING UP LEAD SUBSCRIPTION ===");
-            
-            const subscription = sb
-                .channel('leads-channel')
-                .on(
-                    'postgres_changes',
-                    {
-                        event: 'INSERT',
-                        schema: 'public',
-                        table: 'leads',
-                        filter: `account_id=eq.${accountId}`
-                    },
-                    async (payload) => {
-                        console.log('🆕 New lead received:', payload);
-                        await deductCreditForLead(payload.new);
-                    }
-                )
-                .subscribe();
-
-            console.log("✅ Lead subscription active");
+            sb.channel('leads-channel').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'leads', filter: `account_id=eq.${accountId}` }, async (payload) => { await deductCreditForLead(payload.new); }).subscribe();
         }
 
         async function deductCreditForLead(lead) {
-            console.log("\n=== DEDUCTING CREDIT FOR LEAD ===");
-            console.log("Lead:", lead);
-            console.log("Current balance:", currentBalance);
-            
-            if (currentBalance < COST_PER_LEAD) {
-                console.log("⚠️ Insufficient balance!");
-                alert("Insufficient credits! Please add more credits to continue receiving leads.");
-                return;
-            }
-
+            if (currentBalance < COST_PER_LEAD) { alert("Insufficient credits!"); return; }
             try {
                 const newBalance = currentBalance - COST_PER_LEAD;
-                
-                const { error: updateError } = await sb
-                    .from('billing')
-                    .update({ 
-                        credit_balance: newBalance
-                    })
-                    .eq('account_id', accountId);
-
-                if (updateError) {
-                    console.error("❌ Error updating balance:", updateError);
-                    return;
-                }
-
-                const { error: txError } = await sb
-                    .from('billing_transactions')
-                    .insert([{
-                        account_id: accountId,
-                        type: 'lead_charge',
-                        amount: -COST_PER_LEAD,
-                        balance_after: newBalance,
-                        description: `Lead from ${lead.name || 'Unknown'} - ${lead.form_type || 'form'}`
-                    }]);
-
-                if (txError) {
-                    console.error("❌ Error recording transaction:", txError);
-                }
-
-                console.log("✅ Credit deducted successfully");
-
+                await sb.from('billing').update({ credit_balance: newBalance }).eq('account_id', accountId);
+                await sb.from('billing_transactions').insert([{ account_id: accountId, type: 'lead_charge', amount: -COST_PER_LEAD, balance_after: newBalance, description: `Lead from ${lead.name || 'Unknown'}` }]);
                 await loadBillingData();
-
             } catch (err) {
-                console.error("❌ Error deducting credit:", err);
+                console.error("Error deducting credit:", err);
             }
         }
 
         async function purchaseCredits(amountCents, creditsToAdd) {
-            console.log("\n=== PURCHASING CREDITS ===");
-            console.log("Amount (cents):", amountCents);
-            console.log("Credits to add:", creditsToAdd);
-            
             document.getElementById('paymentProcessing').classList.remove('hidden');
-            
             try {
-                // Call Supabase Edge Function to create checkout session
                 const response = await fetch(CHECKOUT_FUNCTION_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    },
-                    body: JSON.stringify({
-                        amount: amountCents,
-                        credits: creditsToAdd,
-                        accountId: accountId,
-                        userId: userId
-                    })
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+                    body: JSON.stringify({ amount: amountCents, credits: creditsToAdd, accountId: accountId, userId: userId })
                 });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-                }
-
-                const { sessionId, url } = await response.json();
-                
-                console.log("✅ Checkout session created:", sessionId);
-                
-                // Redirect to Stripe Checkout
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const { url } = await response.json();
                 window.location.href = url;
-                
             } catch (err) {
-                console.error("❌ Error creating checkout session:", err);
-                alert(`Payment failed: ${err.message}\n\nPlease make sure your Supabase Edge Function is deployed.`);
+                console.error("Error:", err);
+                alert(`Payment failed: ${err.message}`);
                 document.getElementById('paymentProcessing').classList.add('hidden');
             }
         }
 
         async function handlePaymentSuccess() {
             const urlParams = new URLSearchParams(window.location.search);
-            const success = urlParams.get('success');
-            const sessionId = urlParams.get('session_id');
-            const canceled = urlParams.get('canceled');
-
-            if (canceled) {
-                const banner = document.createElement('div');
-                banner.className = 'fixed top-4 right-4 bg-yellow-500 text-white px-6 py-4 rounded-lg shadow-lg z-50';
-                banner.innerHTML = `
-                    <div class="flex items-center">
-                        <span class="text-xl mr-2">⚠️</span>
-                        <div>
-                            <p class="font-semibold">Payment Canceled</p>
-                            <p class="text-sm">No charges were made.</p>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(banner);
-                setTimeout(() => banner.remove(), 5000);
+            if (urlParams.get('canceled')) {
+                alert('Payment canceled. No charges were made.');
                 window.history.replaceState({}, document.title, '/billing.html');
                 return;
             }
-
-            if (success && sessionId) {
-                console.log("💳 Payment successful! Session ID:", sessionId);
-                
-                const successBanner = document.createElement('div');
-                successBanner.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50';
-                successBanner.innerHTML = `
-                    <div class="flex items-center">
-                        <span class="text-xl mr-2">✅</span>
-                        <div>
-                            <p class="font-semibold">Payment Successful!</p>
-                            <p class="text-sm">Your credits have been added.</p>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(successBanner);
-
-                setTimeout(async () => {
-                    await loadBillingData();
-                    successBanner.remove();
-                    window.history.replaceState({}, document.title, '/billing.html');
-                }, 3000);
+            if (urlParams.get('success')) {
+                alert('Payment successful! Your credits have been added.');
+                setTimeout(() => { loadBillingData(); window.history.replaceState({}, document.title, '/billing.html'); }, 2000);
             }
         }
 
-        document.getElementById('addCreditsBtn').addEventListener('click', () => {
-            document.getElementById('addCreditsModal').classList.remove('hidden');
-        });
-
-        document.getElementById('closeCreditsModal').addEventListener('click', () => {
-            document.getElementById('addCreditsModal').classList.add('hidden');
-        });
-
+        document.getElementById('addCreditsBtn').addEventListener('click', () => document.getElementById('addCreditsModal').classList.remove('hidden'));
+        document.getElementById('closeCreditsModal').addEventListener('click', () => document.getElementById('addCreditsModal').classList.add('hidden'));
         document.querySelectorAll('.credit-package-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
-                const button = e.currentTarget;
-                const amount = parseInt(button.dataset.amount);
-                const credits = parseInt(button.dataset.credits);
-                
-                await purchaseCredits(amount, credits);
+                await purchaseCredits(parseInt(e.currentTarget.dataset.amount), parseInt(e.currentTarget.dataset.credits));
             });
         });
-
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
-            await sb.auth.signOut();
-            window.location.href = 'login.html';
-        });
+        document.getElementById('logoutBtn').addEventListener('click', async () => { await sb.auth.signOut(); window.location.href = 'login.html'; });
 
         checkAuth();
         handlePaymentSuccess();
