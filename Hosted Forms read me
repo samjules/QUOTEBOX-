@@ -1,0 +1,160 @@
+# Hosted Forms Implementation Guide
+
+## Overview
+This update adds a hosted forms management system to QuoteFlow, allowing users to create and manage multiple lead generation forms.
+
+## Files Created
+
+### 1. `schema_update_hosted_forms.sql`
+Database schema updates that need to be run in your Supabase SQL editor:
+- Creates `hosted_forms` table to store form configurations
+- Adds RLS (Row Level Security) policies
+- Adds `hosted_form_id` column to `leads` table to track which form generated each lead
+
+### 2. `hosted-forms.html`
+Main management interface for hosted forms:
+- View all created forms
+- Create new forms with different types (moving, cleaning, plumbing, etc.)
+- Edit existing forms
+- Toggle form active/inactive status
+- Get shareable URLs for each form
+- Delete forms
+
+### 3. `form-template.html`
+Updated form template that:
+- Loads configuration from `hosted_forms` table
+- Checks if form is active before displaying
+- Submits leads directly to database with `hosted_form_id` reference
+- Shows form name from database
+- Handles inactive/missing forms gracefully
+
+### 4. `dashboard.html` (already provided)
+Updated dashboard with analytics focus
+
+## Implementation Steps
+
+### Step 1: Run Database Migration
+1. Open your Supabase project dashboard
+2. Go to SQL Editor
+3. Copy and paste the contents of `schema_update_hosted_forms.sql`
+4. Run the SQL commands
+
+### Step 2: Update Navigation
+Add the "Hosted Forms" link to the sidebar navigation in these files:
+- `dashboard.html` (already updated)
+- `leads.html`
+- `form-builder.html`
+- `billing.html`
+- `settings.html`
+
+Add this link in the nav section:
+```html
+<a href="hosted-forms.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+    Hosted Forms
+</a>
+```
+
+### Step 3: Deploy Form Files
+For each hosted form, you'll need to create a file named `{form-id}.html` based on the `form-template.html`:
+
+**Option A: Manual Deployment**
+1. When a user creates a form in `hosted-forms.html`, they get a form ID (UUID)
+2. Copy `form-template.html` and rename it to `{form-id}.html`
+3. Upload to your hosting in a `/form/` directory
+4. The form will automatically load its configuration from the database
+
+**Option B: Automated Deployment (Recommended)**
+Create a serverless function or build script that:
+1. Listens for new form creation in `hosted_forms` table
+2. Automatically generates/copies the form file with the correct ID
+3. Deploys to your hosting provider
+
+### Step 4: Configure Form Submission
+The forms now submit leads directly to the database instead of using the Edge Function. This means:
+- No Edge Function needed for form submissions
+- Leads are created with `hosted_form_id` reference
+- Billing deduction happens via the existing subscription in `billing.html`
+
+## Form Types Available
+- **Moving Services**: From/To cities, truck size, movers, hours, supplies
+- **Cleaning Services**: Property type, bedrooms, bathrooms, frequency
+- **Plumbing Services**: Service type, urgency, property type, description
+- **Landscaping**: Service details, property size, frequency
+- **Painting Services**: Interior/exterior, rooms, square footage
+- **HVAC Services**: Service type, system type, property details
+- **Roofing**: Roof type, size, issue description
+- **General Quote**: Flexible fields for any service type
+
+## Features
+
+### Hosted Forms Management Page
+- **Create Forms**: Choose from predefined form types with appropriate fields
+- **View URLs**: Get shareable links for each form
+- **Edit Forms**: Update form name, type, and active status
+- **Delete Forms**: Remove unused forms
+- **Status Toggle**: Activate/deactivate forms without deleting
+
+### Form Template Features
+- **Dynamic Loading**: Automatically loads form configuration from database
+- **Active Check**: Only displays active forms
+- **Multi-step Process**: Clean UX with progress bar
+- **Form Validation**: Required fields and input validation
+- **Success/Error Handling**: Clear feedback to users
+- **Responsive Design**: Works on mobile and desktop
+
+## Database Schema
+
+### hosted_forms table
+```
+- id (uuid, primary key)
+- account_id (uuid, foreign key to accounts)
+- form_name (text)
+- form_type (text)
+- form_config (jsonb) - stores field configurations
+- is_active (boolean)
+- created_at (timestamp)
+- updated_at (timestamp)
+```
+
+### leads table updates
+```
+- hosted_form_id (uuid, nullable) - references hosted_forms(id)
+```
+
+## Usage Flow
+
+1. User logs into QuoteFlow
+2. Goes to "Hosted Forms" page
+3. Creates a new form (e.g., "Winter Moving Special")
+4. Gets a shareable URL like: `yourdomain.com/form/{uuid}.html`
+5. Shares URL on website, social media, ads, etc.
+6. When customers fill out the form:
+   - Lead is created in database
+   - Credit is automatically deducted from billing
+   - Lead appears in "Leads" page
+   - User gets notified
+
+## Security Notes
+
+- Forms use Supabase RLS policies to ensure users only see their own forms
+- Anonymous form submissions are allowed (for public-facing forms)
+- Form URLs are non-guessable UUIDs
+- Inactive forms show a "form not available" message
+
+## Next Steps
+
+1. Run the SQL migration
+2. Update all navigation menus
+3. Deploy the new HTML files
+4. Test form creation and submission flow
+5. Set up automated form file generation (optional but recommended)
+
+## Billing Integration
+
+The existing billing system in `billing.html` handles credit deduction:
+- When a lead is inserted into the database
+- The subscription listener in `billing.html` detects it
+- Credits are automatically deducted
+- Transaction is recorded in `billing_transactions`
+
+No changes needed to billing logic!
