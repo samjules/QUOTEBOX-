@@ -126,67 +126,120 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://jpchpqjnyabtpptufkcj.supabase.co';  // ✅ Correct URL with quotes
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';  // ✅ Correct anon key (JWT token)
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);  // ✅ Using the constants
+        console.log("=== DASHBOARD SCRIPT STARTING ===");
+        
+        const SUPABASE_URL = 'https://jpchpqjnyabtpptufkcj.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwY2hwcWpueWFidHBwdHVma2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMDAyNTAsImV4cCI6MjA4NjY3NjI1MH0.FCywHhyz8N0Hkl-jK9RxZyh2KFZMrP8aUSXt1oJQbHY';
+        
+        console.log("Creating Supabase client...");
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log("Supabase client created:", supabase);
 
         let accountId = null;
 
         async function checkAuth() {
-            const { data: { user } } = await supabase.auth.getUser();
+            console.log("\n=== CHECKING AUTHENTICATION ===");
             
-            if (!user) {
-                window.location.href = 'login.html';
-                return;
-            }
+            try {
+                const { data: { user }, error } = await supabase.auth.getUser();
+                
+                console.log("Auth response:", { user, error });
+                
+                if (error || !user) {
+                    console.log("❌ No user found, redirecting to login...");
+                    window.location.href = 'login.html';
+                    return;
+                }
 
-            const { data: account } = await supabase
-                .from('accounts')
-                .select('*')
-                .eq('owner_id', user.id)
-                .single();
+                console.log("✅ User authenticated:", user.id);
 
-            if (account) {
-                accountId = account.id;
-                loadDashboard();
+                const { data: account, error: accountError } = await supabase
+                    .from('accounts')
+                    .select('*')
+                    .eq('owner_id', user.id)
+                    .single();
+
+                console.log("Account query response:", { account, accountError });
+
+                if (account) {
+                    console.log("✅ Account found:", account.id);
+                    accountId = account.id;
+                    loadDashboard();
+                } else {
+                    console.error("❌ No account found for user");
+                }
+            } catch (err) {
+                console.error("❌ Error in checkAuth:", err);
             }
         }
 
         async function loadDashboard() {
-            const { data: leads } = await supabase
-                .from('leads')
-                .select('*')
-                .eq('account_id', accountId)
-                .order('created_at', { ascending: false })
-                .limit(10);
+            console.log("\n=== LOADING DASHBOARD DATA ===");
+            console.log("Account ID:", accountId);
+            
+            try {
+                // Fetch ALL leads for this account (not limited to 10)
+                const { data: allLeads, error: allLeadsError } = await supabase
+                    .from('leads')
+                    .select('*')
+                    .eq('account_id', accountId)
+                    .order('created_at', { ascending: false });
 
-            if (leads) {
-                document.getElementById('totalLeads').textContent = leads.length;
-                
-                const newLeads = leads.filter(l => l.status === 'new');
-                document.getElementById('newLeads').textContent = newLeads.length;
-                
-                const bookedLeads = leads.filter(l => l.status === 'booked');
-                document.getElementById('bookedLeads').textContent = bookedLeads.length;
+                console.log("All leads query response:", { allLeads, allLeadsError });
 
-                const tbody = document.getElementById('leadsTable');
-                tbody.innerHTML = '';
+                if (allLeadsError) {
+                    console.error("❌ Error fetching all leads:", allLeadsError);
+                    return;
+                }
 
-                leads.forEach(lead => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${lead.name || '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lead.email || '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lead.phone || '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(lead.status)}">
-                                ${lead.status}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(lead.created_at).toLocaleDateString()}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
+                if (allLeads) {
+                    console.log("✅ All leads fetched:", allLeads.length, "total leads");
+                    
+                    // Update total leads count
+                    const totalCount = allLeads.length;
+                    document.getElementById('totalLeads').textContent = totalCount;
+                    console.log("Total leads:", totalCount);
+                    
+                    // Count new leads
+                    const newLeads = allLeads.filter(l => l.status === 'new');
+                    document.getElementById('newLeads').textContent = newLeads.length;
+                    console.log("New leads:", newLeads.length);
+                    
+                    // Count booked leads
+                    const bookedLeads = allLeads.filter(l => l.status === 'booked');
+                    document.getElementById('bookedLeads').textContent = bookedLeads.length;
+                    console.log("Booked leads:", bookedLeads.length);
+
+                    // Display recent 10 leads in the table
+                    const recentLeads = allLeads.slice(0, 10);
+                    console.log("Displaying recent leads:", recentLeads.length);
+                    
+                    const tbody = document.getElementById('leadsTable');
+                    tbody.innerHTML = '';
+
+                    recentLeads.forEach((lead, index) => {
+                        console.log(`Rendering lead ${index + 1}:`, lead.name);
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${lead.name || '-'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lead.email || '-'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${lead.phone || '-'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(lead.status)}">
+                                    ${lead.status}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(lead.created_at).toLocaleDateString()}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                    
+                    console.log("✅ Dashboard loaded successfully");
+                } else {
+                    console.log("⚠️ No leads found");
+                }
+            } catch (err) {
+                console.error("❌ Error in loadDashboard:", err);
             }
         }
 
@@ -201,10 +254,13 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); 
         }
 
         document.getElementById('logoutBtn').addEventListener('click', async () => {
+            console.log("\n=== LOGGING OUT ===");
             await supabase.auth.signOut();
+            console.log("✅ Signed out, redirecting to login");
             window.location.href = 'login.html';
         });
 
+        console.log("\n=== INITIALIZING DASHBOARD ===");
         checkAuth();
     </script>
 </body>
