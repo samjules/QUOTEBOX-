@@ -229,7 +229,7 @@
                             <div class="h-3 w-3 bg-indigo-600 rounded-full"></div>
                             <div class="h-3 w-3 bg-indigo-600 rounded-full"></div>
                         </div>
-                        <p class="text-sm text-gray-600 mt-2">Processing payment...</p>
+                        <p class="text-sm text-gray-600 mt-2">Redirecting to checkout...</p>
                     </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
@@ -244,19 +244,30 @@
     <script>
         console.log("=== BILLING PAGE SCRIPT STARTING ===");
         
-        // Supabase setup
+        // ============================================
+        // CONFIGURATION - UPDATE THESE VALUES
+        // ============================================
+        
         const SUPABASE_URL = 'https://jpchpqjnyabtpptufkcj.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwY2hwcWpueWFidHBwdHVma2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMDAyNTAsImV4cCI6MjA4NjY3NjI1MH0.FCywHhyz8N0Hkl-jK9RxZyh2KFZMrP8aUSXt1oJQbHY';
         
+        // YOUR STRIPE PUBLISHABLE KEY (starts with pk_)
+        const STRIPE_PUBLISHABLE_KEY = 'pk_test_51QcxZaP3FoF924dzLqvz7qJbKuP8rJwQ9zdC9zRxH9nVEMo9zY5YRlGvj8Qqh6dMy9SRYH4Wqu0hkPjCKrGHgTAJ00k8HPxH9G';
+        
+        // YOUR SUPABASE EDGE FUNCTION URL
+        // Replace 'jpchpqjnyabtpptufkcj' with your Supabase project reference
+        const CHECKOUT_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/create-checkout-session`;
+        
+        const COST_PER_LEAD = 0.25; // $0.25 per lead
+        
+        // ============================================
+        
         const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        // Stripe setup (you'll need to add your publishable key)
-        const stripe = Stripe('pk_live_51STeNJ8AstiYVbnUXPS4sn95C1WrhifQbWcMkSKbFxxBEK0kXURrBGmYbQoRIGnzwYpzjVYUTnOu9AXi33OXNDDe00sl9POzAl'); // Replace with your key
+        const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
 
         let accountId = null;
         let userId = null;
         let currentBalance = 0;
-        const COST_PER_LEAD = 15.25; // $0.25 per lead (you can adjust this)
 
         async function checkAuth() {
             console.log("\n=== CHECKING AUTHENTICATION ===");
@@ -291,7 +302,6 @@
             console.log("\n=== LOADING BILLING DATA ===");
             
             try {
-                // Get or create billing record
                 let { data: billing, error: billingError } = await sb
                     .from('billing')
                     .select('*')
@@ -299,17 +309,14 @@
                     .single();
 
                 if (billingError && billingError.code === 'PGRST116') {
-                    // No billing record exists, create one
                     console.log("Creating new billing record...");
                     const { data: newBilling, error: createError } = await sb
                         .from('billing')
-                        .insert([
-                            {
-                                account_id: accountId,
-                                credit_balance: 0,
-                                total_spent: 0
-                            }
-                        ])
+                        .insert([{
+                            account_id: accountId,
+                            credit_balance: 0,
+                            total_spent: 0
+                        }])
                         .select()
                         .single();
 
@@ -324,7 +331,6 @@
                 console.log("✅ Billing data loaded:", billing);
                 currentBalance = billing.credit_balance;
 
-                // Get lead count
                 const { data: leads, error: leadsError } = await sb
                     .from('leads')
                     .select('*')
@@ -332,7 +338,6 @@
 
                 const totalLeads = leads ? leads.length : 0;
 
-                // Get this month's leads
                 const startOfMonth = new Date();
                 startOfMonth.setDate(1);
                 startOfMonth.setHours(0, 0, 0, 0);
@@ -341,7 +346,6 @@
                     new Date(l.created_at) >= startOfMonth
                 ).length : 0;
 
-                // Update UI
                 document.getElementById('creditBalance').textContent = `$${currentBalance.toFixed(2)}`;
                 document.getElementById('costPerLead').textContent = `$${COST_PER_LEAD.toFixed(2)}`;
                 document.getElementById('remainingLeads').textContent = Math.floor(currentBalance / COST_PER_LEAD);
@@ -349,7 +353,6 @@
                 document.getElementById('totalSpent').textContent = `$${billing.total_spent.toFixed(2)}`;
                 document.getElementById('monthlyLeads').textContent = monthlyLeads;
 
-                // Show warnings
                 if (currentBalance <= 0) {
                     document.getElementById('noBalanceWarning').classList.remove('hidden');
                     document.getElementById('lowBalanceWarning').classList.add('hidden');
@@ -361,14 +364,11 @@
                     document.getElementById('noBalanceWarning').classList.add('hidden');
                 }
 
-                // Load usage history
                 await loadUsageHistory();
 
-                // Show content
                 document.getElementById('loadingState').classList.add('hidden');
                 document.getElementById('billingContent').classList.remove('hidden');
 
-                // Set up real-time subscription for new leads
                 setupLeadSubscription();
 
             } catch (err) {
@@ -432,7 +432,6 @@
         function setupLeadSubscription() {
             console.log("\n=== SETTING UP LEAD SUBSCRIPTION ===");
             
-            // Subscribe to new leads
             const subscription = sb
                 .channel('leads-channel')
                 .on(
@@ -457,7 +456,6 @@
             console.log("\n=== DEDUCTING CREDIT FOR LEAD ===");
             console.log("Lead:", lead);
             console.log("Current balance:", currentBalance);
-            console.log("Cost per lead:", COST_PER_LEAD);
             
             if (currentBalance < COST_PER_LEAD) {
                 console.log("⚠️ Insufficient balance!");
@@ -468,12 +466,10 @@
             try {
                 const newBalance = currentBalance - COST_PER_LEAD;
                 
-                // Update billing record
                 const { error: updateError } = await sb
                     .from('billing')
                     .update({ 
-                        credit_balance: newBalance,
-                        total_spent: sb.rpc('increment', { row_id: accountId, amount: COST_PER_LEAD })
+                        credit_balance: newBalance
                     })
                     .eq('account_id', accountId);
 
@@ -482,7 +478,6 @@
                     return;
                 }
 
-                // Record transaction
                 const { error: txError } = await sb
                     .from('billing_transactions')
                     .insert([{
@@ -498,9 +493,7 @@
                 }
 
                 console.log("✅ Credit deducted successfully");
-                console.log("New balance:", newBalance);
 
-                // Reload billing data
                 await loadBillingData();
 
             } catch (err) {
@@ -508,7 +501,96 @@
             }
         }
 
-        // Modal controls
+        async function purchaseCredits(amountCents, creditsToAdd) {
+            console.log("\n=== PURCHASING CREDITS ===");
+            console.log("Amount (cents):", amountCents);
+            console.log("Credits to add:", creditsToAdd);
+            
+            document.getElementById('paymentProcessing').classList.remove('hidden');
+            
+            try {
+                // Call Supabase Edge Function to create checkout session
+                const response = await fetch(CHECKOUT_FUNCTION_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({
+                        amount: amountCents,
+                        credits: creditsToAdd,
+                        accountId: accountId,
+                        userId: userId
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+
+                const { sessionId, url } = await response.json();
+                
+                console.log("✅ Checkout session created:", sessionId);
+                
+                // Redirect to Stripe Checkout
+                window.location.href = url;
+                
+            } catch (err) {
+                console.error("❌ Error creating checkout session:", err);
+                alert(`Payment failed: ${err.message}\n\nPlease make sure your Supabase Edge Function is deployed.`);
+                document.getElementById('paymentProcessing').classList.add('hidden');
+            }
+        }
+
+        async function handlePaymentSuccess() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const success = urlParams.get('success');
+            const sessionId = urlParams.get('session_id');
+            const canceled = urlParams.get('canceled');
+
+            if (canceled) {
+                const banner = document.createElement('div');
+                banner.className = 'fixed top-4 right-4 bg-yellow-500 text-white px-6 py-4 rounded-lg shadow-lg z-50';
+                banner.innerHTML = `
+                    <div class="flex items-center">
+                        <span class="text-xl mr-2">⚠️</span>
+                        <div>
+                            <p class="font-semibold">Payment Canceled</p>
+                            <p class="text-sm">No charges were made.</p>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(banner);
+                setTimeout(() => banner.remove(), 5000);
+                window.history.replaceState({}, document.title, '/billing.html');
+                return;
+            }
+
+            if (success && sessionId) {
+                console.log("💳 Payment successful! Session ID:", sessionId);
+                
+                const successBanner = document.createElement('div');
+                successBanner.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50';
+                successBanner.innerHTML = `
+                    <div class="flex items-center">
+                        <span class="text-xl mr-2">✅</span>
+                        <div>
+                            <p class="font-semibold">Payment Successful!</p>
+                            <p class="text-sm">Your credits have been added.</p>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(successBanner);
+
+                setTimeout(async () => {
+                    await loadBillingData();
+                    successBanner.remove();
+                    window.history.replaceState({}, document.title, '/billing.html');
+                }, 3000);
+            }
+        }
+
         document.getElementById('addCreditsBtn').addEventListener('click', () => {
             document.getElementById('addCreditsModal').classList.remove('hidden');
         });
@@ -517,7 +599,6 @@
             document.getElementById('addCreditsModal').classList.add('hidden');
         });
 
-        // Credit package selection
         document.querySelectorAll('.credit-package-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const button = e.currentTarget;
@@ -528,82 +609,13 @@
             });
         });
 
-        async function purchaseCredits(amountCents, creditsToAdd) {
-            console.log("\n=== PURCHASING CREDITS ===");
-            console.log("Amount (cents):", amountCents);
-            console.log("Credits to add:", creditsToAdd);
-            
-            document.getElementById('paymentProcessing').classList.remove('hidden');
-            
-            try {
-                // In a real implementation, you would:
-                // 1. Create a Stripe checkout session on your backend
-                // 2. Redirect to Stripe checkout
-                // 3. Handle the webhook callback to add credits
-                
-                // For demo purposes, we'll simulate a successful payment
-                await simulatePayment(amountCents, creditsToAdd);
-                
-            } catch (err) {
-                console.error("❌ Error processing payment:", err);
-                alert("Payment failed. Please try again.");
-            } finally {
-                document.getElementById('paymentProcessing').classList.add('hidden');
-            }
-        }
-
-        async function simulatePayment(amountCents, creditsToAdd) {
-            console.log("💳 Simulating payment...");
-            
-            // Simulate payment delay
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            const creditAmount = creditsToAdd * COST_PER_LEAD;
-            const newBalance = currentBalance + creditAmount;
-            
-            // Update billing record
-            const { error: updateError } = await sb
-                .from('billing')
-                .update({ 
-                    credit_balance: newBalance
-                })
-                .eq('account_id', accountId);
-
-            if (updateError) {
-                throw updateError;
-            }
-
-            // Record transaction
-            const { error: txError } = await sb
-                .from('billing_transactions')
-                .insert([{
-                    account_id: accountId,
-                    type: 'credit_purchase',
-                    amount: creditAmount,
-                    balance_after: newBalance,
-                    description: `Purchased ${creditsToAdd} credits`
-                }]);
-
-            if (txError) {
-                console.error("❌ Error recording transaction:", txError);
-            }
-
-            console.log("✅ Payment successful!");
-            
-            // Close modal and reload
-            document.getElementById('addCreditsModal').classList.add('hidden');
-            await loadBillingData();
-            
-            alert(`Successfully added ${creditsToAdd} credits ($${(creditAmount).toFixed(2)})!`);
-        }
-
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             await sb.auth.signOut();
             window.location.href = 'login.html';
         });
 
-        // Initialize
         checkAuth();
+        handlePaymentSuccess();
     </script>
 </body>
 </html>
