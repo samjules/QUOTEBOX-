@@ -1,424 +1,763 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hosted Forms - QuoteFlow</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quote Form — Wuote Box</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ── Brand tokens — set by JS after config loads ── */
+  :root {
+    --brand:       #FFE500;
+    --brand-dark:  #1a1a2e;
+    --brand-text:  #1a1a2e;
+    --brand-muted: rgba(26,26,46,0.6);
+    --brand-step-active-bg: #1a1a2e;
+    --brand-step-active-color: #FFE500;
+    --btn-bg: #FFE500;
+    --btn-color: #1a1a2e;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #f5f5f8;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 0;
+  }
+
+  /* ── Loading / Error ── */
+  .screen-center { display: flex; align-items: center; justify-content: center; min-height: 100vh; width: 100%; flex-direction: column; gap: 16px; padding: 32px; text-align: center; }
+  .spinner { width: 36px; height: 36px; border: 3px solid #e2e2ec; border-top-color: #1a1a2e; border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .screen-center h2 { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 700; color: #1a1a2e; }
+  .screen-center p  { color: #8888a0; font-size: 0.9rem; max-width: 340px; line-height: 1.6; }
+
+  /* ── Card wrapper ── */
+  .form-card {
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Coloured header ── */
+  .card-header {
+    background: var(--brand);
+    padding: 32px 32px 28px;
+    flex-shrink: 0;
+  }
+
+  /* Progress steps */
+  .progress-steps { display: flex; align-items: center; margin-bottom: 22px; }
+  .step-dot {
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.72rem; font-weight: 700;
+    transition: all 0.3s; flex-shrink: 0;
+  }
+  .step-dot.done   { background: rgba(0,0,0,0.12); color: var(--brand-muted); }
+  .step-dot.active { background: var(--brand-step-active-bg); color: var(--brand-step-active-color); }
+  .step-dot.todo   { background: rgba(0,0,0,0.06); color: rgba(0,0,0,0.3); }
+  .step-line { flex: 1; height: 2px; margin: 0 8px; border-radius: 1px; background: rgba(0,0,0,0.1); }
+
+  /* For blue theme, overrides added by JS */
+  .blue-theme .step-dot.done   { background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); }
+  .blue-theme .step-dot.active { background: white; color: #1A56FF; }
+  .blue-theme .step-dot.todo   { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.3); }
+  .blue-theme .step-line       { background: rgba(255,255,255,0.2); }
+
+  .step-label {
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--brand-muted);
+    margin-bottom: 8px;
+  }
+  .form-title { font-family: 'Syne', sans-serif; font-size: 1.65rem; font-weight: 800; color: var(--brand-text); line-height: 1.2; }
+  .form-desc  { font-size: 0.875rem; color: var(--brand-muted); margin-top: 6px; line-height: 1.6; }
+
+  /* ── White body ── */
+  .card-body {
+    background: white;
+    flex: 1;
+    padding: 28px 32px 32px;
+  }
+
+  /* ── Fields ── */
+  .field-group { margin-bottom: 20px; }
+  .field-label { font-size: 0.875rem; font-weight: 500; color: #1a1a2e; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .req-star { color: #e5283c; font-size: 0.75rem; }
+
+  .field-input, .field-textarea, .field-select {
+    width: 100%; border: 1.5px solid #e2e2ec; border-radius: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: #1a1a2e;
+    padding: 12px 16px; background: white; outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s; -webkit-appearance: none;
+  }
+  .field-input:focus, .field-textarea:focus, .field-select:focus {
+    border-color: var(--brand-dark);
+    box-shadow: 0 0 0 3px rgba(26,26,46,0.06);
+  }
+  .field-input.has-error, .field-textarea.has-error, .field-select.has-error { border-color: #e5283c; }
+  .field-textarea { min-height: 96px; resize: vertical; }
+  .field-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; cursor: pointer;
+  }
+  .field-err { font-size: 0.77rem; color: #e5283c; margin-top: 5px; display: none; }
+  .field-err.show { display: block; }
+
+  /* Radio cards */
+  .radio-grid { display: flex; flex-direction: column; gap: 8px; }
+  .radio-card {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 16px; border: 1.5px solid #e2e2ec; border-radius: 10px;
+    cursor: pointer; transition: all 0.15s; user-select: none;
+  }
+  .radio-card:hover { border-color: var(--brand-dark); }
+  .radio-card.sel   { border-color: var(--brand-dark); background: rgba(26,26,46,0.02); }
+  .rc-left  { display: flex; align-items: center; gap: 12px; }
+  .rc-dot   { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #d0d0e0; flex-shrink: 0; position: relative; transition: all 0.15s; }
+  .radio-card.sel .rc-dot { border-color: var(--brand-dark); }
+  .radio-card.sel .rc-dot::after { content:''; position:absolute; width:8px; height:8px; background:var(--brand-dark); border-radius:50%; top:50%; left:50%; transform:translate(-50%,-50%); }
+  .rc-label { font-size: 0.88rem; font-weight: 500; color: #1a1a2e; }
+  .rc-price { font-size: 0.82rem; font-weight: 600; color: #8888a0; }
+
+  /* Checkboxes */
+  .checkbox-list { display: flex; flex-direction: column; gap: 8px; }
+  .cb-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border: 1.5px solid #e2e2ec; border-radius: 10px;
+    cursor: pointer; transition: all 0.15s; user-select: none;
+  }
+  .cb-item:hover { border-color: var(--brand-dark); }
+  .cb-item.sel   { border-color: var(--brand-dark); background: rgba(26,26,46,0.02); }
+  .cb-left { display: flex; align-items: center; gap: 12px; }
+  .cb-box  { width: 18px; height: 18px; border-radius: 5px; border: 2px solid #d0d0e0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
+  .cb-item.sel .cb-box { background: var(--brand-dark); border-color: var(--brand-dark); }
+  .cb-check { color: white; font-size: 0.65rem; font-weight: 700; opacity: 0; }
+  .cb-item.sel .cb-check { opacity: 1; }
+  .cb-label { font-size: 0.88rem; font-weight: 500; color: #1a1a2e; }
+  .cb-price { font-size: 0.82rem; font-weight: 600; color: #8888a0; }
+
+  /* Total bar */
+  .total-bar {
+    background: var(--brand-dark); color: white;
+    border-radius: 10px; padding: 16px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 20px;
+  }
+  .total-bar-label { font-size: 0.8rem; opacity: 0.55; margin-bottom: 2px; }
+  .total-bar-amount { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; }
+  .total-bar-breakdown { font-size: 0.72rem; opacity: 0.45; margin-top: 3px; }
+
+  /* Buttons */
+  .btn-row { display: flex; gap: 10px; margin-top: 24px; }
+  .btn-back {
+    padding: 13px 20px; border-radius: 10px; font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem; font-weight: 500; background: white;
+    border: 1.5px solid #e2e2ec; color: #8888a0; cursor: pointer; transition: all 0.15s;
+  }
+  .btn-back:hover { border-color: #1a1a2e; color: #1a1a2e; }
+  .btn-next {
+    flex: 1; padding: 14px; border-radius: 10px; font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 1rem; border: none; cursor: pointer;
+    background: var(--btn-bg); color: var(--btn-color);
+    transition: all 0.15s; letter-spacing: -0.01em;
+  }
+  .btn-next:hover { filter: brightness(1.05); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,0.12); }
+  .btn-next:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; filter: none; }
+
+  /* ── Step 3 — email confirmation ── */
+  .confirm-screen {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; text-align: center; padding: 12px 0 8px;
+    gap: 14px;
+  }
+  .confirm-envelope {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: var(--brand); display: flex; align-items: center;
+    justify-content: center; font-size: 1.8rem;
+    animation: popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+  }
+  @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .confirm-headline { font-family: 'Syne', sans-serif; font-size: 1.35rem; font-weight: 800; color: #1a1a2e; }
+  .confirm-sub { font-size: 0.875rem; color: #8888a0; line-height: 1.65; max-width: 300px; }
+  .confirm-email-chip {
+    background: #f5f5f8; border-radius: 8px; padding: 10px 16px;
+    font-size: 0.85rem; font-weight: 500; color: #1a1a2e;
+    display: flex; align-items: center; gap: 8px; margin-top: 4px;
+  }
+  .confirm-quote-box {
+    width: 100%; background: var(--brand); border-radius: 10px;
+    padding: 16px 20px; display: flex; align-items: center;
+    justify-content: space-between; margin-top: 8px;
+  }
+  .confirm-quote-label { font-size: 0.8rem; font-weight: 600; color: var(--brand-text); opacity: 0.65; margin-bottom: 2px; }
+  .confirm-quote-amount { font-family: 'Syne', sans-serif; font-size: 1.7rem; font-weight: 800; color: var(--brand-text); }
+
+  /* Powered by */
+  .powered-by {
+    text-align: center; padding: 14px; font-size: 0.72rem;
+    color: #c0c0d0; background: white;
+  }
+  .powered-by a { color: inherit; text-decoration: none; font-weight: 600; }
+  .powered-by a:hover { color: #1a1a2e; }
+
+  /* Limit banner */
+  .limit-banner { background: #fff8e6; border: 1.5px solid #f0c040; border-radius: 10px; padding: 13px 16px; font-size: 0.84rem; color: #7a5c00; margin-bottom: 20px; display: none; }
+
+  @media (min-width: 600px) {
+    body { padding: 40px 20px; align-items: center; }
+    .form-card { min-height: auto; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,0.1); }
+  }
+</style>
 </head>
-<body class="bg-gray-50">
-    <div class="flex h-screen overflow-hidden">
-        <!-- Sidebar -->
-        <div class="w-64 bg-gray-900">
-            <div class="flex flex-col h-full">
-                <div class="flex items-center justify-center h-16 bg-gray-800">
-                    <span class="text-white text-xl font-bold">QuoteFlow</span>
-                </div>
-                <nav class="flex-1 px-2 py-4 space-y-1">
-                    <a href="dashboard.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
-                        Dashboard
-                    </a>
-                    <a href="leads.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
-                        Leads
-                    </a>
-                    <a href="form-builder.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
-                        Form Builder
-                    </a>
-                    <a href="hosted-forms.html" class="bg-gray-800 text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
-                        Hosted Forms
-                    </a>
-                    <a href="billing.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
-                        Billing & Credits
-                    </a>
-                    <a href="settings.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
-                        Settings
-                    </a>
-                </nav>
-                <div class="p-4">
-                    <button id="logoutBtn" class="w-full bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
-                        Logout
-                    </button>
-                </div>
-            </div>
-        </div>
+<body>
 
-        <!-- Main Content -->
-        <div class="flex-1 overflow-auto">
-            <div class="py-6">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <h1 class="text-2xl font-semibold text-gray-900">Hosted Forms</h1>
-                            <p class="mt-2 text-sm text-gray-600">Manage your lead generation forms</p>
-                        </div>
-                        <button id="createFormBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition flex items-center">
-                            <span class="text-xl mr-2">+</span> Create Form
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 mt-6">
-                    <!-- Loading State -->
-                    <div id="loadingState" class="py-4">
-                        <div class="bg-white shadow rounded-xl p-8 text-center">
-                            <div class="animate-pulse">
-                                <div class="h-4 bg-gray-200 rounded w-1/4 mx-auto"></div>
-                            </div>
-                            <p class="mt-2 text-gray-500">Loading forms...</p>
-                        </div>
-                    </div>
+<!-- Loading -->
+<div class="screen-center" id="scrLoad">
+  <div class="spinner"></div>
+  <p>Loading your quote form…</p>
+</div>
 
-                    <!-- Empty State -->
-                    <div id="emptyState" class="hidden bg-white shadow rounded-xl p-12 text-center">
-                        <div class="text-6xl mb-4">📝</div>
-                        <h3 class="text-lg font-medium text-gray-900 mb-2">No forms yet</h3>
-                        <p class="text-gray-500 mb-6">Create your first hosted form to start collecting leads</p>
-                        <button onclick="document.getElementById('createFormBtn').click()" class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition">
-                            Create Your First Form
-                        </button>
-                    </div>
+<!-- Not found -->
+<div class="screen-center" id="scrError" style="display:none">
+  <h2>Form not found</h2>
+  <p>This quote form doesn't exist or has been deactivated. Double-check the link and try again.</p>
+</div>
 
-                    <!-- Forms Grid -->
-                    <div id="formsGrid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <!-- Forms will be inserted here -->
-                    </div>
-                </div>
-            </div>
-        </div>
+<!-- Main form card -->
+<div class="form-card" id="scrForm" style="display:none">
+  <div class="card-header" id="cardHeader">
+    <div class="progress-steps" id="progressSteps"></div>
+    <div class="step-label" id="stepLabel"></div>
+    <div class="form-title" id="formTitle"></div>
+    <div class="form-desc"  id="formDesc"></div>
+  </div>
+  <div class="card-body" id="cardBody">
+    <div class="limit-banner" id="limitBanner">
+      ⚠ This form has reached its submission limit and is no longer accepting new quotes.
     </div>
+    <div id="stepContent"></div>
+  </div>
+  <div class="powered-by">
+    Powered by <a href="https://quote-box.com" target="_blank">Wuote Box</a>
+  </div>
+</div>
 
-    <!-- Create/Edit Form Modal -->
-    <div id="formModal" class="hidden fixed z-10 inset-0 overflow-y-auto">
-        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4" id="modalTitle">Create New Form</h3>
-                    
-                    <form id="formConfigForm" class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Form Name</label>
-                            <input type="text" id="formName" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 border">
-                        </div>
+<script>
+// ─────────────────────────────────────────────────────────────
+// CONFIG
+// ─────────────────────────────────────────────────────────────
+const SUPABASE_URL  = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
+// Edge Function URL — deploy send-quote-email to your Supabase project
+const EDGE_FN_URL   = 'YOUR_SUPABASE_URL/functions/v1/send-quote-email';
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Form Type</label>
-                            <select id="formType" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 border">
-                                <option value="">Select a type</option>
-                                <option value="moving">Moving Services</option>
-                                <option value="cleaning">Cleaning Services</option>
-                                <option value="plumbing">Plumbing Services</option>
-                                <option value="landscaping">Landscaping</option>
-                                <option value="painting">Painting Services</option>
-                                <option value="hvac">HVAC Services</option>
-                                <option value="roofing">Roofing</option>
-                                <option value="general">General Quote Request</option>
-                            </select>
-                        </div>
+// ─────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────
+let cfg          = null;  // form_config JSON
+let hostedFormId = null;
+let accountId    = null;
+let step         = 1;     // 1, 2, or 3
+let quoteData    = {};    // selections from step 1
+let contactData  = {};    // name/email/phone from step 2
+let totalPrice   = 0;
+let breakdown    = [];
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                            <div class="flex items-center">
-                                <input type="checkbox" id="formActive" checked class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                                <label for="formActive" class="ml-2 block text-sm text-gray-900">
-                                    Form is active and accepting submissions
-                                </label>
-                            </div>
-                        </div>
+// ─────────────────────────────────────────────────────────────
+// BOOT
+// ─────────────────────────────────────────────────────────────
+(async function boot() {
+  const slug = getSlug();
+  if (!slug) { show('scrError'); return; }
+  await loadForm(slug);
+})();
 
-                        <input type="hidden" id="editingFormId">
-                    </form>
-                </div>
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
-                    <button type="button" id="saveFormBtn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none sm:w-auto sm:text-sm">
-                        Save Form
-                    </button>
-                    <button type="button" id="closeModalBtn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm">
-                        Cancel
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+function getSlug() {
+  const parts = window.location.pathname.replace(/^\/|\/$/g,'').split('/');
+  const last  = parts[parts.length-1];
+  if (last && last !== 'form' && last !== 'index.html') return last;
+  return new URLSearchParams(window.location.search).get('slug') || '';
+}
 
-    <!-- View Form URL Modal -->
-    <div id="urlModal" class="hidden fixed z-10 inset-0 overflow-y-auto">
-        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Form URL</h3>
-                    <p class="text-sm text-gray-600 mb-4">Share this URL to collect leads:</p>
-                    
-                    <div class="bg-gray-50 p-3 rounded-md border border-gray-200 flex items-center justify-between">
-                        <code id="formUrl" class="text-sm text-gray-800 break-all flex-1"></code>
-                        <button id="copyUrlBtn" class="ml-3 flex-shrink-0 bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700">
-                            Copy
-                        </button>
-                    </div>
-                    
-                    <div id="copySuccess" class="hidden mt-2 text-sm text-green-600">
-                        ✓ Copied to clipboard!
-                    </div>
-                </div>
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="button" id="closeUrlModalBtn" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:w-auto sm:text-sm">
-                        Close
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+function show(id) {
+  ['scrLoad','scrError','scrForm'].forEach(s => {
+    const el = document.getElementById(s);
+    el.style.display = s===id ? (s==='scrLoad'?'flex':'block') : 'none';
+  });
+}
 
-    <script>
-        console.log("=== HOSTED FORMS PAGE ===");
-        
-        const SUPABASE_URL = 'https://jpchpqjnyabtpptufkcj.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwY2hwcWpueWFidHBwdHVma2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMDAyNTAsImV4cCI6MjA4NjY3NjI1MH0.FCywHhyz8N0Hkl-jK9RxZyh2KFZMrP8aUSXt1oJQbHY';
-        
-        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ─────────────────────────────────────────────────────────────
+// LOAD FORM
+// ─────────────────────────────────────────────────────────────
+async function loadForm(slug) {
+  try {
+    const res = await fetch(
+      SUPABASE_URL + '/rest/v1/hosted_forms'
+      + '?form_config->>slug=eq.' + encodeURIComponent(slug)
+      + '&is_active=eq.true&select=id,account_id,form_name,form_config&limit=1',
+      { headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON } }
+    );
+    const rows = await res.json();
+    if (!rows || !rows.length) { show('scrError'); return; }
 
-        let accountId = null;
-        let currentForms = [];
+    const row    = rows[0];
+    hostedFormId = row.id;
+    accountId    = row.account_id;
+    cfg          = row.form_config;
 
-        async function checkAuth() {
-            try {
-                const { data: { user }, error } = await sb.auth.getUser();
-                if (error || !user) {
-                    window.location.href = 'login.html';
-                    return;
-                }
-                
-                const { data: account } = await sb.from('accounts').select('*').eq('owner_id', user.id).single();
-                if (account) {
-                    accountId = account.id;
-                    await loadForms();
-                }
-            } catch (err) {
-                console.error("Error in checkAuth:", err);
-            }
-        }
+    // Apply brand colour CSS vars
+    applyTheme(cfg.brand_color || 'yellow');
 
-        async function loadForms() {
-            try {
-                const { data: forms, error } = await sb
-                    .from('hosted_forms')
-                    .select('*')
-                    .eq('account_id', accountId)
-                    .order('created_at', { ascending: false });
+    // Check lead limit
+    const ok = await checkLeadLimit();
+    if (!ok) document.getElementById('limitBanner').style.display = 'block';
 
-                console.log("Loaded forms:", forms);
+    document.title = (cfg.title || row.form_name) + ' — Quote';
+    document.getElementById('formTitle').textContent = cfg.title || row.form_name;
+    document.getElementById('formDesc').textContent  = cfg.description || '';
 
-                if (error) {
-                    console.error("Error loading forms:", error);
-                    return;
-                }
+    renderStep(1, !ok);
+    show('scrForm');
 
-                currentForms = forms || [];
-                
-                document.getElementById('loadingState').classList.add('hidden');
+  } catch(e) {
+    console.error(e);
+    show('scrError');
+  }
+}
 
-                if (currentForms.length === 0) {
-                    document.getElementById('emptyState').classList.remove('hidden');
-                    document.getElementById('formsGrid').classList.add('hidden');
-                } else {
-                    document.getElementById('emptyState').classList.add('hidden');
-                    document.getElementById('formsGrid').classList.remove('hidden');
-                    renderForms();
-                }
-            } catch (err) {
-                console.error("Error loading forms:", err);
-            }
-        }
+// ─────────────────────────────────────────────────────────────
+// THEME
+// ─────────────────────────────────────────────────────────────
+function applyTheme(color) {
+  const root = document.documentElement;
+  const hdr  = document.getElementById('cardHeader');
+  if (color === 'blue') {
+    root.style.setProperty('--brand',                '#1A56FF');
+    root.style.setProperty('--brand-dark',           '#0e3adb');
+    root.style.setProperty('--brand-text',           '#ffffff');
+    root.style.setProperty('--brand-muted',          'rgba(255,255,255,0.65)');
+    root.style.setProperty('--brand-step-active-bg', '#ffffff');
+    root.style.setProperty('--brand-step-active-color','#1A56FF');
+    root.style.setProperty('--btn-bg',               '#1A56FF');
+    root.style.setProperty('--btn-color',            '#ffffff');
+    hdr.classList.add('blue-theme');
+    // Step dot overrides already handled via .blue-theme CSS
+    document.getElementById('stepLabel').style.color  = 'rgba(255,255,255,0.6)';
+    document.getElementById('formTitle').style.color  = 'white';
+    document.getElementById('formDesc').style.color   = 'rgba(255,255,255,0.65)';
+  } else {
+    // yellow (default — CSS vars already set)
+    root.style.setProperty('--brand',                '#FFE500');
+    root.style.setProperty('--brand-dark',           '#1a1a2e');
+    root.style.setProperty('--brand-text',           '#1a1a2e');
+    root.style.setProperty('--brand-muted',          'rgba(26,26,46,0.6)');
+    root.style.setProperty('--brand-step-active-bg', '#1a1a2e');
+    root.style.setProperty('--brand-step-active-color','#FFE500');
+    root.style.setProperty('--btn-bg',               '#FFE500');
+    root.style.setProperty('--btn-color',            '#1a1a2e');
+  }
+  // Also apply theme to the total bar btn-next in step 3 confirm block
+}
 
-        function renderForms() {
-            const grid = document.getElementById('formsGrid');
-            grid.innerHTML = '';
+// ─────────────────────────────────────────────────────────────
+// LEAD LIMIT CHECK
+// ─────────────────────────────────────────────────────────────
+async function checkLeadLimit() {
+  try {
+    const res = await fetch(
+      SUPABASE_URL + '/rest/v1/leads?account_id=eq.' + accountId + '&select=id',
+      { headers: { 'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Prefer':'count=exact','Range':'0-0' } }
+    );
+    const count = parseInt((res.headers.get('Content-Range')||'').split('/')[1]||'0', 10);
+    const LIMIT = 25; // base plan — replace with billing lookup for multi-tier
+    return count < LIMIT;
+  } catch { return true; }
+}
 
-            currentForms.forEach(form => {
-                const card = document.createElement('div');
-                card.className = 'bg-white rounded-xl shadow hover:shadow-lg transition p-6';
-                
-                const statusBadge = form.is_active 
-                    ? '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>'
-                    : '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Inactive</span>';
+// ─────────────────────────────────────────────────────────────
+// STEP RENDER
+// ─────────────────────────────────────────────────────────────
+function renderStep(n, limitReached) {
+  step = n;
+  updateProgress(n);
 
-                card.innerHTML = `
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="flex-1">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-1">${form.form_name}</h3>
-                            <p class="text-sm text-gray-500 capitalize">${form.form_type}</p>
-                        </div>
-                        ${statusBadge}
-                    </div>
-                    
-                    <div class="text-sm text-gray-600 mb-4">
-                        <p>Created: ${new Date(form.created_at).toLocaleDateString()}</p>
-                    </div>
+  const labels = ['Step 1 of 3 — Your Quote', 'Step 2 of 3 — Contact Details', 'Step 3 of 3 — Confirmation'];
+  document.getElementById('stepLabel').textContent = labels[n-1];
 
-                    <div class="flex gap-2">
-                        <button onclick="viewFormUrl('${form.id}')" class="flex-1 bg-indigo-600 text-white px-3 py-2 rounded-md text-sm hover:bg-indigo-700 transition">
-                            View URL
-                        </button>
-                        <button onclick="editForm('${form.id}')" class="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded-md text-sm hover:bg-gray-200 transition">
-                            Edit
-                        </button>
-                        <button onclick="deleteForm('${form.id}')" class="bg-red-100 text-red-700 px-3 py-2 rounded-md text-sm hover:bg-red-200 transition">
-                            Delete
-                        </button>
-                    </div>
-                `;
-                
-                grid.appendChild(card);
-            });
-        }
+  const body = document.getElementById('stepContent');
+  body.innerHTML = '';
 
-        function viewFormUrl(formId) {
-            const form = currentForms.find(f => f.id === formId);
-            if (!form) return;
+  if (n === 1) renderStep1(body, limitReached);
+  if (n === 2) renderStep2(body);
+  if (n === 3) renderStep3(body);
+}
 
-            const baseUrl = window.location.origin;
-            const formUrl = `${baseUrl}/form/${formId}.html`;
-            
-            document.getElementById('formUrl').textContent = formUrl;
-            document.getElementById('urlModal').classList.remove('hidden');
-            document.getElementById('copySuccess').classList.add('hidden');
-        }
+function updateProgress(active) {
+  const wrap = document.getElementById('progressSteps');
+  const isBlue = (cfg.brand_color||'yellow') === 'blue';
+  wrap.innerHTML = [1,2,3].map((i,idx) => {
+    const cls = i < active ? 'done' : i===active ? 'active' : 'todo';
+    return '<div class="step-dot'+( isBlue ? ' blue-theme-dot' : '')+' '+cls+'" style="'+(isBlue&&cls==='active'?'background:white;color:#1A56FF;':'')+(isBlue&&cls==='done'?'background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);':'')+(isBlue&&cls==='todo'?'background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.3);':'')+'">'+i+'</div>'
+         + (idx<2 ? '<div class="step-line" style="'+(isBlue?'background:rgba(255,255,255,0.2);':'')+'"></div>' : '');
+  }).join('');
+}
 
-        function editForm(formId) {
-            const form = currentForms.find(f => f.id === formId);
-            if (!form) return;
+// ─────────────────────────────────────────────────────────────
+// STEP 1 — Quote selections
+// ─────────────────────────────────────────────────────────────
+function renderStep1(wrap, limitReached) {
+  const cur = cfg.currency || '$';
 
-            document.getElementById('modalTitle').textContent = 'Edit Form';
-            document.getElementById('formName').value = form.form_name;
-            document.getElementById('formType').value = form.form_type;
-            document.getElementById('formActive').checked = form.is_active;
-            document.getElementById('editingFormId').value = formId;
-            document.getElementById('formModal').classList.remove('hidden');
-        }
+  (cfg.fields || []).forEach(field => {
+    const grp = document.createElement('div');
+    grp.className = 'field-group';
 
-        async function deleteForm(formId) {
-            if (!confirm('Are you sure you want to delete this form? This action cannot be undone.')) {
-                return;
-            }
+    const lbl = document.createElement('div');
+    lbl.className = 'field-label';
+    lbl.innerHTML = esc(field.label) + (field.required ? '<span class="req-star">*</span>' : '');
+    grp.appendChild(lbl);
 
-            try {
-                const { error } = await sb
-                    .from('hosted_forms')
-                    .delete()
-                    .eq('id', formId);
+    if (field.type === 'textarea' || field.type === 'number') {
+      const inp = document.createElement(field.type==='textarea'?'textarea':'input');
+      inp.className = field.type==='textarea'?'field-textarea':'field-input';
+      if (field.type==='number') { inp.type='number'; inp.min='0'; }
+      inp.placeholder = field.placeholder || '';
+      inp.setAttribute('data-fid', field.id);
+      if (quoteData[field.id] !== undefined) inp.value = quoteData[field.id];
+      inp.addEventListener('input', () => { clearErr(field.id); if(field.type==='number') recalc(); });
+      grp.appendChild(inp);
 
-                if (error) throw error;
+    } else if (field.type === 'dropdown') {
+      const sel = document.createElement('select');
+      sel.className = 'field-select';
+      sel.setAttribute('data-fid', field.id);
+      const blank = document.createElement('option'); blank.value=''; blank.textContent='Select an option…'; sel.appendChild(blank);
+      (field.options||[]).forEach(o => {
+        const opt = document.createElement('option');
+        opt.value = o.id;
+        opt.textContent = o.label + (o.price>0?' (+'+cur+o.price+')':'');
+        if (quoteData[field.id]===o.id) opt.selected=true;
+        sel.appendChild(opt);
+      });
+      sel.addEventListener('change', () => { clearErr(field.id); recalc(); });
+      grp.appendChild(sel);
 
-                await loadForms();
-            } catch (err) {
-                console.error("Error deleting form:", err);
-                alert('Failed to delete form: ' + err.message);
-            }
-        }
-
-        // Modal handlers
-        document.getElementById('createFormBtn').addEventListener('click', () => {
-            document.getElementById('modalTitle').textContent = 'Create New Form';
-            document.getElementById('formConfigForm').reset();
-            document.getElementById('formActive').checked = true;
-            document.getElementById('editingFormId').value = '';
-            document.getElementById('formModal').classList.remove('hidden');
+    } else if (field.type === 'radio') {
+      const grid = document.createElement('div');
+      grid.className = 'radio-grid'; grid.setAttribute('data-fid', field.id);
+      (field.options||[]).forEach(o => {
+        const card = document.createElement('div');
+        card.className = 'radio-card' + (quoteData[field.id]===o.id?' sel':'');
+        card.setAttribute('data-val', o.id);
+        card.innerHTML = '<div class="rc-left"><div class="rc-dot"></div><span class="rc-label">'+esc(o.label)+'</span></div>'
+          +'<span class="rc-price">'+(o.price>0?cur+o.price:'Free')+'</span>';
+        card.addEventListener('click', () => {
+          grid.querySelectorAll('.radio-card').forEach(c=>c.classList.remove('sel'));
+          card.classList.add('sel'); clearErr(field.id); recalc();
         });
+        grid.appendChild(card);
+      });
+      grp.appendChild(grid);
 
-        document.getElementById('closeModalBtn').addEventListener('click', () => {
-            document.getElementById('formModal').classList.add('hidden');
-        });
+    } else if (field.type === 'checkbox') {
+      const list = document.createElement('div');
+      list.className = 'checkbox-list'; list.setAttribute('data-fid', field.id);
+      (field.options||[]).forEach(o => {
+        const item = document.createElement('div');
+        const prevSel = Array.isArray(quoteData[field.id]) && quoteData[field.id].includes(o.id);
+        item.className = 'cb-item' + (prevSel?' sel':'');
+        item.setAttribute('data-val', o.id);
+        item.innerHTML = '<div class="cb-left"><div class="cb-box"><span class="cb-check">✓</span></div><span class="cb-label">'+esc(o.label)+'</span></div>'
+          +'<span class="cb-price">'+(o.price>0?'+'+cur+o.price:'Free')+'</span>';
+        item.addEventListener('click', () => { item.classList.toggle('sel'); recalc(); });
+        list.appendChild(item);
+      });
+      grp.appendChild(list);
+    }
 
-        document.getElementById('closeUrlModalBtn').addEventListener('click', () => {
-            document.getElementById('urlModal').classList.add('hidden');
-        });
+    const err = document.createElement('div');
+    err.className = 'field-err'; err.id = 'err_'+field.id;
+    err.textContent = field.label + ' is required';
+    grp.appendChild(err);
+    wrap.appendChild(grp);
+  });
 
-        document.getElementById('saveFormBtn').addEventListener('click', async () => {
-            const formName = document.getElementById('formName').value;
-            const formType = document.getElementById('formType').value;
-            const isActive = document.getElementById('formActive').checked;
-            const editingId = document.getElementById('editingFormId').value;
+  // Total bar
+  const hasPricing = (cfg.fields||[]).some(f=>['radio','dropdown','checkbox'].includes(f.type)||(f.type==='number'&&f.ratePerUnit>0));
+  if (hasPricing) {
+    const bar = document.createElement('div');
+    bar.className = 'total-bar'; bar.id = 'totalBar';
+    bar.innerHTML = '<div><div class="total-bar-label">Estimated Total</div><div class="total-bar-amount" id="totalAmt">'+cur+'0</div><div class="total-bar-breakdown" id="totalBD">Make selections above</div></div>';
+    wrap.appendChild(bar);
+  }
 
-            if (!formName || !formType) {
-                alert('Please fill in all required fields');
-                return;
-            }
+  // Button
+  const btnRow = document.createElement('div');
+  btnRow.className = 'btn-row';
+  const next = document.createElement('button');
+  next.className = 'btn-next';
+  next.textContent = 'Next →';
+  next.disabled = limitReached;
+  next.addEventListener('click', advanceStep1);
+  btnRow.appendChild(next);
+  wrap.appendChild(btnRow);
 
-            try {
-                const formData = {
-                    account_id: accountId,
-                    form_name: formName,
-                    form_type: formType,
-                    is_active: isActive,
-                    form_config: getDefaultFormConfig(formType),
-                    updated_at: new Date().toISOString()
-                };
+  recalc();
+}
 
-                if (editingId) {
-                    // Update existing form
-                    const { error } = await sb
-                        .from('hosted_forms')
-                        .update(formData)
-                        .eq('id', editingId);
+function recalc() {
+  const cur = cfg.currency || '$';
+  let total = 0; const items = [];
+  (cfg.fields||[]).forEach(f => {
+    if (f.type==='number' && f.ratePerUnit>0) {
+      const el = document.querySelector('[data-fid="'+f.id+'"]');
+      const qty = parseFloat(el&&el.value)||0;
+      if (qty>0) { const sub=qty*f.ratePerUnit; total+=sub; items.push(qty+'×'+cur+f.ratePerUnit); }
+    } else if (f.type==='radio') {
+      const g=document.querySelector('[data-fid="'+f.id+'"]');
+      const s=g&&g.querySelector('.radio-card.sel');
+      const o=s&&(f.options||[]).find(x=>x.id===s.getAttribute('data-val'));
+      if (o&&o.price>0) { total+=o.price; items.push(esc(o.label)+': '+cur+o.price); }
+    } else if (f.type==='dropdown') {
+      const el=document.querySelector('[data-fid="'+f.id+'"]');
+      const o=el&&el.value&&(f.options||[]).find(x=>x.id===el.value);
+      if (o&&o.price>0) { total+=o.price; items.push(esc(o.label)+': '+cur+o.price); }
+    } else if (f.type==='checkbox') {
+      const l=document.querySelector('[data-fid="'+f.id+'"]');
+      if (l) l.querySelectorAll('.cb-item.sel').forEach(item=>{
+        const o=(f.options||[]).find(x=>x.id===item.getAttribute('data-val'));
+        if (o&&o.price>0) { total+=o.price; items.push('+'+cur+o.price+' '+esc(o.label)); }
+      });
+    }
+  });
+  totalPrice = total; breakdown = items;
+  const amt = document.getElementById('totalAmt');
+  const bd  = document.getElementById('totalBD');
+  if (amt) amt.textContent = cur + total.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2});
+  if (bd)  bd.textContent  = items.length ? items.join(' + ') : 'Make selections above';
+}
 
-                    if (error) throw error;
-                } else {
-                    // Create new form
-                    const { error } = await sb
-                        .from('hosted_forms')
-                        .insert([formData]);
+function advanceStep1() {
+  // Collect + validate
+  let ok = true;
+  const data = {};
+  (cfg.fields||[]).forEach(f => {
+    if (['textarea'].includes(f.type)||f.type==='number') {
+      const el=document.querySelector('[data-fid="'+f.id+'"]');
+      const v=el?el.value.trim():'';
+      data[f.id]=v;
+      if (f.required&&!v) { showErr(f.id); ok=false; }
+    } else if (f.type==='dropdown') {
+      const el=document.querySelector('[data-fid="'+f.id+'"]');
+      data[f.id]=el?el.value:'';
+      if (f.required&&!el.value) { showErr(f.id); ok=false; }
+    } else if (f.type==='radio') {
+      const g=document.querySelector('[data-fid="'+f.id+'"]');
+      const s=g&&g.querySelector('.radio-card.sel');
+      data[f.id]=s?s.getAttribute('data-val'):'';
+      if (f.required&&!data[f.id]) { showErr(f.id); ok=false; }
+    } else if (f.type==='checkbox') {
+      const l=document.querySelector('[data-fid="'+f.id+'"]');
+      const sel=[];
+      if (l) l.querySelectorAll('.cb-item.sel').forEach(i=>sel.push(i.getAttribute('data-val')));
+      data[f.id]=sel;
+    }
+  });
+  if (!ok) return;
+  quoteData = data;
+  renderStep(2);
+}
 
-                    if (error) throw error;
-                }
+// ─────────────────────────────────────────────────────────────
+// STEP 2 — Contact info
+// ─────────────────────────────────────────────────────────────
+function renderStep2(wrap) {
+  const fields2 = [
+    { id:'name',  label:'Full Name',     type:'text',  placeholder:'Your full name',     required:true  },
+    { id:'email', label:'Email Address', type:'email', placeholder:'you@example.com',    required:true  },
+    { id:'phone', label:'Phone Number',  type:'tel',   placeholder:'+1 (555) 000-0000',  required:false },
+  ];
 
-                document.getElementById('formModal').classList.add('hidden');
-                await loadForms();
-            } catch (err) {
-                console.error("Error saving form:", err);
-                alert('Failed to save form: ' + err.message);
-            }
-        });
+  fields2.forEach(f => {
+    const grp = document.createElement('div');
+    grp.className = 'field-group';
+    const lbl = document.createElement('div');
+    lbl.className = 'field-label';
+    lbl.innerHTML = esc(f.label) + (f.required?'<span class="req-star">*</span>':'');
+    grp.appendChild(lbl);
+    const inp = document.createElement('input');
+    inp.type = f.type; inp.className = 'field-input';
+    inp.placeholder = f.placeholder;
+    inp.setAttribute('data-cid', f.id);
+    if (contactData[f.id]) inp.value = contactData[f.id];
+    inp.addEventListener('input', () => clearErr('c_'+f.id));
+    grp.appendChild(inp);
+    const err = document.createElement('div');
+    err.className='field-err'; err.id='err_c_'+f.id; err.textContent=f.label+' is required';
+    grp.appendChild(err);
+    wrap.appendChild(grp);
+  });
 
-        document.getElementById('copyUrlBtn').addEventListener('click', () => {
-            const url = document.getElementById('formUrl').textContent;
-            navigator.clipboard.writeText(url).then(() => {
-                document.getElementById('copySuccess').classList.remove('hidden');
-                setTimeout(() => {
-                    document.getElementById('copySuccess').classList.add('hidden');
-                }, 3000);
-            });
-        });
+  const btnRow = document.createElement('div');
+  btnRow.className = 'btn-row';
+  const back = document.createElement('button');
+  back.className='btn-back'; back.textContent='← Back';
+  back.addEventListener('click', ()=>renderStep(1));
+  const next = document.createElement('button');
+  next.className='btn-next'; next.textContent = cfg.submit_label||'Get My Quote →';
+  next.addEventListener('click', advanceStep2);
+  btnRow.appendChild(back); btnRow.appendChild(next);
+  wrap.appendChild(btnRow);
+}
 
-        function getDefaultFormConfig(formType) {
-            // Return default configuration based on form type
-            const configs = {
-                moving: {
-                    fields: ['from_city', 'to_city', 'truck_size', 'movers', 'estimated_hours', 'supplies_included']
-                },
-                cleaning: {
-                    fields: ['property_type', 'bedrooms', 'bathrooms', 'service_type', 'frequency']
-                },
-                plumbing: {
-                    fields: ['service_type', 'urgency', 'property_type', 'issue_description']
-                },
-                general: {
-                    fields: ['service_needed', 'project_description', 'budget_range', 'timeline']
-                }
-            };
+async function advanceStep2() {
+  const nameEl  = document.querySelector('[data-cid="name"]');
+  const emailEl = document.querySelector('[data-cid="email"]');
+  const phoneEl = document.querySelector('[data-cid="phone"]');
+  let ok = true;
+  if (!nameEl.value.trim())  { showErr('c_name');  nameEl.classList.add('has-error');  ok=false; }
+  if (!emailEl.value.trim()) { showErr('c_email'); emailEl.classList.add('has-error'); ok=false; }
+  if (!ok) return;
 
-            return configs[formType] || configs.general;
-        }
+  const btn = document.querySelector('.btn-next');
+  btn.disabled=true; btn.textContent='Submitting…';
 
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
-            await sb.auth.signOut();
-            window.location.href = 'login.html';
-        });
+  contactData = {
+    name:  nameEl.value.trim(),
+    email: emailEl.value.trim(),
+    phone: phoneEl.value.trim()||null,
+  };
 
-        checkAuth();
-    </script>
+  // Re-check lead limit
+  const limitOk = await checkLeadLimit();
+  if (!limitOk) {
+    document.getElementById('limitBanner').style.display='block';
+    btn.disabled=true; btn.textContent=cfg.submit_label||'Get My Quote →';
+    return;
+  }
+
+  await submitLead(btn);
+}
+
+// ─────────────────────────────────────────────────────────────
+// SUBMIT LEAD → Supabase leads table + Edge Function
+// ─────────────────────────────────────────────────────────────
+async function submitLead(btn) {
+  const cur = cfg.currency||'$';
+
+  // Build human-readable form_data for CRM
+  const form_data = {};
+  (cfg.fields||[]).forEach(f => {
+    if (['number','textarea'].includes(f.type)) {
+      form_data[f.label] = quoteData[f.id]||'';
+    } else if (f.type==='dropdown'||f.type==='radio') {
+      const o=(f.options||[]).find(x=>x.id===quoteData[f.id]);
+      form_data[f.label] = o?o.label:'';
+    } else if (f.type==='checkbox') {
+      form_data[f.label] = (quoteData[f.id]||[]).map(id=>{
+        const o=(f.options||[]).find(x=>x.id===id); return o?o.label:'';
+      }).filter(Boolean);
+    }
+  });
+  form_data._quote_total    = totalPrice;
+  form_data._quote_currency = cur;
+  form_data._breakdown      = breakdown;
+
+  const lead = {
+    account_id:     accountId,
+    hosted_form_id: hostedFormId,
+    name:           contactData.name,
+    email:          contactData.email,
+    phone:          contactData.phone||null,
+    form_type:      'quote',
+    form_data,
+    status:         'new',
+  };
+
+  try {
+    // 1. Insert lead into Supabase
+    const res = await fetch(SUPABASE_URL+'/rest/v1/leads', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json','apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Prefer':'return=representation' },
+      body: JSON.stringify(lead),
+    });
+
+    if (!res.ok && res.status!==201) throw new Error('Lead insert failed: '+res.status);
+    const rows = await res.json();
+    const leadId = rows[0]&&rows[0].id;
+
+    // 2. Call Edge Function to send quote email
+    try {
+      await fetch(EDGE_FN_URL, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON },
+        body: JSON.stringify({
+          lead_id:       leadId,
+          to_email:      contactData.email,
+          to_name:       contactData.name,
+          form_name:     cfg.title||'Your Quote',
+          quote_total:   totalPrice,
+          currency:      cur,
+          breakdown,
+          form_data,
+        }),
+      });
+    } catch(e) {
+      // Email failure is non-blocking — lead is still saved
+      console.warn('Edge Function email failed:', e);
+    }
+
+    renderStep(3);
+
+  } catch(e) {
+    alert('Submission failed. Please try again.');
+    console.error(e);
+    if (btn) { btn.disabled=false; btn.textContent=cfg.submit_label||'Get My Quote →'; }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// STEP 3 — Confirmation
+// ─────────────────────────────────────────────────────────────
+function renderStep3(wrap) {
+  const cur   = cfg.currency||'$';
+  const email = contactData.email||'your email';
+  const hasPricing = totalPrice > 0;
+
+  wrap.innerHTML =
+    '<div class="confirm-screen">'
+    + '<div class="confirm-envelope">✉</div>'
+    + '<div class="confirm-headline">Your quote is on its way!</div>'
+    + '<div class="confirm-sub">We\'ve received your details and emailed your personalised quote to:</div>'
+    + '<div class="confirm-email-chip">📧 <strong>'+esc(email)+'</strong></div>'
+    + '<div class="confirm-sub" style="margin-top:4px">Please check your inbox (and spam folder) shortly.</div>'
+    + (hasPricing
+        ? '<div class="confirm-quote-box" style="margin-top:16px">'
+          + '<div><div class="confirm-quote-label">Your Estimated Quote</div>'
+          + '<div class="confirm-quote-amount">'+cur+totalPrice.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2})+'</div></div>'
+          + '</div>'
+        : '')
+    + '</div>';
+}
+
+// ─────────────────────────────────────────────────────────────
+// VALIDATION HELPERS
+// ─────────────────────────────────────────────────────────────
+function showErr(id) { const e=document.getElementById('err_'+id); if(e) e.classList.add('show'); }
+function clearErr(id){ const e=document.getElementById('err_'+id); if(e) e.classList.remove('show'); }
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
 </body>
 </html>
