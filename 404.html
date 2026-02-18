@@ -2,10 +2,8 @@
 <html>
 <head>
 <script>
-  // Redirects quote-box.com/my-form → quote-box.com/?slug=my-form
-  // which index.html picks up and loads the correct form
   const slug = window.location.pathname.replace(/^\//, '').split('/')[0];
-  if (slug && slug !== '404.html') {
+  if (slug && !slug.endsWith('.html') && !slug.endsWith('.css') && !slug.endsWith('.js')) {
     window.location.replace('/quote-form.html?slug=' + encodeURIComponent(slug));
   } else {
     window.location.replace('/');

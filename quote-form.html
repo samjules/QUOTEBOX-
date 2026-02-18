@@ -156,7 +156,7 @@ let totalPrice=0, breakdown=[];
 function getSlug(){
   const parts=window.location.pathname.replace(/^\/|\/$/g,'').split('/');
   const last=parts[parts.length-1];
-  if(last&&last!=='index.html') return last;
+  if(last && !last.endsWith('.html')) return last;
   return new URLSearchParams(window.location.search).get('slug')||'';
 }
 function show(id){
