@@ -1,240 +1,537 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Form Builder - QuoteFlow</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wuote Box — Form Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0e0e11; --surface: #16161a; --surface2: #1e1e24; --border: #2a2a34;
+    --accent: #f0e040; --accent2: #3dffa0; --text: #f0f0f4; --muted: #6b6b80;
+    --danger: #ff4d6d; --radius: 10px;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 28px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.25rem; letter-spacing: -0.02em; }
+  .logo span { color: var(--accent); }
+  .header-actions { display: flex; gap: 10px; align-items: center; }
+
+  .btn { font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500; padding: 8px 18px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.15s; }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+  .btn-primary { background: var(--accent); color: #0e0e11; font-weight: 700; }
+  .btn-primary:hover { background: #f5e850; transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-sm { padding: 5px 12px; font-size: 0.78rem; }
+  .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--border); }
+  .btn-danger:hover { border-color: var(--danger); }
+
+  .builder-layout { display: grid; grid-template-columns: 268px 1fr 320px; flex: 1; overflow: hidden; height: calc(100vh - 60px); }
+
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; padding: 20px 16px; }
+  .sidebar-section { margin-bottom: 26px; }
+  .sidebar-label { font-family: 'Syne', sans-serif; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; padding: 0 4px; }
+
+  .field-type-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; cursor: pointer; margin-bottom: 6px; transition: all 0.15s; text-align: left; }
+  .field-type-btn:hover { border-color: var(--accent); background: rgba(240,224,64,0.06); }
+  .field-type-btn .icon { width: 28px; height: 28px; border-radius: 6px; background: var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; }
+  .field-type-btn .step-tag { font-size: 0.65rem; background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 1px 6px; border-radius: 4px; margin-left: auto; }
+
+  .form-meta input, .form-meta textarea, .form-meta select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; padding: 9px 12px; margin-bottom: 8px; outline: none; transition: border-color 0.15s; resize: none; }
+  .form-meta input:focus, .form-meta textarea:focus, .form-meta select:focus { border-color: var(--accent); }
+  .form-meta select option { background: var(--surface2); }
+  .form-meta label { display: block; font-size: 0.75rem; color: var(--muted); margin-bottom: 4px; }
+
+  /* Color picker */
+  .color-picker { display: flex; gap: 8px; margin-bottom: 8px; }
+  .color-swatch { width: 44px; height: 44px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: all 0.15s; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-direction: column; gap: 2px; }
+  .color-swatch:hover { transform: scale(1.05); }
+  .color-swatch.active { border-color: white; box-shadow: 0 0 0 3px rgba(255,255,255,0.25); }
+  .color-swatch.yellow { background: #FFE500; }
+  .color-swatch.blue   { background: #1A56FF; }
+  .color-swatch-label { font-size: 0.6rem; font-weight: 600; color: rgba(0,0,0,0.5); line-height: 1; }
+  .color-swatch.blue .color-swatch-label { color: rgba(255,255,255,0.7); }
+
+  /* Step tabs in canvas */
+  .step-tabs { display: flex; gap: 0; margin-bottom: 24px; background: var(--surface); border-radius: var(--radius); padding: 4px; border: 1px solid var(--border); }
+  .step-tab { flex: 1; padding: 8px 6px; text-align: center; border-radius: 7px; cursor: pointer; font-size: 0.78rem; font-weight: 500; color: var(--muted); transition: all 0.15s; }
+  .step-tab.active { background: var(--surface2); color: var(--text); }
+
+  /* Canvas */
+  .canvas { overflow-y: auto; padding: 28px; background: var(--bg); }
+  .canvas-inner { max-width: 640px; margin: 0 auto; }
+
+  /* Live preview card */
+  .preview-card { border-radius: 16px; overflow: hidden; border: 1px solid var(--border); }
+  .preview-card-header { padding: 28px 28px 24px; position: relative; }
+  .preview-card-header.yellow-bg { background: #FFE500; }
+  .preview-card-header.blue-bg   { background: #1A56FF; }
+  .preview-steps { display: flex; align-items: center; gap: 0; margin-bottom: 20px; }
+  .preview-step-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; transition: all 0.2s; }
+  .preview-step-dot.yellow-bg.done   { background: rgba(0,0,0,0.15); color: rgba(0,0,0,0.7); }
+  .preview-step-dot.yellow-bg.active { background: #1a1a2e; color: #FFE500; }
+  .preview-step-dot.yellow-bg.todo   { background: rgba(0,0,0,0.08); color: rgba(0,0,0,0.4); }
+  .preview-step-dot.blue-bg.done     { background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.8); }
+  .preview-step-dot.blue-bg.active   { background: white; color: #1A56FF; }
+  .preview-step-dot.blue-bg.todo     { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); }
+  .preview-step-line { height: 2px; flex: 1; margin: 0 6px; border-radius: 1px; }
+  .preview-step-line.yellow-bg { background: rgba(0,0,0,0.12); }
+  .preview-step-line.blue-bg   { background: rgba(255,255,255,0.2); }
+  .preview-card-title { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; line-height: 1.2; }
+  .preview-card-title.yellow-bg { color: #1a1a2e; }
+  .preview-card-title.blue-bg   { color: white; }
+  .preview-card-desc { font-size: 0.88rem; margin-top: 6px; }
+  .preview-card-desc.yellow-bg { color: rgba(26,26,46,0.65); }
+  .preview-card-desc.blue-bg   { color: rgba(255,255,255,0.7); }
+  .preview-card-body { background: var(--surface); padding: 24px 28px; }
+
+  .field-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 8px; cursor: pointer; transition: all 0.15s; }
+  .field-card:hover { border-color: var(--muted); }
+  .field-card.selected { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(240,224,64,0.08); }
+  .field-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .field-card-label { font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+  .field-required-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent2); display: inline-block; }
+  .field-card-actions { display: flex; gap: 6px; opacity: 0; transition: opacity 0.15s; align-items: center; }
+  .field-card:hover .field-card-actions, .field-card.selected .field-card-actions { opacity: 1; }
+  .field-type-badge { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); background: var(--bg); padding: 2px 7px; border-radius: 4px; }
+
+  .field-preview-input { background: var(--bg); border: 1px solid var(--border); border-radius: 7px; color: var(--muted); font-size: 0.82rem; padding: 8px 12px; }
+  .field-preview-options { display: flex; flex-direction: column; gap: 5px; }
+  .field-preview-option { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 8px 12px; font-size: 0.82rem; }
+  .price-tag { font-size: 0.73rem; color: var(--accent2); font-weight: 500; }
+
+  .step-section-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .step-section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .empty-step { border: 2px dashed var(--border); border-radius: var(--radius); padding: 28px; text-align: center; color: var(--muted); font-size: 0.82rem; margin-bottom: 8px; }
+  .empty-step p { margin-top: 4px; font-size: 0.78rem; }
+
+  .price-total-preview { background: linear-gradient(135deg, rgba(240,224,64,0.08), rgba(61,255,160,0.05)); border: 1px solid rgba(240,224,64,0.2); border-radius: 8px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
+  .price-total-label { font-size: 0.82rem; color: var(--muted); }
+  .price-total-value { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; color: var(--accent); }
+  .submit-btn-preview { width: 100%; margin-top: 12px; padding: 13px; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.95rem; border: none; border-radius: 8px; cursor: default; }
+  .submit-btn-preview.yellow-bg { background: #FFE500; color: #1a1a2e; }
+  .submit-btn-preview.blue-bg   { background: #1A56FF; color: white; }
+
+  /* Step 2 contact preview */
+  .contact-preview-fields { display: flex; flex-direction: column; gap: 8px; }
+  .contact-preview-field { background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 10px 14px; font-size: 0.82rem; color: var(--muted); }
+
+  /* Step 3 email notice preview */
+  .email-notice-preview { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 20px; text-align: center; gap: 12px; }
+  .email-icon-preview { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+  .email-icon-preview.yellow-bg { background: rgba(0,0,0,0.08); }
+  .email-icon-preview.blue-bg   { background: rgba(255,255,255,0.12); }
+  .email-notice-text { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; }
+  .email-notice-text.yellow-bg { color: #1a1a2e; }
+  .email-notice-text.blue-bg   { color: white; }
+  .email-notice-sub { font-size: 0.82rem; max-width: 280px; }
+  .email-notice-sub.yellow-bg { color: rgba(26,26,46,0.6); }
+  .email-notice-sub.blue-bg   { color: rgba(255,255,255,0.6); }
+
+  /* Props */
+  .props-panel { background: var(--surface); border-left: 1px solid var(--border); overflow-y: auto; padding: 20px 18px; }
+  .props-title { font-family: 'Syne', sans-serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 20px; }
+  .prop-group { margin-bottom: 18px; }
+  .prop-label { font-size: 0.75rem; color: var(--muted); margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between; }
+  .prop-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; padding: 9px 12px; outline: none; transition: border-color 0.15s; }
+  .prop-input:focus { border-color: var(--accent); }
+  .prop-toggle { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
+  .prop-toggle-label { font-size: 0.85rem; }
+  .toggle { width: 36px; height: 20px; background: var(--border); border-radius: 10px; position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+  .toggle.on { background: var(--accent2); }
+  .toggle::after { content: ''; position: absolute; width: 14px; height: 14px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: transform 0.2s; }
+  .toggle.on::after { transform: translateX(16px); }
+  .options-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 6px; }
+  .option-row { display: flex; align-items: center; gap: 6px; }
+  .option-row .prop-input { flex: 1; }
+  .option-price { width: 80px !important; flex-shrink: 0; }
+  .add-option-btn { width: 100%; padding: 8px; background: transparent; border: 1px dashed var(--border); border-radius: 8px; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.8rem; cursor: pointer; transition: all 0.15s; }
+  .add-option-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .remove-btn { width: 26px; height: 26px; border-radius: 6px; background: transparent; border: 1px solid var(--border); color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0; transition: all 0.15s; }
+  .remove-btn:hover { border-color: var(--danger); color: var(--danger); }
+  .no-selection { text-align: center; padding: 40px 16px; color: var(--muted); font-size: 0.85rem; line-height: 1.6; }
+  .no-selection .icon { display: block; font-size: 2rem; margin-bottom: 12px; }
+
+  .slug-preview { font-size: 0.75rem; color: var(--accent2); padding: 6px 10px; background: rgba(61,255,160,0.08); border-radius: 6px; margin-top: -4px; margin-bottom: 8px; font-family: monospace; word-break: break-all; }
+  .plan-badge { font-size: 0.7rem; background: rgba(240,224,64,0.1); color: var(--accent); border: 1px solid rgba(240,224,64,0.2); padding: 3px 8px; border-radius: 20px; font-weight: 600; }
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 12px 20px; border-radius: var(--radius); font-size: 0.85rem; font-weight: 500; z-index: 999; display: none; }
+  .toast.success { border-color: var(--accent2); }
+  .toast.error   { border-color: var(--danger); color: var(--danger); }
+  @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
 </head>
-<body class="bg-gray-50">
-    <div class="flex h-screen overflow-hidden">
-        <div class="w-64 bg-gray-900">
-            <div class="flex flex-col h-full">
-                <div class="flex items-center justify-center h-16 bg-gray-800">
-                    <span class="text-white text-xl font-bold">QuoteFlow</span>
-                </div>
-                <nav class="flex-1 px-2 py-4 space-y-1">
-                    <a href="dashboard.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
-                        <span>Dashboard</span>
-                    </a>
-                    <a href="leads.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
-                        <span>Leads</span>
-                    </a>
-                    <a href="form-builder.html" class="bg-gray-800 text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
-                        <span>Form Builder</span>
-                    </a>
-                    <a href="settings.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
-                        <span>Settings</span>
-                    </a>
-                </nav>
-                <div class="p-4">
-                    <button id="logoutBtn" class="w-full bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">
-                        Logout
-                    </button>
-                </div>
-            </div>
+<body>
+
+<header class="header">
+  <div class="logo">wuote<span>.</span>box</div>
+  <div class="header-actions">
+    <span class="plan-badge" id="planBadge">Base · 1 form · 25 leads</span>
+    <button class="btn btn-ghost" onclick="copyShareLink()">Copy Link</button>
+    <button class="btn btn-primary" id="saveBtn" onclick="saveForm()">Save Form</button>
+  </div>
+</header>
+
+<div class="builder-layout">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Form Settings</div>
+      <div class="form-meta">
+        <label>Form Name</label>
+        <input type="text" id="formName" value="My Quote Form" oninput="updateMeta()">
+        <label>Tagline / Description</label>
+        <textarea id="formDesc" rows="2" placeholder="Short line shown under title…">Tell us about your project and get a price instantly.</textarea>
+        <label>Submit Button Label</label>
+        <input type="text" id="submitLabel" value="Get My Quote →" oninput="renderCanvas()">
+        <label>URL Slug</label>
+        <input type="text" id="formSlug" value="my-quote-form" oninput="updateSlug()">
+        <div class="slug-preview" id="slugPreview">quote-box.com/my-quote-form</div>
+        <label>Currency</label>
+        <select id="currency" onchange="renderCanvas()">
+          <option value="$">USD ($)</option>
+          <option value="£">GBP (£)</option>
+          <option value="€">EUR (€)</option>
+          <option value="CA$">CAD (CA$)</option>
+          <option value="AU$">AUD (AU$)</option>
+        </select>
+        <label>Brand Colour</label>
+        <div class="color-picker">
+          <div class="color-swatch yellow active" id="swatchYellow" onclick="setColor('yellow')" title="Electric Yellow">
+            <span>☀</span>
+            <span class="color-swatch-label">Yellow</span>
+          </div>
+          <div class="color-swatch blue" id="swatchBlue" onclick="setColor('blue')" title="Cobalt Blue">
+            <span style="color:rgba(255,255,255,0.9)">◈</span>
+            <span class="color-swatch-label">Blue</span>
+          </div>
         </div>
-
-        <div class="flex-1 overflow-auto">
-            <div class="py-6">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <h1 class="text-2xl font-semibold text-gray-900">Form Builder</h1>
-                </div>
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-                    <div class="py-4">
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            <div class="lg:col-span-1 bg-white shadow rounded-xl p-6">
-                                <h2 class="text-lg font-medium text-gray-900 mb-4">Field Types</h2>
-                                <div class="space-y-2">
-                                    <button class="add-field-btn w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition" data-type="text">
-                                        📝 Text Field
-                                    </button>
-                                    <button class="add-field-btn w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition" data-type="email">
-                                        📧 Email Field
-                                    </button>
-                                    <button class="add-field-btn w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition" data-type="phone">
-                                        📞 Phone Field
-                                    </button>
-                                    <button class="add-field-btn w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition" data-type="dropdown">
-                                        📋 Dropdown
-                                    </button>
-                                    <button class="add-field-btn w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition" data-type="date">
-                                        📅 Date Field
-                                    </button>
-                                </div>
-                                <div class="mt-6">
-                                    <button id="saveFormBtn" class="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
-                                        Save Form
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="lg:col-span-2 space-y-6">
-                                <div class="bg-white shadow rounded-xl p-6">
-                                    <h2 class="text-lg font-medium text-gray-900 mb-4">Form Preview</h2>
-                                    <div id="formPreview" class="space-y-4 min-h-[200px] border-2 border-dashed border-gray-300 rounded-lg p-4">
-                                        <p class="text-gray-500 text-center">Drag fields here or click "Add" buttons</p>
-                                    </div>
-                                </div>
-
-                                <div class="bg-white shadow rounded-xl p-6">
-                                    <h2 class="text-lg font-medium text-gray-900 mb-4">Embed Code</h2>
-                                    <div class="bg-gray-50 rounded-lg p-4">
-                                        <pre id="embedCode" class="text-xs text-gray-800 overflow-x-auto">Save your form to generate embed code</pre>
-                                    </div>
-                                    <button id="copyEmbedBtn" class="mt-4 bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900 transition">
-                                        Copy Embed Code
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
 
-    <script>
-        const SUPABASE_URL = 'https://jpchpqjnyabtpptufkcj.supabase.co';  // ✅ Correct URL with quotes
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';  // ✅ Correct anon key (JWT token)
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);  // ✅ Using the constants
+    <div class="sidebar-section">
+      <div class="sidebar-label">Step 1 — Quote Fields</div>
+      <button class="field-type-btn" onclick="addField('radio','quote')"><span class="icon">◉</span> Radio Cards <span class="step-tag">S1</span></button>
+      <button class="field-type-btn" onclick="addField('dropdown','quote')"><span class="icon">▾</span> Dropdown <span class="step-tag">S1</span></button>
+      <button class="field-type-btn" onclick="addField('checkbox','quote')"><span class="icon">☑</span> Checkboxes <span class="step-tag">S1</span></button>
+      <button class="field-type-btn" onclick="addField('number','quote')"><span class="icon">#</span> Qty / Number <span class="step-tag">S1</span></button>
+      <button class="field-type-btn" onclick="addField('textarea','quote')"><span class="icon">≡</span> Long Text <span class="step-tag">S1</span></button>
+    </div>
+  </aside>
 
-        let accountId = null;
-        let formFields = [];
+  <!-- CANVAS -->
+  <main class="canvas">
+    <div class="canvas-inner">
+      <!-- Step preview tabs -->
+      <div class="step-tabs">
+        <div class="step-tab active" id="tab0" onclick="switchTab(0)">Step 1 · Quote</div>
+        <div class="step-tab" id="tab1" onclick="switchTab(1)">Step 2 · Contact</div>
+        <div class="step-tab" id="tab2" onclick="switchTab(2)">Step 3 · Confirm</div>
+      </div>
 
-        async function checkAuth() {
-            const { data: { user } } = await supabase.auth.getUser();
-            
-            if (!user) {
-                window.location.href = 'login.html';
-                return;
-            }
+      <div id="canvasContent"></div>
+    </div>
+  </main>
 
-            const { data: account } = await supabase
-                .from('accounts')
-                .select('*')
-                .eq('owner_id', user.id)
-                .single();
+  <!-- PROPERTIES -->
+  <aside class="props-panel" id="propsPanel">
+    <div class="props-title">Properties</div>
+    <div class="no-selection"><span class="icon">☜</span>Click a field on the canvas to edit its properties</div>
+  </aside>
+</div>
 
-            if (account) {
-                accountId = account.id;
-                loadSavedForm();
-            }
-        }
+<div class="toast" id="toast"></div>
 
-        function loadSavedForm() {
-            const saved = localStorage.getItem('formConfig');
-            if (saved) {
-                formFields = JSON.parse(saved);
-                renderForm();
-                generateEmbedCode();
-            }
-        }
-
-        document.querySelectorAll('.add-field-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const type = e.currentTarget.dataset.type;
-                addField(type);
-            });
-        });
-
-        function addField(type) {
-            const field = {
-                id: Date.now().toString(),
-                type: type,
-                label: `${type.charAt(0).toUpperCase() + type.slice(1)} Field`,
-                required: true,
-                options: type === 'dropdown' ? ['Option 1', 'Option 2', 'Option 3'] : []
-            };
-            formFields.push(field);
-            renderForm();
-        }
-
-        function renderForm() {
-            const preview = document.getElementById('formPreview');
-            
-            if (formFields.length === 0) {
-                preview.innerHTML = '<p class="text-gray-500 text-center">Drag fields here or click "Add" buttons</p>';
-                return;
-            }
-
-            preview.innerHTML = '';
-
-            formFields.forEach((field, index) => {
-                const fieldDiv = document.createElement('div');
-                fieldDiv.className = 'bg-gray-50 p-4 rounded-lg';
-                
-                let fieldHtml = `
-                    <div class="flex justify-between items-start mb-2">
-                        <input type="text" value="${field.label}" class="field-label font-medium text-gray-900 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-indigo-500 focus:outline-none" data-index="${index}">
-                        <button class="remove-field text-red-600 hover:text-red-800" data-index="${index}">✕</button>
-                    </div>
-                `;
-
-                if (field.type === 'dropdown') {
-                    fieldHtml += `
-                        <select class="mt-2 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" disabled>
-                            ${field.options.map(opt => `<option>${opt}</option>`).join('')}
-                        </select>
-                    `;
-                } else if (field.type === 'date') {
-                    fieldHtml += `<input type="date" class="mt-2 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" disabled>`;
-                } else {
-                    fieldHtml += `<input type="${field.type}" placeholder="${field.label}" class="mt-2 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" disabled>`;
-                }
-
-                fieldDiv.innerHTML = fieldHtml;
-                preview.appendChild(fieldDiv);
-            });
-
-            document.querySelectorAll('.field-label').forEach(input => {
-                input.addEventListener('blur', (e) => {
-                    const index = parseInt(e.target.dataset.index);
-                    formFields[index].label = e.target.value;
-                });
-            });
-
-            document.querySelectorAll('.remove-field').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const index = parseInt(e.currentTarget.dataset.index);
-                    formFields.splice(index, 1);
-                    renderForm();
-                });
-            });
-        }
-
-        document.getElementById('saveFormBtn').addEventListener('click', () => {
-            localStorage.setItem('formConfig', JSON.stringify(formFields));
-            generateEmbedCode();
-            alert('Form saved successfully!');
-        });
-
-        function generateEmbedCode() {
-            const code = `<div id="quoteflow-form"></div>
-<script src="embed.js"></script>
 <script>
-  QuoteFlow.init({
-    accountId: '${accountId}',
-    targetElement: 'quoteflow-form'
-  });
-</script>`;
+// ─────────────────────────────────────────────────
+// CONFIG — replace before deploying
+// ─────────────────────────────────────────────────
+const SUPABASE_URL  = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
+let   ACCOUNT_ID    = 'ACCOUNT_ID_FROM_SESSION'; // inject from auth
+let   EDITING_FORM_ID = null;
 
-            document.getElementById('embedCode').textContent = code;
-        }
+// ─────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────
+let fields     = [];   // only step 1 (quote) fields
+let selectedId = null;
+let brandColor = 'yellow'; // 'yellow' | 'blue'
+let activeTab  = 0;
+let _counter   = 0;
+function uid() { return 'f' + (++_counter) + '_' + Math.random().toString(36).slice(2,7); }
 
-        document.getElementById('copyEmbedBtn').addEventListener('click', () => {
-            const code = document.getElementById('embedCode').textContent;
-            navigator.clipboard.writeText(code);
-            alert('Embed code copied to clipboard!');
-        });
+// ─────────────────────────────────────────────────
+// TOAST
+// ─────────────────────────────────────────────────
+function toast(msg, type='info', ms=3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'toast '+type; el.style.display = 'block';
+  clearTimeout(el._t); el._t = setTimeout(()=>{ el.style.display='none'; }, ms);
+}
 
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
-            await supabase.auth.signOut();
-            window.location.href = 'login.html';
-        });
+// ─────────────────────────────────────────────────
+// META
+// ─────────────────────────────────────────────────
+function updateMeta() { renderCanvas(); }
+function updateSlug() {
+  const slug = document.getElementById('formSlug').value
+    .toLowerCase().replace(/[^a-z0-9-]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'');
+  document.getElementById('formSlug').value = slug;
+  document.getElementById('slugPreview').textContent = 'quote-box.com/' + (slug || 'my-quote-form');
+}
+function copyShareLink() {
+  const slug = document.getElementById('formSlug').value;
+  if (!slug) { toast('Set a slug first','error'); return; }
+  navigator.clipboard.writeText('https://quote-box.com/' + slug);
+  toast('Link copied!','success');
+}
+function setColor(color) {
+  brandColor = color;
+  document.getElementById('swatchYellow').classList.toggle('active', color==='yellow');
+  document.getElementById('swatchBlue').classList.toggle('active', color==='blue');
+  renderCanvas();
+}
 
-        checkAuth();
-    </script>
+// ─────────────────────────────────────────────────
+// TABS
+// ─────────────────────────────────────────────────
+function switchTab(i) {
+  activeTab = i;
+  document.querySelectorAll('.step-tab').forEach((t,idx) => t.classList.toggle('active', idx===i));
+  renderCanvas();
+}
+
+// ─────────────────────────────────────────────────
+// FIELD DEFAULTS
+// ─────────────────────────────────────────────────
+function makeField(type) {
+  const def = {
+    radio:    { label:'Choose a Package', required:true,  options:[{id:uid(),label:'Starter',price:99},{id:uid(),label:'Pro',price:199}] },
+    dropdown: { label:'Select an Option', required:true,  options:[{id:uid(),label:'Option A',price:0},{id:uid(),label:'Option B',price:50}] },
+    checkbox: { label:'Add-ons',          required:false, options:[{id:uid(),label:'Extra feature',price:25},{id:uid(),label:'Rush delivery',price:50}] },
+    number:   { label:'Quantity',         required:false, placeholder:'1', ratePerUnit:0 },
+    textarea: { label:'Project Details',  required:false, placeholder:'Tell us more about your project…' },
+  }[type];
+  return { id:uid(), type, ...def };
+}
+function addField(type) {
+  const f = makeField(type);
+  fields.push(f);
+  selectedId = f.id;
+  renderCanvas();
+  renderProps();
+}
+function removeField(id, e) {
+  e.stopPropagation();
+  fields = fields.filter(f=>f.id!==id);
+  if (selectedId===id) { selectedId=null; clearProps(); }
+  renderCanvas();
+}
+
+// ─────────────────────────────────────────────────
+// RENDER CANVAS
+// ─────────────────────────────────────────────────
+function renderCanvas() {
+  const wrap  = document.getElementById('canvasContent');
+  const title = document.getElementById('formName').value || 'My Quote Form';
+  const desc  = document.getElementById('formDesc').value;
+  const cur   = document.getElementById('currency').value;
+  const bg    = brandColor + '-bg';
+  const subLabel = document.getElementById('submitLabel').value || 'Get My Quote →';
+
+  const stepLabels = ['Step 1 of 3 — Your Quote', 'Step 2 of 3 — Contact Details', 'Step 3 of 3'];
+
+  // Step dots
+  const dots = [0,1,2].map(i => {
+    const cls = i < activeTab ? 'done' : i===activeTab ? 'active' : 'todo';
+    return '<div class="preview-step-dot ' + bg + ' ' + cls + '">' + (i+1) + '</div>'
+         + (i<2 ? '<div class="preview-step-line ' + bg + '"></div>' : '');
+  }).join('');
+
+  let body = '';
+
+  if (activeTab === 0) {
+    // Step 1: Quote fields
+    const hasPricing = fields.some(f=>['radio','dropdown','checkbox'].includes(f.type)||(f.type==='number'&&f.ratePerUnit>0));
+
+    const fieldCards = fields.length ? fields.map(f => {
+      let preview = '';
+      if (f.type==='textarea'||f.type==='number') {
+        preview = '<div class="field-preview-input">'+esc(f.placeholder||'')+'</div>';
+        if (f.type==='number'&&f.ratePerUnit>0) preview += '<span style="font-size:0.75rem;color:var(--muted);margin-top:4px;display:block">× '+cur+f.ratePerUnit+' per unit</span>';
+      } else if (f.options) {
+        preview = '<div class="field-preview-options">' + f.options.map(o=>
+          '<div class="field-preview-option"><span>'+esc(o.label)+'</span><span class="price-tag">'+(o.price>0?'+'+cur+o.price:'free')+'</span></div>'
+        ).join('') + '</div>';
+      }
+      return '<div class="field-card'+(selectedId===f.id?' selected':'')+'" onclick="selectField(\''+f.id+'\')">'
+        +'<div class="field-card-header">'
+        +'<div class="field-card-label">'+(f.required?'<span class="field-required-dot"></span>':'')+esc(f.label)+'</div>'
+        +'<div class="field-card-actions"><span class="field-type-badge">'+f.type+'</span>'
+        +'<button class="btn btn-sm btn-danger" onclick="removeField(\''+f.id+'\',event)">✕</button></div>'
+        +'</div>'+preview+'</div>';
+    }).join('') : '<div class="empty-step">No quote fields yet<p>Add radio cards, dropdowns or checkboxes from the left panel to build your pricing.</p></div>';
+
+    body = '<div class="step-section-label">Quote Fields</div>'
+      + fieldCards
+      + (hasPricing ? '<div class="price-total-preview"><div class="price-total-label">Estimated Total</div><div class="price-total-value">'+cur+'0</div></div>' : '')
+      + '<button class="submit-btn-preview '+bg+'" style="margin-top:12px">Next →</button>';
+
+  } else if (activeTab === 1) {
+    // Step 2: Contact (fixed, always the same)
+    body = '<div class="step-section-label">Contact Details (always included)</div>'
+      + '<div class="contact-preview-fields">'
+      + '<div class="contact-preview-field">Full Name</div>'
+      + '<div class="contact-preview-field">Email Address</div>'
+      + '<div class="contact-preview-field">Phone Number (optional)</div>'
+      + '</div>'
+      + '<button class="submit-btn-preview '+bg+'" style="margin-top:16px">'+esc(subLabel)+'</button>';
+
+  } else if (activeTab === 2) {
+    // Step 3: Confirmation
+    body = '<div class="email-notice-preview">'
+      + '<div class="email-icon-preview '+bg+'">✉</div>'
+      + '<div class="email-notice-text '+bg+'">Your quote is on its way!</div>'
+      + '<div class="email-notice-sub '+bg+'">We\'ve received your details and will email your personalised quote to you shortly.</div>'
+      + '</div>';
+  }
+
+  wrap.innerHTML =
+    '<div class="preview-card">'
+    + '<div class="preview-card-header '+bg+'">'
+    + '<div class="preview-steps">'+dots+'</div>'
+    + '<div style="font-size:0.72rem;font-weight:600;letter-spacing:0.05em;margin-bottom:8px;opacity:0.6;color:'+(brandColor==='yellow'?'#1a1a2e':'white')+'">'+stepLabels[activeTab]+'</div>'
+    + '<div class="preview-card-title '+bg+'">'+esc(title)+'</div>'
+    + '<div class="preview-card-desc '+bg+'">'+esc(desc)+'</div>'
+    + '</div>'
+    + '<div class="preview-card-body">'+body+'</div>'
+    + '</div>';
+}
+
+// ─────────────────────────────────────────────────
+// SELECT + PROPS
+// ─────────────────────────────────────────────────
+function selectField(id) {
+  selectedId = id; renderCanvas(); renderProps();
+}
+function clearProps() {
+  document.getElementById('propsPanel').innerHTML =
+    '<div class="props-title">Properties</div><div class="no-selection"><span class="icon">☜</span>Click a field on the canvas to edit its properties</div>';
+}
+function renderProps() {
+  const f = fields.find(x=>x.id===selectedId);
+  if (!f) { clearProps(); return; }
+  const hasOpts = ['radio','dropdown','checkbox'].includes(f.type);
+  const hasRate = f.type==='number';
+  const hasPH   = ['number','textarea'].includes(f.type);
+
+  document.getElementById('propsPanel').innerHTML =
+    '<div class="props-title">Field Properties</div>'
+    +'<div class="prop-group"><div class="prop-label">Label</div>'
+    +'<input class="prop-input" value="'+esc(f.label)+'" oninput="setProp(\''+f.id+'\',\'label\',this.value)"></div>'
+    +(hasPH?'<div class="prop-group"><div class="prop-label">Placeholder</div>'
+      +'<input class="prop-input" value="'+esc(f.placeholder||'')+'" oninput="setProp(\''+f.id+'\',\'placeholder\',this.value)"></div>':'')
+    +(hasRate?'<div class="prop-group"><div class="prop-label">Price per unit</div>'
+      +'<input class="prop-input" type="number" min="0" step="0.01" value="'+(f.ratePerUnit||0)+'" oninput="setProp(\''+f.id+'\',\'ratePerUnit\',parseFloat(this.value)||0)"></div>':'')
+    +'<div class="prop-toggle"><span class="prop-toggle-label">Required field</span>'
+    +'<div class="toggle '+(f.required?'on':'')+'" onclick="toggleProp(\''+f.id+'\',\'required\')"></div></div>'
+    +(hasOpts?'<div class="prop-group"><div class="prop-label">Options <span style="font-size:0.7rem;color:var(--accent2)">label · price</span></div>'
+      +'<div class="options-list">'
+      +f.options.map(o=>
+        '<div class="option-row">'
+        +'<input class="prop-input" value="'+esc(o.label)+'" oninput="setOpt(\''+f.id+'\',\''+o.id+'\',\'label\',this.value)" placeholder="Label">'
+        +'<input class="prop-input option-price" type="number" min="0" step="0.01" value="'+(o.price||0)+'" oninput="setOpt(\''+f.id+'\',\''+o.id+'\',\'price\',parseFloat(this.value)||0)">'
+        +'<button class="remove-btn" onclick="removeOpt(\''+f.id+'\',\''+o.id+'\')">✕</button>'
+        +'</div>'
+      ).join('')
+      +'</div><button class="add-option-btn" onclick="addOpt(\''+f.id+'\')">+ Add option</button></div>':'');
+}
+
+function setProp(id,key,val)  { const f=fields.find(x=>x.id===id); if(f){f[key]=val;renderCanvas();} }
+function toggleProp(id,key)   { const f=fields.find(x=>x.id===id); if(f){f[key]=!f[key];renderCanvas();renderProps();} }
+function setOpt(fid,oid,k,v)  { const f=fields.find(x=>x.id===fid); const o=f&&f.options&&f.options.find(x=>x.id===oid); if(o){o[k]=v;renderCanvas();} }
+function addOpt(fid)          { const f=fields.find(x=>x.id===fid); if(!f)return; f.options.push({id:uid(),label:'New Option',price:0}); renderCanvas();renderProps(); }
+function removeOpt(fid,oid)   {
+  const f=fields.find(x=>x.id===fid);
+  if(!f||f.options.length<=1){toast('Need at least one option','error');return;}
+  f.options=f.options.filter(o=>o.id!==oid); renderCanvas();renderProps();
+}
+
+// ─────────────────────────────────────────────────
+// SAVE → hosted_forms
+// ─────────────────────────────────────────────────
+async function saveForm() {
+  const name  = document.getElementById('formName').value.trim();
+  const slug  = document.getElementById('formSlug').value.trim();
+  const desc  = document.getElementById('formDesc').value.trim();
+  const submitLabel = document.getElementById('submitLabel').value.trim() || 'Get My Quote';
+  const currency    = document.getElementById('currency').value;
+
+  if (!name)          { toast('Enter a form name','error'); return; }
+  if (!slug)          { toast('Set a URL slug','error'); return; }
+  if (!fields.length) { toast('Add at least one quote field','error'); return; }
+  if (ACCOUNT_ID==='ACCOUNT_ID_FROM_SESSION') {
+    console.log('Config:', JSON.stringify(buildConfig(slug,desc,submitLabel,currency),null,2));
+    toast('Set ACCOUNT_ID from your auth session to save','error',5000); return;
+  }
+
+  const btn = document.getElementById('saveBtn');
+  btn.disabled=true; btn.textContent='Saving…';
+
+  const payload = {
+    account_id:  ACCOUNT_ID,
+    form_name:   name,
+    form_type:   'quote',
+    form_config: buildConfig(slug,desc,submitLabel,currency),
+    is_active:   true,
+    updated_at:  new Date().toISOString(),
+  };
+
+  try {
+    const isEdit = Boolean(EDITING_FORM_ID);
+    const url = isEdit
+      ? SUPABASE_URL+'/rest/v1/hosted_forms?id=eq.'+EDITING_FORM_ID
+      : SUPABASE_URL+'/rest/v1/hosted_forms';
+
+    const res = await fetch(url, {
+      method: isEdit?'PATCH':'POST',
+      headers: { 'Content-Type':'application/json','apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Prefer':'return=representation' },
+      body: JSON.stringify(payload),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (!EDITING_FORM_ID && data[0]?.id) EDITING_FORM_ID = data[0].id;
+      toast('✓ Saved! Live at quote-box.com/'+slug,'success');
+    } else {
+      const err = await res.json().catch(()=>({}));
+      toast(err.code==='23505'?'Slug already taken — try another':'Error: '+(err.message||'Unknown'),'error',5000);
+    }
+  } catch(e) {
+    toast('Network error — check console','error'); console.error(e);
+  } finally {
+    btn.disabled=false; btn.textContent='Save Form';
+  }
+}
+
+function buildConfig(slug,desc,submitLabel,currency) {
+  return { slug, description:desc, submit_label:submitLabel, currency, brand_color:brandColor, show_total:true, fields };
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// Init
+updateSlug();
+renderCanvas();
+document.getElementById('formDesc').addEventListener('input', renderCanvas);
+</script>
 </body>
 </html>
