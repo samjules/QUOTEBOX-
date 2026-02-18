@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wuote Box — Form Builder</title>
+<title>Form Builder - QuoteFlow</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -12,139 +14,140 @@
     --accent: #f0e040; --accent2: #3dffa0; --text: #f0f0f4; --muted: #6b6b80;
     --danger: #ff4d6d; --radius: 10px;
   }
-  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+  .builder-wrap { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; }
 
-  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 28px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
-  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.25rem; letter-spacing: -0.02em; }
-  .logo span { color: var(--accent); }
-  .header-actions { display: flex; gap: 10px; align-items: center; }
+  .builder-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 28px; height: 56px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .builder-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem; letter-spacing: -0.02em; color: #f0f0f4; }
+  .builder-logo span { color: var(--accent); }
+  .builder-actions { display: flex; gap: 10px; align-items: center; }
 
-  .btn { font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500; padding: 8px 18px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.15s; }
-  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-  .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
-  .btn-primary { background: var(--accent); color: #0e0e11; font-weight: 700; }
-  .btn-primary:hover { background: #f5e850; transform: translateY(-1px); }
-  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-  .btn-sm { padding: 5px 12px; font-size: 0.78rem; }
-  .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--border); }
-  .btn-danger:hover { border-color: var(--danger); }
+  .bb { font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500; padding: 7px 16px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.15s; }
+  .bb-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .bb-ghost:hover { color: var(--text); border-color: var(--muted); }
+  .bb-primary { background: var(--accent); color: #0e0e11; font-weight: 700; }
+  .bb-primary:hover { background: #f5e850; transform: translateY(-1px); }
+  .bb-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .bb-sm { padding: 4px 10px; font-size: 0.76rem; }
+  .bb-danger { background: transparent; color: var(--danger); border: 1px solid var(--border); }
+  .bb-danger:hover { border-color: var(--danger); }
 
-  .builder-layout { display: grid; grid-template-columns: 268px 1fr 320px; flex: 1; overflow: hidden; height: calc(100vh - 60px); }
+  .builder-layout { display: grid; grid-template-columns: 260px 1fr 316px; flex: 1; overflow: hidden; }
 
-  .sidebar { background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; padding: 20px 16px; }
-  .sidebar-section { margin-bottom: 26px; }
-  .sidebar-label { font-family: 'Syne', sans-serif; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; padding: 0 4px; }
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; padding: 18px 14px; }
+  .sidebar-section { margin-bottom: 24px; }
+  .sidebar-label { font-family: 'Syne', sans-serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 9px; padding: 0 4px; }
 
-  .field-type-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; cursor: pointer; margin-bottom: 6px; transition: all 0.15s; text-align: left; }
-  .field-type-btn:hover { border-color: var(--accent); background: rgba(240,224,64,0.06); }
-  .field-type-btn .icon { width: 28px; height: 28px; border-radius: 6px; background: var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; }
+  .ftype-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 11px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.83rem; cursor: pointer; margin-bottom: 5px; transition: all 0.15s; text-align: left; }
+  .ftype-btn:hover { border-color: var(--accent); background: rgba(240,224,64,0.06); }
+  .ftype-btn .icon { width: 26px; height: 26px; border-radius: 6px; background: var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.82rem; flex-shrink: 0; }
 
-  .form-meta input, .form-meta textarea, .form-meta select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; padding: 9px 12px; margin-bottom: 8px; outline: none; transition: border-color 0.15s; resize: none; }
-  .form-meta input:focus, .form-meta textarea:focus, .form-meta select:focus { border-color: var(--accent); }
-  .form-meta select option { background: var(--surface2); }
-  .form-meta label { display: block; font-size: 0.75rem; color: var(--muted); margin-bottom: 4px; }
+  .fm input, .fm textarea, .fm select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.83rem; padding: 8px 11px; margin-bottom: 7px; outline: none; transition: border-color 0.15s; resize: none; }
+  .fm input:focus, .fm textarea:focus, .fm select:focus { border-color: var(--accent); }
+  .fm select option { background: var(--surface2); }
+  .fm label { display: block; font-size: 0.73rem; color: var(--muted); margin-bottom: 3px; }
 
   .color-picker { display: flex; gap: 8px; margin-bottom: 8px; }
-  .color-swatch { width: 44px; height: 44px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: all 0.15s; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-direction: column; gap: 2px; }
-  .color-swatch:hover { transform: scale(1.05); }
-  .color-swatch.active { border-color: white; box-shadow: 0 0 0 3px rgba(255,255,255,0.25); }
-  .color-swatch.yellow { background: #FFE500; }
-  .color-swatch.blue   { background: #1A56FF; }
-  .color-swatch-label { font-size: 0.6rem; font-weight: 600; color: rgba(0,0,0,0.5); line-height: 1; }
-  .color-swatch.blue .color-swatch-label { color: rgba(255,255,255,0.7); }
+  .cswatch { width: 42px; height: 42px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: all 0.15s; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 2px; }
+  .cswatch:hover { transform: scale(1.05); }
+  .cswatch.active { border-color: white; box-shadow: 0 0 0 3px rgba(255,255,255,0.2); }
+  .cswatch.yellow { background: #FFE500; }
+  .cswatch.blue   { background: #1A56FF; }
+  .cswatch-lbl { font-size: 0.58rem; font-weight: 700; color: rgba(0,0,0,0.5); line-height: 1; }
+  .cswatch.blue .cswatch-lbl { color: rgba(255,255,255,0.7); }
 
-  .step-tabs { display: flex; gap: 0; margin-bottom: 24px; background: var(--surface); border-radius: var(--radius); padding: 4px; border: 1px solid var(--border); }
-  .step-tab { flex: 1; padding: 8px 6px; text-align: center; border-radius: 7px; cursor: pointer; font-size: 0.78rem; font-weight: 500; color: var(--muted); transition: all 0.15s; }
+  .step-tabs { display: flex; margin-bottom: 22px; background: var(--surface); border-radius: var(--radius); padding: 4px; border: 1px solid var(--border); }
+  .step-tab { flex: 1; padding: 7px 5px; text-align: center; border-radius: 7px; cursor: pointer; font-size: 0.76rem; font-weight: 500; color: var(--muted); transition: all 0.15s; }
   .step-tab.active { background: var(--surface2); color: var(--text); }
 
-  .canvas { overflow-y: auto; padding: 28px; background: var(--bg); }
-  .canvas-inner { max-width: 640px; margin: 0 auto; }
+  .canvas { overflow-y: auto; padding: 24px; background: var(--bg); }
+  .canvas-inner { max-width: 620px; margin: 0 auto; }
 
-  .preview-card { border-radius: 16px; overflow: hidden; border: 1px solid var(--border); }
-  .preview-card-header { padding: 28px 28px 24px; }
+  .preview-card { border-radius: 14px; overflow: hidden; border: 1px solid var(--border); }
+  .preview-card-header { padding: 24px 26px 20px; }
   .preview-card-header.yellow-bg { background: #FFE500; }
   .preview-card-header.blue-bg   { background: #1A56FF; }
-  .preview-steps { display: flex; align-items: center; gap: 0; margin-bottom: 20px; }
-  .preview-step-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; }
-  .preview-step-line { height: 2px; flex: 1; margin: 0 6px; border-radius: 1px; }
-  .yellow-bg .preview-step-line { background: rgba(0,0,0,0.12); }
-  .blue-bg .preview-step-line   { background: rgba(255,255,255,0.2); }
-  .preview-card-title { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; line-height: 1.2; }
-  .yellow-bg .preview-card-title { color: #1a1a2e; }
-  .blue-bg .preview-card-title   { color: white; }
-  .preview-card-desc { font-size: 0.88rem; margin-top: 6px; }
-  .yellow-bg .preview-card-desc { color: rgba(26,26,46,0.65); }
-  .blue-bg .preview-card-desc   { color: rgba(255,255,255,0.7); }
-  .preview-card-body { background: var(--surface); padding: 24px 28px; }
+  .preview-steps { display: flex; align-items: center; margin-bottom: 16px; }
+  .ps-dot  { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.68rem; font-weight: 700; }
+  .ps-line { height: 2px; flex: 1; margin: 0 6px; border-radius: 1px; }
+  .yellow-bg .ps-line { background: rgba(0,0,0,0.12); }
+  .blue-bg .ps-line   { background: rgba(255,255,255,0.2); }
+  .pv-title { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; line-height: 1.2; }
+  .yellow-bg .pv-title { color: #1a1a2e; }
+  .blue-bg .pv-title   { color: white; }
+  .pv-desc { font-size: 0.85rem; margin-top: 5px; }
+  .yellow-bg .pv-desc { color: rgba(26,26,46,0.65); }
+  .blue-bg .pv-desc   { color: rgba(255,255,255,0.7); }
+  .preview-card-body { background: var(--surface); padding: 22px 26px; }
 
-  .field-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 8px; cursor: pointer; transition: all 0.15s; }
+  .field-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 13px 15px; margin-bottom: 7px; cursor: pointer; transition: all 0.15s; }
   .field-card:hover { border-color: var(--muted); }
   .field-card.selected { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(240,224,64,0.08); }
-  .field-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-  .field-card-label { font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 8px; }
-  .field-required-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent2); display: inline-block; }
-  .field-card-actions { display: flex; gap: 6px; opacity: 0; transition: opacity 0.15s; align-items: center; }
-  .field-card:hover .field-card-actions, .field-card.selected .field-card-actions { opacity: 1; }
-  .field-type-badge { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); background: var(--bg); padding: 2px 7px; border-radius: 4px; }
-  .field-preview-input { background: var(--bg); border: 1px solid var(--border); border-radius: 7px; color: var(--muted); font-size: 0.82rem; padding: 8px 12px; }
-  .field-preview-options { display: flex; flex-direction: column; gap: 5px; }
-  .field-preview-option { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 8px 12px; font-size: 0.82rem; }
-  .price-tag { font-size: 0.73rem; color: var(--accent2); font-weight: 500; }
+  .field-card-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+  .field-card-lbl { font-size: 0.83rem; font-weight: 500; display: flex; align-items: center; gap: 7px; }
+  .req-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent2); display: inline-block; }
+  .field-card-acts { display: flex; gap: 5px; opacity: 0; transition: opacity 0.15s; align-items: center; }
+  .field-card:hover .field-card-acts, .field-card.selected .field-card-acts { opacity: 1; }
+  .ftype-badge { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); background: var(--bg); padding: 2px 6px; border-radius: 4px; }
+  .fprev-input { background: var(--bg); border: 1px solid var(--border); border-radius: 7px; color: var(--muted); font-size: 0.8rem; padding: 7px 11px; }
+  .fprev-opts { display: flex; flex-direction: column; gap: 5px; }
+  .fprev-opt { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 7px 11px; font-size: 0.8rem; }
+  .ptag { font-size: 0.7rem; color: var(--accent2); font-weight: 500; }
 
-  .step-section-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-  .step-section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-  .empty-step { border: 2px dashed var(--border); border-radius: var(--radius); padding: 28px; text-align: center; color: var(--muted); font-size: 0.82rem; margin-bottom: 8px; }
-  .empty-step p { margin-top: 4px; font-size: 0.78rem; }
+  .sec-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 9px; display: flex; align-items: center; gap: 8px; }
+  .sec-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .empty-step { border: 2px dashed var(--border); border-radius: var(--radius); padding: 24px; text-align: center; color: var(--muted); font-size: 0.8rem; }
+  .empty-step p { margin-top: 3px; font-size: 0.75rem; }
 
-  .price-total-preview { background: linear-gradient(135deg, rgba(240,224,64,0.08), rgba(61,255,160,0.05)); border: 1px solid rgba(240,224,64,0.2); border-radius: 8px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
-  .price-total-label { font-size: 0.82rem; color: var(--muted); }
-  .price-total-value { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; color: var(--accent); }
-  .submit-btn-preview { width: 100%; margin-top: 12px; padding: 13px; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.95rem; border: none; border-radius: 8px; cursor: default; }
-  .submit-btn-preview.yellow-bg { background: #FFE500; color: #1a1a2e; }
-  .submit-btn-preview.blue-bg   { background: #1A56FF; color: white; }
+  .total-prev { background: linear-gradient(135deg, rgba(240,224,64,0.08), rgba(61,255,160,0.05)); border: 1px solid rgba(240,224,64,0.2); border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+  .total-prev-lbl { font-size: 0.8rem; color: var(--muted); }
+  .total-prev-val { font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 800; color: var(--accent); }
+  .sub-btn-prev { width: 100%; margin-top: 10px; padding: 12px; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.92rem; border: none; border-radius: 8px; cursor: default; }
+  .sub-btn-prev.yellow-bg { background: #FFE500; color: #1a1a2e; }
+  .sub-btn-prev.blue-bg   { background: #1A56FF; color: white; }
 
-  .contact-preview-fields { display: flex; flex-direction: column; gap: 8px; }
-  .contact-preview-field { background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 10px 14px; font-size: 0.82rem; color: var(--muted); }
+  .contact-prev { display: flex; flex-direction: column; gap: 7px; }
+  .contact-prev-field { background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 9px 13px; font-size: 0.8rem; color: var(--muted); }
 
-  .email-notice-preview { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 20px; text-align: center; gap: 12px; }
-  .email-icon-preview { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
-  .yellow-bg .email-icon-preview { background: rgba(0,0,0,0.08); }
-  .blue-bg .email-icon-preview   { background: rgba(255,255,255,0.12); }
-  .email-notice-text { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; }
-  .yellow-bg .email-notice-text { color: #1a1a2e; }
-  .blue-bg .email-notice-text   { color: white; }
-  .email-notice-sub { font-size: 0.82rem; max-width: 280px; }
+  .email-notice-prev { display: flex; flex-direction: column; align-items: center; padding: 28px 16px; text-align: center; gap: 10px; }
+  .email-icon-prev { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+  .yellow-bg .email-icon-prev { background: rgba(0,0,0,0.08); }
+  .blue-bg .email-icon-prev   { background: rgba(255,255,255,0.12); }
+  .email-notice-txt { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; }
+  .yellow-bg .email-notice-txt { color: #1a1a2e; }
+  .blue-bg .email-notice-txt   { color: white; }
+  .email-notice-sub { font-size: 0.8rem; max-width: 260px; }
   .yellow-bg .email-notice-sub { color: rgba(26,26,46,0.6); }
   .blue-bg .email-notice-sub   { color: rgba(255,255,255,0.6); }
 
-  .props-panel { background: var(--surface); border-left: 1px solid var(--border); overflow-y: auto; padding: 20px 18px; }
-  .props-title { font-family: 'Syne', sans-serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 20px; }
-  .prop-group { margin-bottom: 18px; }
-  .prop-label { font-size: 0.75rem; color: var(--muted); margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between; }
-  .prop-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; padding: 9px 12px; outline: none; transition: border-color 0.15s; }
+  .props-panel { background: var(--surface); border-left: 1px solid var(--border); overflow-y: auto; padding: 18px 16px; }
+  .props-title { font-family: 'Syne', sans-serif; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 18px; }
+  .prop-group { margin-bottom: 16px; }
+  .prop-label { font-size: 0.73rem; color: var(--muted); margin-bottom: 4px; }
+  .prop-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.83rem; padding: 8px 11px; outline: none; transition: border-color 0.15s; }
   .prop-input:focus { border-color: var(--accent); }
-  .prop-toggle { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
-  .prop-toggle-label { font-size: 0.85rem; }
-  .toggle { width: 36px; height: 20px; background: var(--border); border-radius: 10px; position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+  .prop-toggle { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border); margin-bottom: 13px; }
+  .prop-toggle-lbl { font-size: 0.83rem; }
+  .toggle { width: 34px; height: 19px; background: var(--border); border-radius: 10px; position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
   .toggle.on { background: var(--accent2); }
-  .toggle::after { content: ''; position: absolute; width: 14px; height: 14px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: transform 0.2s; }
-  .toggle.on::after { transform: translateX(16px); }
-  .options-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 6px; }
-  .option-row { display: flex; align-items: center; gap: 6px; }
-  .option-row .prop-input { flex: 1; }
-  .option-price { width: 80px !important; flex-shrink: 0; }
-  .add-option-btn { width: 100%; padding: 8px; background: transparent; border: 1px dashed var(--border); border-radius: 8px; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.8rem; cursor: pointer; transition: all 0.15s; }
-  .add-option-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .remove-btn { width: 26px; height: 26px; border-radius: 6px; background: transparent; border: 1px solid var(--border); color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0; transition: all 0.15s; }
-  .remove-btn:hover { border-color: var(--danger); color: var(--danger); }
-  .no-selection { text-align: center; padding: 40px 16px; color: var(--muted); font-size: 0.85rem; line-height: 1.6; }
-  .no-selection .icon { display: block; font-size: 2rem; margin-bottom: 12px; }
-  .slug-preview { font-size: 0.75rem; color: var(--accent2); padding: 6px 10px; background: rgba(61,255,160,0.08); border-radius: 6px; margin-top: -4px; margin-bottom: 8px; font-family: monospace; word-break: break-all; }
-  .plan-badge { font-size: 0.7rem; background: rgba(240,224,64,0.1); color: var(--accent); border: 1px solid rgba(240,224,64,0.2); padding: 3px 8px; border-radius: 20px; font-weight: 600; }
-  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 12px 20px; border-radius: var(--radius); font-size: 0.85rem; font-weight: 500; z-index: 999; display: none; animation: slideUp 0.25s ease; }
-  .toast.success { border-color: var(--accent2); }
-  .toast.error   { border-color: var(--danger); color: var(--danger); }
-  @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .toggle::after { content: ''; position: absolute; width: 13px; height: 13px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: transform 0.2s; }
+  .toggle.on::after { transform: translateX(15px); }
+  .opts-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 6px; }
+  .opt-row { display: flex; align-items: center; gap: 5px; }
+  .opt-row .prop-input { flex: 1; }
+  .opt-price { width: 72px !important; flex-shrink: 0; }
+  .add-opt-btn { width: 100%; padding: 7px; background: transparent; border: 1px dashed var(--border); border-radius: 8px; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.78rem; cursor: pointer; transition: all 0.15s; }
+  .add-opt-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .rm-btn { width: 24px; height: 24px; border-radius: 5px; background: transparent; border: 1px solid var(--border); color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; flex-shrink: 0; transition: all 0.15s; }
+  .rm-btn:hover { border-color: var(--danger); color: var(--danger); }
+  .no-sel { text-align: center; padding: 36px 14px; color: var(--muted); font-size: 0.83rem; line-height: 1.6; }
+  .no-sel .icon { display: block; font-size: 1.8rem; margin-bottom: 10px; }
+
+  .slug-prev { font-size: 0.72rem; color: var(--accent2); padding: 5px 9px; background: rgba(61,255,160,0.08); border-radius: 6px; margin-top: -4px; margin-bottom: 7px; font-family: monospace; word-break: break-all; }
+  .plan-badge { font-size: 0.68rem; background: rgba(240,224,64,0.1); color: var(--accent); border: 1px solid rgba(240,224,64,0.2); padding: 3px 8px; border-radius: 20px; font-weight: 600; }
+  .btoast { position: fixed; bottom: 22px; right: 22px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 11px 18px; border-radius: var(--radius); font-size: 0.83rem; font-weight: 500; z-index: 999; display: none; animation: slideUp 0.25s ease; }
+  .btoast.success { border-color: var(--accent2); }
+  .btoast.error   { border-color: var(--danger); color: var(--danger); }
+  @keyframes slideUp { from { transform: translateY(14px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -152,133 +155,163 @@
 </head>
 <body>
 
-<header class="header">
-  <div class="logo">wuote<span>.</span>box</div>
-  <div class="header-actions">
-    <span class="plan-badge" id="planBadge">Loading plan…</span>
-    <button class="btn btn-ghost" onclick="copyShareLink()">Copy Link</button>
-    <button class="btn btn-primary" id="saveBtn" onclick="saveForm()">Save Form</button>
+<!-- Matches your dashboard sidebar exactly -->
+<div class="flex h-screen overflow-hidden">
+  <div class="w-64 bg-gray-900 flex-shrink-0">
+    <div class="flex flex-col h-full">
+      <div class="flex items-center justify-center h-16 bg-gray-800">
+        <span class="text-white text-xl font-bold">QuoteFlow</span>
+      </div>
+      <nav class="flex-1 px-2 py-4 space-y-1">
+        <a href="dashboard.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">Dashboard</a>
+        <a href="leads.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">Leads</a>
+        <a href="hosted-forms.html" class="bg-gray-800 text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">Hosted Forms</a>
+        <a href="billing.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">Billing & Credits</a>
+        <a href="settings.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">Settings</a>
+      </nav>
+      <div class="p-4">
+        <button id="logoutBtn" class="w-full bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">Logout</button>
+      </div>
+    </div>
   </div>
-</header>
 
-<div class="builder-layout">
-  <aside class="sidebar">
-    <div class="sidebar-section">
-      <div class="sidebar-label">Form Settings</div>
-      <div class="form-meta">
-        <label>Form Name</label>
-        <input type="text" id="formName" value="My Quote Form" oninput="renderCanvas()">
-        <label>Description</label>
-        <textarea id="formDesc" rows="2" placeholder="Shown to visitors…">Get an instant price for your project.</textarea>
-        <label>Submit Button Label</label>
-        <input type="text" id="submitLabel" value="Get My Quote →" oninput="renderCanvas()">
-        <label>URL Slug</label>
-        <input type="text" id="formSlug" value="my-quote-form" oninput="updateSlug()">
-        <div class="slug-preview" id="slugPreview">quote-box.com/my-quote-form</div>
-        <label>Currency</label>
-        <select id="currency" onchange="renderCanvas()">
-          <option value="$">USD ($)</option>
-          <option value="£">GBP (£)</option>
-          <option value="€">EUR (€)</option>
-          <option value="CA$">CAD (CA$)</option>
-          <option value="AU$">AUD (AU$)</option>
-        </select>
-        <label>Brand Colour</label>
-        <div class="color-picker">
-          <div class="color-swatch yellow active" id="swatchYellow" onclick="setColor('yellow')">
-            <span>☀</span><span class="color-swatch-label">Yellow</span>
-          </div>
-          <div class="color-swatch blue" id="swatchBlue" onclick="setColor('blue')">
-            <span style="color:rgba(255,255,255,0.9)">◈</span><span class="color-swatch-label">Blue</span>
+  <!-- Builder fills remaining space -->
+  <div class="flex-1 overflow-hidden builder-wrap">
+    <div class="builder-header">
+      <div class="builder-logo">wuote<span>.</span>box <span style="font-size:0.7rem;color:var(--muted);font-weight:400;margin-left:8px">Form Builder</span></div>
+      <div class="builder-actions">
+        <span class="plan-badge" id="planBadge">Loading…</span>
+        <button class="bb bb-ghost" onclick="copyShareLink()">Copy Link</button>
+        <button class="bb bb-primary" id="saveBtn" onclick="saveForm()">Save Form</button>
+      </div>
+    </div>
+
+    <div class="builder-layout">
+      <!-- LEFT -->
+      <aside class="sidebar">
+        <div class="sidebar-section">
+          <div class="sidebar-label">Form Settings</div>
+          <div class="fm">
+            <label>Form Name</label>
+            <input type="text" id="formName" value="My Quote Form" oninput="renderCanvas()">
+            <label>Description</label>
+            <textarea id="formDesc" rows="2" placeholder="Shown to visitors…">Get an instant price for your project.</textarea>
+            <label>Submit Button Label</label>
+            <input type="text" id="submitLabel" value="Get My Quote →" oninput="renderCanvas()">
+            <label>URL Slug</label>
+            <input type="text" id="formSlug" value="my-quote-form" oninput="updateSlug()">
+            <div class="slug-prev" id="slugPreview">quote-box.com/my-quote-form</div>
+            <label>Currency</label>
+            <select id="currency" onchange="renderCanvas()">
+              <option value="$">USD ($)</option>
+              <option value="£">GBP (£)</option>
+              <option value="€">EUR (€)</option>
+              <option value="CA$">CAD (CA$)</option>
+              <option value="AU$">AUD (AU$)</option>
+            </select>
+            <label>Brand Colour</label>
+            <div class="color-picker">
+              <div class="cswatch yellow active" id="swatchYellow" onclick="setColor('yellow')">
+                <span>☀</span><span class="cswatch-lbl">Yellow</span>
+              </div>
+              <div class="cswatch blue" id="swatchBlue" onclick="setColor('blue')">
+                <span style="color:rgba(255,255,255,0.9)">◈</span><span class="cswatch-lbl">Blue</span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-label">Step 1 — Quote Fields</div>
-      <button class="field-type-btn" onclick="addField('radio')"><span class="icon">◉</span> Radio Cards</button>
-      <button class="field-type-btn" onclick="addField('dropdown')"><span class="icon">▾</span> Dropdown</button>
-      <button class="field-type-btn" onclick="addField('checkbox')"><span class="icon">☑</span> Checkboxes</button>
-      <button class="field-type-btn" onclick="addField('number')"><span class="icon">#</span> Qty / Number</button>
-      <button class="field-type-btn" onclick="addField('textarea')"><span class="icon">≡</span> Long Text</button>
-    </div>
-  </aside>
+        <div class="sidebar-section">
+          <div class="sidebar-label">Add Field</div>
+          <button class="ftype-btn" onclick="addField('radio')"><span class="icon">◉</span> Radio Cards</button>
+          <button class="ftype-btn" onclick="addField('dropdown')"><span class="icon">▾</span> Dropdown</button>
+          <button class="ftype-btn" onclick="addField('checkbox')"><span class="icon">☑</span> Checkboxes</button>
+          <button class="ftype-btn" onclick="addField('number')"><span class="icon">#</span> Qty / Number</button>
+          <button class="ftype-btn" onclick="addField('textarea')"><span class="icon">≡</span> Long Text</button>
+        </div>
+      </aside>
 
-  <main class="canvas">
-    <div class="canvas-inner">
-      <div class="step-tabs">
-        <div class="step-tab active" id="tab0" onclick="switchTab(0)">Step 1 · Quote</div>
-        <div class="step-tab" id="tab1" onclick="switchTab(1)">Step 2 · Contact</div>
-        <div class="step-tab" id="tab2" onclick="switchTab(2)">Step 3 · Confirm</div>
-      </div>
-      <div id="canvasContent"></div>
-    </div>
-  </main>
+      <!-- CANVAS -->
+      <main class="canvas">
+        <div class="canvas-inner">
+          <div class="step-tabs">
+            <div class="step-tab active" id="tab0" onclick="switchTab(0)">Step 1 · Quote</div>
+            <div class="step-tab" id="tab1" onclick="switchTab(1)">Step 2 · Contact</div>
+            <div class="step-tab" id="tab2" onclick="switchTab(2)">Step 3 · Confirm</div>
+          </div>
+          <div id="canvasContent"></div>
+        </div>
+      </main>
 
-  <aside class="props-panel" id="propsPanel">
-    <div class="props-title">Properties</div>
-    <div class="no-selection"><span class="icon">☜</span>Click a field to edit its properties</div>
-  </aside>
+      <!-- PROPS -->
+      <aside class="props-panel" id="propsPanel">
+        <div class="props-title">Properties</div>
+        <div class="no-sel"><span class="icon">☜</span>Click a field to edit its properties</div>
+      </aside>
+    </div>
+  </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="btoast" id="toast"></div>
 
 <script>
 // ─────────────────────────────────────────────────
-// SUPABASE CONFIG — your real credentials
+// SUPABASE — same credentials as your dashboard
 // ─────────────────────────────────────────────────
-const SUPABASE_URL  = 'https://jpchpqjnyabtpptufkcj.supabase.co';
-const SUPABASE_KEY  = 'sb_publishable_JunqsBKy_PS1BZCzO-r0Kw_65juJQ7o';
+const SUPABASE_URL      = 'https://jpchpqjnyabtpptufkcj.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwY2hwcWpueWFidHBwdHVma2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMDAyNTAsImV4cCI6MjA4NjY3NjI1MH0.FCywHhyz8N0Hkl-jK9RxZyh2KFZMrP8aUSXt1oJQbHY';
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ─────────────────────────────────────────────────
-// AUTH — get account ID from Supabase session
+// AUTH — exact same pattern as your dashboard
 // ─────────────────────────────────────────────────
-let ACCOUNT_ID      = null;
+let accountId      = null;
 let EDITING_FORM_ID = null;
 
-async function initAuth() {
-  // Get current session
-  const sessionRes = await sbFetch('/auth/v1/user', 'GET');
-  if (!sessionRes || sessionRes.error) {
-    window.location.href = '/login.html';
-    return false;
-  }
+async function checkAuth() {
+  const { data: { user }, error } = await sb.auth.getUser();
+  if (error || !user) { window.location.href = 'login.html'; return; }
 
-  const userId = sessionRes.id;
+  const { data: account } = await sb
+    .from('accounts')
+    .select('*')
+    .eq('owner_id', user.id)
+    .single();
 
-  // Get account row for this user
-  const accounts = await sbFetch(
-    '/rest/v1/accounts?owner_id=eq.' + userId + '&select=id&limit=1', 'GET'
-  );
-  if (!accounts || !accounts.length) {
-    toast('No account found for this user', 'error'); return false;
-  }
-  ACCOUNT_ID = accounts[0].id;
+  if (!account) { alert('No account found. Please contact support.'); return; }
+  accountId = account.id;
 
-  // Load plan badge
-  const billing = await sbFetch(
-    '/rest/v1/billing?account_id=eq.' + ACCOUNT_ID + '&select=plan&limit=1', 'GET'
-  );
-  const plan = billing && billing[0] ? billing[0].plan : 'base';
+  // Load plan badge from billing
+  const { data: billing } = await sb
+    .from('billing')
+    .select('plan')
+    .eq('account_id', accountId)
+    .single();
+
+  const plan = billing?.plan || 'base';
   const planLabels = { base: 'Base · 1 form · 25 leads', pro: 'Pro · 10 forms · 500 leads', agency: 'Agency · Unlimited' };
   document.getElementById('planBadge').textContent = planLabels[plan] || planLabels.base;
 
-  // Check if editing existing form
-  const params = new URLSearchParams(window.location.search);
-  const editId = params.get('form_id');
+  // Check if editing existing form (?form_id=xxx)
+  const params  = new URLSearchParams(window.location.search);
+  const editId  = params.get('form_id');
   if (editId) await loadExistingForm(editId);
 
-  return true;
+  updateSlug();
+  renderCanvas();
 }
 
 async function loadExistingForm(formId) {
   EDITING_FORM_ID = formId;
-  const rows = await sbFetch(
-    '/rest/v1/hosted_forms?id=eq.' + formId + '&select=*&limit=1', 'GET'
-  );
-  if (!rows || !rows.length) return;
-  const row = rows[0];
-  const c   = row.form_config;
+  const { data: row } = await sb
+    .from('hosted_forms')
+    .select('*')
+    .eq('id', formId)
+    .single();
+
+  if (!row) return;
+  const c = row.form_config;
   document.getElementById('formName').value    = row.form_name || '';
   document.getElementById('formSlug').value    = c.slug || '';
   document.getElementById('formDesc').value    = c.description || '';
@@ -286,28 +319,15 @@ async function loadExistingForm(formId) {
   document.getElementById('currency').value    = c.currency || '$';
   fields = c.fields || [];
   setColor(c.brand_color || 'yellow');
-  updateSlug();
-  renderCanvas();
 }
 
 // ─────────────────────────────────────────────────
-// SUPABASE FETCH HELPER
+// LOGOUT — same as dashboard
 // ─────────────────────────────────────────────────
-async function sbFetch(path, method, body) {
-  const opts = {
-    method,
-    headers: {
-      'apikey':        SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Content-Type':  'application/json',
-      'Prefer':        'return=representation',
-    },
-  };
-  if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(SUPABASE_URL + path, opts);
-  if (method === 'DELETE' || res.status === 204) return null;
-  return res.json();
-}
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await sb.auth.signOut();
+  window.location.href = 'login.html';
+});
 
 // ─────────────────────────────────────────────────
 // STATE
@@ -323,8 +343,8 @@ function uid() { return 'f'+(++_ctr)+'_'+Math.random().toString(36).slice(2,7); 
 // TOAST
 // ─────────────────────────────────────────────────
 function toast(msg, type='info', ms=3000) {
-  const el = document.getElementById('toast');
-  el.textContent=msg; el.className='toast '+type; el.style.display='block';
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='btoast '+type; el.style.display='block';
   clearTimeout(el._t); el._t=setTimeout(()=>el.style.display='none', ms);
 }
 
@@ -332,15 +352,15 @@ function toast(msg, type='info', ms=3000) {
 // META
 // ─────────────────────────────────────────────────
 function updateSlug() {
-  const slug = document.getElementById('formSlug').value
+  const slug=document.getElementById('formSlug').value
     .toLowerCase().replace(/[^a-z0-9-]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'');
-  document.getElementById('formSlug').value = slug;
-  document.getElementById('slugPreview').textContent = 'quote-box.com/'+(slug||'my-quote-form');
+  document.getElementById('formSlug').value=slug;
+  document.getElementById('slugPreview').textContent='quote-box.com/'+(slug||'my-quote-form');
   renderCanvas();
 }
 function copyShareLink() {
-  const slug = document.getElementById('formSlug').value;
-  if (!slug) { toast('Set a slug first','error'); return; }
+  const slug=document.getElementById('formSlug').value;
+  if(!slug){toast('Set a slug first','error');return;}
   navigator.clipboard.writeText('https://quote-box.com/'+slug);
   toast('Link copied!','success');
 }
@@ -360,84 +380,79 @@ function switchTab(i) {
 // FIELD DEFAULTS
 // ─────────────────────────────────────────────────
 function makeField(type) {
-  const defs = {
-    radio:    { label:'Choose a Package', required:true,  options:[{id:uid(),label:'Starter',price:99},{id:uid(),label:'Pro',price:199}] },
-    dropdown: { label:'Select an Option', required:true,  options:[{id:uid(),label:'Option A',price:0},{id:uid(),label:'Option B',price:50}] },
-    checkbox: { label:'Add-ons',          required:false, options:[{id:uid(),label:'Extra feature',price:25},{id:uid(),label:'Rush delivery',price:50}] },
-    number:   { label:'Quantity',         required:false, placeholder:'1', ratePerUnit:0 },
-    textarea: { label:'Project Details',  required:false, placeholder:'Tell us more…' },
+  const d={
+    radio:    {label:'Choose a Package',required:true, options:[{id:uid(),label:'Starter',price:99},{id:uid(),label:'Pro',price:199}]},
+    dropdown: {label:'Select an Option', required:true, options:[{id:uid(),label:'Option A',price:0},{id:uid(),label:'Option B',price:50}]},
+    checkbox: {label:'Add-ons',          required:false,options:[{id:uid(),label:'Extra feature',price:25},{id:uid(),label:'Rush delivery',price:50}]},
+    number:   {label:'Quantity',         required:false,placeholder:'1',ratePerUnit:0},
+    textarea: {label:'Project Details',  required:false,placeholder:'Tell us more…'},
   };
-  return { id:uid(), type, ...defs[type] };
+  return {id:uid(),type,...d[type]};
 }
-function addField(type) {
-  const f=makeField(type); fields.push(f); selectedId=f.id; renderCanvas(); renderProps();
-}
-function removeField(id,e) {
-  e.stopPropagation(); fields=fields.filter(f=>f.id!==id);
-  if(selectedId===id){selectedId=null;clearProps();} renderCanvas();
+function addField(type){const f=makeField(type);fields.push(f);selectedId=f.id;renderCanvas();renderProps();}
+function removeField(id,e){
+  e.stopPropagation();fields=fields.filter(f=>f.id!==id);
+  if(selectedId===id){selectedId=null;clearProps();}renderCanvas();
 }
 
 // ─────────────────────────────────────────────────
 // RENDER CANVAS
 // ─────────────────────────────────────────────────
-function renderCanvas() {
-  const wrap  = document.getElementById('canvasContent');
-  const title = document.getElementById('formName').value||'My Quote Form';
-  const desc  = document.getElementById('formDesc').value;
-  const cur   = document.getElementById('currency').value;
-  const bg    = brandColor+'-bg';
-  const subLbl= document.getElementById('submitLabel').value||'Get My Quote →';
+function renderCanvas(){
+  const wrap=document.getElementById('canvasContent');
+  const title=document.getElementById('formName').value||'My Quote Form';
+  const desc=document.getElementById('formDesc').value;
+  const cur=document.getElementById('currency').value;
+  const bg=brandColor+'-bg';
+  const subLbl=document.getElementById('submitLabel').value||'Get My Quote →';
   const stepLabels=['Step 1 of 3 — Your Quote','Step 2 of 3 — Contact Details','Step 3 of 3'];
+  const isBlue=brandColor==='blue';
 
-  // Step dots
-  const isBlue = brandColor==='blue';
   const dots=[0,1,2].map((i,idx)=>{
     const cls=i<activeTab?'done':i===activeTab?'active':'todo';
-    const dotStyle=isBlue
-      ? (cls==='active'?'background:white;color:#1A56FF;':cls==='done'?'background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);':'background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.3);')
-      : (cls==='active'?'background:#1a1a2e;color:#FFE500;':cls==='done'?'background:rgba(0,0,0,0.15);color:rgba(0,0,0,0.5);':'background:rgba(0,0,0,0.06);color:rgba(0,0,0,0.3);');
-    return '<div class="preview-step-dot" style="'+dotStyle+'">'+( i+1)+'</div>'
-      +(idx<2?'<div class="preview-step-line"></div>':'');
+    const s=isBlue
+      ?(cls==='active'?'background:white;color:#1A56FF;':cls==='done'?'background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);':'background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.3);')
+      :(cls==='active'?'background:#1a1a2e;color:#FFE500;':cls==='done'?'background:rgba(0,0,0,0.15);color:rgba(0,0,0,0.5);':'background:rgba(0,0,0,0.06);color:rgba(0,0,0,0.3);');
+    return '<div class="ps-dot" style="'+s+'">'+(i+1)+'</div>'+(idx<2?'<div class="ps-line"></div>':'');
   }).join('');
 
   let body='';
-  if(activeTab===0) {
+  if(activeTab===0){
     const hasPricing=fields.some(f=>['radio','dropdown','checkbox'].includes(f.type)||(f.type==='number'&&f.ratePerUnit>0));
     const cards=fields.length?fields.map(f=>{
-      let preview='';
+      let prev='';
       if(f.type==='textarea'||f.type==='number'){
-        preview='<div class="field-preview-input">'+esc(f.placeholder||'')+'</div>';
-        if(f.type==='number'&&f.ratePerUnit>0) preview+='<span style="font-size:0.75rem;color:var(--muted);margin-top:4px;display:block">× '+cur+f.ratePerUnit+' per unit</span>';
+        prev='<div class="fprev-input">'+esc(f.placeholder||'')+'</div>';
+        if(f.type==='number'&&f.ratePerUnit>0) prev+='<span style="font-size:0.72rem;color:var(--muted);margin-top:3px;display:block">× '+cur+f.ratePerUnit+' per unit</span>';
       } else if(f.options){
-        preview='<div class="field-preview-options">'+f.options.map(o=>
-          '<div class="field-preview-option"><span>'+esc(o.label)+'</span><span class="price-tag">'+(o.price>0?'+'+cur+o.price:'free')+'</span></div>'
+        prev='<div class="fprev-opts">'+f.options.map(o=>
+          '<div class="fprev-opt"><span>'+esc(o.label)+'</span><span class="ptag">'+(o.price>0?'+'+cur+o.price:'free')+'</span></div>'
         ).join('')+'</div>';
       }
       return '<div class="field-card'+(selectedId===f.id?' selected':'')+'" onclick="selectField(\''+f.id+'\')">'
-        +'<div class="field-card-header"><div class="field-card-label">'+(f.required?'<span class="field-required-dot"></span>':'')+esc(f.label)+'</div>'
-        +'<div class="field-card-actions"><span class="field-type-badge">'+f.type+'</span>'
-        +'<button class="btn btn-sm btn-danger" onclick="removeField(\''+f.id+'\',event)">✕</button></div></div>'+preview+'</div>';
+        +'<div class="field-card-hdr"><div class="field-card-lbl">'+(f.required?'<span class="req-dot"></span>':'')+esc(f.label)+'</div>'
+        +'<div class="field-card-acts"><span class="ftype-badge">'+f.type+'</span>'
+        +'<button class="bb bb-sm bb-danger" onclick="removeField(\''+f.id+'\',event)">✕</button></div></div>'+prev+'</div>';
     }).join('')
     :'<div class="empty-step">No quote fields yet<p>Add fields from the left panel.</p></div>';
 
-    body='<div class="step-section-label">Quote Fields</div>'+cards
-      +(hasPricing?'<div class="price-total-preview"><div class="price-total-label">Estimated Total</div><div class="price-total-value">'+cur+'0</div></div>':'')
-      +'<button class="submit-btn-preview '+bg+'" style="margin-top:12px">Next →</button>';
+    body='<div class="sec-label">Quote Fields</div>'+cards
+      +(hasPricing?'<div class="total-prev"><div class="total-prev-lbl">Estimated Total</div><div class="total-prev-val">'+cur+'0</div></div>':'')
+      +'<button class="sub-btn-prev '+bg+'" style="margin-top:10px">Next →</button>';
 
-  } else if(activeTab===1) {
-    body='<div class="step-section-label">Contact Details (fixed)</div>'
-      +'<div class="contact-preview-fields">'
-      +'<div class="contact-preview-field">Full Name</div>'
-      +'<div class="contact-preview-field">Email Address</div>'
-      +'<div class="contact-preview-field">Phone Number (optional)</div>'
+  } else if(activeTab===1){
+    body='<div class="sec-label">Contact Details (always included)</div>'
+      +'<div class="contact-prev">'
+      +'<div class="contact-prev-field">Full Name</div>'
+      +'<div class="contact-prev-field">Email Address</div>'
+      +'<div class="contact-prev-field">Phone Number (optional)</div>'
       +'</div>'
-      +'<button class="submit-btn-preview '+bg+'" style="margin-top:16px">'+esc(subLbl)+'</button>';
-
+      +'<button class="sub-btn-prev '+bg+'" style="margin-top:14px">'+esc(subLbl)+'</button>';
   } else {
-    body='<div class="email-notice-preview">'
-      +'<div class="email-icon-preview">✉</div>'
-      +'<div class="email-notice-text">Your quote is on its way!</div>'
-      +'<div class="email-notice-sub">We\'ve received your details and will email your quote to you shortly.</div>'
+    body='<div class="email-notice-prev">'
+      +'<div class="email-icon-prev">✉</div>'
+      +'<div class="email-notice-txt">Your quote is on its way!</div>'
+      +'<div class="email-notice-sub">We\'ve received your details and will email your personalised quote to you shortly.</div>'
       +'</div>';
   }
 
@@ -445,9 +460,9 @@ function renderCanvas() {
   wrap.innerHTML='<div class="preview-card">'
     +'<div class="preview-card-header '+bg+'">'
     +'<div class="preview-steps">'+dots+'</div>'
-    +'<div style="font-size:0.7rem;font-weight:600;letter-spacing:0.05em;margin-bottom:8px;color:'+stepColor+'">'+stepLabels[activeTab]+'</div>'
-    +'<div class="preview-card-title">'+esc(title)+'</div>'
-    +'<div class="preview-card-desc">'+esc(desc)+'</div>'
+    +'<div style="font-size:0.68rem;font-weight:600;letter-spacing:0.05em;margin-bottom:7px;color:'+stepColor+'">'+stepLabels[activeTab]+'</div>'
+    +'<div class="pv-title">'+esc(title)+'</div>'
+    +'<div class="pv-desc">'+esc(desc)+'</div>'
     +'</div>'
     +'<div class="preview-card-body">'+body+'</div>'
     +'</div>';
@@ -456,13 +471,13 @@ function renderCanvas() {
 // ─────────────────────────────────────────────────
 // SELECT + PROPS
 // ─────────────────────────────────────────────────
-function selectField(id){ selectedId=id; renderCanvas(); renderProps(); }
+function selectField(id){selectedId=id;renderCanvas();renderProps();}
 function clearProps(){
   document.getElementById('propsPanel').innerHTML=
-    '<div class="props-title">Properties</div><div class="no-selection"><span class="icon">☜</span>Click a field to edit its properties</div>';
+    '<div class="props-title">Properties</div><div class="no-sel"><span class="icon">☜</span>Click a field to edit</div>';
 }
 function renderProps(){
-  const f=fields.find(x=>x.id===selectedId); if(!f){clearProps();return;}
+  const f=fields.find(x=>x.id===selectedId);if(!f){clearProps();return;}
   const hasOpts=['radio','dropdown','checkbox'].includes(f.type);
   const hasRate=f.type==='number';
   const hasPH=['number','textarea'].includes(f.type);
@@ -474,25 +489,29 @@ function renderProps(){
       +'<input class="prop-input" value="'+esc(f.placeholder||'')+'" oninput="setProp(\''+f.id+'\',\'placeholder\',this.value)"></div>':'')
     +(hasRate?'<div class="prop-group"><div class="prop-label">Price per unit</div>'
       +'<input class="prop-input" type="number" min="0" step="0.01" value="'+(f.ratePerUnit||0)+'" oninput="setProp(\''+f.id+'\',\'ratePerUnit\',parseFloat(this.value)||0)"></div>':'')
-    +'<div class="prop-toggle"><span class="prop-toggle-label">Required field</span>'
+    +'<div class="prop-toggle"><span class="prop-toggle-lbl">Required field</span>'
     +'<div class="toggle '+(f.required?'on':'')+'" onclick="toggleProp(\''+f.id+'\',\'required\')"></div></div>'
     +(hasOpts?'<div class="prop-group"><div class="prop-label">Options</div>'
-      +'<div class="options-list">'+f.options.map(o=>
-        '<div class="option-row">'
+      +'<div class="opts-list">'+f.options.map(o=>
+        '<div class="opt-row">'
         +'<input class="prop-input" value="'+esc(o.label)+'" oninput="setOpt(\''+f.id+'\',\''+o.id+'\',\'label\',this.value)">'
-        +'<input class="prop-input option-price" type="number" min="0" step="0.01" value="'+(o.price||0)+'" oninput="setOpt(\''+f.id+'\',\''+o.id+'\',\'price\',parseFloat(this.value)||0)">'
-        +'<button class="remove-btn" onclick="removeOpt(\''+f.id+'\',\''+o.id+'\')">✕</button>'
+        +'<input class="prop-input opt-price" type="number" min="0" step="0.01" value="'+(o.price||0)+'" oninput="setOpt(\''+f.id+'\',\''+o.id+'\',\'price\',parseFloat(this.value)||0)">'
+        +'<button class="rm-btn" onclick="removeOpt(\''+f.id+'\',\''+o.id+'\')">✕</button>'
         +'</div>').join('')
-      +'</div><button class="add-option-btn" onclick="addOpt(\''+f.id+'\')">+ Add option</button></div>':'');
+      +'</div><button class="add-opt-btn" onclick="addOpt(\''+f.id+'\')">+ Add option</button></div>':'');
 }
-function setProp(id,k,v){ const f=fields.find(x=>x.id===id); if(f){f[k]=v;renderCanvas();} }
-function toggleProp(id,k){ const f=fields.find(x=>x.id===id); if(f){f[k]=!f[k];renderCanvas();renderProps();} }
-function setOpt(fid,oid,k,v){ const f=fields.find(x=>x.id===fid); const o=f&&f.options&&f.options.find(x=>x.id===oid); if(o){o[k]=v;renderCanvas();} }
-function addOpt(fid){ const f=fields.find(x=>x.id===fid); if(!f)return; f.options.push({id:uid(),label:'New Option',price:0}); renderCanvas();renderProps(); }
-function removeOpt(fid,oid){ const f=fields.find(x=>x.id===fid); if(!f||f.options.length<=1){toast('Need at least one option','error');return;} f.options=f.options.filter(o=>o.id!==oid); renderCanvas();renderProps(); }
+function setProp(id,k,v){const f=fields.find(x=>x.id===id);if(f){f[k]=v;renderCanvas();}}
+function toggleProp(id,k){const f=fields.find(x=>x.id===id);if(f){f[k]=!f[k];renderCanvas();renderProps();}}
+function setOpt(fid,oid,k,v){const f=fields.find(x=>x.id===fid);const o=f&&f.options&&f.options.find(x=>x.id===oid);if(o){o[k]=v;renderCanvas();}}
+function addOpt(fid){const f=fields.find(x=>x.id===fid);if(!f)return;f.options.push({id:uid(),label:'New Option',price:0});renderCanvas();renderProps();}
+function removeOpt(fid,oid){
+  const f=fields.find(x=>x.id===fid);
+  if(!f||f.options.length<=1){toast('Need at least one option','error');return;}
+  f.options=f.options.filter(o=>o.id!==oid);renderCanvas();renderProps();
+}
 
 // ─────────────────────────────────────────────────
-// SAVE FORM
+// SAVE — uses sb client exactly like your dashboard
 // ─────────────────────────────────────────────────
 async function saveForm() {
   const name        = document.getElementById('formName').value.trim();
@@ -501,23 +520,25 @@ async function saveForm() {
   const submitLabel = document.getElementById('submitLabel').value.trim()||'Get My Quote';
   const currency    = document.getElementById('currency').value;
 
-  if(!name)          { toast('Enter a form name','error'); return; }
-  if(!slug)          { toast('Set a URL slug','error'); return; }
-  if(!fields.length) { toast('Add at least one field','error'); return; }
-  if(!ACCOUNT_ID)    { toast('Not logged in','error'); return; }
+  if(!name)          {toast('Enter a form name','error');return;}
+  if(!slug)          {toast('Set a URL slug','error');return;}
+  if(!fields.length) {toast('Add at least one field','error');return;}
+  if(!accountId)     {toast('Not logged in','error');return;}
 
-  // Check plan form limit
-  const billing = await sbFetch('/rest/v1/billing?account_id=eq.'+ACCOUNT_ID+'&select=plan&limit=1','GET');
-  const plan    = billing&&billing[0]?billing[0].plan:'base';
-  const limits  = { base:1, pro:10, agency:Infinity };
+  // Check plan limit
+  const { data: billing } = await sb.from('billing').select('plan').eq('account_id',accountId).single();
+  const plan   = billing?.plan||'base';
+  const limits = {base:1,pro:10,agency:Infinity};
 
-  if(!EDITING_FORM_ID) {
-    const countRes = await fetch(SUPABASE_URL+'/rest/v1/hosted_forms?account_id=eq.'+ACCOUNT_ID+'&select=id', {
-      headers:{ 'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'count=exact','Range':'0-0' }
-    });
-    const count = parseInt((countRes.headers.get('Content-Range')||'').split('/')[1]||'0',10);
-    if(count >= limits[plan]) {
-      toast('Form limit reached for your plan — upgrade to add more','error',5000); return;
+  if(!EDITING_FORM_ID){
+    const { count } = await sb
+      .from('hosted_forms')
+      .select('id',{count:'exact',head:true})
+      .eq('account_id',accountId);
+
+    if(count >= limits[plan]){
+      toast('Form limit reached — upgrade to add more','error',5000);
+      return;
     }
   }
 
@@ -525,39 +546,39 @@ async function saveForm() {
   btn.disabled=true; btn.textContent='Saving…';
 
   const payload = {
-    account_id:  ACCOUNT_ID,
+    account_id:  accountId,
     form_name:   name,
     form_type:   'quote',
-    form_config: { slug, description, submit_label:submitLabel, currency, brand_color:brandColor, show_total:true, fields },
+    form_config: {slug,description,submit_label:submitLabel,currency,brand_color:brandColor,show_total:true,fields},
     is_active:   true,
     updated_at:  new Date().toISOString(),
   };
 
-  try {
-    const isEdit = Boolean(EDITING_FORM_ID);
-    const path   = isEdit
-      ? '/rest/v1/hosted_forms?id=eq.'+EDITING_FORM_ID
-      : '/rest/v1/hosted_forms';
-    const data = await sbFetch(path, isEdit?'PATCH':'POST', payload);
-    if(data && data[0] && !EDITING_FORM_ID) EDITING_FORM_ID=data[0].id;
+  try{
+    if(EDITING_FORM_ID){
+      const {error} = await sb.from('hosted_forms').update(payload).eq('id',EDITING_FORM_ID);
+      if(error) throw error;
+    } else {
+      const {data,error} = await sb.from('hosted_forms').insert(payload).select().single();
+      if(error) throw error;
+      EDITING_FORM_ID = data.id;
+    }
     toast('✓ Saved! Live at quote-box.com/'+slug,'success');
-  } catch(e) {
-    toast('Error saving — check console','error'); console.error(e);
-  } finally {
+  }catch(e){
+    if(e.code==='23505') toast('Slug already taken — try another','error');
+    else { toast('Error: '+(e.message||'Unknown'),'error',5000); console.error(e); }
+  }finally{
     btn.disabled=false; btn.textContent='Save Form';
   }
 }
 
-function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 // ─────────────────────────────────────────────────
 // INIT
 // ─────────────────────────────────────────────────
-(async()=>{
-  const ok = await initAuth();
-  if(ok){ updateSlug(); renderCanvas(); }
-  document.getElementById('formDesc').addEventListener('input',renderCanvas);
-})();
+document.getElementById('formDesc').addEventListener('input', renderCanvas);
+checkAuth();
 </script>
 </body>
 </html>
