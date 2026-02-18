@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script>
+  // Redirects quote-box.com/my-form → quote-box.com/?slug=my-form
+  // which index.html picks up and loads the correct form
+  const slug = window.location.pathname.replace(/^\//, '').split('/')[0];
+  if (slug && slug !== '404.html') {
+    window.location.replace('/?slug=' + encodeURIComponent(slug));
+  } else {
+    window.location.replace('/');
+  }
+</script>
+</head>
+<body></body>
+</html>
