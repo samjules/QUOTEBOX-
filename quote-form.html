@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quote Form — Wuote Box</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --brand: #FFE500; --brand-text: #1a1a2e; --brand-muted: rgba(26,26,46,0.6);
+    --step-active-bg: #1a1a2e; --step-active-color: #FFE500;
+    --btn-bg: #FFE500; --btn-color: #1a1a2e;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: #f5f5f8; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 0; }
+
+  .screen-center { display: flex; align-items: center; justify-content: center; min-height: 100vh; width: 100%; flex-direction: column; gap: 16px; padding: 32px; text-align: center; }
+  .spinner { width: 36px; height: 36px; border: 3px solid #e2e2ec; border-top-color: #1a1a2e; border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .screen-center h2 { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 700; color: #1a1a2e; }
+  .screen-center p  { color: #8888a0; font-size: 0.9rem; max-width: 340px; line-height: 1.6; }
+
+  .form-card { width: 100%; max-width: 560px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+  .card-header { background: var(--brand); padding: 32px 32px 28px; flex-shrink: 0; }
+
+  .progress-steps { display: flex; align-items: center; margin-bottom: 22px; }
+  .step-dot { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; transition: all 0.3s; flex-shrink: 0; }
+  .step-dot.done   { background: rgba(0,0,0,0.12); color: var(--brand-muted); }
+  .step-dot.active { background: var(--step-active-bg); color: var(--step-active-color); }
+  .step-dot.todo   { background: rgba(0,0,0,0.06); color: rgba(0,0,0,0.3); }
+  .step-line { flex: 1; height: 2px; margin: 0 8px; border-radius: 1px; background: rgba(0,0,0,0.1); }
+
+  .step-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--brand-muted); margin-bottom: 8px; }
+  .form-title { font-family: 'Syne', sans-serif; font-size: 1.65rem; font-weight: 800; color: var(--brand-text); line-height: 1.2; }
+  .form-desc  { font-size: 0.875rem; color: var(--brand-muted); margin-top: 6px; line-height: 1.6; }
+
+  .card-body { background: white; flex: 1; padding: 28px 32px 32px; }
+
+  .field-group { margin-bottom: 20px; }
+  .field-label { font-size: 0.875rem; font-weight: 500; color: #1a1a2e; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .req-star { color: #e5283c; font-size: 0.75rem; }
+  .field-input, .field-textarea, .field-select { width: 100%; border: 1.5px solid #e2e2ec; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: #1a1a2e; padding: 12px 16px; background: white; outline: none; transition: border-color 0.15s, box-shadow 0.15s; -webkit-appearance: none; }
+  .field-input:focus, .field-textarea:focus, .field-select:focus { border-color: #1a1a2e; box-shadow: 0 0 0 3px rgba(26,26,46,0.06); }
+  .field-input.err, .field-textarea.err, .field-select.err { border-color: #e5283c; }
+  .field-textarea { min-height: 96px; resize: vertical; }
+  .field-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; cursor: pointer; }
+  .field-err { font-size: 0.77rem; color: #e5283c; margin-top: 5px; display: none; }
+  .field-err.show { display: block; }
+
+  .radio-grid { display: flex; flex-direction: column; gap: 8px; }
+  .radio-card { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border: 1.5px solid #e2e2ec; border-radius: 10px; cursor: pointer; transition: all 0.15s; user-select: none; }
+  .radio-card:hover { border-color: #1a1a2e; }
+  .radio-card.sel   { border-color: #1a1a2e; background: rgba(26,26,46,0.02); }
+  .rc-left { display: flex; align-items: center; gap: 12px; }
+  .rc-dot  { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #d0d0e0; flex-shrink: 0; position: relative; transition: all 0.15s; }
+  .radio-card.sel .rc-dot { border-color: #1a1a2e; }
+  .radio-card.sel .rc-dot::after { content:''; position:absolute; width:8px; height:8px; background:#1a1a2e; border-radius:50%; top:50%; left:50%; transform:translate(-50%,-50%); }
+  .rc-label { font-size: 0.88rem; font-weight: 500; color: #1a1a2e; }
+  .rc-price { font-size: 0.82rem; font-weight: 600; color: #8888a0; }
+
+  .checkbox-list { display: flex; flex-direction: column; gap: 8px; }
+  .cb-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border: 1.5px solid #e2e2ec; border-radius: 10px; cursor: pointer; transition: all 0.15s; user-select: none; }
+  .cb-item:hover { border-color: #1a1a2e; }
+  .cb-item.sel   { border-color: #1a1a2e; background: rgba(26,26,46,0.02); }
+  .cb-left { display: flex; align-items: center; gap: 12px; }
+  .cb-box  { width: 18px; height: 18px; border-radius: 5px; border: 2px solid #d0d0e0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
+  .cb-item.sel .cb-box { background: #1a1a2e; border-color: #1a1a2e; }
+  .cb-check { color: white; font-size: 0.65rem; font-weight: 700; opacity: 0; }
+  .cb-item.sel .cb-check { opacity: 1; }
+  .cb-label { font-size: 0.88rem; font-weight: 500; color: #1a1a2e; }
+  .cb-price { font-size: 0.82rem; font-weight: 600; color: #8888a0; }
+
+  .total-bar { background: #1a1a2e; color: white; border-radius: 10px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; margin-top: 20px; }
+  .total-bar-label  { font-size: 0.8rem; opacity: 0.55; margin-bottom: 2px; }
+  .total-bar-amount { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; color: var(--brand); }
+  .total-bar-bd     { font-size: 0.72rem; opacity: 0.45; margin-top: 3px; }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 24px; }
+  .btn-back { padding: 13px 20px; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500; background: white; border: 1.5px solid #e2e2ec; color: #8888a0; cursor: pointer; transition: all 0.15s; }
+  .btn-back:hover { border-color: #1a1a2e; color: #1a1a2e; }
+  .btn-next { flex: 1; padding: 14px; border-radius: 10px; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1rem; border: none; cursor: pointer; background: var(--btn-bg); color: var(--btn-color); transition: all 0.15s; }
+  .btn-next:hover { filter: brightness(1.05); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,0.12); }
+  .btn-next:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; filter: none; }
+
+  .confirm-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 12px 0 8px; gap: 14px; }
+  .confirm-envelope { width: 72px; height: 72px; border-radius: 50%; background: var(--brand); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; animation: popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275); }
+  @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .confirm-headline { font-family: 'Syne', sans-serif; font-size: 1.35rem; font-weight: 800; color: #1a1a2e; }
+  .confirm-sub { font-size: 0.875rem; color: #8888a0; line-height: 1.65; max-width: 300px; }
+  .confirm-email-chip { background: #f5f5f8; border-radius: 8px; padding: 10px 16px; font-size: 0.85rem; font-weight: 500; color: #1a1a2e; display: flex; align-items: center; gap: 8px; }
+  .confirm-quote-box { width: 100%; background: var(--brand); border-radius: 10px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+  .confirm-quote-label  { font-size: 0.8rem; font-weight: 600; color: var(--brand-text); opacity: 0.65; margin-bottom: 2px; }
+  .confirm-quote-amount { font-family: 'Syne', sans-serif; font-size: 1.7rem; font-weight: 800; color: var(--brand-text); }
+
+  .limit-banner { background: #fff8e6; border: 1.5px solid #f0c040; border-radius: 10px; padding: 13px 16px; font-size: 0.84rem; color: #7a5c00; margin-bottom: 20px; display: none; }
+  .powered-by { text-align: center; padding: 14px; font-size: 0.72rem; color: #c0c0d0; background: white; }
+  .powered-by a { color: inherit; text-decoration: none; font-weight: 600; }
+  .powered-by a:hover { color: #1a1a2e; }
+
+  @media (min-width: 600px) {
+    body { padding: 40px 20px; align-items: center; }
+    .form-card { min-height: auto; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,0.1); }
+  }
+</style>
+</head>
+<body>
+
+<div class="screen-center" id="scrLoad">
+  <div class="spinner"></div>
+  <p>Loading your quote form…</p>
+</div>
+
+<div class="screen-center" id="scrError" style="display:none">
+  <h2>Form not found</h2>
+  <p>This quote form doesn't exist or has been deactivated. Double-check the link and try again.</p>
+</div>
+
+<div class="form-card" id="scrForm" style="display:none">
+  <div class="card-header" id="cardHeader">
+    <div class="progress-steps" id="progressSteps"></div>
+    <div class="step-label"  id="stepLabel"></div>
+    <div class="form-title"  id="formTitle"></div>
+    <div class="form-desc"   id="formDesc"></div>
+  </div>
+  <div class="card-body" id="cardBody">
+    <div class="limit-banner" id="limitBanner">⚠ This form has reached its submission limit.</div>
+    <div id="stepContent"></div>
+  </div>
+  <div class="powered-by">Powered by <a href="https://quote-box.com" target="_blank">Wuote Box</a></div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────
+// CONFIG — your real credentials
+// ─────────────────────────────────────────────────
+const SUPABASE_URL  = 'https://jpchpqjnyabtpptufkcj.supabase.co';
+const SUPABASE_KEY  = 'sb_publishable_JunqsBKy_PS1BZCzO-r0Kw_65juJQ7o';
+const EDGE_FN_URL   = 'https://jpchpqjnyabtpptufkcj.supabase.co/functions/v1/send-quote-email';
+
+// ─────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────
+let cfg=null, hostedFormId=null, accountId=null;
+let step=1, quoteData={}, contactData={};
+let totalPrice=0, breakdown=[];
+
+// ─────────────────────────────────────────────────
+// BOOT
+// ─────────────────────────────────────────────────
+(async()=>{
+  const slug=getSlug();
+  if(!slug){show('scrError');return;}
+  await loadForm(slug);
+})();
+
+function getSlug(){
+  const parts=window.location.pathname.replace(/^\/|\/$/g,'').split('/');
+  const last=parts[parts.length-1];
+  if(last&&last!=='index.html') return last;
+  return new URLSearchParams(window.location.search).get('slug')||'';
+}
+function show(id){
+  ['scrLoad','scrError','scrForm'].forEach(s=>{
+    document.getElementById(s).style.display=s===id?(s==='scrLoad'?'flex':'block'):'none';
+  });
+}
+
+// ─────────────────────────────────────────────────
+// LOAD FORM FROM SUPABASE
+// ─────────────────────────────────────────────────
+async function loadForm(slug){
+  try{
+    const res=await fetch(
+      SUPABASE_URL+'/rest/v1/hosted_forms'
+      +'?form_config->>slug=eq.'+encodeURIComponent(slug)
+      +'&is_active=eq.true&select=id,account_id,form_name,form_config&limit=1',
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
+    );
+    const rows=await res.json();
+    if(!rows||!rows.length){show('scrError');return;}
+    const row=rows[0];
+    hostedFormId=row.id; accountId=row.account_id; cfg=row.form_config;
+    applyTheme(cfg.brand_color||'yellow');
+    const ok=await checkLeadLimit();
+    if(!ok) document.getElementById('limitBanner').style.display='block';
+    document.title=(cfg.title||row.form_name)+' — Quote';
+    document.getElementById('formTitle').textContent=cfg.title||row.form_name;
+    document.getElementById('formDesc').textContent=cfg.description||'';
+    renderStep(1,!ok);
+    show('scrForm');
+  }catch(e){console.error(e);show('scrError');}
+}
+
+// ─────────────────────────────────────────────────
+// THEME
+// ─────────────────────────────────────────────────
+function applyTheme(color){
+  const r=document.documentElement;
+  if(color==='blue'){
+    r.style.setProperty('--brand','#1A56FF');
+    r.style.setProperty('--brand-text','#ffffff');
+    r.style.setProperty('--brand-muted','rgba(255,255,255,0.65)');
+    r.style.setProperty('--step-active-bg','#ffffff');
+    r.style.setProperty('--step-active-color','#1A56FF');
+    r.style.setProperty('--btn-bg','#1A56FF');
+    r.style.setProperty('--btn-color','#ffffff');
+    document.getElementById('stepLabel').style.color='rgba(255,255,255,0.6)';
+    document.getElementById('formTitle').style.color='white';
+    document.getElementById('formDesc').style.color='rgba(255,255,255,0.65)';
+  }
+  // yellow is default via CSS vars
+}
+
+// ─────────────────────────────────────────────────
+// LEAD LIMIT CHECK
+// ─────────────────────────────────────────────────
+async function checkLeadLimit(){
+  try{
+    const res=await fetch(
+      SUPABASE_URL+'/rest/v1/leads?account_id=eq.'+accountId+'&select=id',
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'count=exact','Range':'0-0'}}
+    );
+    // Get plan limit from billing
+    const bRes=await fetch(
+      SUPABASE_URL+'/rest/v1/billing?account_id=eq.'+accountId+'&select=plan&limit=1',
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
+    );
+    const bRows=await bRes.json();
+    const plan=bRows&&bRows[0]?bRows[0].plan:'base';
+    const limits={base:25,pro:500,agency:999999};
+    const count=parseInt((res.headers.get('Content-Range')||'').split('/')[1]||'0',10);
+    return count<limits[plan];
+  }catch{return true;}
+}
+
+// ─────────────────────────────────────────────────
+// STEP RENDER
+// ─────────────────────────────────────────────────
+function renderStep(n,limitReached){
+  step=n; updateProgress(n);
+  const labels=['Step 1 of 3 — Your Quote','Step 2 of 3 — Contact Details','Step 3 of 3'];
+  document.getElementById('stepLabel').textContent=labels[n-1];
+  const body=document.getElementById('stepContent');
+  body.innerHTML='';
+  if(n===1) renderStep1(body,limitReached);
+  if(n===2) renderStep2(body);
+  if(n===3) renderStep3(body);
+}
+function updateProgress(active){
+  const wrap=document.getElementById('progressSteps');
+  const isBlue=(cfg.brand_color||'yellow')==='blue';
+  wrap.innerHTML=[1,2,3].map((i,idx)=>{
+    const cls=i<active?'done':i===active?'active':'todo';
+    let style='';
+    if(isBlue){
+      if(cls==='active') style='background:white;color:#1A56FF;';
+      else if(cls==='done') style='background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);';
+      else style='background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.3);';
+    }
+    const lineStyle=isBlue?'background:rgba(255,255,255,0.2);':'';
+    return '<div class="step-dot '+cls+'" style="'+style+'">'+i+'</div>'
+      +(idx<2?'<div class="step-line" style="'+lineStyle+'"></div>':'');
+  }).join('');
+}
+
+// ─────────────────────────────────────────────────
+// STEP 1 — Quote fields
+// ─────────────────────────────────────────────────
+function renderStep1(wrap,limitReached){
+  const cur=cfg.currency||'$';
+  (cfg.fields||[]).forEach(field=>{
+    const grp=document.createElement('div'); grp.className='field-group';
+    const lbl=document.createElement('div'); lbl.className='field-label';
+    lbl.innerHTML=esc(field.label)+(field.required?'<span class="req-star">*</span>':'');
+    grp.appendChild(lbl);
+
+    if(field.type==='textarea'||field.type==='number'){
+      const inp=document.createElement(field.type==='textarea'?'textarea':'input');
+      inp.className=field.type==='textarea'?'field-textarea':'field-input';
+      if(field.type==='number'){inp.type='number';inp.min='0';}
+      inp.placeholder=field.placeholder||'';
+      inp.setAttribute('data-fid',field.id);
+      if(quoteData[field.id]!==undefined) inp.value=quoteData[field.id];
+      inp.addEventListener('input',()=>{clearErr(field.id);if(field.type==='number')recalc();});
+      grp.appendChild(inp);
+
+    } else if(field.type==='dropdown'){
+      const sel=document.createElement('select'); sel.className='field-select'; sel.setAttribute('data-fid',field.id);
+      const blank=document.createElement('option'); blank.value=''; blank.textContent='Select an option…'; sel.appendChild(blank);
+      (field.options||[]).forEach(o=>{
+        const opt=document.createElement('option'); opt.value=o.id;
+        opt.textContent=o.label+(o.price>0?' (+'+cur+o.price+')':'');
+        if(quoteData[field.id]===o.id) opt.selected=true;
+        sel.appendChild(opt);
+      });
+      sel.addEventListener('change',()=>{clearErr(field.id);recalc();});
+      grp.appendChild(sel);
+
+    } else if(field.type==='radio'){
+      const grid=document.createElement('div'); grid.className='radio-grid'; grid.setAttribute('data-fid',field.id);
+      (field.options||[]).forEach(o=>{
+        const card=document.createElement('div');
+        card.className='radio-card'+(quoteData[field.id]===o.id?' sel':'');
+        card.setAttribute('data-val',o.id);
+        card.innerHTML='<div class="rc-left"><div class="rc-dot"></div><span class="rc-label">'+esc(o.label)+'</span></div>'
+          +'<span class="rc-price">'+(o.price>0?cur+o.price:'Free')+'</span>';
+        card.addEventListener('click',()=>{
+          grid.querySelectorAll('.radio-card').forEach(c=>c.classList.remove('sel'));
+          card.classList.add('sel'); clearErr(field.id); recalc();
+        });
+        grid.appendChild(card);
+      });
+      grp.appendChild(grid);
+
+    } else if(field.type==='checkbox'){
+      const list=document.createElement('div'); list.className='checkbox-list'; list.setAttribute('data-fid',field.id);
+      (field.options||[]).forEach(o=>{
+        const prev=Array.isArray(quoteData[field.id])&&quoteData[field.id].includes(o.id);
+        const item=document.createElement('div');
+        item.className='cb-item'+(prev?' sel':''); item.setAttribute('data-val',o.id);
+        item.innerHTML='<div class="cb-left"><div class="cb-box"><span class="cb-check">✓</span></div><span class="cb-label">'+esc(o.label)+'</span></div>'
+          +'<span class="cb-price">'+(o.price>0?'+'+cur+o.price:'Free')+'</span>';
+        item.addEventListener('click',()=>{item.classList.toggle('sel');recalc();});
+        list.appendChild(item);
+      });
+      grp.appendChild(list);
+    }
+
+    const err=document.createElement('div'); err.className='field-err'; err.id='err_'+field.id;
+    err.textContent=field.label+' is required'; grp.appendChild(err);
+    wrap.appendChild(grp);
+  });
+
+  const hasPricing=(cfg.fields||[]).some(f=>['radio','dropdown','checkbox'].includes(f.type)||(f.type==='number'&&f.ratePerUnit>0));
+  if(hasPricing){
+    const bar=document.createElement('div'); bar.className='total-bar'; bar.id='totalBar';
+    bar.innerHTML='<div><div class="total-bar-label">Estimated Total</div><div class="total-bar-amount" id="totalAmt">'+(cfg.currency||'$')+'0</div><div class="total-bar-bd" id="totalBD">Make selections above</div></div>';
+    wrap.appendChild(bar);
+  }
+
+  const btnRow=document.createElement('div'); btnRow.className='btn-row';
+  const next=document.createElement('button'); next.className='btn-next'; next.textContent='Next →'; next.disabled=limitReached;
+  next.addEventListener('click',advanceStep1);
+  btnRow.appendChild(next); wrap.appendChild(btnRow);
+  recalc();
+}
+
+function recalc(){
+  const cur=cfg.currency||'$'; let total=0; const items=[];
+  (cfg.fields||[]).forEach(f=>{
+    if(f.type==='number'&&f.ratePerUnit>0){
+      const el=document.querySelector('[data-fid="'+f.id+'"]');
+      const qty=parseFloat(el&&el.value)||0;
+      if(qty>0){const sub=qty*f.ratePerUnit;total+=sub;items.push(qty+'×'+cur+f.ratePerUnit);}
+    } else if(f.type==='radio'){
+      const g=document.querySelector('[data-fid="'+f.id+'"]');
+      const s=g&&g.querySelector('.radio-card.sel');
+      const o=s&&(f.options||[]).find(x=>x.id===s.getAttribute('data-val'));
+      if(o&&o.price>0){total+=o.price;items.push(esc(o.label)+': '+cur+o.price);}
+    } else if(f.type==='dropdown'){
+      const el=document.querySelector('[data-fid="'+f.id+'"]');
+      const o=el&&el.value&&(f.options||[]).find(x=>x.id===el.value);
+      if(o&&o.price>0){total+=o.price;items.push(esc(o.label)+': '+cur+o.price);}
+    } else if(f.type==='checkbox'){
+      const l=document.querySelector('[data-fid="'+f.id+'"]');
+      if(l) l.querySelectorAll('.cb-item.sel').forEach(item=>{
+        const o=(f.options||[]).find(x=>x.id===item.getAttribute('data-val'));
+        if(o&&o.price>0){total+=o.price;items.push('+'+cur+o.price+' '+esc(o.label));}
+      });
+    }
+  });
+  totalPrice=total; breakdown=items;
+  const amt=document.getElementById('totalAmt');
+  const bd=document.getElementById('totalBD');
+  if(amt) amt.textContent=(cfg.currency||'$')+total.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2});
+  if(bd)  bd.textContent=items.length?items.join(' + '):'Make selections above';
+}
+
+function advanceStep1(){
+  let ok=true; const data={};
+  (cfg.fields||[]).forEach(f=>{
+    if(['textarea','number'].includes(f.type)){
+      const el=document.querySelector('[data-fid="'+f.id+'"]');
+      const v=el?el.value.trim():''; data[f.id]=v;
+      if(f.required&&!v){showErr(f.id);ok=false;}
+    } else if(f.type==='dropdown'){
+      const el=document.querySelector('[data-fid="'+f.id+'"]');
+      data[f.id]=el?el.value:'';
+      if(f.required&&!el.value){showErr(f.id);ok=false;}
+    } else if(f.type==='radio'){
+      const g=document.querySelector('[data-fid="'+f.id+'"]');
+      const s=g&&g.querySelector('.radio-card.sel');
+      data[f.id]=s?s.getAttribute('data-val'):'';
+      if(f.required&&!data[f.id]){showErr(f.id);ok=false;}
+    } else if(f.type==='checkbox'){
+      const l=document.querySelector('[data-fid="'+f.id+'"]');
+      const sel=[];
+      if(l) l.querySelectorAll('.cb-item.sel').forEach(i=>sel.push(i.getAttribute('data-val')));
+      data[f.id]=sel;
+    }
+  });
+  if(!ok) return;
+  quoteData=data; renderStep(2);
+}
+
+// ─────────────────────────────────────────────────
+// STEP 2 — Contact info
+// ─────────────────────────────────────────────────
+function renderStep2(wrap){
+  [{id:'name',label:'Full Name',type:'text',ph:'Your full name',req:true},
+   {id:'email',label:'Email Address',type:'email',ph:'you@example.com',req:true},
+   {id:'phone',label:'Phone Number',type:'tel',ph:'+1 (555) 000-0000',req:false}
+  ].forEach(f=>{
+    const grp=document.createElement('div'); grp.className='field-group';
+    const lbl=document.createElement('div'); lbl.className='field-label';
+    lbl.innerHTML=esc(f.label)+(f.req?'<span class="req-star">*</span>':'');
+    grp.appendChild(lbl);
+    const inp=document.createElement('input');
+    inp.type=f.type; inp.className='field-input'; inp.placeholder=f.ph;
+    inp.setAttribute('data-cid',f.id);
+    if(contactData[f.id]) inp.value=contactData[f.id];
+    inp.addEventListener('input',()=>{
+      inp.classList.remove('err');
+      const e=document.getElementById('err_c_'+f.id); if(e) e.classList.remove('show');
+    });
+    grp.appendChild(inp);
+    const err=document.createElement('div'); err.className='field-err'; err.id='err_c_'+f.id;
+    err.textContent=f.label+' is required'; grp.appendChild(err);
+    wrap.appendChild(grp);
+  });
+
+  const btnRow=document.createElement('div'); btnRow.className='btn-row';
+  const back=document.createElement('button'); back.className='btn-back'; back.textContent='← Back';
+  back.addEventListener('click',()=>renderStep(1));
+  const next=document.createElement('button'); next.className='btn-next';
+  next.textContent=cfg.submit_label||'Get My Quote →';
+  next.addEventListener('click',advanceStep2);
+  btnRow.appendChild(back); btnRow.appendChild(next); wrap.appendChild(btnRow);
+}
+
+async function advanceStep2(){
+  const nameEl=document.querySelector('[data-cid="name"]');
+  const emailEl=document.querySelector('[data-cid="email"]');
+  let ok=true;
+  if(!nameEl.value.trim()){
+    nameEl.classList.add('err');
+    document.getElementById('err_c_name').classList.add('show'); ok=false;
+  }
+  if(!emailEl.value.trim()){
+    emailEl.classList.add('err');
+    document.getElementById('err_c_email').classList.add('show'); ok=false;
+  }
+  if(!ok) return;
+
+  const btn=document.querySelector('.btn-next');
+  btn.disabled=true; btn.textContent='Submitting…';
+
+  contactData={
+    name:  nameEl.value.trim(),
+    email: emailEl.value.trim(),
+    phone: document.querySelector('[data-cid="phone"]').value.trim()||null,
+  };
+
+  const limitOk=await checkLeadLimit();
+  if(!limitOk){
+    document.getElementById('limitBanner').style.display='block';
+    btn.disabled=true; btn.textContent=cfg.submit_label||'Get My Quote →'; return;
+  }
+
+  await submitLead(btn);
+}
+
+// ─────────────────────────────────────────────────
+// SUBMIT → leads table + Edge Function email
+// ─────────────────────────────────────────────────
+async function submitLead(btn){
+  const cur=cfg.currency||'$';
+  const form_data={};
+  (cfg.fields||[]).forEach(f=>{
+    if(['number','textarea'].includes(f.type)){
+      form_data[f.label]=quoteData[f.id]||'';
+    } else if(f.type==='dropdown'||f.type==='radio'){
+      const o=(f.options||[]).find(x=>x.id===quoteData[f.id]);
+      form_data[f.label]=o?o.label:'';
+    } else if(f.type==='checkbox'){
+      form_data[f.label]=(quoteData[f.id]||[]).map(id=>{
+        const o=(f.options||[]).find(x=>x.id===id); return o?o.label:'';
+      }).filter(Boolean);
+    }
+  });
+  form_data._quote_total=totalPrice;
+  form_data._quote_currency=cur;
+  form_data._breakdown=breakdown;
+
+  try{
+    // 1. Insert lead into Supabase
+    const res=await fetch(SUPABASE_URL+'/rest/v1/leads',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=representation'},
+      body:JSON.stringify({
+        account_id:accountId, hosted_form_id:hostedFormId,
+        name:contactData.name, email:contactData.email, phone:contactData.phone,
+        form_type:'quote', form_data, status:'new',
+      }),
+    });
+    const rows=await res.json();
+    const leadId=rows[0]&&rows[0].id;
+
+    // 2. Call Edge Function to send quote email
+    try{
+      await fetch(EDGE_FN_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_KEY},
+        body:JSON.stringify({
+          lead_id:leadId, to_email:contactData.email, to_name:contactData.name,
+          form_name:cfg.title||'Your Quote', quote_total:totalPrice,
+          currency:cur, breakdown, form_data,
+        }),
+      });
+    }catch(e){console.warn('Email failed (non-blocking):',e);}
+
+    renderStep(3);
+  }catch(e){
+    alert('Submission failed. Please try again.');
+    console.error(e);
+    if(btn){btn.disabled=false;btn.textContent=cfg.submit_label||'Get My Quote →';}
+  }
+}
+
+// ─────────────────────────────────────────────────
+// STEP 3 — Confirmation
+// ─────────────────────────────────────────────────
+function renderStep3(wrap){
+  const cur=cfg.currency||'$';
+  wrap.innerHTML='<div class="confirm-screen">'
+    +'<div class="confirm-envelope">✉</div>'
+    +'<div class="confirm-headline">Your quote is on its way!</div>'
+    +'<div class="confirm-sub">We\'ve received your details and emailed your personalised quote to:</div>'
+    +'<div class="confirm-email-chip">📧 <strong>'+esc(contactData.email)+'</strong></div>'
+    +'<div class="confirm-sub">Please check your inbox (and spam folder) shortly.</div>'
+    +(totalPrice>0
+      ?'<div class="confirm-quote-box"><div><div class="confirm-quote-label">Your Estimated Quote</div>'
+        +'<div class="confirm-quote-amount">'+cur+totalPrice.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2})+'</div></div></div>'
+      :'')
+    +'</div>';
+}
+
+function showErr(id){const e=document.getElementById('err_'+id);if(e)e.classList.add('show');}
+function clearErr(id){const e=document.getElementById('err_'+id);if(e)e.classList.remove('show');}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+</script>
+</body>
+</html>
