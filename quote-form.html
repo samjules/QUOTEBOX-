@@ -503,21 +503,21 @@ async function submitLead(btn){
         form_type:'quote', form_data, status:'new',
       }),
     });
-    const rows=await res.json();
-    const leadId=rows[0]&&rows[0].id;
 
-    // 2. Call Edge Function to send quote email
-    try{
-      await fetch(EDGE_FN_URL,{
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_KEY},
-        body:JSON.stringify({
-          lead_id:leadId, to_email:contactData.email, to_name:contactData.name,
-          form_name:cfg.title||'Your Quote', quote_total:totalPrice,
-          currency:cur, breakdown, form_data,
-        }),
-      });
-    }catch(e){console.warn('Email failed (non-blocking):',e);}
+    // Check if insert succeeded
+    if(!res.ok){
+      const errBody=await res.json();
+      console.error('Lead insert failed:', errBody);
+      alert('Submission failed: '+(errBody.message||errBody.error||res.status));
+      if(btn){btn.disabled=false;btn.textContent=cfg.submit_label||'Get My Quote →';}
+      return;
+    }
+
+    const rows=await res.json();
+    console.log('Lead saved:', rows[0]);
+
+    // 2. Email disabled temporarily
+    // await fetch(EDGE_FN_URL, { ... });
 
     renderStep(3);
   }catch(e){
@@ -525,7 +525,6 @@ async function submitLead(btn){
     console.error(e);
     if(btn){btn.disabled=false;btn.textContent=cfg.submit_label||'Get My Quote →';}
   }
-}
 
 // ─────────────────────────────────────────────────
 // STEP 3 — Confirmation
