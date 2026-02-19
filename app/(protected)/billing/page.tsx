@@ -1,0 +1,480 @@
+'use client'
+
+import { useEffect, useState, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import type { BillingTransaction } from '@/lib/types'
+
+const COST_PER_LEAD = 0.25
+const CHECKOUT_FUNCTION_URL = process.env.NEXT_PUBLIC_CHECKOUT_FUNCTION_URL!
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+interface CreditPackage {
+  credits: number
+  amount: number // cents
+  label: string
+  perLead: string
+  savings?: string
+  featured?: boolean
+}
+
+const CREDIT_PACKAGES: CreditPackage[] = [
+  { credits: 100, amount: 2500, label: '100 Credits', perLead: '$0.25 per lead' },
+  {
+    credits: 200,
+    amount: 4500,
+    label: '200 Credits',
+    perLead: '$0.225 per lead',
+    savings: 'Save 10%',
+  },
+  {
+    credits: 500,
+    amount: 10000,
+    label: '500 Credits',
+    perLead: '$0.20 per lead',
+    savings: 'Save 20%',
+  },
+  {
+    credits: 1000,
+    amount: 17500,
+    label: '1000 Credits',
+    perLead: '$0.175 per lead',
+    savings: 'Save 30%',
+    featured: true,
+  },
+]
+
+export default function BillingPage() {
+  const searchParams = useSearchParams()
+  const supabase = createClient()
+
+  const [accountId, setAccountId] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [currentBalance, setCurrentBalance] = useState(0)
+  const [totalSpent, setTotalSpent] = useState(0)
+  const [totalLeads, setTotalLeads] = useState(0)
+  const [monthlyLeads, setMonthlyLeads] = useState(0)
+  const [transactions, setTransactions] = useState<BillingTransaction[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showModal, setShowModal] = useState(false)
+  const [purchasing, setPurchasing] = useState(false)
+
+  const loadBillingData = useCallback(
+    async (accId: string) => {
+      let { data: billing, error: billingError } = await supabase
+        .from('billing')
+        .select('*')
+        .eq('account_id', accId)
+        .single()
+
+      if (billingError?.code === 'PGRST116') {
+        const { data: newBilling } = await supabase
+          .from('billing')
+          .insert([{ account_id: accId, credit_balance: 0, total_spent: 0 }])
+          .select()
+          .single()
+        billing = newBilling
+      }
+
+      const balance = billing?.credit_balance ?? 0
+      const spent = billing?.total_spent ?? 0
+      setCurrentBalance(balance)
+      setTotalSpent(spent)
+
+      const { data: leads } = await supabase
+        .from('leads')
+        .select('created_at')
+        .eq('account_id', accId)
+
+      const allLeads = leads ?? []
+      const startOfMonth = new Date()
+      startOfMonth.setDate(1)
+      startOfMonth.setHours(0, 0, 0, 0)
+
+      setTotalLeads(allLeads.length)
+      setMonthlyLeads(
+        allLeads.filter(
+          (l: { created_at: string }) => new Date(l.created_at) >= startOfMonth
+        ).length
+      )
+
+      const { data: txns } = await supabase
+        .from('billing_transactions')
+        .select('*')
+        .eq('account_id', accId)
+        .order('created_at', { ascending: false })
+        .limit(50)
+
+      setTransactions(txns ?? [])
+      setLoading(false)
+    },
+    [supabase]
+  )
+
+  useEffect(() => {
+    async function init() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) return
+      setUserId(user.id)
+
+      const { data: account } = await supabase
+        .from('accounts')
+        .select('*')
+        .eq('owner_id', user.id)
+        .single()
+      if (!account) return
+
+      setAccountId(account.id)
+      await loadBillingData(account.id)
+    }
+    init()
+  }, [supabase, loadBillingData])
+
+  // Handle Stripe redirect params
+  useEffect(() => {
+    if (searchParams.get('canceled')) {
+      alert('Payment canceled. No charges were made.')
+      window.history.replaceState({}, document.title, '/billing')
+    }
+    if (searchParams.get('success')) {
+      alert('Payment successful! Your credits have been added.')
+      setTimeout(() => {
+        if (accountId) loadBillingData(accountId)
+        window.history.replaceState({}, document.title, '/billing')
+      }, 2000)
+    }
+  }, [searchParams, accountId, loadBillingData])
+
+  // Real-time lead subscription for credit deduction
+  useEffect(() => {
+    if (!accountId) return
+
+    const channel = supabase
+      .channel('leads-billing-channel')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'leads',
+          filter: `account_id=eq.${accountId}`,
+        },
+        async (payload) => {
+          if (currentBalance < COST_PER_LEAD) {
+            alert('Insufficient credits!')
+            return
+          }
+          const newBalance = currentBalance - COST_PER_LEAD
+          await supabase
+            .from('billing')
+            .update({ credit_balance: newBalance })
+            .eq('account_id', accountId)
+          await supabase.from('billing_transactions').insert([
+            {
+              account_id: accountId,
+              type: 'lead_charge',
+              amount: -COST_PER_LEAD,
+              balance_after: newBalance,
+              description: `Lead from ${payload.new.name || 'Unknown'}`,
+            },
+          ])
+          loadBillingData(accountId)
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [accountId, currentBalance, supabase, loadBillingData])
+
+  async function purchaseCredits(amountCents: number, credits: number) {
+    setPurchasing(true)
+    try {
+      const response = await fetch(CHECKOUT_FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          amount: amountCents,
+          credits,
+          accountId,
+          userId,
+        }),
+      })
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`)
+      const { url } = await response.json()
+      window.location.href = url
+    } catch (err) {
+      alert(`Payment failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      setPurchasing(false)
+    }
+  }
+
+  const isLow = currentBalance > 0 && currentBalance < COST_PER_LEAD * 10
+  const isEmpty = currentBalance <= 0
+
+  return (
+    <div className="py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 className="text-2xl font-semibold text-gray-900">
+          Billing & Credits
+        </h1>
+        <p className="mt-2 text-sm text-gray-600">
+          Manage your lead credits and billing information
+        </p>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 mt-6">
+        {loading ? (
+          <div className="bg-white shadow rounded-xl p-8 text-center">
+            <div className="animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-1/4 mx-auto" />
+            </div>
+            <p className="mt-2 text-gray-500">Loading billing information…</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Credit Balance Card */}
+            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg p-8 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-indigo-100 text-sm font-medium">
+                    Available Credits
+                  </p>
+                  <p className="text-5xl font-bold mt-2">
+                    ${currentBalance.toFixed(2)}
+                  </p>
+                  <p className="text-indigo-100 text-sm mt-2">
+                    {Math.floor(currentBalance / COST_PER_LEAD)} leads remaining
+                    at ${COST_PER_LEAD.toFixed(2)}/lead
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:bg-indigo-50 transition shadow-md"
+                >
+                  Add Credits
+                </button>
+              </div>
+
+              {isEmpty && (
+                <div className="mt-4 bg-red-500 bg-opacity-30 border border-red-300 rounded-lg p-4">
+                  <p className="font-semibold">🚨 Insufficient Credits</p>
+                  <p className="text-sm text-red-100 mt-1">
+                    You&apos;ve run out of credits. New leads will be paused
+                    until you add more credits.
+                  </p>
+                </div>
+              )}
+
+              {isLow && !isEmpty && (
+                <div className="mt-4 bg-yellow-500 bg-opacity-20 border border-yellow-300 rounded-lg p-4">
+                  <p className="font-semibold">⚠️ Low Balance Warning</p>
+                  <p className="text-sm text-yellow-100 mt-1">
+                    Your credit balance is running low. Add more credits to
+                    continue receiving leads.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white rounded-xl shadow p-6 flex items-center">
+                <div className="flex-shrink-0 bg-blue-100 rounded-lg p-3">
+                  <span className="text-2xl">📊</span>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-500">
+                    Total Leads
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {totalLeads}
+                  </p>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl shadow p-6 flex items-center">
+                <div className="flex-shrink-0 bg-green-100 rounded-lg p-3">
+                  <span className="text-2xl">💰</span>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-500">
+                    Total Spent
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    ${totalSpent.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl shadow p-6 flex items-center">
+                <div className="flex-shrink-0 bg-purple-100 rounded-lg p-3">
+                  <span className="text-2xl">📈</span>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-500">
+                    This Month
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {monthlyLeads}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Usage History */}
+            <div className="bg-white shadow rounded-xl">
+              <div className="px-6 py-5 border-b border-gray-200">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">
+                  Credit Usage History
+                </h3>
+              </div>
+              <div className="overflow-x-auto">
+                {transactions.length === 0 ? (
+                  <p className="p-8 text-center text-gray-500">
+                    No usage history yet.
+                  </p>
+                ) : (
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        {['Date', 'Type', 'Description', 'Amount', 'Balance'].map(
+                          (h) => (
+                            <th
+                              key={h}
+                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                              {h}
+                            </th>
+                          )
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {transactions.map((tx) => {
+                        const isCredit = tx.type === 'credit_purchase'
+                        return (
+                          <tr key={tx.id}>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {new Date(tx.created_at).toLocaleDateString()}{' '}
+                              {new Date(tx.created_at).toLocaleTimeString()}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                              <span
+                                className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${isCredit ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+                              >
+                                {isCredit ? 'Credit Purchase' : 'Lead Charge'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                              {tx.description || '-'}
+                            </td>
+                            <td
+                              className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${isCredit ? 'text-green-600' : 'text-red-600'}`}
+                            >
+                              {isCredit ? '+' : '-'}$
+                              {Math.abs(tx.amount).toFixed(2)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              ${tx.balance_after.toFixed(2)}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Add Credits Modal */}
+      {showModal && (
+        <div className="fixed z-10 inset-0 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center">
+            <div
+              className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+              onClick={() => setShowModal(false)}
+            />
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full relative z-10">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                  Add Credits
+                </h3>
+                <p className="text-sm text-gray-600 mb-6">
+                  Select a credit package to purchase. Each credit allows you
+                  to receive one lead.
+                </p>
+
+                <div className="space-y-3">
+                  {CREDIT_PACKAGES.map((pkg) => (
+                    <button
+                      key={pkg.credits}
+                      onClick={() =>
+                        purchaseCredits(pkg.amount, pkg.credits)
+                      }
+                      disabled={purchasing}
+                      className={`w-full text-left rounded-lg p-4 hover:bg-indigo-50 transition border-2 ${pkg.featured ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-indigo-500'}`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="font-semibold text-gray-900">
+                            {pkg.label}
+                          </p>
+                          <p className="text-sm text-gray-500">{pkg.perLead}</p>
+                          {pkg.featured && (
+                            <span className="inline-block mt-1 px-2 py-1 text-xs font-semibold text-indigo-800 bg-indigo-200 rounded">
+                              BEST VALUE
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-gray-900">
+                            ${(pkg.amount / 100).toFixed(0)}
+                          </p>
+                          {pkg.savings && (
+                            <p className="text-xs text-green-600 font-semibold">
+                              {pkg.savings}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {purchasing && (
+                  <div className="mt-4 text-center">
+                    <div className="animate-pulse flex space-x-2 justify-center items-center">
+                      <div className="h-3 w-3 bg-indigo-600 rounded-full" />
+                      <div className="h-3 w-3 bg-indigo-600 rounded-full" />
+                      <div className="h-3 w-3 bg-indigo-600 rounded-full" />
+                    </div>
+                    <p className="text-sm text-gray-600 mt-2">
+                      Redirecting to checkout…
+                    </p>
+                  </div>
+                )}
+              </div>
+              <div className="bg-gray-50 px-4 py-3 sm:px-6">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

@@ -1,0 +1,75 @@
+export interface Account {
+  id: string
+  owner_id: string
+  business_name: string
+  created_at: string
+  updated_at: string
+}
+
+export interface FieldOption {
+  id: string
+  label: string
+  price: number
+}
+
+export interface FormField {
+  id: string
+  type: 'radio' | 'dropdown' | 'checkbox' | 'number' | 'textarea'
+  label: string
+  required: boolean
+  options?: FieldOption[]
+  placeholder?: string
+  ratePerUnit?: number
+}
+
+export interface FormConfig {
+  slug: string
+  description: string
+  submit_label: string
+  currency: string
+  brand_color: 'yellow' | 'blue'
+  show_total: boolean
+  fields: FormField[]
+}
+
+export interface HostedForm {
+  id: string
+  account_id: string
+  form_name: string
+  form_type: string
+  form_config: FormConfig
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface Lead {
+  id: string
+  account_id: string
+  hosted_form_id: string
+  name: string
+  email: string
+  phone: string
+  status: 'new' | 'contacted' | 'booked' | 'lost'
+  created_at: string
+}
+
+export interface Billing {
+  id: string
+  account_id: string
+  credit_balance: number
+  total_spent: number
+  plan: 'base' | 'pro' | 'agency'
+  created_at: string
+  updated_at: string
+}
+
+export interface BillingTransaction {
+  id: string
+  account_id: string
+  type: 'lead_charge' | 'credit_purchase'
+  amount: number
+  balance_after: number
+  description: string
+  created_at: string
+}

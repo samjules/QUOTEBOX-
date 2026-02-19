@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hosted Forms - QuoteFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen overflow-hidden">
+
+        <!-- Sidebar — identical to dashboard -->
+        <div class="w-64 bg-gray-900 flex-shrink-0">
+            <div class="flex flex-col h-full">
+                <div class="flex items-center justify-center h-16 bg-gray-800">
+                    <span class="text-white text-xl font-bold">QuoteFlow</span>
+                </div>
+                <nav class="flex-1 px-2 py-4 space-y-1">
+                    <a href="dashboard.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">Dashboard</a>
+                    <a href="leads.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">Leads</a>
+                    <a href="hosted-forms.html" class="bg-gray-800 text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">Hosted Forms</a>
+                    <a href="billing.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">Billing & Credits</a>
+                    <a href="settings.html" class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">Settings</a>
+                </nav>
+                <div class="p-4">
+                    <button id="logoutBtn" class="w-full bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition">Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex-1 overflow-auto">
+            <div class="py-6">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h1 class="text-2xl font-semibold text-gray-900">Hosted Forms</h1>
+                            <p class="mt-1 text-sm text-gray-600">All your live quote forms</p>
+                        </div>
+                        <a href="form-builder.html" id="newFormBtn"
+                            class="inline-flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-indigo-700 transition shadow-sm">
+                            + New Form
+                        </a>
+                    </div>
+                </div>
+
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+
+                    <!-- Plan usage bar -->
+                    <div class="bg-white shadow rounded-xl p-5 mb-6" id="planUsage" style="display:none">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium text-gray-700">Forms used</span>
+                            <span class="text-sm text-gray-500" id="usageText">0 / 1</span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-2">
+                            <div id="usageBar" class="bg-indigo-600 h-2 rounded-full transition-all" style="width:0%"></div>
+                        </div>
+                        <p class="mt-2 text-xs text-gray-400" id="planName">Base plan</p>
+                    </div>
+
+                    <!-- Loading -->
+                    <div id="loadingState" class="bg-white shadow rounded-xl p-8 text-center">
+                        <div class="animate-pulse">
+                            <div class="h-4 bg-gray-200 rounded w-1/4 mx-auto"></div>
+                        </div>
+                        <p class="mt-2 text-gray-500">Loading forms…</p>
+                    </div>
+
+                    <!-- Empty state -->
+                    <div id="emptyState" class="hidden bg-white shadow rounded-xl p-12 text-center">
+                        <div class="text-5xl mb-4">📝</div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">No forms yet</h3>
+                        <p class="text-gray-500 text-sm mb-6">Create your first quote form and share it with customers instantly.</p>
+                        <a href="form-builder.html" class="inline-flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-indigo-700 transition">
+                            + Create your first form
+                        </a>
+                    </div>
+
+                    <!-- Limit reached banner -->
+                    <div id="limitBanner" class="hidden bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xl">⚠️</span>
+                            <div>
+                                <p class="text-sm font-semibold text-yellow-800">Form limit reached</p>
+                                <p class="text-xs text-yellow-700">Upgrade your plan to create more forms.</p>
+                            </div>
+                        </div>
+                        <a href="billing.html" class="bg-yellow-500 text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-yellow-600 transition">Upgrade</a>
+                    </div>
+
+                    <!-- Forms grid -->
+                    <div id="formsGrid" class="hidden grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete confirm modal -->
+    <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Delete form?</h3>
+            <p class="text-sm text-gray-500 mb-6">This will permanently delete the form and it will stop accepting submissions. Your existing leads won't be affected.</p>
+            <div class="flex gap-3">
+                <button onclick="closeDeleteModal()" class="flex-1 border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition">Cancel</button>
+                <button onclick="confirmDelete()" class="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-700 transition">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL      = 'https://jpchpqjnyabtpptufkcj.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwY2hwcWpueWFidHBwdHVma2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMDAyNTAsImV4cCI6MjA4NjY3NjI1MH0.FCywHhyz8N0Hkl-jK9RxZyh2KFZMrP8aUSXt1oJQbHY';
+
+        const { createClient } = supabase;
+        const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let accountId    = null;
+        let deleteFormId = null;
+        let planLimit    = 1;
+
+        // ── Auth (same as dashboard) ──────────────────────
+        async function checkAuth() {
+            const { data: { user }, error } = await sb.auth.getUser();
+            if (error || !user) { window.location.href = 'login.html'; return; }
+
+            const { data: account } = await sb
+                .from('accounts').select('*').eq('owner_id', user.id).single();
+
+            if (!account) { alert('No account found.'); return; }
+            accountId = account.id;
+            loadForms();
+        }
+
+        // ── Load forms ────────────────────────────────────
+        async function loadForms() {
+            // Get plan
+            const { data: billing } = await sb
+                .from('billing').select('plan').eq('account_id', accountId).single();
+            const plan = billing?.plan || 'base';
+            const limits = { base: 1, pro: 10, agency: Infinity };
+            planLimit = limits[plan];
+
+            // Get all forms for this account
+            const { data: forms, error } = await sb
+                .from('hosted_forms')
+                .select('*')
+                .eq('account_id', accountId)
+                .order('created_at', { ascending: false });
+
+            if (error) { console.error(error); return; }
+
+            // Get lead counts per form in one query
+            const { data: leadCounts } = await sb
+                .from('leads')
+                .select('hosted_form_id')
+                .eq('account_id', accountId);
+
+            const countMap = {};
+            (leadCounts || []).forEach(l => {
+                countMap[l.hosted_form_id] = (countMap[l.hosted_form_id] || 0) + 1;
+            });
+
+            document.getElementById('loadingState').classList.add('hidden');
+
+            // Plan usage bar
+            const usageEl = document.getElementById('planUsage');
+            usageEl.style.display = 'block';
+            document.getElementById('usageText').textContent =
+                forms.length + ' / ' + (planLimit === Infinity ? '∞' : planLimit);
+            document.getElementById('usageBar').style.width =
+                planLimit === Infinity ? '10%' : Math.min((forms.length / planLimit) * 100, 100) + '%';
+            document.getElementById('planName').textContent =
+                { base: 'Base plan', pro: 'Pro plan', agency: 'Agency plan' }[plan];
+
+            // Show limit banner + disable new form btn if at limit
+            if (forms.length >= planLimit) {
+                document.getElementById('limitBanner').classList.remove('hidden');
+                const btn = document.getElementById('newFormBtn');
+                btn.classList.add('opacity-50', 'pointer-events-none');
+            }
+
+            if (!forms.length) {
+                document.getElementById('emptyState').classList.remove('hidden');
+                return;
+            }
+
+            // Render cards
+            const grid = document.getElementById('formsGrid');
+            grid.classList.remove('hidden');
+            grid.innerHTML = forms.map(f => renderFormCard(f, countMap[f.id] || 0)).join('');
+        }
+
+        function renderFormCard(form, leadCount) {
+            const cfg       = form.form_config || {};
+            const slug      = cfg.slug || '';
+            const color     = cfg.brand_color || 'yellow';
+            const currency  = cfg.currency || '$';
+            const fieldCount = (cfg.fields || []).length;
+            const created   = new Date(form.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const liveUrl   = 'https://quote-box.com/' + slug;
+
+            const headerBg  = color === 'blue' ? 'background:#1A56FF' : 'background:#FFE500';
+            const headerText = color === 'blue' ? 'color:white' : 'color:#1a1a2e';
+            const statusDot  = form.is_active
+                ? '<span class="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">● Live</span>'
+                : '<span class="inline-flex items-center gap-1 text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">○ Inactive</span>';
+
+            return `
+            <div class="bg-white shadow rounded-xl overflow-hidden flex flex-col">
+                <!-- Colour header -->
+                <div style="${headerBg};${headerText};padding:20px 20px 16px;">
+                    <div style="font-size:0.65rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;opacity:0.6;margin-bottom:4px">Quote Form</div>
+                    <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;line-height:1.2">${esc(form.form_name)}</div>
+                    <div style="font-size:0.75rem;margin-top:4px;opacity:0.65;font-family:monospace">${slug ? liveUrl : 'No slug set'}</div>
+                </div>
+
+                <!-- Stats row -->
+                <div class="flex divide-x divide-gray-100 border-b border-gray-100">
+                    <div class="flex-1 px-4 py-3 text-center">
+                        <div class="text-xl font-bold text-gray-900">${leadCount}</div>
+                        <div class="text-xs text-gray-500">Leads</div>
+                    </div>
+                    <div class="flex-1 px-4 py-3 text-center">
+                        <div class="text-xl font-bold text-gray-900">${fieldCount}</div>
+                        <div class="text-xs text-gray-500">Fields</div>
+                    </div>
+                    <div class="flex-1 px-4 py-3 text-center">
+                        <div class="text-xl font-bold text-gray-900">${currency}</div>
+                        <div class="text-xs text-gray-500">Currency</div>
+                    </div>
+                </div>
+
+                <!-- Meta -->
+                <div class="px-4 py-3 flex items-center justify-between">
+                    ${statusDot}
+                    <span class="text-xs text-gray-400">Created ${created}</span>
+                </div>
+
+                <!-- Actions -->
+                <div class="px-4 pb-4 mt-auto flex gap-2">
+                    <a href="form-builder.html?form_id=${form.id}"
+                        class="flex-1 text-center bg-indigo-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition">
+                        Edit
+                    </a>
+                    ${slug ? `
+                    <a href="${liveUrl}" target="_blank"
+                        class="flex-1 text-center border border-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
+                        View Live ↗
+                    </a>` : ''}
+                    <button onclick="copyLink('${liveUrl}')"
+                        class="border border-gray-200 text-gray-500 px-3 py-2 rounded-lg text-sm hover:bg-gray-50 transition" title="Copy link">
+                        🔗
+                    </button>
+                    <button onclick="toggleActive('${form.id}', ${form.is_active})"
+                        class="border border-gray-200 text-gray-500 px-3 py-2 rounded-lg text-sm hover:bg-gray-50 transition"
+                        title="${form.is_active ? 'Deactivate' : 'Activate'}">
+                        ${form.is_active ? '⏸' : '▶'}
+                    </button>
+                    <button onclick="openDeleteModal('${form.id}')"
+                        class="border border-red-100 text-red-400 px-3 py-2 rounded-lg text-sm hover:bg-red-50 transition" title="Delete">
+                        🗑
+                    </button>
+                </div>
+            </div>`;
+        }
+
+        // ── Copy link ─────────────────────────────────────
+        function copyLink(url) {
+            navigator.clipboard.writeText(url);
+            showToast('Link copied!');
+        }
+
+        // ── Toggle active/inactive ────────────────────────
+        async function toggleActive(formId, currentState) {
+            const { error } = await sb
+                .from('hosted_forms')
+                .update({ is_active: !currentState, updated_at: new Date().toISOString() })
+                .eq('id', formId);
+
+            if (error) { showToast('Error updating form', true); return; }
+            showToast(currentState ? 'Form deactivated' : 'Form activated');
+            loadForms(); // refresh
+        }
+
+        // ── Delete ────────────────────────────────────────
+        function openDeleteModal(formId) {
+            deleteFormId = formId;
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
+        function closeDeleteModal() {
+            deleteFormId = null;
+            document.getElementById('deleteModal').classList.add('hidden');
+        }
+        async function confirmDelete() {
+            if (!deleteFormId) return;
+            const { error } = await sb.from('hosted_forms').delete().eq('id', deleteFormId);
+            closeDeleteModal();
+            if (error) { showToast('Error deleting form', true); return; }
+            showToast('Form deleted');
+            loadForms();
+        }
+
+        // ── Toast ─────────────────────────────────────────
+        let toastTimer;
+        function showToast(msg, isError = false) {
+            let el = document.getElementById('toastEl');
+            if (!el) {
+                el = document.createElement('div');
+                el.id = 'toastEl';
+                el.style.cssText = 'position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-size:0.85rem;font-weight:500;z-index:999;transition:all 0.2s;';
+                document.body.appendChild(el);
+            }
+            el.textContent = msg;
+            el.style.background = isError ? '#fee2e2' : '#f0fdf4';
+            el.style.color      = isError ? '#991b1b' : '#166534';
+            el.style.border     = isError ? '1px solid #fca5a5' : '1px solid #86efac';
+            el.style.display    = 'block';
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => el.style.display = 'none', 2500);
+        }
+
+        function esc(s) {
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        // ── Logout ────────────────────────────────────────
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await sb.auth.signOut();
+            window.location.href = 'login.html';
+        });
+
+        checkAuth();
+    </script>
+</body>
+</html>
