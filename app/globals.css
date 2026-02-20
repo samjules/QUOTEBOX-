@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Global typography ───────────────────────────── */
+body {
+  font-family: 'Inter', 'Work Sans', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Oswald', sans-serif;
+  letter-spacing: 0.01em;
+}
+
 /* ── Form Builder custom styles ─────────────────── */
 :root {
   --bg: #f9fafb;
@@ -17,7 +27,7 @@
 }
 
 .builder-wrap {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   background: var(--bg);
   color: var(--text);
   height: 100%;
@@ -37,7 +47,7 @@
 }
 
 .builder-logo {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Oswald', sans-serif;
   font-weight: 800;
   font-size: 1.1rem;
   letter-spacing: -0.02em;
@@ -55,7 +65,7 @@
 }
 
 .bb {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.85rem;
   font-weight: 500;
   padding: 7px 16px;
@@ -127,7 +137,7 @@
 }
 
 .sidebar-label {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Oswald', sans-serif;
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -147,7 +157,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text);
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.83rem;
   cursor: pointer;
   margin-bottom: 5px;
@@ -180,7 +190,7 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text);
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.83rem;
   padding: 8px 11px;
   margin-bottom: 7px;
@@ -344,7 +354,7 @@
 }
 
 .pv-title {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Oswald', sans-serif;
   font-size: 1.4rem;
   font-weight: 800;
   line-height: 1.2;
@@ -527,7 +537,7 @@
 }
 
 .total-prev-val {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Oswald', sans-serif;
   font-size: 1.25rem;
   font-weight: 800;
   color: var(--accent);
@@ -537,7 +547,7 @@
   width: 100%;
   margin-top: 10px;
   padding: 12px;
-  font-family: 'Syne', sans-serif;
+  font-family: 'Oswald', sans-serif;
   font-weight: 800;
   font-size: 0.92rem;
   border: none;
@@ -598,7 +608,7 @@
 }
 
 .email-notice-txt {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Oswald', sans-serif;
   font-size: 1rem;
   font-weight: 700;
 }
@@ -632,7 +642,7 @@
 }
 
 .props-title {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Oswald', sans-serif;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -657,7 +667,7 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text);
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.83rem;
   padding: 8px 11px;
   outline: none;
@@ -741,7 +751,7 @@
   border: 1px dashed var(--border);
   border-radius: 8px;
   color: var(--muted);
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.78rem;
   cursor: pointer;
   transition: all 0.15s;

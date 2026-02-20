@@ -30,6 +30,7 @@ export interface FormConfig {
   brand_color: 'yellow' | 'blue'
   show_total: boolean
   fields: FormField[]
+  meta_pixel_id?: string
 }
 
 export interface HostedForm {
@@ -46,10 +47,12 @@ export interface HostedForm {
 export interface Lead {
   id: string
   account_id: string
-  hosted_form_id: string
-  name: string
-  email: string
-  phone: string
+  hosted_form_id: string | null
+  name: string | null
+  email: string | null
+  phone: string | null
+  form_type: string | null
+  form_data: Record<string, unknown> | null
   status: 'new' | 'contacted' | 'booked' | 'lost'
   created_at: string
 }

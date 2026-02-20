@@ -77,7 +77,7 @@ export default function Sidebar() {
     <div className="w-64 bg-gray-900 flex-shrink-0">
       <div className="flex flex-col h-full">
         <div className="flex items-center justify-center h-16 bg-indigo-700">
-          <span className="text-white text-xl font-bold tracking-tight">QuoteBox</span>
+          <span className="text-white text-xl font-bold tracking-wide" style={{ fontFamily: "'Oswald', sans-serif" }}>QuoteBox</span>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1">
           {navItems.map(({ href, label, icon }) => {

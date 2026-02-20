@@ -428,6 +428,7 @@ export default function FormBuilderPage() {
   const [submitLabel, setSubmitLabel] = useState('Get My Quote →')
   const [formSlug, setFormSlug] = useState('my-quote-form')
   const [currency, setCurrency] = useState('$')
+  const [metaPixelId, setMetaPixelId] = useState('')
   const [editingFormId, setEditingFormId] = useState<string | null>(null)
   const [accountId, setAccountId] = useState<string | null>(null)
   const [planBadge, setPlanBadge] = useState('Loading…')
@@ -507,6 +508,7 @@ export default function FormBuilderPage() {
     setCurrency(c.currency ?? '$')
     setFields(c.fields ?? [])
     setBrandColor(c.brand_color ?? 'yellow')
+    setMetaPixelId(c.meta_pixel_id ?? '')
   }
 
   // ── Field operations ──
@@ -656,6 +658,7 @@ export default function FormBuilderPage() {
         brand_color: brandColor,
         show_total: true,
         fields,
+        ...(metaPixelId.trim() ? { meta_pixel_id: metaPixelId.trim() } : {}),
       },
       is_active: true,
       updated_at: new Date().toISOString(),
@@ -771,6 +774,13 @@ export default function FormBuilderPage() {
                 <option value="CA$">CAD (CA$)</option>
                 <option value="AU$">AUD (AU$)</option>
               </select>
+              <label>Meta Pixel ID</label>
+              <input
+                type="text"
+                value={metaPixelId}
+                onChange={(e) => setMetaPixelId(e.target.value)}
+                placeholder="e.g. 1234567890123456"
+              />
               <label>Brand Colour</label>
               <div className="color-picker">
                 <div
