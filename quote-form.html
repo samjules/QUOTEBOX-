@@ -148,14 +148,20 @@ let totalPrice=0, breakdown=[];
 // BOOT
 // ─────────────────────────────────────────────────
 (async()=>{
+  console.log('[QB] ── BOOT START ──', new Date().toISOString());
+  console.log('[QB] URL:', window.location.href);
   const slug=getSlug();
-  if(!slug){show('scrError');return;}
+  console.log('[QB] slug:', slug);
+  if(!slug){console.warn('[QB] No slug found, showing error');show('scrError');return;}
+  console.log('[QB] calling loadForm…');
   await loadForm(slug);
+  console.log('[QB] ── BOOT END ──', new Date().toISOString());
 })();
 
 function getSlug(){
   const parts=window.location.pathname.replace(/^\/|\/$/g,'').split('/');
   const last=parts[parts.length-1];
+  console.log('[QB] pathname:', window.location.pathname, '| search:', window.location.search, '| last part:', last);
   if(last && !last.endsWith('.html')) return last;
   return new URLSearchParams(window.location.search).get('slug')||'';
 }
@@ -170,25 +176,32 @@ function show(id){
 // ─────────────────────────────────────────────────
 async function loadForm(slug){
   try{
-    const res=await fetch(
-      SUPABASE_URL+'/rest/v1/hosted_forms'
+    const url=SUPABASE_URL+'/rest/v1/hosted_forms'
       +'?form_config->>slug=eq.'+encodeURIComponent(slug)
-      +'&is_active=eq.true&select=id,account_id,form_name,form_config&limit=1',
+      +'&is_active=eq.true&select=id,account_id,form_name,form_config&limit=1';
+    console.log('[QB] Fetching form URL:', url);
+    const res=await fetch(url,
       {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
     );
+    console.log('[QB] Fetch status:', res.status, res.statusText);
     const rows=await res.json();
-    if(!rows||!rows.length){show('scrError');return;}
+    console.log('[QB] Rows returned:', rows);
+    if(!rows||!rows.length){console.warn('[QB] No rows — showing error screen');show('scrError');return;}
     const row=rows[0];
     hostedFormId=row.id; accountId=row.account_id; cfg=row.form_config;
+    console.log('[QB] cfg:', cfg);
     applyTheme(cfg.brand_color||'yellow');
+    console.log('[QB] Checking lead limit…');
     const ok=await checkLeadLimit();
+    console.log('[QB] Lead limit ok:', ok);
     if(!ok) document.getElementById('limitBanner').style.display='block';
     document.title=(cfg.title||row.form_name)+' — Quote';
     document.getElementById('formTitle').textContent=cfg.title||row.form_name;
     document.getElementById('formDesc').textContent=cfg.description||'';
     renderStep(1,!ok);
     show('scrForm');
-  }catch(e){console.error(e);show('scrError');}
+    console.log('[QB] Form shown successfully');
+  }catch(e){console.error('[QB] loadForm error:', e);show('scrError');}
 }
 
 // ─────────────────────────────────────────────────
@@ -216,21 +229,29 @@ function applyTheme(color){
 // ─────────────────────────────────────────────────
 async function checkLeadLimit(){
   try{
+    console.log('[QB] checkLeadLimit: fetching lead count for accountId:', accountId);
+    const t0=Date.now();
     const res=await fetch(
       SUPABASE_URL+'/rest/v1/leads?account_id=eq.'+accountId+'&select=id',
       {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'count=exact','Range':'0-0'}}
     );
-    // Get plan limit from billing
+    console.log('[QB] checkLeadLimit: leads fetch done in', Date.now()-t0, 'ms — status:', res.status, '| Content-Range:', res.headers.get('Content-Range'));
+
+    console.log('[QB] checkLeadLimit: fetching billing plan…');
+    const t1=Date.now();
     const bRes=await fetch(
       SUPABASE_URL+'/rest/v1/billing?account_id=eq.'+accountId+'&select=plan&limit=1',
       {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
     );
+    console.log('[QB] checkLeadLimit: billing fetch done in', Date.now()-t1, 'ms — status:', bRes.status);
     const bRows=await bRes.json();
+    console.log('[QB] checkLeadLimit: billing rows:', bRows);
     const plan=bRows&&bRows[0]?bRows[0].plan:'base';
     const limits={base:25,pro:500,agency:999999};
     const count=parseInt((res.headers.get('Content-Range')||'').split('/')[1]||'0',10);
+    console.log('[QB] checkLeadLimit: plan=', plan, '| lead count=', count, '| limit=', limits[plan], '| ok=', count<limits[plan]);
     return count<limits[plan];
-  }catch{return true;}
+  }catch(e){console.error('[QB] checkLeadLimit ERROR:', e);return true;}
 }
 
 // ─────────────────────────────────────────────────
@@ -525,6 +546,7 @@ async function submitLead(btn){
     console.error(e);
     if(btn){btn.disabled=false;btn.textContent=cfg.submit_label||'Get My Quote →';}
   }
+}
 
 // ─────────────────────────────────────────────────
 // STEP 3 — Confirmation
