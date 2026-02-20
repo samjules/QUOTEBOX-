@@ -239,7 +239,10 @@ export default function HostedFormsPage() {
                 'en-US',
                 { month: 'short', day: 'numeric', year: 'numeric' }
               )
-              const liveUrl = `https://quote-box.com/${slug}`
+              const liveUrl = `/quote-form.html?slug=${slug}`
+              const absoluteUrl = typeof window !== 'undefined'
+                ? `${window.location.origin}/quote-form.html?slug=${slug}`
+                : `/quote-form.html?slug=${slug}`
               const headerStyle =
                 color === 'blue'
                   ? { background: '#1A56FF', color: 'white' }
@@ -282,7 +285,7 @@ export default function HostedFormsPage() {
                         fontFamily: 'monospace',
                       }}
                     >
-                      {slug ? liveUrl : 'No slug set'}
+                      {slug ? absoluteUrl : 'No slug set'}
                     </div>
                   </div>
 
@@ -343,7 +346,7 @@ export default function HostedFormsPage() {
                       </a>
                     )}
                     <button
-                      onClick={() => copyLink(liveUrl)}
+                      onClick={() => copyLink(absoluteUrl)}
                       className="border border-gray-200 text-gray-500 px-3 py-2 rounded-lg text-sm hover:bg-gray-50 transition"
                       title="Copy link"
                     >
