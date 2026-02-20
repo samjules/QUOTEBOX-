@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { BillingTransaction } from '@/lib/types'
 
-const COST_PER_LEAD = 0.25
+const COST_PER_LEAD = 15
 const CHECKOUT_FUNCTION_URL = process.env.NEXT_PUBLIC_CHECKOUT_FUNCTION_URL!
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
@@ -19,26 +19,26 @@ interface CreditPackage {
 }
 
 const CREDIT_PACKAGES: CreditPackage[] = [
-  { credits: 100, amount: 2500, label: '100 Credits', perLead: '$0.25 per lead' },
+  { credits: 5, amount: 7500, label: '5 Leads', perLead: '$15.00 per lead' },
   {
-    credits: 200,
-    amount: 4500,
-    label: '200 Credits',
-    perLead: '$0.225 per lead',
+    credits: 10,
+    amount: 13500,
+    label: '10 Leads',
+    perLead: '$13.50 per lead',
     savings: 'Save 10%',
   },
   {
-    credits: 500,
-    amount: 10000,
-    label: '500 Credits',
-    perLead: '$0.20 per lead',
+    credits: 25,
+    amount: 30000,
+    label: '25 Leads',
+    perLead: '$12.00 per lead',
     savings: 'Save 20%',
   },
   {
-    credits: 1000,
-    amount: 17500,
-    label: '1000 Credits',
-    perLead: '$0.175 per lead',
+    credits: 50,
+    amount: 52500,
+    label: '50 Leads',
+    perLead: '$10.50 per lead',
     savings: 'Save 30%',
     featured: true,
   },

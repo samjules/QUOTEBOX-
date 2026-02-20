@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 
-const COST_PER_LEAD = 0.25
+const COST_PER_LEAD = 15
 
 export default async function DashboardPage() {
   const supabase = createClient()
@@ -95,6 +95,31 @@ export default async function DashboardPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
         <div className="py-4 space-y-6">
+          {/* Low balance banner */}
+          {creditBalance < COST_PER_LEAD && (
+            <div className={`rounded-lg p-4 flex items-center justify-between ${creditBalance <= 0 ? 'bg-red-50 border border-red-300' : 'bg-yellow-50 border border-yellow-300'}`}>
+              <div className="flex items-center gap-3">
+                <span className="text-xl">{creditBalance <= 0 ? '🚨' : '⚠️'}</span>
+                <div>
+                  <p className={`font-semibold text-sm ${creditBalance <= 0 ? 'text-red-800' : 'text-yellow-800'}`}>
+                    {creditBalance <= 0 ? 'No credits remaining' : 'Low credit balance'}
+                  </p>
+                  <p className={`text-sm ${creditBalance <= 0 ? 'text-red-600' : 'text-yellow-600'}`}>
+                    {creditBalance <= 0
+                      ? 'New leads are paused. Add credits to continue receiving leads.'
+                      : `Your balance ($${creditBalance.toFixed(2)}) is below $${COST_PER_LEAD.toFixed(2)}. Top up to keep receiving leads.`}
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/billing"
+                className={`ml-4 flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold transition ${creditBalance <= 0 ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-yellow-500 text-white hover:bg-yellow-600'}`}
+              >
+                Add Credits
+              </Link>
+            </div>
+          )}
+
           {/* Primary Stats Grid */}
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard

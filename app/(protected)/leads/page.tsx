@@ -1,26 +1,14 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import type { Lead } from '@/lib/types'
+import LeadsTable from './LeadsTable'
 
-function statusColor(status: string) {
-  switch (status) {
-    case 'new':
-      return 'bg-yellow-100 text-yellow-800'
-    case 'contacted':
-      return 'bg-blue-100 text-blue-800'
-    case 'booked':
-      return 'bg-green-100 text-green-800'
-    case 'lost':
-      return 'bg-red-100 text-red-800'
-    default:
-      return 'bg-gray-100 text-gray-800'
-  }
-}
+const COST_PER_LEAD = 15
 
 export default async function LeadsPage() {
   const supabase = createClient()
 
-  // Auth timing fix
   const {
     data: { session },
   } = await supabase.auth.getSession()
@@ -45,9 +33,17 @@ export default async function LeadsPage() {
     )
   }
 
+  const { data: billingData } = await supabase
+    .from('billing')
+    .select('credit_balance')
+    .eq('account_id', account.id)
+    .single()
+
+  const creditBalance = billingData?.credit_balance ?? 0
+
   const { data: allLeads } = await supabase
     .from('leads')
-    .select('*')
+    .select('id, account_id, hosted_form_id, name, email, phone, form_type, form_data, status, created_at')
     .eq('account_id', account.id)
     .order('created_at', { ascending: false })
 
@@ -55,7 +51,6 @@ export default async function LeadsPage() {
   const totalLeads = leads.length
   const newLeads = leads.filter((l) => l.status === 'new').length
   const bookedLeads = leads.filter((l) => l.status === 'booked').length
-  const recentLeads = leads.slice(0, 10)
 
   return (
     <div className="py-6">
@@ -65,6 +60,31 @@ export default async function LeadsPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
         <div className="py-4">
+          {/* Low balance banner */}
+          {creditBalance < COST_PER_LEAD && (
+            <div className={`mb-6 rounded-lg p-4 flex items-center justify-between ${creditBalance <= 0 ? 'bg-red-50 border border-red-300' : 'bg-yellow-50 border border-yellow-300'}`}>
+              <div className="flex items-center gap-3">
+                <span className="text-xl">{creditBalance <= 0 ? '🚨' : '⚠️'}</span>
+                <div>
+                  <p className={`font-semibold text-sm ${creditBalance <= 0 ? 'text-red-800' : 'text-yellow-800'}`}>
+                    {creditBalance <= 0 ? 'No credits remaining' : 'Low credit balance'}
+                  </p>
+                  <p className={`text-sm ${creditBalance <= 0 ? 'text-red-600' : 'text-yellow-600'}`}>
+                    {creditBalance <= 0
+                      ? 'New leads are paused. Add credits to continue receiving leads.'
+                      : `Your balance ($${creditBalance.toFixed(2)}) is below $${COST_PER_LEAD.toFixed(2)}. Top up to keep receiving leads.`}
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/billing"
+                className={`ml-4 flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold transition ${creditBalance <= 0 ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-yellow-500 text-white hover:bg-yellow-600'}`}
+              >
+                Add Credits
+              </Link>
+            </div>
+          )}
+
           {/* Stats */}
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-8">
             <div className="bg-white overflow-hidden shadow rounded-xl">
@@ -73,12 +93,8 @@ export default async function LeadsPage() {
                   📊
                 </div>
                 <div className="ml-5">
-                  <dt className="text-sm font-medium text-gray-500">
-                    Total Leads
-                  </dt>
-                  <dd className="text-3xl font-semibold text-gray-900">
-                    {totalLeads}
-                  </dd>
+                  <dt className="text-sm font-medium text-gray-500">Total Leads</dt>
+                  <dd className="text-3xl font-semibold text-gray-900">{totalLeads}</dd>
                 </div>
               </div>
             </div>
@@ -89,12 +105,8 @@ export default async function LeadsPage() {
                   🆕
                 </div>
                 <div className="ml-5">
-                  <dt className="text-sm font-medium text-gray-500">
-                    New Leads
-                  </dt>
-                  <dd className="text-3xl font-semibold text-gray-900">
-                    {newLeads}
-                  </dd>
+                  <dt className="text-sm font-medium text-gray-500">New Leads</dt>
+                  <dd className="text-3xl font-semibold text-gray-900">{newLeads}</dd>
                 </div>
               </div>
             </div>
@@ -105,85 +117,15 @@ export default async function LeadsPage() {
                   ✅
                 </div>
                 <div className="ml-5">
-                  <dt className="text-sm font-medium text-gray-500">
-                    Booked Leads
-                  </dt>
-                  <dd className="text-3xl font-semibold text-gray-900">
-                    {bookedLeads}
-                  </dd>
+                  <dt className="text-sm font-medium text-gray-500">Booked Leads</dt>
+                  <dd className="text-3xl font-semibold text-gray-900">{bookedLeads}</dd>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Leads table */}
-          <div className="bg-white shadow rounded-xl">
-            <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">
-                Recent Leads
-              </h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Phone
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {recentLeads.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={5}
-                        className="px-6 py-4 text-center text-sm text-gray-500"
-                      >
-                        No leads yet. They will appear here once you receive
-                        them.
-                      </td>
-                    </tr>
-                  ) : (
-                    recentLeads.map((lead) => (
-                      <tr key={lead.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {lead.name || '-'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {lead.email || '-'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {lead.phone || '-'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColor(lead.status)}`}
-                          >
-                            {lead.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(lead.created_at).toLocaleDateString()}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          {/* Leads table with detail panel */}
+          <LeadsTable leads={leads} />
         </div>
       </div>
     </div>
