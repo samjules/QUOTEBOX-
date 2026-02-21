@@ -18,13 +18,5 @@ export default async function PublicFormPage({
 
   if (!form) notFound()
 
-  return (
-    <>
-      <link
-        href="https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.css"
-        rel="stylesheet"
-      />
-      <QuoteForm form={form as HostedForm} />
-    </>
-  )
+  return <QuoteForm form={form as HostedForm} />
 }
