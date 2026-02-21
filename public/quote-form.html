@@ -97,6 +97,8 @@
   .powered-by a { color: inherit; text-decoration: none; font-weight: 600; }
   .powered-by a:hover { color: #1a1a2e; }
 
+  .hero-img { width: 100%; max-height: 220px; object-fit: cover; display: block; flex-shrink: 0; }
+
   @media (min-width: 600px) {
     body { padding: 40px 20px; align-items: center; }
     .form-card { min-height: auto; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,0.1); }
@@ -199,6 +201,12 @@ async function loadForm(slug){
     document.title=(cfg.title||row.form_name)+' — Quote';
     document.getElementById('formTitle').textContent=cfg.title||row.form_name;
     document.getElementById('formDesc').textContent=cfg.description||'';
+    if(cfg.hero_image_url){
+      const img=document.createElement('img');
+      img.src=cfg.hero_image_url; img.alt=''; img.className='hero-img';
+      const header=document.getElementById('cardHeader');
+      header.parentNode.insertBefore(img,header.nextSibling);
+    }
     renderStep(1,!ok);
     show('scrForm');
     console.log('[QB] Form shown successfully');
@@ -354,7 +362,8 @@ function renderStep1(wrap,limitReached){
   });
 
   const hasPricing=(cfg.fields||[]).some(f=>['radio','dropdown','checkbox'].includes(f.type)||(f.type==='number'&&f.ratePerUnit>0));
-  if(hasPricing){
+  const quoteDisplay=cfg.quote_display||(cfg.show_total!==false?'live':'hidden');
+  if(hasPricing&&quoteDisplay==='live'){
     const bar=document.createElement('div'); bar.className='total-bar'; bar.id='totalBar';
     bar.innerHTML='<div><div class="total-bar-label">Estimated Total</div><div class="total-bar-amount" id="totalAmt">'+(cfg.currency||'$')+'0</div><div class="total-bar-bd" id="totalBD">Make selections above</div></div>';
     wrap.appendChild(bar);
@@ -554,13 +563,15 @@ async function submitLead(btn){
 // ─────────────────────────────────────────────────
 function renderStep3(wrap){
   const cur=cfg.currency||'$';
+  const quoteDisplay=cfg.quote_display||(cfg.show_total!==false?'live':'hidden');
+  const showQuote=totalPrice>0&&quoteDisplay!=='hidden';
   wrap.innerHTML='<div class="confirm-screen">'
     +'<div class="confirm-envelope">✉</div>'
     +'<div class="confirm-headline">Your quote is on its way!</div>'
     +'<div class="confirm-sub">We\'ve received your details and emailed your personalised quote to:</div>'
     +'<div class="confirm-email-chip">📧 <strong>'+esc(contactData.email)+'</strong></div>'
     +'<div class="confirm-sub">Please check your inbox (and spam folder) shortly.</div>'
-    +(totalPrice>0
+    +(showQuote
       ?'<div class="confirm-quote-box"><div><div class="confirm-quote-label">Your Estimated Quote</div>'
         +'<div class="confirm-quote-amount">'+cur+totalPrice.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2})+'</div></div></div>'
       :'')

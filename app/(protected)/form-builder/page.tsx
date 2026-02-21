@@ -84,6 +84,8 @@ function CanvasPreview({
   formDesc,
   submitLabel,
   currency,
+  heroImageUrl,
+  quoteDisplay,
   onSelectField,
   onRemoveField,
 }: {
@@ -95,6 +97,8 @@ function CanvasPreview({
   formDesc: string
   submitLabel: string
   currency: string
+  heroImageUrl: string
+  quoteDisplay: 'live' | 'after_submit' | 'hidden'
   onSelectField: (id: string) => void
   onRemoveField: (id: string, e: React.MouseEvent) => void
 }) {
@@ -115,6 +119,23 @@ function CanvasPreview({
   return (
     <div className="preview-card">
       <div className={`preview-card-header ${bg}`}>
+        {/* Hero image */}
+        {heroImageUrl && activeTab === 0 && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={heroImageUrl}
+            alt="Hero"
+            style={{
+              width: 'calc(100% + 32px)',
+              marginLeft: -16,
+              marginTop: -16,
+              marginBottom: 16,
+              height: 120,
+              objectFit: 'cover',
+              display: 'block',
+            }}
+          />
+        )}
         {/* Step dots */}
         <div className="preview-steps">
           {[0, 1, 2].map((i) => {
@@ -238,10 +259,16 @@ function CanvasPreview({
               ))
             )}
 
-            {hasPricing && (
+            {hasPricing && quoteDisplay === 'live' && (
               <div className="total-prev">
                 <div className="total-prev-lbl">Estimated Total</div>
                 <div className="total-prev-val">{currency}0</div>
+              </div>
+            )}
+            {hasPricing && quoteDisplay === 'after_submit' && (
+              <div className="total-prev" style={{ opacity: 0.4 }}>
+                <div className="total-prev-lbl">Total shown after submit</div>
+                <div className="total-prev-val">{currency}–</div>
               </div>
             )}
             <button className={`sub-btn-prev ${bg}`} style={{ marginTop: 10 }}>
@@ -277,6 +304,14 @@ function CanvasPreview({
               We&apos;ve received your details and will email your personalised
               quote to you shortly.
             </div>
+            {hasPricing && quoteDisplay !== 'hidden' && (
+              <div className="total-prev" style={{ marginTop: 14, width: '100%' }}>
+                <div className="total-prev-lbl">
+                  {quoteDisplay === 'after_submit' ? 'Your Estimated Quote (shown here)' : 'Your Estimated Quote'}
+                </div>
+                <div className="total-prev-val">{currency}–</div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -429,6 +464,8 @@ export default function FormBuilderPage() {
   const [formSlug, setFormSlug] = useState('my-quote-form')
   const [currency, setCurrency] = useState('$')
   const [metaPixelId, setMetaPixelId] = useState('')
+  const [heroImageUrl, setHeroImageUrl] = useState('')
+  const [quoteDisplay, setQuoteDisplay] = useState<'live' | 'after_submit' | 'hidden'>('live')
   const [editingFormId, setEditingFormId] = useState<string | null>(null)
   const [accountId, setAccountId] = useState<string | null>(null)
   const [planBadge, setPlanBadge] = useState('Loading…')
@@ -509,6 +546,12 @@ export default function FormBuilderPage() {
     setFields(c.fields ?? [])
     setBrandColor(c.brand_color ?? 'yellow')
     setMetaPixelId(c.meta_pixel_id ?? '')
+    setHeroImageUrl(c.hero_image_url ?? '')
+    if (c.quote_display) {
+      setQuoteDisplay(c.quote_display)
+    } else {
+      setQuoteDisplay(c.show_total !== false ? 'live' : 'hidden')
+    }
   }
 
   // ── Field operations ──
@@ -656,7 +699,9 @@ export default function FormBuilderPage() {
         submit_label: submitLabel || 'Get My Quote',
         currency,
         brand_color: brandColor,
-        show_total: true,
+        show_total: quoteDisplay === 'live',
+        quote_display: quoteDisplay,
+        ...(heroImageUrl.trim() ? { hero_image_url: heroImageUrl.trim() } : {}),
         fields,
         ...(metaPixelId.trim() ? { meta_pixel_id: metaPixelId.trim() } : {}),
       },
@@ -798,6 +843,54 @@ export default function FormBuilderPage() {
                   <span className="cswatch-lbl">Blue</span>
                 </div>
               </div>
+              <label>Hero Image URL</label>
+              <input
+                type="url"
+                value={heroImageUrl}
+                onChange={(e) => setHeroImageUrl(e.target.value)}
+                placeholder="https://… (optional)"
+              />
+              {heroImageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={heroImageUrl}
+                  alt="Hero preview"
+                  style={{ width: '100%', height: 80, objectFit: 'cover', borderRadius: 6, marginTop: 4 }}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                  onLoad={(e) => { (e.target as HTMLImageElement).style.display = 'block' }}
+                />
+              )}
+              <label style={{ marginTop: 12 }}>Quote Total Display</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 2 }}>
+                {([
+                  ['live', '▶ Live — show as user fills in'],
+                  ['after_submit', '✉ After submit — show on confirmation'],
+                  ['hidden', '✕ Hidden — never show total'],
+                ] as const).map(([val, lbl]) => (
+                  <label
+                    key={val}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      fontSize: '0.78rem',
+                      color: quoteDisplay === val ? 'var(--accent)' : 'var(--fg)',
+                      cursor: 'pointer',
+                      fontWeight: quoteDisplay === val ? 600 : 400,
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="quoteDisplay"
+                      value={val}
+                      checked={quoteDisplay === val}
+                      onChange={() => setQuoteDisplay(val)}
+                      style={{ accentColor: 'var(--accent)' }}
+                    />
+                    {lbl}
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -848,6 +941,8 @@ export default function FormBuilderPage() {
               formDesc={formDesc}
               submitLabel={submitLabel}
               currency={currency}
+              heroImageUrl={heroImageUrl}
+              quoteDisplay={quoteDisplay}
               onSelectField={setSelectedId}
               onRemoveField={removeField}
             />

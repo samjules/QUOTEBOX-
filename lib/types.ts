@@ -29,6 +29,8 @@ export interface FormConfig {
   currency: string
   brand_color: 'yellow' | 'blue'
   show_total: boolean
+  quote_display?: 'live' | 'after_submit' | 'hidden'
+  hero_image_url?: string
   fields: FormField[]
   meta_pixel_id?: string
 }
