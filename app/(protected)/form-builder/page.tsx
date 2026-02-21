@@ -55,6 +55,13 @@ function makeField(type: FormField['type']): FormField {
       required: false,
       placeholder: 'Tell us more…',
     },
+    route: {
+      label: 'Service Location',
+      required: true,
+      routeChargeType: 'mileage',
+      ratePerMile: 1.5,
+      ratePerMinute: 0,
+    },
   }
   return { id: uid(), type, ...defaults[type] }
 }
@@ -113,7 +120,8 @@ function CanvasPreview({
   const hasPricing = fields.some(
     (f) =>
       ['radio', 'dropdown', 'checkbox'].includes(f.type) ||
-      (f.type === 'number' && (f.ratePerUnit ?? 0) > 0)
+      (f.type === 'number' && (f.ratePerUnit ?? 0) > 0) ||
+      (f.type === 'route' && f.routeChargeType !== 'none')
   )
 
   return (
@@ -243,6 +251,65 @@ function CanvasPreview({
                     </>
                   )}
 
+                  {f.type === 'route' && (
+                    <div style={{ marginTop: 6 }}>
+                      <div className="fprev-input" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ color: '#22c55e', fontSize: '0.8rem' }}>●</span>
+                        Starting location…
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', paddingLeft: 7, margin: '2px 0' }}>
+                        <div style={{ width: 2, height: 10, background: 'var(--border)', borderRadius: 1 }} />
+                      </div>
+                      <div className="fprev-input" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ color: '#ef4444', fontSize: '0.8rem' }}>●</span>
+                        Ending location…
+                      </div>
+                      {/* Map placeholder */}
+                      <div style={{
+                        marginTop: 8,
+                        borderRadius: 8,
+                        overflow: 'hidden',
+                        border: '1px solid var(--border)',
+                        height: 90,
+                        background: 'linear-gradient(135deg, #e8f4e8 0%, #d4ecd4 30%, #c8e6c9 60%, #dcedc8 100%)',
+                        position: 'relative',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                        <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }} viewBox="0 0 240 90" preserveAspectRatio="none">
+                          {/* fake road lines */}
+                          <path d="M20,75 Q80,20 160,40 Q200,50 220,30" stroke="#94a3b8" strokeWidth="2" fill="none" strokeDasharray="4,3" opacity="0.5"/>
+                          <path d="M0,55 Q60,70 120,50 Q180,30 240,45" stroke="#94a3b8" strokeWidth="1.5" fill="none" opacity="0.3"/>
+                          {/* route line */}
+                          <path d="M30,70 Q100,15 210,25" stroke="#3b82f6" strokeWidth="3" fill="none" strokeLinecap="round"/>
+                          {/* start dot */}
+                          <circle cx="30" cy="70" r="5" fill="#22c55e" stroke="white" strokeWidth="1.5"/>
+                          {/* end dot */}
+                          <circle cx="210" cy="25" r="5" fill="#ef4444" stroke="white" strokeWidth="1.5"/>
+                        </svg>
+                        <span style={{ fontSize: '0.68rem', color: '#475569', background: 'rgba(255,255,255,0.85)', padding: '2px 7px', borderRadius: 10, zIndex: 1, fontWeight: 600 }}>
+                          12.4 mi · 22 min
+                        </span>
+                      </div>
+                      {/* Charge info */}
+                      {f.routeChargeType !== 'none' && (
+                        <div style={{ marginTop: 6, fontSize: '0.72rem', color: 'var(--muted)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                          {(f.routeChargeType === 'mileage' || f.routeChargeType === 'both') && (
+                            <span style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 7px' }}>
+                              {currency}{f.ratePerMile ?? 0}/mi
+                            </span>
+                          )}
+                          {(f.routeChargeType === 'drivetime' || f.routeChargeType === 'both') && (
+                            <span style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 7px' }}>
+                              {currency}{f.ratePerMinute ?? 0}/min
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {f.options && (
                     <div className="fprev-opts">
                       {f.options.map((o) => (
@@ -350,6 +417,7 @@ function PropsPanel({
   const hasOpts = ['radio', 'dropdown', 'checkbox'].includes(field.type)
   const hasRate = field.type === 'number'
   const hasPH = ['number', 'textarea'].includes(field.type)
+  const isRoute = field.type === 'route'
 
   return (
     <aside className="props-panel">
@@ -389,6 +457,77 @@ function PropsPanel({
             }
           />
         </div>
+      )}
+
+      {isRoute && (
+        <>
+          <div className="prop-group">
+            <div className="prop-label">Charge type</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 2 }}>
+              {([
+                ['mileage', '📍 Mileage — charge per mile'],
+                ['drivetime', '⏱ Drive time — charge per minute'],
+                ['both', '⚡ Both — mileage + drive time'],
+                ['none', '✕ None — distance info only'],
+              ] as const).map(([val, lbl]) => (
+                <label
+                  key={val}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 7,
+                    fontSize: '0.78rem',
+                    cursor: 'pointer',
+                    color: field.routeChargeType === val ? 'var(--accent)' : 'var(--fg)',
+                    fontWeight: field.routeChargeType === val ? 600 : 400,
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name={`routeCharge_${field.id}`}
+                    value={val}
+                    checked={(field.routeChargeType ?? 'mileage') === val}
+                    onChange={() => onSetProp(field.id, 'routeChargeType', val)}
+                    style={{ accentColor: 'var(--accent)' }}
+                  />
+                  {lbl}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {(field.routeChargeType === 'mileage' || field.routeChargeType === 'both') && (
+            <div className="prop-group">
+              <div className="prop-label">Rate per mile ($)</div>
+              <input
+                className="prop-input"
+                type="number"
+                min={0}
+                step={0.01}
+                value={field.ratePerMile ?? 0}
+                onChange={(e) =>
+                  onSetProp(field.id, 'ratePerMile', parseFloat(e.target.value) || 0)
+                }
+              />
+            </div>
+          )}
+
+          {(field.routeChargeType === 'drivetime' || field.routeChargeType === 'both') && (
+            <div className="prop-group">
+              <div className="prop-label">Rate per minute ($)</div>
+              <input
+                className="prop-input"
+                type="number"
+                min={0}
+                step={0.001}
+                value={field.ratePerMinute ?? 0}
+                onChange={(e) =>
+                  onSetProp(field.id, 'ratePerMinute', parseFloat(e.target.value) || 0)
+                }
+              />
+            </div>
+          )}
+        </>
       )}
 
       <div className="prop-toggle">
@@ -910,6 +1049,9 @@ export default function FormBuilderPage() {
             </button>
             <button className="ftype-btn" onClick={() => addField('textarea')}>
               <span className="icon">≡</span> Long Text
+            </button>
+            <button className="ftype-btn" onClick={() => addField('route')}>
+              <span className="icon">⇌</span> Route / Distance
             </button>
           </div>
         </aside>

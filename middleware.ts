@@ -34,10 +34,10 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
   const isAuthPage = pathname === '/login' || pathname === '/signup'
-  const isPublicPage =
-    isAuthPage ||
-    pathname.startsWith('/quote') ||
-    pathname === '/'
+  const isProtectedPage = [
+    '/dashboard', '/leads', '/hosted-forms', '/billing', '/settings', '/form-builder',
+  ].some((p) => pathname.startsWith(p))
+  const isPublicPage = isAuthPage || pathname === '/' || !isProtectedPage
 
   // Unauthenticated user hitting a protected route → send to login
   if (!user && !isPublicPage) {

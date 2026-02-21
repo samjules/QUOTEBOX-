@@ -14,12 +14,16 @@ export interface FieldOption {
 
 export interface FormField {
   id: string
-  type: 'radio' | 'dropdown' | 'checkbox' | 'number' | 'textarea'
+  type: 'radio' | 'dropdown' | 'checkbox' | 'number' | 'textarea' | 'route'
   label: string
   required: boolean
   options?: FieldOption[]
   placeholder?: string
   ratePerUnit?: number
+  // Route field
+  routeChargeType?: 'mileage' | 'drivetime' | 'both' | 'none'
+  ratePerMile?: number
+  ratePerMinute?: number
 }
 
 export interface FormConfig {
