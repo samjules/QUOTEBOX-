@@ -211,6 +211,7 @@ function RouteField({
   useEffect(() => { onRouteChangeRef.current = onRouteChange }, [onRouteChange])
 
   const [mapLoaded, setMapLoaded] = useState(false)
+  const [mapError, setMapError] = useState(false)
   const [startQuery, setStartQuery] = useState('')
   const [startSuggestions, setStartSuggestions] = useState<GeocodeSuggestion[]>([])
   const [startCoords, setStartCoords] = useState<[number, number] | null>(null)
@@ -268,23 +269,29 @@ function RouteField({
   // Init map
   useEffect(() => {
     if (!mapContainerRef.current) return
+    if (!MAPBOX_TOKEN) { setMapError(true); return }
     let cancelled = false
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let mapInstance: any = null
 
     import('mapbox-gl').then((mod) => {
       if (cancelled || !mapContainerRef.current) return
-      const mapboxgl = mod.default
-      mapboxgl.accessToken = MAPBOX_TOKEN
-      mapInstance = new mapboxgl.Map({
-        container: mapContainerRef.current,
-        style: 'mapbox://styles/mapbox/light-v11',
-        center: [-98.5795, 39.8283],
-        zoom: 3,
-      })
-      mapRef.current = mapInstance
-      mapInstance.on('load', () => { if (!cancelled) setMapLoaded(true) })
-    })
+      try {
+        const mapboxgl = mod.default
+        mapboxgl.accessToken = MAPBOX_TOKEN
+        mapInstance = new mapboxgl.Map({
+          container: mapContainerRef.current,
+          style: 'mapbox://styles/mapbox/light-v11',
+          center: [-98.5795, 39.8283],
+          zoom: 3,
+        })
+        mapRef.current = mapInstance
+        mapInstance.on('load', () => { if (!cancelled) setMapLoaded(true) })
+        mapInstance.on('error', () => { if (!cancelled) setMapError(true) })
+      } catch {
+        if (!cancelled) setMapError(true)
+      }
+    }).catch(() => { if (!cancelled) setMapError(true) })
 
     return () => {
       cancelled = true
@@ -395,8 +402,17 @@ function RouteField({
 
       {/* Map container — always rendered so the ref is stable */}
       <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', border: '1px solid #e5e4e0', marginTop: 4 }}>
-        <div ref={mapContainerRef} style={{ height: 220, width: '100%', background: '#e8ecef' }} />
-        {isLoadingRoute && (
+        <div ref={mapContainerRef} style={{ height: 220, width: '100%', background: '#e8ecef', display: mapError ? 'none' : undefined }} />
+        {mapError && (
+          <div style={{
+            height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: '#f8fafc', flexDirection: 'column', gap: 6,
+          }}>
+            <span style={{ fontSize: '1.4rem' }}>🗺️</span>
+            <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 500 }}>Map unavailable</span>
+          </div>
+        )}
+        {isLoadingRoute && !mapError && (
           <div style={{
             position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.78)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
