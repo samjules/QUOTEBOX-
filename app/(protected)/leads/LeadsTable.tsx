@@ -61,9 +61,20 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
   const getDisplayStatus = (lead: Lead) =>
     savedStatus[lead.id] ?? lead.status
 
+  const INTERNAL_KEYS = ['name', 'email', 'phone', '_quote_total', '_quote_currency', '_breakdown']
+
+  function getQuote(lead: Lead): { total: number; currency: string } | null {
+    const total = lead.form_data?._quote_total
+    if (typeof total !== 'number' || total === 0) return null
+    const currency = (lead.form_data?._quote_currency as string) ?? '$'
+    return { total, currency }
+  }
+
   const formDataEntries = selected?.form_data
-    ? Object.entries(selected.form_data).filter(([key]) => !['name', 'email', 'phone'].includes(key))
+    ? Object.entries(selected.form_data).filter(([key]) => !INTERNAL_KEYS.includes(key))
     : []
+
+  const selectedQuote = selected ? getQuote(selected) : null
 
   return (
     <div className="relative">
@@ -81,6 +92,7 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quote</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
@@ -109,6 +121,9 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {lead.phone || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                        {(() => { const q = getQuote(lead); return q ? `${q.currency}${q.total.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}` : <span className="text-gray-400 font-normal">—</span> })()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColor(displayStatus)}`}>
@@ -190,6 +205,19 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
                   </div>
                 </dl>
               </section>
+
+              {/* Quote total */}
+              {selectedQuote && (
+                <section>
+                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Estimated Quote</h3>
+                  <div className="rounded-xl bg-green-50 border border-green-200 px-5 py-4 flex items-center justify-between">
+                    <span className="text-sm text-green-700 font-medium">Total</span>
+                    <span className="text-2xl font-bold text-green-800">
+                      {selectedQuote.currency}{selectedQuote.total.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                </section>
+              )}
 
               {/* Form data */}
               {formDataEntries.length > 0 && (

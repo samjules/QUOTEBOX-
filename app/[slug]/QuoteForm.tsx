@@ -504,6 +504,10 @@ export default function QuoteForm({ form }: { form: HostedForm }) {
     for (const [id, rd] of Object.entries(routeData)) {
       if (rd) formData[id] = rd
     }
+    if (total > 0) {
+      formData._quote_total = total
+      formData._quote_currency = currency
+    }
 
     const { error } = await supabase.from('leads').insert({
       account_id: form.account_id,
