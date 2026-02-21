@@ -103,7 +103,29 @@
     body { padding: 40px 20px; align-items: center; }
     .form-card { min-height: auto; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,0.1); }
   }
+
+  /* ── Route field ── */
+  .route-field { display: flex; flex-direction: column; gap: 8px; }
+  .addr-wrap { position: relative; }
+  .addr-dot { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 10px; pointer-events: none; z-index: 1; line-height: 1; }
+  .addr-input { width: 100%; padding: 11px 12px 11px 28px; border: 1.5px solid #e2e2ec; border-radius: 10px; font-size: 0.88rem; font-family: 'Inter', sans-serif; color: #1a1a2e; outline: none; box-sizing: border-box; background: white; }
+  .addr-input:focus { border-color: #1a1a2e; box-shadow: 0 0 0 3px rgba(26,26,46,0.06); }
+  .addr-input.set { border-color: #86efac; }
+  .addr-connector { padding-left: 14px; margin: -2px 0; }
+  .addr-connector-line { width: 2px; height: 10px; background: #d0d0e0; border-radius: 1px; }
+  .addr-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #e2e2ec; border-radius: 10px; box-shadow: 0 4px 18px rgba(0,0,0,0.1); z-index: 50; margin-top: 3px; overflow: hidden; display: none; }
+  .addr-sug-item { padding: 10px 14px; cursor: pointer; font-size: 0.83rem; color: #334155; border-bottom: 1px solid #f5f5f8; }
+  .addr-sug-item:last-child { border-bottom: none; }
+  .addr-sug-item:hover { background: #f8fafc; }
+  .route-map-wrap { position: relative; border-radius: 10px; overflow: hidden; border: 1px solid #e2e2ec; margin-top: 4px; }
+  .route-map-canvas { height: 220px; width: 100%; background: #e8ecef; }
+  .route-map-loading { position: absolute; inset: 0; background: rgba(255,255,255,0.75); display: none; align-items: center; justify-content: center; font-size: 0.83rem; color: #8888a0; font-weight: 500; }
+  .route-info { display: none; align-items: center; gap: 14px; padding: 9px 14px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e2ec; flex-wrap: wrap; }
+  .route-info-stat { font-size: 0.83rem; color: #334155; font-weight: 600; }
+  .route-info-price { margin-left: auto; font-size: 0.86rem; color: #059669; font-weight: 700; }
 </style>
+<link href='https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css' rel='stylesheet' />
+<script src='https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js'></script>
 </head>
 <body>
 
@@ -138,6 +160,7 @@
 const SUPABASE_URL  = 'https://jpchpqjnyabtpptufkcj.supabase.co';
 const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwY2hwcWpueWFidHBwdHVma2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMDAyNTAsImV4cCI6MjA4NjY3NjI1MH0.FCywHhyz8N0Hkl-jK9RxZyh2KFZMrP8aUSXt1oJQbHY';
 const EDGE_FN_URL   = 'https://jpchpqjnyabtpptufkcj.supabase.co/functions/v1/send-quote-email';
+let MAPBOX_TOKEN = ''; // loaded from /api/config at boot
 
 // ─────────────────────────────────────────────────
 // STATE
@@ -145,6 +168,8 @@ const EDGE_FN_URL   = 'https://jpchpqjnyabtpptufkcj.supabase.co/functions/v1/sen
 let cfg=null, hostedFormId=null, accountId=null;
 let step=1, quoteData={}, contactData={};
 let totalPrice=0, breakdown=[];
+let routeState={};   // per-field map/geocode state
+let routeResults={}; // { fieldId: { distanceMiles, durationMinutes, startAddress, endAddress } | null }
 
 // ─────────────────────────────────────────────────
 // BOOT
@@ -152,6 +177,7 @@ let totalPrice=0, breakdown=[];
 (async()=>{
   console.log('[QB] ── BOOT START ──', new Date().toISOString());
   console.log('[QB] URL:', window.location.href);
+  try{ const cfg=await fetch('/api/config').then(r=>r.json()); MAPBOX_TOKEN=cfg.mapboxToken||''; }catch{}
   const slug=getSlug();
   console.log('[QB] slug:', slug);
   if(!slug){console.warn('[QB] No slug found, showing error');show('scrError');return;}
@@ -354,6 +380,47 @@ function renderStep1(wrap,limitReached){
         list.appendChild(item);
       });
       grp.appendChild(list);
+
+    } else if(field.type==='route'){
+      const fid=field.id;
+      routeState[fid]={startQuery:'',startCoords:null,startTimer:null,endQuery:'',endCoords:null,endTimer:null,routeGeometry:null,map:null,mapLoaded:false,startMarker:null,endMarker:null};
+      routeResults[fid]=null;
+
+      const rf=document.createElement('div'); rf.className='route-field'; rf.setAttribute('data-fid',fid);
+
+      // ── start address ──
+      const sw=document.createElement('div'); sw.className='addr-wrap';
+      const sd=document.createElement('span'); sd.className='addr-dot'; sd.style.color='#22c55e'; sd.textContent='●'; sw.appendChild(sd);
+      const si=document.createElement('input'); si.className='addr-input'; si.id='ainput_start_'+fid; si.placeholder='Starting location…'; si.autocomplete='off';
+      sw.appendChild(si);
+      const ss=document.createElement('div'); ss.className='addr-suggestions'; ss.id='asug_start_'+fid; sw.appendChild(ss);
+      rf.appendChild(sw);
+
+      // ── connector ──
+      const conn=document.createElement('div'); conn.className='addr-connector';
+      const connL=document.createElement('div'); connL.className='addr-connector-line'; conn.appendChild(connL); rf.appendChild(conn);
+
+      // ── end address ──
+      const ew=document.createElement('div'); ew.className='addr-wrap';
+      const ed=document.createElement('span'); ed.className='addr-dot'; ed.style.color='#ef4444'; ed.textContent='●'; ew.appendChild(ed);
+      const ei=document.createElement('input'); ei.className='addr-input'; ei.id='ainput_end_'+fid; ei.placeholder='Ending location…'; ei.autocomplete='off';
+      ew.appendChild(ei);
+      const es=document.createElement('div'); es.className='addr-suggestions'; es.id='asug_end_'+fid; ew.appendChild(es);
+      rf.appendChild(ew);
+
+      // ── map ──
+      const mw=document.createElement('div'); mw.className='route-map-wrap';
+      const mc=document.createElement('div'); mc.className='route-map-canvas'; mc.id='map_'+fid; mw.appendChild(mc);
+      const ml=document.createElement('div'); ml.className='route-map-loading'; ml.id='rload_'+fid; ml.textContent='Calculating route…'; mw.appendChild(ml);
+      rf.appendChild(mw);
+
+      // ── route info strip ──
+      const ri=document.createElement('div'); ri.className='route-info'; ri.id='rinfo_'+fid; rf.appendChild(ri);
+
+      grp.appendChild(rf);
+
+      // wire up events after this tick (DOM must be inserted first)
+      setTimeout(()=>initRouteField(fid,field),0);
     }
 
     const err=document.createElement('div'); err.className='field-err'; err.id='err_'+field.id;
@@ -361,7 +428,7 @@ function renderStep1(wrap,limitReached){
     wrap.appendChild(grp);
   });
 
-  const hasPricing=(cfg.fields||[]).some(f=>['radio','dropdown','checkbox'].includes(f.type)||(f.type==='number'&&f.ratePerUnit>0));
+  const hasPricing=(cfg.fields||[]).some(f=>['radio','dropdown','checkbox'].includes(f.type)||(f.type==='number'&&f.ratePerUnit>0)||(f.type==='route'&&f.routeChargeType!=='none'));
   const quoteDisplay=cfg.quote_display||(cfg.show_total!==false?'live':'hidden');
   if(hasPricing&&quoteDisplay==='live'){
     const bar=document.createElement('div'); bar.className='total-bar'; bar.id='totalBar';
@@ -398,6 +465,15 @@ function recalc(){
         const o=(f.options||[]).find(x=>x.id===item.getAttribute('data-val'));
         if(o&&o.price>0){total+=o.price;items.push('+'+cur+o.price+' '+esc(o.label));}
       });
+    } else if(f.type==='route'){
+      const rr=routeResults[f.id];
+      if(rr&&f.routeChargeType!=='none'){
+        let p=0;
+        if(f.routeChargeType==='mileage'||f.routeChargeType==='both') p+=rr.distanceMiles*(f.ratePerMile||0);
+        if(f.routeChargeType==='drivetime'||f.routeChargeType==='both') p+=rr.durationMinutes*(f.ratePerMinute||0);
+        total+=p;
+        if(p>0) items.push('Route: '+cur+p.toFixed(2));
+      }
     }
   });
   totalPrice=total; breakdown=items;
@@ -428,6 +504,9 @@ function advanceStep1(){
       const sel=[];
       if(l) l.querySelectorAll('.cb-item.sel').forEach(i=>sel.push(i.getAttribute('data-val')));
       data[f.id]=sel;
+    } else if(f.type==='route'){
+      data[f.id]=routeResults[f.id]||null;
+      if(f.required&&!routeResults[f.id]){showErr(f.id);ok=false;}
     }
   });
   if(!ok) return;
@@ -517,6 +596,9 @@ async function submitLead(btn){
       form_data[f.label]=(quoteData[f.id]||[]).map(id=>{
         const o=(f.options||[]).find(x=>x.id===id); return o?o.label:'';
       }).filter(Boolean);
+    } else if(f.type==='route'){
+      const rr=quoteData[f.id];
+      if(rr) form_data[f.label]=rr.startAddress+' → '+rr.endAddress+' ('+rr.distanceMiles.toFixed(1)+' mi, '+Math.round(rr.durationMinutes)+' min)';
     }
   });
   form_data._quote_total=totalPrice;
@@ -591,6 +673,142 @@ function injectMetaPixel(pixelId){
   document,'script','https://connect.facebook.net/en_US/fbevents.js');
   fbq('init', pixelId);
   fbq('track', 'PageView');
+}
+
+// ─────────────────────────────────────────────────
+// ROUTE FIELD — Mapbox helpers
+// ─────────────────────────────────────────────────
+async function geocode(q){
+  if(!q||q.length<3) return [];
+  try{
+    const url='https://api.mapbox.com/geocoding/v5/mapbox.places/'+encodeURIComponent(q)+'.json?access_token='+MAPBOX_TOKEN+'&limit=5&types=address,place,locality,neighborhood';
+    const r=await fetch(url); const d=await r.json();
+    return (d.features||[]).map(f=>({place_name:f.place_name,center:f.center}));
+  }catch{return [];}
+}
+
+async function getDirections(start,end){
+  try{
+    const url='https://api.mapbox.com/directions/v5/mapbox/driving/'+start[0]+','+start[1]+';'+end[0]+','+end[1]+'?steps=false&geometries=geojson&overview=full&access_token='+MAPBOX_TOKEN;
+    const r=await fetch(url); const d=await r.json();
+    const route=d.routes&&d.routes[0]; if(!route) return null;
+    return {distanceMiles:route.distance/1609.344,durationMinutes:route.duration/60,geometry:route.geometry};
+  }catch{return null;}
+}
+
+function updateRouteMap(fid){
+  const st=routeState[fid]; if(!st||!st.map||!st.mapLoaded) return;
+  const map=st.map;
+  if(st.startMarker){st.startMarker.remove();st.startMarker=null;}
+  if(st.endMarker){st.endMarker.remove();st.endMarker=null;}
+  if(st.startCoords){
+    const el=document.createElement('div');
+    el.style.cssText='width:14px;height:14px;border-radius:50%;background:#22c55e;border:2.5px solid white;box-shadow:0 1px 5px rgba(0,0,0,0.3)';
+    st.startMarker=new mapboxgl.Marker({element:el}).setLngLat(st.startCoords).addTo(map);
+  }
+  if(st.endCoords){
+    const el=document.createElement('div');
+    el.style.cssText='width:14px;height:14px;border-radius:50%;background:#ef4444;border:2.5px solid white;box-shadow:0 1px 5px rgba(0,0,0,0.3)';
+    st.endMarker=new mapboxgl.Marker({element:el}).setLngLat(st.endCoords).addTo(map);
+  }
+  if(st.routeGeometry){
+    const gj={type:'Feature',properties:{},geometry:st.routeGeometry};
+    if(map.getSource('route')){map.getSource('route').setData(gj);}
+    else{
+      map.addSource('route',{type:'geojson',data:gj});
+      map.addLayer({id:'route',type:'line',source:'route',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#1a1a2e','line-width':4,'line-opacity':0.85}});
+    }
+    const bounds=new mapboxgl.LngLatBounds();
+    st.routeGeometry.coordinates.forEach(c=>bounds.extend(c));
+    map.fitBounds(bounds,{padding:52,maxZoom:14});
+  }else if(st.startCoords&&st.endCoords){
+    const bounds=new mapboxgl.LngLatBounds();
+    bounds.extend(st.startCoords); bounds.extend(st.endCoords);
+    map.fitBounds(bounds,{padding:60});
+  }else if(st.startCoords){
+    map.flyTo({center:st.startCoords,zoom:11});
+  }
+}
+
+async function onBothCoordsSet(fid,field){
+  const st=routeState[fid]; if(!st.startCoords||!st.endCoords) return;
+  const loadEl=document.getElementById('rload_'+fid);
+  if(loadEl) loadEl.style.display='flex';
+  const result=await getDirections(st.startCoords,st.endCoords);
+  if(loadEl) loadEl.style.display='none';
+  if(!result) return;
+  st.routeGeometry=result.geometry;
+  routeResults[fid]={startAddress:st.startQuery,startCoords:st.startCoords,endAddress:st.endQuery,endCoords:st.endCoords,distanceMiles:result.distanceMiles,durationMinutes:result.durationMinutes};
+  const cur=cfg.currency||'$';
+  let p=0;
+  if(field.routeChargeType==='mileage'||field.routeChargeType==='both') p+=result.distanceMiles*(field.ratePerMile||0);
+  if(field.routeChargeType==='drivetime'||field.routeChargeType==='both') p+=result.durationMinutes*(field.ratePerMinute||0);
+  const ri=document.getElementById('rinfo_'+fid);
+  if(ri){
+    ri.innerHTML='<span class="route-info-stat">📍 '+result.distanceMiles.toFixed(1)+' mi</span>'
+      +'<span class="route-info-stat">⏱ '+Math.round(result.durationMinutes)+' min</span>'
+      +(p>0?'<span class="route-info-price">+'+cur+p.toFixed(2)+'</span>':'');
+    ri.style.display='flex';
+  }
+  updateRouteMap(fid);
+  recalc();
+}
+
+function showSuggestions(sugEl,suggestions,onSelect){
+  sugEl.innerHTML='';
+  if(!suggestions.length){sugEl.style.display='none';return;}
+  suggestions.forEach(s=>{
+    const item=document.createElement('div'); item.className='addr-sug-item'; item.textContent=s.place_name;
+    item.addEventListener('mousedown',e=>{e.preventDefault();onSelect(s);sugEl.style.display='none';});
+    sugEl.appendChild(item);
+  });
+  sugEl.style.display='block';
+}
+
+function initRouteField(fid,field){
+  const st=routeState[fid];
+  const si=document.getElementById('ainput_start_'+fid);
+  const ss=document.getElementById('asug_start_'+fid);
+  const ei=document.getElementById('ainput_end_'+fid);
+  const es=document.getElementById('asug_end_'+fid);
+  if(!si||!ss||!ei||!es) return;
+
+  // Start input
+  si.addEventListener('input',()=>{
+    st.startQuery=si.value; st.startCoords=null; si.classList.remove('set');
+    st.routeGeometry=null; routeResults[fid]=null;
+    const ri=document.getElementById('rinfo_'+fid); if(ri) ri.style.display='none';
+    clearTimeout(st.startTimer);
+    st.startTimer=setTimeout(async()=>{
+      const sug=await geocode(st.startQuery);
+      showSuggestions(ss,sug,s=>{si.value=s.place_name;si.classList.add('set');st.startQuery=s.place_name;st.startCoords=s.center;updateRouteMap(fid);onBothCoordsSet(fid,field);});
+    },300);
+  });
+  si.addEventListener('blur',()=>setTimeout(()=>ss.style.display='none',150));
+
+  // End input
+  ei.addEventListener('input',()=>{
+    st.endQuery=ei.value; st.endCoords=null; ei.classList.remove('set');
+    st.routeGeometry=null; routeResults[fid]=null;
+    const ri=document.getElementById('rinfo_'+fid); if(ri) ri.style.display='none';
+    clearTimeout(st.endTimer);
+    st.endTimer=setTimeout(async()=>{
+      const sug=await geocode(st.endQuery);
+      showSuggestions(es,sug,s=>{ei.value=s.place_name;ei.classList.add('set');st.endQuery=s.place_name;st.endCoords=s.center;updateRouteMap(fid);onBothCoordsSet(fid,field);});
+    },300);
+  });
+  ei.addEventListener('blur',()=>setTimeout(()=>es.style.display='none',150));
+
+  // Init map
+  if(typeof mapboxgl==='undefined') return;
+  mapboxgl.accessToken=MAPBOX_TOKEN;
+  const mapEl=document.getElementById('map_'+fid);
+  if(!mapEl) return;
+  try{
+    const map=new mapboxgl.Map({container:mapEl,style:'mapbox://styles/mapbox/light-v11',center:[-98.5795,39.8283],zoom:3});
+    st.map=map;
+    map.on('load',()=>{st.mapLoaded=true;updateRouteMap(fid);});
+  }catch(e){console.warn('Mapbox init failed',e);}
 }
 
 function showErr(id){const e=document.getElementById('err_'+id);if(e)e.classList.add('show');}
