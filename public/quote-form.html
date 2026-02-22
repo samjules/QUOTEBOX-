@@ -123,6 +123,18 @@
   .route-info { display: none; align-items: center; gap: 14px; padding: 9px 14px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e2ec; flex-wrap: wrap; }
   .route-info-stat { font-size: 0.83rem; color: #334155; font-weight: 600; }
   .route-info-price { margin-left: auto; font-size: 0.86rem; color: #059669; font-weight: 700; }
+
+  /* ── Image upload field ── */
+  .image-upload-zone { border: 2px dashed #e2e2ec; border-radius: 10px; padding: 24px 16px; text-align: center; cursor: pointer; transition: border-color .15s; background: #fafafa; }
+  .image-upload-zone:hover { border-color: #1a1a2e; }
+  .image-upload-zone.has-file { border-style: solid; border-color: #86efac; }
+  .image-upload-zone.uploading { opacity: .6; pointer-events: none; }
+  .image-upload-prompt { display: flex; flex-direction: column; align-items: center; gap: 6px; color: #8888a0; font-size: .88rem; }
+  .image-upload-prompt-icon { font-size: 1.8rem; }
+  .image-upload-preview { max-width: 100%; max-height: 160px; border-radius: 8px; display: block; margin: 0 auto; }
+  .image-upload-filename { font-size: .78rem; color: #059669; margin-top: 6px; font-weight: 500; }
+  .image-upload-spinner { width: 28px; height: 28px; border: 3px solid #e2e2ec; border-top-color: #1a1a2e; border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
+  .image-upload-clear { background: none; border: none; color: #e5283c; font-size: .78rem; cursor: pointer; margin-top: 6px; text-decoration: underline; }
 </style>
 <link href='https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css' rel='stylesheet' />
 <script src='https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js'></script>
@@ -170,6 +182,7 @@ let step=1, quoteData={}, contactData={};
 let totalPrice=0, breakdown=[];
 let routeState={};   // per-field map/geocode state
 let routeResults={}; // { fieldId: { distanceMiles, durationMinutes, startAddress, endAddress } | null }
+let imageUploadData = {};  // { [fieldId]: { url: string, filename: string } }
 
 // ─────────────────────────────────────────────────
 // BOOT
@@ -421,6 +434,70 @@ function renderStep1(wrap,limitReached){
 
       // wire up events after this tick (DOM must be inserted first)
       setTimeout(()=>initRouteField(fid,field),0);
+
+    } else if(field.type==='image'){
+      const zone=document.createElement('div');
+      zone.className='image-upload-zone';
+      zone.id='imgzone_'+field.id;
+      const fileInput=document.createElement('input');
+      fileInput.type='file';
+      fileInput.accept='image/jpeg,image/png,image/webp,image/gif';
+      fileInput.style.display='none';
+
+      function renderZone(fid){
+        const z=document.getElementById('imgzone_'+fid);
+        const existing=imageUploadData[fid];
+        if(existing){
+          z.className='image-upload-zone has-file';
+          z.innerHTML='';
+          const img=document.createElement('img');
+          img.src=existing.url; img.className='image-upload-preview';
+          z.appendChild(img);
+          const fname=document.createElement('div');
+          fname.className='image-upload-filename'; fname.textContent=existing.filename;
+          z.appendChild(fname);
+          const clearBtn=document.createElement('button');
+          clearBtn.className='image-upload-clear'; clearBtn.textContent='Remove';
+          clearBtn.addEventListener('click',(e)=>{e.stopPropagation();delete imageUploadData[fid];renderZone(fid);});
+          z.appendChild(clearBtn);
+        }else{
+          z.className='image-upload-zone';
+          z.innerHTML='<div class="image-upload-prompt"><div class="image-upload-prompt-icon">⬆</div><div>'
+            +esc(field.imageHint||'Click to upload an image')+'</div>'
+            +'<div style="font-size:.72rem;color:#c0c0d0">'+(field.imageMaxMb||5)+' MB max</div></div>';
+        }
+      }
+
+      zone.addEventListener('click',()=>{if(!imageUploadData[field.id])fileInput.click();});
+
+      fileInput.addEventListener('change',async()=>{
+        const file=fileInput.files&&fileInput.files[0];
+        if(!file)return;
+        if(file.size>(field.imageMaxMb||5)*1024*1024){
+          alert('File too large. Max '+(field.imageMaxMb||5)+' MB.');fileInput.value='';return;
+        }
+        zone.className='image-upload-zone uploading';
+        zone.innerHTML='<div class="image-upload-prompt"><span class="image-upload-spinner"></span><div>Uploading…</div></div>';
+        const path='submissions/'+(cfg.slug||'form')+'/'+Date.now()+'_'+file.name.replace(/[^a-z0-9.\-]/gi,'_');
+        const uploadUrl=SUPABASE_URL+'/storage/v1/object/form-images/'+encodeURIComponent(path);
+        try{
+          const res=await fetch(uploadUrl,{
+            method:'POST',
+            headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':file.type,'x-upsert':'false'},
+            body:file,
+          });
+          if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.message||res.status);}
+          const publicUrl=SUPABASE_URL+'/storage/v1/object/public/form-images/'+path;
+          imageUploadData[field.id]={url:publicUrl,filename:file.name};
+          clearErr(field.id);
+        }catch(e){alert('Upload failed: '+e.message);zone.className='image-upload-zone';}
+        fileInput.value='';
+        renderZone(field.id);
+      });
+
+      grp.appendChild(fileInput);
+      grp.appendChild(zone);
+      renderZone(field.id);
     }
 
     const err=document.createElement('div'); err.className='field-err'; err.id='err_'+field.id;
@@ -507,6 +584,9 @@ function advanceStep1(){
     } else if(f.type==='route'){
       data[f.id]=routeResults[f.id]||null;
       if(f.required&&!routeResults[f.id]){showErr(f.id);ok=false;}
+    } else if(f.type==='image'){
+      data[f.id]=imageUploadData[f.id]?imageUploadData[f.id].url:'';
+      if(f.required&&!imageUploadData[f.id]){showErr(f.id);ok=false;}
     }
   });
   if(!ok) return;
@@ -599,6 +679,8 @@ async function submitLead(btn){
     } else if(f.type==='route'){
       const rr=quoteData[f.id];
       if(rr) form_data[f.label]=rr.startAddress+' → '+rr.endAddress+' ('+rr.distanceMiles.toFixed(1)+' mi, '+Math.round(rr.durationMinutes)+' min)';
+    } else if(f.type==='image'){
+      form_data[f.label]=quoteData[f.id]||'';
     }
   });
   form_data._quote_total=totalPrice;

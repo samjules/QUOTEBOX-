@@ -14,7 +14,7 @@ export interface FieldOption {
 
 export interface FormField {
   id: string
-  type: 'radio' | 'dropdown' | 'checkbox' | 'number' | 'textarea' | 'route'
+  type: 'radio' | 'dropdown' | 'checkbox' | 'number' | 'textarea' | 'route' | 'image'
   label: string
   required: boolean
   options?: FieldOption[]
@@ -24,6 +24,8 @@ export interface FormField {
   routeChargeType?: 'mileage' | 'drivetime' | 'both' | 'none'
   ratePerMile?: number
   ratePerMinute?: number
+  imageHint?: string
+  imageMaxMb?: number
 }
 
 export interface FormConfig {

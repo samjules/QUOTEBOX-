@@ -857,3 +857,17 @@ h1, h2, h3, h4, h5, h6 {
     opacity: 1;
   }
 }
+
+/* ── Hero Image Upload Zone (Form Builder) ── */
+.hero-upload-zone { position: relative; width: 100%; border: 2px dashed var(--border); border-radius: 8px; min-height: 80px; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; transition: border-color .15s; background: var(--surface2); margin-bottom: 4px; }
+.hero-upload-zone:hover { border-color: var(--accent); }
+.hero-upload-preview { width: 100%; height: 80px; object-fit: cover; display: block; }
+.hero-upload-overlay { position: absolute; inset: 0; background: rgba(0,0,0,.45); color: white; font-size: .78rem; font-weight: 600; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .15s; }
+.hero-upload-zone:hover .hero-upload-overlay { opacity: 1; }
+.hero-upload-prompt { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px; color: var(--muted); font-size: .78rem; text-align: center; }
+.hero-upload-spinner { width: 22px; height: 22px; border: 2.5px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
+.hero-upload-clear { background: none; border: none; color: var(--danger); font-size: .73rem; cursor: pointer; text-decoration: underline; padding: 2px 0; font-family: 'Inter', sans-serif; }
+
+/* ── Image Field Canvas Preview ── */
+.fprev-image-placeholder { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 16px; border: 2px dashed var(--border); border-radius: 8px; margin-top: 8px; background: var(--bg); text-align: center; }
+.fprev-image-icon { font-size: 1.5rem; color: var(--muted); }

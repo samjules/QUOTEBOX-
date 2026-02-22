@@ -62,6 +62,12 @@ function makeField(type: FormField['type']): FormField {
       ratePerMile: 1.5,
       ratePerMinute: 0,
     },
+    image: {
+      label: 'Upload a Photo',
+      required: false,
+      imageHint: 'JPG, PNG or WebP — max 5 MB',
+      imageMaxMb: 5,
+    },
   }
   return { id: uid(), type, ...defaults[type] }
 }
@@ -310,6 +316,18 @@ function CanvasPreview({
                     </div>
                   )}
 
+                  {f.type === 'image' && (
+                    <div className="fprev-image-placeholder">
+                      <div className="fprev-image-icon">⬆</div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
+                        {f.imageHint || 'Click to upload an image'}
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--border)', marginTop: 2 }}>
+                        {f.imageMaxMb ?? 5} MB max
+                      </div>
+                    </div>
+                  )}
+
                   {f.options && (
                     <div className="fprev-opts">
                       {f.options.map((o) => (
@@ -418,6 +436,7 @@ function PropsPanel({
   const hasRate = field.type === 'number'
   const hasPH = ['number', 'textarea'].includes(field.type)
   const isRoute = field.type === 'route'
+  const isImage = field.type === 'image'
 
   return (
     <aside className="props-panel">
@@ -530,6 +549,23 @@ function PropsPanel({
         </>
       )}
 
+      {isImage && (
+        <>
+          <div className="prop-group">
+            <div className="prop-label">Hint text</div>
+            <input className="prop-input" value={field.imageHint ?? ''}
+              placeholder="e.g. JPG, PNG — max 5 MB"
+              onChange={(e) => onSetProp(field.id, 'imageHint', e.target.value)} />
+          </div>
+          <div className="prop-group">
+            <div className="prop-label">Max file size (MB)</div>
+            <input className="prop-input" type="number" min={1} max={10} step={1}
+              value={field.imageMaxMb ?? 5}
+              onChange={(e) => onSetProp(field.id, 'imageMaxMb', parseInt(e.target.value) || 5)} />
+          </div>
+        </>
+      )}
+
       <div className="prop-toggle">
         <span className="prop-toggle-lbl">Required field</span>
         <div
@@ -614,6 +650,8 @@ export default function FormBuilderPage() {
     type: 'success' | 'error' | 'info'
   } | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [heroUploadLoading, setHeroUploadLoading] = useState(false)
+  const heroFileInputRef = useRef<HTMLInputElement>(null)
 
   function showToast(
     msg: string,
@@ -623,6 +661,28 @@ export default function FormBuilderPage() {
     setToast({ msg, type })
     if (toastTimer.current) clearTimeout(toastTimer.current)
     toastTimer.current = setTimeout(() => setToast(null), ms)
+  }
+
+  async function uploadHeroImage(file: File) {
+    if (!accountId) { showToast('Not logged in', 'error'); return }
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+    if (!['jpg','jpeg','png','webp','gif'].includes(ext)) {
+      showToast('Only JPG, PNG, WebP or GIF images allowed', 'error'); return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Image must be under 5 MB', 'error'); return
+    }
+    setHeroUploadLoading(true)
+    const uuid = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+    const path = `hero/${accountId}/${uuid}.${ext}`
+    const { data, error } = await supabase.storage
+      .from('form-images')
+      .upload(path, file, { contentType: file.type, upsert: false })
+    setHeroUploadLoading(false)
+    if (error) { showToast(`Upload failed: ${error.message}`, 'error'); return }
+    const { data: urlData } = supabase.storage.from('form-images').getPublicUrl(data.path)
+    setHeroImageUrl(urlData.publicUrl)
+    showToast('Hero image uploaded', 'success')
   }
 
   // ── Init ──
@@ -982,22 +1042,49 @@ export default function FormBuilderPage() {
                   <span className="cswatch-lbl">Blue</span>
                 </div>
               </div>
-              <label>Hero Image URL</label>
+              <label>Hero Image</label>
               <input
-                type="url"
-                value={heroImageUrl}
-                onChange={(e) => setHeroImageUrl(e.target.value)}
-                placeholder="https://… (optional)"
+                ref={heroFileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) uploadHeroImage(file)
+                  e.target.value = ''
+                }}
               />
-              {heroImageUrl && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={heroImageUrl}
-                  alt="Hero preview"
-                  style={{ width: '100%', height: 80, objectFit: 'cover', borderRadius: 6, marginTop: 4 }}
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-                  onLoad={(e) => { (e.target as HTMLImageElement).style.display = 'block' }}
-                />
+              <div
+                className="hero-upload-zone"
+                onClick={() => !heroUploadLoading && heroFileInputRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  const file = e.dataTransfer.files?.[0]
+                  if (file && !heroUploadLoading) uploadHeroImage(file)
+                }}
+              >
+                {heroUploadLoading ? (
+                  <span className="hero-upload-spinner" />
+                ) : heroImageUrl ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={heroImageUrl} alt="Hero preview" className="hero-upload-preview"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                    <div className="hero-upload-overlay">Click to replace</div>
+                  </>
+                ) : (
+                  <div className="hero-upload-prompt">
+                    <span style={{ fontSize: '1.4rem' }}>+</span>
+                    <span>Upload hero image</span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>JPG, PNG, WebP · max 5 MB</span>
+                  </div>
+                )}
+              </div>
+              {heroImageUrl && !heroUploadLoading && (
+                <button className="hero-upload-clear" onClick={() => setHeroImageUrl('')}>
+                  Remove hero image
+                </button>
               )}
               <label style={{ marginTop: 12 }}>Quote Total Display</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 2 }}>
@@ -1052,6 +1139,9 @@ export default function FormBuilderPage() {
             </button>
             <button className="ftype-btn" onClick={() => addField('route')}>
               <span className="icon">⇌</span> Route / Distance
+            </button>
+            <button className="ftype-btn" onClick={() => addField('image')}>
+              <span className="icon">⬆</span> Image Upload
             </button>
           </div>
         </aside>
