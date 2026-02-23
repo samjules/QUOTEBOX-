@@ -25,5 +25,13 @@ export default async function PublicFormPage({
   const form = rows?.[0] ?? null
   if (!form) notFound()
 
-  return <QuoteForm form={form as HostedForm} />
+  const { data: billing } = await supabase
+    .from('billing')
+    .select('credit_balance')
+    .eq('account_id', form.account_id)
+    .single()
+
+  const hasCredits = (billing?.credit_balance ?? 0) >= 15
+
+  return <QuoteForm form={form as HostedForm} hasCredits={hasCredits} />
 }

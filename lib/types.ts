@@ -61,7 +61,7 @@ export interface Lead {
   phone: string | null
   form_type: string | null
   form_data: Record<string, unknown> | null
-  status: 'new' | 'contacted' | 'booked' | 'lost'
+  status: 'new' | 'contacted' | 'booked' | 'lost' | 'held'
   created_at: string
 }
 

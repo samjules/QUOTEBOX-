@@ -183,6 +183,7 @@ let totalPrice=0, breakdown=[];
 let routeState={};   // per-field map/geocode state
 let routeResults={}; // { fieldId: { distanceMiles, durationMinutes, startAddress, endAddress } | null }
 let imageUploadData = {};  // { [fieldId]: { url: string, filename: string } }
+let leadIsHeld = false;    // true when account has no credits — lead saved as 'held'
 
 // ─────────────────────────────────────────────────
 // BOOT
@@ -233,10 +234,8 @@ async function loadForm(slug){
     console.log('[QB] cfg:', cfg);
     applyTheme(cfg.brand_color||'yellow');
     if(cfg.meta_pixel_id) injectMetaPixel(cfg.meta_pixel_id);
-    console.log('[QB] Checking lead limit…');
-    const ok=await checkLeadLimit();
-    console.log('[QB] Lead limit ok:', ok);
-    if(!ok) document.getElementById('limitBanner').style.display='block';
+    const {withinLimit,hasCredits}=await checkLeadLimit();
+    leadIsHeld=!withinLimit||!hasCredits;
     document.title=(cfg.title||row.form_name)+' — Quote';
     document.getElementById('formTitle').textContent=cfg.title||row.form_name;
     document.getElementById('formDesc').textContent=cfg.description||'';
@@ -246,7 +245,7 @@ async function loadForm(slug){
       const header=document.getElementById('cardHeader');
       header.parentNode.insertBefore(img,header.nextSibling);
     }
-    renderStep(1,!ok);
+    renderStep(1,false);
     show('scrForm');
     console.log('[QB] Form shown successfully');
   }catch(e){console.error('[QB] loadForm error:', e);show('scrError');}
@@ -277,29 +276,21 @@ function applyTheme(color){
 // ─────────────────────────────────────────────────
 async function checkLeadLimit(){
   try{
-    console.log('[QB] checkLeadLimit: fetching lead count for accountId:', accountId);
-    const t0=Date.now();
-    const res=await fetch(
-      SUPABASE_URL+'/rest/v1/leads?account_id=eq.'+accountId+'&select=id',
-      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'count=exact','Range':'0-0'}}
-    );
-    console.log('[QB] checkLeadLimit: leads fetch done in', Date.now()-t0, 'ms — status:', res.status, '| Content-Range:', res.headers.get('Content-Range'));
-
-    console.log('[QB] checkLeadLimit: fetching billing plan…');
-    const t1=Date.now();
-    const bRes=await fetch(
-      SUPABASE_URL+'/rest/v1/billing?account_id=eq.'+accountId+'&select=plan&limit=1',
-      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
-    );
-    console.log('[QB] checkLeadLimit: billing fetch done in', Date.now()-t1, 'ms — status:', bRes.status);
-    const bRows=await bRes.json();
-    console.log('[QB] checkLeadLimit: billing rows:', bRows);
+    const [leadsRes, billingRes]=await Promise.all([
+      fetch(SUPABASE_URL+'/rest/v1/leads?account_id=eq.'+accountId+'&select=id',
+        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'count=exact','Range':'0-0'}}),
+      fetch(SUPABASE_URL+'/rest/v1/billing?account_id=eq.'+accountId+'&select=plan,credit_balance&limit=1',
+        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}),
+    ]);
+    const bRows=await billingRes.json();
     const plan=bRows&&bRows[0]?bRows[0].plan:'base';
+    const creditBalance=bRows&&bRows[0]?Number(bRows[0].credit_balance)||0:0;
     const limits={base:25,pro:500,agency:999999};
-    const count=parseInt((res.headers.get('Content-Range')||'').split('/')[1]||'0',10);
-    console.log('[QB] checkLeadLimit: plan=', plan, '| lead count=', count, '| limit=', limits[plan], '| ok=', count<limits[plan]);
-    return count<limits[plan];
-  }catch(e){console.error('[QB] checkLeadLimit ERROR:', e);return true;}
+    const count=parseInt((leadsRes.headers.get('Content-Range')||'').split('/')[1]||'0',10);
+    const withinLimit=count<limits[plan];
+    const hasCredits=creditBalance>=15;
+    return {withinLimit, hasCredits};
+  }catch(e){console.error('[QB] checkLeadLimit ERROR:', e);return {withinLimit:true,hasCredits:true};}
 }
 
 // ─────────────────────────────────────────────────
@@ -651,12 +642,6 @@ async function advanceStep2(){
     phone: document.querySelector('[data-cid="phone"]').value.trim()||null,
   };
 
-  const limitOk=await checkLeadLimit();
-  if(!limitOk){
-    document.getElementById('limitBanner').style.display='block';
-    btn.disabled=true; btn.textContent=cfg.submit_label||'Get My Quote →'; return;
-  }
-
   await submitLead(btn);
 }
 
@@ -695,7 +680,7 @@ async function submitLead(btn){
       body:JSON.stringify({
         account_id:accountId, hosted_form_id:hostedFormId,
         name:contactData.name, email:contactData.email, phone:contactData.phone,
-        form_type:'quote', form_data, status:'new',
+        form_type:'quote', form_data, status:leadIsHeld?'held':'new',
       }),
     });
 

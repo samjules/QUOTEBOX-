@@ -447,7 +447,7 @@ function RouteField({
 }
 
 // ── QuoteForm ──────────────────────────────────────────────────
-export default function QuoteForm({ form }: { form: HostedForm }) {
+export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasCredits: boolean }) {
   const config = form.form_config
   const supabase = createClient()
 
@@ -517,7 +517,7 @@ export default function QuoteForm({ form }: { form: HostedForm }) {
       phone: phone.trim() || null,
       form_type: form.form_type,
       form_data: formData,
-      status: 'new',
+      status: hasCredits ? 'new' : 'held',
     })
 
     setIsSubmitting(false)
