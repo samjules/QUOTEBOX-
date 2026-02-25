@@ -639,6 +639,7 @@ export default function FormBuilderPage() {
   const [formSlug, setFormSlug] = useState('my-quote-form')
   const [currency, setCurrency] = useState('$')
   const [metaPixelId, setMetaPixelId] = useState('')
+  const [minQuote, setMinQuote] = useState(0)
   const [heroImageUrl, setHeroImageUrl] = useState('')
   const [quoteDisplay, setQuoteDisplay] = useState<'live' | 'after_submit' | 'hidden'>('live')
   const [editingFormId, setEditingFormId] = useState<string | null>(null)
@@ -745,6 +746,7 @@ export default function FormBuilderPage() {
     setFields(c.fields ?? [])
     setBrandColor(c.brand_color ?? 'yellow')
     setMetaPixelId(c.meta_pixel_id ?? '')
+    setMinQuote(c.min_quote ?? 0)
     setHeroImageUrl(c.hero_image_url ?? '')
     if (c.quote_display) {
       setQuoteDisplay(c.quote_display)
@@ -903,6 +905,7 @@ export default function FormBuilderPage() {
         ...(heroImageUrl.trim() ? { hero_image_url: heroImageUrl.trim() } : {}),
         fields,
         ...(metaPixelId.trim() ? { meta_pixel_id: metaPixelId.trim() } : {}),
+        ...(minQuote > 0 ? { min_quote: minQuote } : {}),
       },
       is_active: true,
       updated_at: new Date().toISOString(),
@@ -1086,6 +1089,20 @@ export default function FormBuilderPage() {
                   Remove hero image
                 </button>
               )}
+              <label style={{ marginTop: 12 }}>Minimum Quote Amount</label>
+              <input
+                type="number"
+                min={0}
+                step={0.01}
+                value={minQuote || ''}
+                placeholder={`0 (no minimum)`}
+                onChange={(e) => setMinQuote(parseFloat(e.target.value) || 0)}
+              />
+              <div className="slug-prev" style={{ marginTop: 2 }}>
+                {minQuote > 0
+                  ? `Quote will never show below ${currency}${minQuote.toFixed(2)}`
+                  : 'No minimum — quote starts from $0'}
+              </div>
               <label style={{ marginTop: 12 }}>Quote Total Display</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 2 }}>
                 {([

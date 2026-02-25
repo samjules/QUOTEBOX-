@@ -470,6 +470,10 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
     [config.fields, answers, routeData]
   )
 
+  const minQuote = config.min_quote ?? 0
+  const displayTotal = total > 0 ? Math.max(total, minQuote) : total
+  const minApplied = total > 0 && minQuote > 0 && displayTotal > total
+
   const handleRouteChange = useCallback((fieldId: string, result: RouteResult | null) => {
     setRouteData((prev) => ({ ...prev, [fieldId]: result }))
   }, [])
@@ -504,8 +508,8 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
     for (const [id, rd] of Object.entries(routeData)) {
       if (rd) formData[id] = rd
     }
-    if (total > 0) {
-      formData._quote_total = total
+    if (displayTotal > 0) {
+      formData._quote_total = displayTotal
       formData._quote_currency = currency
     }
 
@@ -809,14 +813,19 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
               ))}
 
               {/* Live total */}
-              {hasPricing && config.quote_display === 'live' && total > 0 && (
+              {hasPricing && config.quote_display === 'live' && displayTotal > 0 && (
                 <div style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   padding: '14px 16px', background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0',
                 }}>
-                  <span style={{ fontSize: '0.88rem', color: '#475569', fontWeight: 500 }}>Estimated Total</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span style={{ fontSize: '0.88rem', color: '#475569', fontWeight: 500 }}>Estimated Total</span>
+                    {minApplied && (
+                      <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Minimum booking fee applies</span>
+                    )}
+                  </div>
                   <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1a1a2e' }}>
-                    {currency}{total.toFixed(2)}
+                    {currency}{displayTotal.toFixed(2)}
                   </span>
                 </div>
               )}
@@ -895,7 +904,7 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
                 <strong style={{ color: '#334155' }}>{email}</strong> shortly.
               </div>
 
-              {hasPricing && config.quote_display !== 'hidden' && total > 0 && (
+              {hasPricing && config.quote_display !== 'hidden' && displayTotal > 0 && (
                 <div style={{
                   marginTop: 22, padding: '16px 20px',
                   background: '#f8fafc', borderRadius: 12, border: '1px solid #e2e8f0',
@@ -904,8 +913,13 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
                     {config.quote_display === 'after_submit' ? 'Your Estimated Total' : 'Estimated Total'}
                   </div>
                   <div style={{ fontSize: '1.7rem', fontWeight: 800, color: '#1a1a2e' }}>
-                    {currency}{total.toFixed(2)}
+                    {currency}{displayTotal.toFixed(2)}
                   </div>
+                  {minApplied && (
+                    <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: 4 }}>
+                      Minimum booking fee applies
+                    </div>
+                  )}
                 </div>
               )}
             </div>

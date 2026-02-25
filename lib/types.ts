@@ -39,6 +39,7 @@ export interface FormConfig {
   hero_image_url?: string
   fields: FormField[]
   meta_pixel_id?: string
+  min_quote?: number
 }
 
 export interface HostedForm {
