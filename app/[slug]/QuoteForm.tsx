@@ -471,8 +471,8 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
   )
 
   const minQuote = config.min_quote ?? 0
-  const displayTotal = total > 0 ? Math.max(total, minQuote) : total
-  const minApplied = total > 0 && minQuote > 0 && displayTotal > total
+  const displayTotal = minQuote > 0 ? Math.max(total, minQuote) : total
+  const minApplied = minQuote > 0 && total < minQuote
 
   const handleRouteChange = useCallback((fieldId: string, result: RouteResult | null) => {
     setRouteData((prev) => ({ ...prev, [fieldId]: result }))
