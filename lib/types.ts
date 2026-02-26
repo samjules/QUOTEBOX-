@@ -5,6 +5,10 @@ export interface Account {
   phone?: string
   created_at: string
   updated_at: string
+  meta_access_token?: string
+  meta_ad_account_id?: string
+  meta_user_id?: string
+  meta_connected_at?: string
 }
 
 export interface FieldOption {
