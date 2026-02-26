@@ -110,6 +110,7 @@ export default function MetaAdsPage() {
   const [createdCampaign, setCreatedCampaign] = useState<CreatedCampaign | null>(null)
   const [error, setError] = useState('')
   const [metaAdAccountId, setMetaAdAccountId] = useState<string | null>(null)
+  const [fbReady, setFbReady] = useState(false)
 
   const [questionnaire, setQuestionnaire] = useState<Questionnaire>({
     objective: 'LEAD_GENERATION',
@@ -214,7 +215,7 @@ export default function MetaAdsPage() {
   }
 
   function handleConnectMeta() {
-    if (typeof window.FB !== 'undefined') {
+    if (fbReady) {
       window.FB.login((response) => {
         if (response.status === 'connected' && response.authResponse) {
           exchangeToken(response.authResponse.accessToken, response.authResponse.userID)
@@ -225,7 +226,7 @@ export default function MetaAdsPage() {
         }
       }, { scope: 'ads_management,ads_read,pages_read_engagement' })
     } else {
-      // Fallback: server-side redirect
+      // SDK not ready yet — use server-side redirect as fallback
       window.location.href = '/api/meta/connect'
     }
   }
@@ -366,7 +367,7 @@ export default function MetaAdsPage() {
       <>
       <Script
         src="https://connect.facebook.net/en_US/sdk.js"
-        strategy="lazyOnload"
+        strategy="afterInteractive"
         onLoad={() => {
           window.FB.init({
             appId: process.env.NEXT_PUBLIC_META_APP_ID!,
@@ -375,6 +376,7 @@ export default function MetaAdsPage() {
             version: 'v18.0',
           })
           window.FB.AppEvents.logPageView()
+          setFbReady(true)
           handleFbSdkReady()
         }}
       />
