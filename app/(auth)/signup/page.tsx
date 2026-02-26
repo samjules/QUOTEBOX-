@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, KeyboardEvent } from 'react'
+import { useState, useEffect, KeyboardEvent, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -133,7 +133,7 @@ function ProgressBar({ current }: { current: Step }) {
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
-export default function SignupPage() {
+function SignupWizard() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -573,5 +573,13 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignupWizard />
+    </Suspense>
   )
 }
