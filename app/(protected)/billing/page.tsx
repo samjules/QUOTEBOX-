@@ -51,6 +51,7 @@ export default function BillingPage() {
 
   const [accountId, setAccountId] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
+  const [plan, setPlan] = useState<'starter' | 'growth' | 'fully_managed' | null>(null)
   const [currentBalance, setCurrentBalance] = useState(0)
   const [totalSpent, setTotalSpent] = useState(0)
   const [totalLeads, setTotalLeads] = useState(0)
@@ -80,6 +81,7 @@ export default function BillingPage() {
 
       const balance = billing?.credit_balance ?? 0
       const spent = billing?.total_spent ?? 0
+      setPlan(billing?.plan ?? null)
       setCurrentBalance(balance)
       setTotalSpent(spent)
 
@@ -155,9 +157,9 @@ export default function BillingPage() {
     }
   }, [searchParams, accountId, loadBillingData])
 
-  // Real-time lead subscription for credit deduction
+  // Real-time lead subscription for credit deduction (fully managed only)
   useEffect(() => {
-    if (!accountId) return
+    if (!accountId || plan !== 'fully_managed') return
 
     const channel = supabase
       .channel('leads-billing-channel')
@@ -380,49 +382,51 @@ export default function BillingPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Credit Balance Card */}
-            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg p-8 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-indigo-100 text-sm font-medium">
-                    Available Credits
-                  </p>
-                  <p className="text-5xl font-bold mt-2">
-                    ${currentBalance.toFixed(2)}
-                  </p>
-                  <p className="text-indigo-100 text-sm mt-2">
-                    {Math.floor(currentBalance / COST_PER_LEAD)} leads remaining
-                    at ${COST_PER_LEAD.toFixed(2)}/lead
-                  </p>
+            {/* Credit Balance Card — fully managed only */}
+            {plan === 'fully_managed' && (
+              <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg p-8 text-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-indigo-100 text-sm font-medium">
+                      Available Credits
+                    </p>
+                    <p className="text-5xl font-bold mt-2">
+                      ${currentBalance.toFixed(2)}
+                    </p>
+                    <p className="text-indigo-100 text-sm mt-2">
+                      {Math.floor(currentBalance / COST_PER_LEAD)} leads remaining
+                      at ${COST_PER_LEAD.toFixed(2)}/lead
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowModal(true)}
+                    className="bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:bg-indigo-50 transition shadow-md"
+                  >
+                    Add Credits
+                  </button>
                 </div>
-                <button
-                  onClick={() => setShowModal(true)}
-                  className="bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:bg-indigo-50 transition shadow-md"
-                >
-                  Add Credits
-                </button>
+
+                {isEmpty && (
+                  <div className="mt-4 bg-red-500 bg-opacity-30 border border-red-300 rounded-lg p-4">
+                    <p className="font-semibold">Insufficient Credits</p>
+                    <p className="text-sm text-red-100 mt-1">
+                      You&apos;ve run out of credits. New leads will be paused
+                      until you add more credits.
+                    </p>
+                  </div>
+                )}
+
+                {isLow && !isEmpty && (
+                  <div className="mt-4 bg-yellow-500 bg-opacity-20 border border-yellow-300 rounded-lg p-4">
+                    <p className="font-semibold">Low Balance Warning</p>
+                    <p className="text-sm text-yellow-100 mt-1">
+                      Your credit balance is running low. Add more credits to
+                      continue receiving leads.
+                    </p>
+                  </div>
+                )}
               </div>
-
-              {isEmpty && (
-                <div className="mt-4 bg-red-500 bg-opacity-30 border border-red-300 rounded-lg p-4">
-                  <p className="font-semibold">🚨 Insufficient Credits</p>
-                  <p className="text-sm text-red-100 mt-1">
-                    You&apos;ve run out of credits. New leads will be paused
-                    until you add more credits.
-                  </p>
-                </div>
-              )}
-
-              {isLow && !isEmpty && (
-                <div className="mt-4 bg-yellow-500 bg-opacity-20 border border-yellow-300 rounded-lg p-4">
-                  <p className="font-semibold">⚠️ Low Balance Warning</p>
-                  <p className="text-sm text-yellow-100 mt-1">
-                    Your credit balance is running low. Add more credits to
-                    continue receiving leads.
-                  </p>
-                </div>
-              )}
-            </div>
+            )}
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -535,8 +539,8 @@ export default function BillingPage() {
         )}
       </div>
 
-      {/* Add Credits Modal */}
-      {showModal && (
+      {/* Add Credits Modal — fully managed only */}
+      {plan === 'fully_managed' && showModal && (
         <div className="fixed z-10 inset-0 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center">
             <div

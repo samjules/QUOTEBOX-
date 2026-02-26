@@ -76,7 +76,7 @@ export interface Billing {
   account_id: string
   credit_balance: number
   total_spent: number
-  plan: 'base' | 'pro' | 'agency'
+  plan: 'starter' | 'growth' | 'fully_managed'
   created_at: string
   updated_at: string
 }
