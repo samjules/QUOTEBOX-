@@ -227,6 +227,10 @@ export default function BillingPage() {
   }
 
   async function purchaseSubscription(plan: 'starter' | 'growth') {
+    if (!SUBSCRIPTION_FUNCTION_URL) {
+      alert('Subscription checkout is not configured. Please contact support.')
+      return
+    }
     setSubscribing(plan)
     try {
       const response = await fetch(SUBSCRIPTION_FUNCTION_URL, {
