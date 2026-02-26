@@ -25,7 +25,6 @@ declare global {
       init: (params: object) => void
     }
     fbAsyncInit: () => void
-    __onFbReady?: () => void
   }
 }
 
@@ -360,33 +359,25 @@ export default function MetaAdsPage() {
     )
   }
 
-  const fbSdkInit = `
-    window.fbAsyncInit = function() {
-      FB.init({
-        appId: '${process.env.NEXT_PUBLIC_META_APP_ID}',
-        cookie: true,
-        xfbml: true,
-        version: 'v18.0'
-      });
-      FB.AppEvents.logPageView();
-      if (typeof window.__onFbReady === 'function') {
-        window.__onFbReady();
-      }
-    };
-  `
-
   // ─── State A: Disconnected ────────────────────────────────────────────────
 
   if (pageState === 'disconnected') {
-    // Register the callback so fbAsyncInit can trigger a status check
-    if (typeof window !== 'undefined') {
-      window.__onFbReady = handleFbSdkReady
-    }
-
     return (
       <>
-      <Script id="fb-sdk-init" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: fbSdkInit }} />
-      <Script async defer crossOrigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js" strategy="lazyOnload" />
+      <Script
+        src="https://connect.facebook.net/en_US/sdk.js"
+        strategy="lazyOnload"
+        onLoad={() => {
+          window.FB.init({
+            appId: process.env.NEXT_PUBLIC_META_APP_ID!,
+            cookie: true,
+            xfbml: true,
+            version: 'v18.0',
+          })
+          window.FB.AppEvents.logPageView()
+          handleFbSdkReady()
+        }}
+      />
       <div className="max-w-2xl mx-auto px-4 py-12">
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-4">
