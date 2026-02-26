@@ -4,6 +4,31 @@ import { useEffect, useState } from 'react'
 import Script from 'next/script'
 import { createClient } from '@/lib/supabase/client'
 
+// ─── FB SDK global types ──────────────────────────────────────────────────────
+
+interface FBStatusResponse {
+  status: 'connected' | 'not_authorized' | 'unknown'
+  authResponse?: {
+    accessToken: string
+    expiresIn: string
+    signedRequest: string
+    userID: string
+  }
+}
+
+declare global {
+  interface Window {
+    FB: {
+      getLoginStatus: (cb: (r: FBStatusResponse) => void) => void
+      login: (cb: (r: FBStatusResponse) => void, opts?: { scope: string }) => void
+      AppEvents: { logPageView: () => void }
+      init: (params: object) => void
+    }
+    fbAsyncInit: () => void
+    __onFbReady?: () => void
+  }
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface AdAccount {
@@ -157,8 +182,53 @@ export default function MetaAdsPage() {
 
   // ─── Handlers ────────────────────────────────────────────────────────────
 
+  async function exchangeToken(accessToken: string, userId: string) {
+    setLoading(true)
+    setError('')
+    try {
+      const res = await fetch('/api/meta/exchange-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accessToken, userId }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        setError(data.error || 'Failed to connect Meta account')
+        setLoading(false)
+        return
+      }
+      // Reload account state after token saved
+      window.location.reload()
+    } catch {
+      setError('Failed to connect Meta account')
+      setLoading(false)
+    }
+  }
+
+  function handleFbSdkReady() {
+    // Check if user is already logged into Facebook and authorized the app
+    window.FB.getLoginStatus((response) => {
+      if (response.status === 'connected' && response.authResponse) {
+        exchangeToken(response.authResponse.accessToken, response.authResponse.userID)
+      }
+    })
+  }
+
   function handleConnectMeta() {
-    window.location.href = '/api/meta/connect'
+    if (typeof window.FB !== 'undefined') {
+      window.FB.login((response) => {
+        if (response.status === 'connected' && response.authResponse) {
+          exchangeToken(response.authResponse.accessToken, response.authResponse.userID)
+        } else if (response.status === 'not_authorized') {
+          setError('Please authorize the app to access your Meta Ads account.')
+        } else {
+          setError('Login was cancelled or failed. Please try again.')
+        }
+      }, { scope: 'ads_management,ads_read,pages_read_engagement' })
+    } else {
+      // Fallback: server-side redirect
+      window.location.href = '/api/meta/connect'
+    }
   }
 
   async function handleSaveAdAccount() {
@@ -299,15 +369,23 @@ export default function MetaAdsPage() {
         version: 'v18.0'
       });
       FB.AppEvents.logPageView();
+      if (typeof window.__onFbReady === 'function') {
+        window.__onFbReady();
+      }
     };
   `
 
   // ─── State A: Disconnected ────────────────────────────────────────────────
 
   if (pageState === 'disconnected') {
+    // Register the callback so fbAsyncInit can trigger a status check
+    if (typeof window !== 'undefined') {
+      window.__onFbReady = handleFbSdkReady
+    }
+
     return (
       <>
-      <Script id="fb-sdk-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: fbSdkInit }} />
+      <Script id="fb-sdk-init" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: fbSdkInit }} />
       <Script async defer crossOrigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js" strategy="lazyOnload" />
       <div className="max-w-2xl mx-auto px-4 py-12">
         <div className="text-center mb-10">
