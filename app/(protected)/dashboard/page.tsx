@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import type { ReactNode } from 'react'
 
 const COST_PER_LEAD = 15
+const PLAN_LIMITS: Record<string, number> = { starter: 10, growth: 50 }
 
 export default async function DashboardPage() {
   const supabase = createClient()
@@ -83,7 +84,8 @@ export default async function DashboardPage() {
     ? Math.abs(monthlyTxns.reduce((sum: number, tx: { amount: number }) => sum + tx.amount, 0))
     : 0
   const creditBalance = billing?.credit_balance ?? 0
-  const remainingLeads = Math.floor(creditBalance / COST_PER_LEAD)
+  const plan = billing?.plan ?? null
+  const monthlyLeads = leads.filter((l) => new Date(l.created_at) >= startOfMonth).length
 
   // Monthly pipeline: sum of _quote_total from leads this month
   const monthlyPipeline = leads
@@ -110,59 +112,8 @@ export default async function DashboardPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
         <div className="py-4 space-y-6">
-          {/* Leads waiting / low balance banner */}
-          {creditBalance < COST_PER_LEAD && totalLeads > 0 && (
-            <div className="rounded-lg p-5 flex items-center justify-between bg-red-50 border border-red-300">
-              <div className="flex items-start gap-4">
-                <span className="text-red-500 mt-0.5 flex-shrink-0">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                  </svg>
-                </span>
-                <div>
-                  <p className="font-semibold text-red-800">
-                    {totalLeads} lead{totalLeads !== 1 ? 's' : ''} waiting — credits required to unlock
-                  </p>
-                  <p className="text-sm text-red-600 mt-0.5">
-                    Your account has no credits. Add at least ${COST_PER_LEAD.toFixed(0)} to unlock your leads and keep receiving new ones.
-                  </p>
-                </div>
-              </div>
-              <Link
-                href="/billing"
-                className="ml-4 flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold transition bg-red-600 text-white hover:bg-red-700"
-              >
-                Add Credits
-              </Link>
-            </div>
-          )}
-          {creditBalance < COST_PER_LEAD && totalLeads === 0 && (
-            <div className={`rounded-lg p-4 flex items-center justify-between ${creditBalance <= 0 ? 'bg-red-50 border border-red-300' : 'bg-yellow-50 border border-yellow-300'}`}>
-              <div className="flex items-center gap-3">
-                <span className={`${creditBalance <= 0 ? 'text-red-500' : 'text-yellow-500'}`}>
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                  </svg>
-                </span>
-                <div>
-                  <p className={`font-semibold text-sm ${creditBalance <= 0 ? 'text-red-800' : 'text-yellow-800'}`}>
-                    {creditBalance <= 0 ? 'No credits remaining' : 'Low credit balance'}
-                  </p>
-                  <p className={`text-sm ${creditBalance <= 0 ? 'text-red-600' : 'text-yellow-600'}`}>
-                    {creditBalance <= 0
-                      ? 'New leads are paused. Add credits to continue receiving leads.'
-                      : `Your balance ($${creditBalance.toFixed(2)}) is below $${COST_PER_LEAD.toFixed(2)}. Top up to keep receiving leads.`}
-                  </p>
-                </div>
-              </div>
-              <Link
-                href="/billing"
-                className={`ml-4 flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold transition ${creditBalance <= 0 ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-yellow-500 text-white hover:bg-yellow-600'}`}
-              >
-                Add Credits
-              </Link>
-            </div>
-          )}
+          {/* Lead usage banner */}
+          <LeadUsageBanner plan={plan} monthlyLeads={monthlyLeads} />
 
           {/* Primary Stats Grid */}
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -243,31 +194,6 @@ export default async function DashboardPage() {
               label="Conversion Rate"
               value={`${conversionRate}%`}
             />
-          </div>
-
-          {/* Credit Balance Card */}
-          <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-indigo-100 text-sm font-medium">
-                  Available Credits
-                </p>
-                <p className="text-4xl font-bold mt-2">
-                  ${creditBalance.toFixed(2)}
-                </p>
-                <p className="text-indigo-100 text-sm mt-2">
-                  {remainingLeads} leads remaining
-                </p>
-              </div>
-              <div className="text-right">
-                <Link
-                  href="/billing"
-                  className="bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:bg-indigo-50 transition shadow-md inline-block"
-                >
-                  Add Credits
-                </Link>
-              </div>
-            </div>
           </div>
 
           {/* Rewards */}
@@ -389,6 +315,114 @@ function QuickAction({
         <p className="text-sm text-gray-500">{desc}</p>
       </div>
     </Link>
+  )
+}
+
+// ── Lead Usage Banner ─────────────────────────────────────────
+
+function LeadUsageBanner({
+  plan,
+  monthlyLeads,
+}: {
+  plan: string | null
+  monthlyLeads: number
+}) {
+  // No plan
+  if (!plan) {
+    return (
+      <div className="rounded-lg p-5 flex items-center justify-between bg-yellow-50 border border-yellow-300">
+        <div className="flex items-center gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-yellow-500 flex-shrink-0">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+          <div>
+            <p className="font-semibold text-sm text-yellow-800">No active subscription</p>
+            <p className="text-sm text-yellow-700">Subscribe to a plan to start receiving leads.</p>
+          </div>
+        </div>
+        <Link href="/billing" className="ml-4 flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold bg-yellow-500 text-white hover:bg-yellow-600 transition">
+          View Plans
+        </Link>
+      </div>
+    )
+  }
+
+  // Fully managed — $15/lead, no monthly cap
+  if (plan === 'fully_managed') {
+    const accrued = monthlyLeads * 15
+    return (
+      <div className="rounded-lg p-5 flex items-center justify-between bg-gray-900 text-white">
+        <div className="flex items-center gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-green-400 flex-shrink-0">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <p className="font-semibold text-sm">Fully Managed — {monthlyLeads} lead{monthlyLeads !== 1 ? 's' : ''} this month</p>
+            <p className="text-sm text-gray-400">${accrued.toFixed(2)} accrued at $15.00/lead</p>
+          </div>
+        </div>
+        <Link href="/billing" className="ml-4 flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold bg-white text-gray-900 hover:bg-gray-100 transition">
+          Billing
+        </Link>
+      </div>
+    )
+  }
+
+  // Starter / Growth — monthly lead cap
+  const limit = PLAN_LIMITS[plan] ?? 10
+  const pct = Math.min(100, Math.round((monthlyLeads / limit) * 100))
+  const isOver = monthlyLeads >= limit
+  const isNearing = !isOver && pct >= 80
+  const planLabel = plan === 'growth' ? 'Growth' : 'Starter'
+
+  if (isOver) {
+    return (
+      <div className="rounded-lg p-5 flex items-center justify-between bg-red-50 border border-red-300">
+        <div className="flex items-start gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+          <div>
+            <p className="font-semibold text-sm text-red-800">Monthly lead limit reached ({limit}/{limit})</p>
+            <p className="text-sm text-red-600">
+              {plan === 'starter'
+                ? 'Upgrade to Growth for 50 leads/month.'
+                : 'New leads are paused until next month or you upgrade to Fully Managed.'}
+            </p>
+          </div>
+        </div>
+        <Link href="/billing" className="ml-4 flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold bg-red-600 text-white hover:bg-red-700 transition">
+          Upgrade
+        </Link>
+      </div>
+    )
+  }
+
+  return (
+    <div className={`rounded-lg p-5 border ${isNearing ? 'bg-yellow-50 border-yellow-300' : 'bg-white border-gray-200'}`}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`w-5 h-5 flex-shrink-0 ${isNearing ? 'text-yellow-500' : 'text-indigo-500'}`}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+          </svg>
+          <span className={`font-semibold text-sm ${isNearing ? 'text-yellow-800' : 'text-gray-800'}`}>
+            {planLabel} plan — {monthlyLeads} / {limit} leads this month
+          </span>
+        </div>
+        <span className={`text-xs font-bold ${isNearing ? 'text-yellow-600' : 'text-indigo-600'}`}>{pct}%</span>
+      </div>
+      <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all ${isNearing ? 'bg-yellow-400' : 'bg-indigo-500'}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      {isNearing && (
+        <p className="text-xs text-yellow-700 mt-2">
+          Nearing your monthly limit — <Link href="/billing" className="underline font-medium">upgrade your plan</Link> to avoid interruptions.
+        </p>
+      )}
+    </div>
   )
 }
 
