@@ -90,3 +90,14 @@ export interface BillingTransaction {
   description: string
   created_at: string
 }
+
+export interface VSL {
+  id: string
+  account_id: string
+  title: string
+  file_name: string
+  file_url: string
+  storage_path: string
+  file_size: number
+  created_at: string
+}

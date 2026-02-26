@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import Script from 'next/script'
 import { createClient } from '@/lib/supabase/client'
+import type { VSL } from '@/lib/types'
 
 // ─── FB SDK global types ──────────────────────────────────────────────────────
 
@@ -67,6 +69,9 @@ interface Questionnaire {
   tone: string
   dailyBudget: number
   duration: number | 'ongoing'
+  vslId: string | null
+  vslUrl: string | null
+  vslTitle: string | null
 }
 
 type PageState = 'disconnected' | 'pick-account' | 'questionnaire' | 'created'
@@ -112,6 +117,8 @@ export default function MetaAdsPage() {
   const [metaAdAccountId, setMetaAdAccountId] = useState<string | null>(null)
   const [fbReady, setFbReady] = useState(false)
 
+  const [vsls, setVsls] = useState<VSL[]>([])
+
   const [questionnaire, setQuestionnaire] = useState<Questionnaire>({
     objective: 'OUTCOME_LEADS',
     ageMin: 25,
@@ -124,6 +131,9 @@ export default function MetaAdsPage() {
     tone: 'professional',
     dailyBudget: 20,
     duration: 14,
+    vslId: null,
+    vslUrl: null,
+    vslTitle: null,
   })
 
   // ─── FB SDK initialisation (fbAsyncInit pattern) ─────────────────────────
@@ -183,6 +193,21 @@ export default function MetaAdsPage() {
       }
 
       setMetaAdAccountId(account.meta_ad_account_id || null)
+
+      // Load VSLs for this account
+      const { data: accountRow } = await supabase
+        .from('accounts')
+        .select('id')
+        .eq('owner_id', user.id)
+        .single()
+      if (accountRow) {
+        const { data: vslData } = await supabase
+          .from('vsls')
+          .select('*')
+          .eq('account_id', accountRow.id)
+          .order('created_at', { ascending: false })
+        setVsls(vslData || [])
+      }
 
       if (!account.meta_ad_account_id) {
         // Fetch ad accounts to let user pick one
@@ -377,6 +402,9 @@ export default function MetaAdsPage() {
       tone: 'professional',
       dailyBudget: 20,
       duration: 14,
+      vslId: null,
+      vslUrl: null,
+      vslTitle: null,
     })
   }
 
@@ -733,6 +761,54 @@ export default function MetaAdsPage() {
                   ))}
                 </div>
               </div>
+
+              {/* VSL Picker */}
+              <div className="border-t border-gray-100 pt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Attach a VSL{' '}
+                  <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <p className="text-xs text-gray-400 mb-2">
+                  Select a video sales letter to include its URL with your campaign.
+                </p>
+                {vsls.length === 0 ? (
+                  <div className="flex items-center gap-2 text-sm text-gray-400 bg-gray-50 rounded-lg px-3 py-2.5">
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.882v6.236a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    No VSLs uploaded yet.{' '}
+                    <Link href="/vsls" className="text-indigo-600 hover:underline font-medium">
+                      Upload one in VSL Library
+                    </Link>
+                  </div>
+                ) : (
+                  <select
+                    value={questionnaire.vslId || ''}
+                    onChange={(e) => {
+                      const selected = vsls.find((v) => v.id === e.target.value) || null
+                      setQuestionnaire((q) => ({
+                        ...q,
+                        vslId: selected?.id || null,
+                        vslUrl: selected?.file_url || null,
+                        vslTitle: selected?.title || null,
+                      }))
+                    }}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">No VSL (skip)</option>
+                    {vsls.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.title}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {questionnaire.vslUrl && (
+                  <p className="text-xs text-indigo-600 mt-1.5 truncate">
+                    Selected: {questionnaire.vslTitle}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -810,6 +886,34 @@ export default function MetaAdsPage() {
                   <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Strategy</p>
                   <p className="text-sm text-gray-700">{generatedCopy.summary}</p>
                 </div>
+
+                {questionnaire.vslUrl && (
+                  <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
+                    <p className="text-xs font-medium text-indigo-400 uppercase tracking-wider mb-2">Attached VSL</p>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0 w-12 h-9 bg-indigo-100 rounded-lg flex items-center justify-center">
+                        <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.882v6.236a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-indigo-900 truncate">{questionnaire.vslTitle}</p>
+                        <p className="text-xs text-indigo-400 truncate">{questionnaire.vslUrl}</p>
+                      </div>
+                      <a
+                        href={questionnaire.vslUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-indigo-600 hover:underline flex-shrink-0"
+                      >
+                        Preview
+                      </a>
+                    </div>
+                    <p className="text-xs text-indigo-500 mt-2">
+                      Copy this URL and attach the video to your ad creative inside Meta Ads Manager.
+                    </p>
+                  </div>
+                )}
 
                 <div>
                   <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Headlines (pick one in Meta Ads Manager)</p>
