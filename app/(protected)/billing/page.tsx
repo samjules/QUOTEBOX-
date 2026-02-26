@@ -7,6 +7,7 @@ import type { BillingTransaction } from '@/lib/types'
 
 const COST_PER_LEAD = 15
 const CHECKOUT_FUNCTION_URL = process.env.NEXT_PUBLIC_CHECKOUT_FUNCTION_URL!
+const SUBSCRIPTION_FUNCTION_URL = process.env.NEXT_PUBLIC_SUBSCRIPTION_FUNCTION_URL!
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 interface CreditPackage {
@@ -58,6 +59,7 @@ export default function BillingPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [purchasing, setPurchasing] = useState(false)
+  const [subscribing, setSubscribing] = useState<string | null>(null)
 
   const loadBillingData = useCallback(
     async (accId: string) => {
@@ -145,6 +147,12 @@ export default function BillingPage() {
         window.history.replaceState({}, document.title, '/billing')
       }, 2000)
     }
+    if (searchParams.get('subscription') === 'success') {
+      const plan = searchParams.get('plan')
+      const label = plan === 'starter' ? 'Starter' : 'Growth'
+      alert(`You're now subscribed to the ${label} plan! Welcome aboard.`)
+      window.history.replaceState({}, document.title, '/billing')
+    }
   }, [searchParams, accountId, loadBillingData])
 
   // Real-time lead subscription for credit deduction
@@ -216,6 +224,27 @@ export default function BillingPage() {
     }
   }
 
+  async function purchaseSubscription(plan: 'starter' | 'growth') {
+    setSubscribing(plan)
+    try {
+      const response = await fetch(SUBSCRIPTION_FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ plan, accountId, userId }),
+      })
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`)
+      const { url } = await response.json()
+      window.location.href = url
+    } catch (err) {
+      alert(`Checkout failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      setSubscribing(null)
+    }
+  }
+
   const isLow = currentBalance > 0 && currentBalance < COST_PER_LEAD * 10
   const isEmpty = currentBalance <= 0
 
@@ -226,11 +255,122 @@ export default function BillingPage() {
           Billing & Credits
         </h1>
         <p className="mt-2 text-sm text-gray-600">
-          Manage your lead credits and billing information
+          Manage your subscription plan and billing information
         </p>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 mt-6">
+      {/* Subscription Plans */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 mt-8">
+        <h2 className="text-lg font-semibold text-gray-900 mb-1">Subscription Plans</h2>
+        <p className="text-sm text-gray-500 mb-6">Choose the plan that fits your business</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+          {/* Starter */}
+          <div className="bg-white rounded-xl shadow border border-gray-200 p-6 flex flex-col">
+            <div className="mb-4">
+              <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600 mb-3">STARTER</span>
+              <div className="flex items-end gap-1">
+                <span className="text-4xl font-bold text-gray-900">$20</span>
+                <span className="text-gray-500 mb-1">/month</span>
+              </div>
+              <p className="text-sm text-gray-500 mt-1">Everything you need to get started</p>
+            </div>
+            <ul className="space-y-3 mb-6 flex-1">
+              {[
+                '1 quote form',
+                '10 leads per month',
+                '1 VSL',
+              ].map((feature) => (
+                <li key={feature} className="flex items-center gap-2 text-sm text-gray-700">
+                  <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  {feature}
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => purchaseSubscription('starter')}
+              disabled={subscribing !== null}
+              className="w-full py-2 px-4 rounded-lg border-2 border-indigo-500 text-indigo-600 font-semibold text-sm hover:bg-indigo-50 transition disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {subscribing === 'starter' ? 'Redirecting…' : 'Get Started'}
+            </button>
+          </div>
+
+          {/* Growth */}
+          <div className="bg-white rounded-xl shadow-lg border-2 border-indigo-500 p-6 flex flex-col relative">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+              <span className="bg-indigo-500 text-white text-xs font-bold px-3 py-1 rounded-full">MOST POPULAR</span>
+            </div>
+            <div className="mb-4">
+              <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-600 mb-3">GROWTH</span>
+              <div className="flex items-end gap-1">
+                <span className="text-4xl font-bold text-gray-900">$30</span>
+                <span className="text-gray-500 mb-1">/month</span>
+              </div>
+              <p className="text-sm text-gray-500 mt-1">Scale your lead generation</p>
+            </div>
+            <ul className="space-y-3 mb-6 flex-1">
+              {[
+                '3 quote forms',
+                '50 leads per month',
+                'Priority support',
+              ].map((feature) => (
+                <li key={feature} className="flex items-center gap-2 text-sm text-gray-700">
+                  <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  {feature}
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => purchaseSubscription('growth')}
+              disabled={subscribing !== null}
+              className="w-full py-2 px-4 rounded-lg bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {subscribing === 'growth' ? 'Redirecting…' : 'Upgrade to Growth'}
+            </button>
+          </div>
+
+          {/* Fully Managed */}
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl shadow-lg p-6 flex flex-col text-white">
+            <div className="mb-4">
+              <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-white bg-opacity-20 text-white mb-3">FULLY MANAGED</span>
+              <div className="flex items-end gap-1">
+                <span className="text-4xl font-bold">$15</span>
+                <span className="text-gray-300 mb-1">/lead</span>
+              </div>
+              <p className="text-sm text-gray-400 mt-1">Guaranteed results, hands-free</p>
+            </div>
+            <ul className="space-y-3 mb-6 flex-1">
+              {[
+                'Guaranteed qualified leads',
+                'Fully managed account',
+                'Dedicated account manager',
+                'Pay only for results',
+              ].map((feature) => (
+                <li key={feature} className="flex items-center gap-2 text-sm text-gray-200">
+                  <svg className="w-4 h-4 text-green-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  {feature}
+                </li>
+              ))}
+            </ul>
+            <a
+              href="mailto:sales@quote-box.com?subject=Fully%20Managed%20Account%20Inquiry"
+              className="block w-full py-2 px-4 rounded-lg bg-white text-gray-900 font-semibold text-sm hover:bg-gray-100 transition text-center"
+            >
+              Contact Us
+            </a>
+          </div>
+
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 mt-8">
         {loading ? (
           <div className="bg-white shadow rounded-xl p-8 text-center">
             <div className="animate-pulse">
