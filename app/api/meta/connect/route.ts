@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const supabase = createClient()
 
   const { data: { session } } = await supabase.auth.getSession()
@@ -21,8 +21,11 @@ export async function GET() {
     return NextResponse.json({ error: 'Meta app not configured' }, { status: 500 })
   }
 
+  // Read optional `from` query param so the callback can return to the right place
+  const from = request.nextUrl.searchParams.get('from') ?? ''
+
   const redirectUri = `${siteUrl}/api/meta/callback`
-  const state = Buffer.from(user.id).toString('base64')
+  const state = Buffer.from(JSON.stringify({ userId: user.id, from })).toString('base64')
   const scopes = 'ads_management,ads_read,pages_read_engagement'
 
   const oauthUrl = new URL('https://www.facebook.com/v18.0/dialog/oauth')

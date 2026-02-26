@@ -19,11 +19,24 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${siteUrl}/meta-ads?error=missing_params`)
   }
 
-  // Decode state to get user ID
+  // Decode state — supports both new JSON format and legacy plain base64 userId
   let userId: string
+  let from: string = ''
+
   try {
-    userId = Buffer.from(state, 'base64').toString('utf-8')
+    const decoded = JSON.parse(Buffer.from(state, 'base64').toString('utf-8'))
+    userId = decoded.userId
+    from = decoded.from ?? ''
   } catch {
+    // Legacy format: state was plain base64-encoded userId string
+    try {
+      userId = Buffer.from(state, 'base64').toString('utf-8')
+    } catch {
+      return NextResponse.redirect(`${siteUrl}/meta-ads?error=invalid_state`)
+    }
+  }
+
+  if (!userId) {
     return NextResponse.redirect(`${siteUrl}/meta-ads?error=invalid_state`)
   }
 
@@ -122,6 +135,11 @@ export async function GET(request: NextRequest) {
     .from('accounts')
     .update(updatePayload)
     .eq('id', account.id)
+
+  // Return to signup wizard if that's where the OAuth flow originated
+  if (from === 'signup') {
+    return NextResponse.redirect(`${siteUrl}/signup?step=2&meta=connected`)
+  }
 
   return NextResponse.redirect(`${siteUrl}/meta-ads?connected=true`)
 }
