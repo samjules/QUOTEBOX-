@@ -79,6 +79,7 @@ export interface Billing {
   plan: 'starter' | 'growth' | 'fully_managed' | null
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
+  trial_ends_at: string | null
   created_at: string
   updated_at: string
 }

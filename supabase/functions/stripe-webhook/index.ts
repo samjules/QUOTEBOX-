@@ -58,17 +58,24 @@ serve(async (req) => {
           break
         }
 
+        // Fetch the subscription to capture trial end date
+        const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
+        const trialEndsAt = subscription.trial_end
+          ? new Date(subscription.trial_end * 1000).toISOString()
+          : null
+
         const { error } = await supabase
           .from('billing')
           .update({
             plan: mappedPlan,
             stripe_customer_id: session.customer as string,
             stripe_subscription_id: session.subscription as string,
+            trial_ends_at: trialEndsAt,
           })
           .eq('account_id', accountId)
 
         if (error) throw error
-        console.log(`Plan set to '${mappedPlan}' for account ${accountId}`)
+        console.log(`Plan set to '${mappedPlan}' for account ${accountId}${trialEndsAt ? ` (trial until ${trialEndsAt})` : ''}`)
         break
       }
 
@@ -92,7 +99,7 @@ serve(async (req) => {
         if (['past_due', 'unpaid', 'canceled', 'paused'].includes(sub.status)) {
           const { error } = await supabase
             .from('billing')
-            .update({ plan: null, stripe_subscription_id: null })
+            .update({ plan: null, stripe_subscription_id: null, trial_ends_at: null })
             .eq('account_id', billing.account_id)
           if (error) throw error
           console.log(`Plan cleared for account ${billing.account_id} — subscription status: ${sub.status}`)
@@ -117,7 +124,7 @@ serve(async (req) => {
 
         const { error } = await supabase
           .from('billing')
-          .update({ plan: null, stripe_subscription_id: null })
+          .update({ plan: null, stripe_subscription_id: null, trial_ends_at: null })
           .eq('account_id', billing.account_id)
 
         if (error) throw error

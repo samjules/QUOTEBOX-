@@ -4,8 +4,6 @@ import { createClient } from '@/lib/supabase/server'
 import type { Lead } from '@/lib/types'
 import LeadsTable from './LeadsTable'
 
-const COST_PER_LEAD = 15
-
 export default async function LeadsPage() {
   const supabase = createClient()
 
@@ -35,14 +33,17 @@ export default async function LeadsPage() {
 
   const { data: billingData } = await supabase
     .from('billing')
-    .select('credit_balance')
+    .select('plan, trial_ends_at')
     .eq('account_id', account.id)
     .single()
 
-  const creditBalance = billingData?.credit_balance ?? 0
+  const plan = billingData?.plan ?? null
+  const trialEndsAt = billingData?.trial_ends_at ?? null
+  const isOnTrial = trialEndsAt ? new Date(trialEndsAt) > new Date() : false
+  const hasAccess = plan !== null
 
-  // Auto-promote held leads to 'new' when the user has enough credits
-  if (creditBalance >= COST_PER_LEAD) {
+  // Auto-promote held leads to 'new' when account has an active plan
+  if (hasAccess) {
     await supabase
       .from('leads')
       .update({ status: 'new' })
@@ -60,8 +61,11 @@ export default async function LeadsPage() {
   const totalLeads = leads.length
   const newLeads = leads.filter((l) => l.status === 'new').length
   const bookedLeads = leads.filter((l) => l.status === 'booked').length
-  // Held leads are captured but locked until credits are added
-  const tableLeads = leads.filter((l) => l.status !== 'held')
+
+  // Compute trial days remaining for banner
+  const trialDaysLeft = isOnTrial
+    ? Math.ceil((new Date(trialEndsAt!).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : 0
 
   return (
     <div className="py-6">
@@ -71,60 +75,43 @@ export default async function LeadsPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
         <div className="py-4">
-          {/* No-credit locked state */}
-          {creditBalance < COST_PER_LEAD ? (
+          {!hasAccess ? (
+            /* No plan — subscribe gate */
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              {/* Lock icon */}
-              <div className="flex items-center justify-center w-20 h-20 rounded-full bg-red-100 mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-red-500">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+              <div className="flex items-center justify-center w-20 h-20 rounded-full bg-indigo-100 mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-indigo-500">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
                 </svg>
               </div>
-
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                {totalLeads > 0
-                  ? `${totalLeads} lead${totalLeads !== 1 ? 's' : ''} waiting for you`
-                  : 'Your leads are locked'}
-              </h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Subscribe to access your leads</h2>
               <p className="text-gray-500 max-w-md mb-8">
-                {totalLeads > 0
-                  ? `You have ${totalLeads} lead${totalLeads !== 1 ? 's' : ''} ready to view. Add at least $${COST_PER_LEAD.toFixed(0)} in credits to unlock them and start managing your pipeline.`
-                  : `Add credits to start receiving leads. Each lead costs $${COST_PER_LEAD.toFixed(0)}.`}
+                Choose a plan to start receiving and managing leads. The Starter plan includes a 7-day free trial.
               </p>
-
-              {/* Credit breakdown */}
-              {totalLeads > 0 && (
-                <div className="bg-gray-50 border border-gray-200 rounded-xl px-8 py-5 mb-8 inline-flex gap-8 text-center">
-                  <div>
-                    <p className="text-3xl font-bold text-gray-900">{totalLeads}</p>
-                    <p className="text-sm text-gray-500 mt-1">Leads waiting</p>
-                  </div>
-                  <div className="border-l border-gray-200" />
-                  <div>
-                    <p className="text-3xl font-bold text-red-600">${(totalLeads * COST_PER_LEAD).toFixed(0)}</p>
-                    <p className="text-sm text-gray-500 mt-1">Credits needed</p>
-                  </div>
-                  <div className="border-l border-gray-200" />
-                  <div>
-                    <p className="text-3xl font-bold text-gray-400">${creditBalance.toFixed(0)}</p>
-                    <p className="text-sm text-gray-500 mt-1">Current balance</p>
-                  </div>
-                </div>
-              )}
-
               <Link
                 href="/billing"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition shadow-md"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
-                </svg>
-                Add Credits Now
+                View Plans
               </Link>
             </div>
           ) : (
             <>
-              {/* Low balance warning (has some credits but below threshold) — kept for edge cases */}
+              {/* Trial banner */}
+              {isOnTrial && (
+                <div className="mb-6 rounded-lg p-4 flex items-center justify-between bg-indigo-50 border border-indigo-200">
+                  <div className="flex items-center gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-indigo-500 flex-shrink-0">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-sm font-semibold text-indigo-800">
+                      Free trial — {trialDaysLeft} day{trialDaysLeft !== 1 ? 's' : ''} remaining
+                    </p>
+                  </div>
+                  <Link href="/billing" className="text-xs font-semibold text-indigo-600 hover:underline">
+                    Manage plan
+                  </Link>
+                </div>
+              )}
 
               {/* Stats */}
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-8">
@@ -171,8 +158,8 @@ export default async function LeadsPage() {
                 </div>
               </div>
 
-              {/* Leads table with detail panel */}
-              <LeadsTable leads={tableLeads} />
+              {/* Leads table */}
+              <LeadsTable leads={leads} />
             </>
           )}
         </div>

@@ -63,6 +63,7 @@ export default function BillingPage() {
   const [purchasing, setPurchasing] = useState(false)
   const [subscribing, setSubscribing] = useState<string | null>(null)
   const [stripeCustomerId, setStripeCustomerId] = useState<string | null>(null)
+  const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null)
   const [openingPortal, setOpeningPortal] = useState(false)
 
   const loadBillingData = useCallback(
@@ -86,6 +87,7 @@ export default function BillingPage() {
       const spent = billing?.total_spent ?? 0
       setPlan(billing?.plan ?? null)
       setStripeCustomerId(billing?.stripe_customer_id ?? null)
+      setTrialEndsAt(billing?.trial_ends_at ?? null)
       setCurrentBalance(balance)
       setTotalSpent(spent)
 
@@ -309,6 +311,11 @@ export default function BillingPage() {
                 {plan === 'growth' && '3 quote forms · 50 leads/month · Priority support'}
                 {plan === 'fully_managed' && 'Guaranteed qualified leads · Dedicated account manager'}
               </p>
+              {trialEndsAt && new Date(trialEndsAt) > new Date() && (
+                <span className="inline-block mt-2 px-2.5 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-300">
+                  Free trial — {Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days remaining
+                </span>
+              )}
             </div>
             {plan !== 'fully_managed' && stripeCustomerId && (
               <button
@@ -346,6 +353,7 @@ export default function BillingPage() {
                 <span className="text-gray-500 mb-1">/month</span>
               </div>
               <p className="text-sm text-gray-500 mt-1">Everything you need to get started</p>
+              <span className="inline-block mt-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">7-day free trial</span>
             </div>
             <ul className="space-y-3 mb-6 flex-1">
               {[

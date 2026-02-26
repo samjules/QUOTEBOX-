@@ -6,6 +6,7 @@ import type { VSL } from '@/lib/types'
 
 const BUCKET = 'vsls'
 const MAX_FILE_SIZE_MB = 500
+const VSL_LIMITS: Record<string, number> = { starter: 1, growth: Infinity, fully_managed: Infinity }
 
 function formatBytes(bytes: number) {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
@@ -25,6 +26,7 @@ export default function VSLsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [vsls, setVsls] = useState<VSL[]>([])
+  const [plan, setPlan] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -64,6 +66,13 @@ export default function VSLsPage() {
 
     setAccountId(account.id)
 
+    const { data: billing } = await supabase
+      .from('billing')
+      .select('plan')
+      .eq('account_id', account.id)
+      .single()
+    setPlan(billing?.plan ?? null)
+
     const { data, error: fetchError } = await supabase
       .from('vsls')
       .select('*')
@@ -82,6 +91,13 @@ export default function VSLsPage() {
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+
+    const vslLimit = VSL_LIMITS[plan ?? 'starter'] ?? 1
+    if (vsls.length >= vslLimit) {
+      setError(`Your ${plan === 'starter' ? 'Starter' : 'current'} plan allows ${vslLimit} VSL${vslLimit !== 1 ? 's' : ''}. Upgrade your plan to upload more.`)
+      e.target.value = ''
+      return
+    }
 
     if (!file.type.startsWith('video/')) {
       setError('Please select a video file.')
@@ -208,16 +224,23 @@ export default function VSLsPage() {
             Upload and manage your Video Sales Letters. Use them in Meta Ads campaigns.
           </p>
         </div>
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl transition text-sm"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-          </svg>
-          {uploading ? 'Uploading...' : 'Upload VSL'}
-        </button>
+        <div className="flex items-center gap-3">
+          {plan && VSL_LIMITS[plan] !== Infinity && (
+            <span className="text-sm text-gray-500">
+              {vsls.length} / {VSL_LIMITS[plan]} VSL{VSL_LIMITS[plan] !== 1 ? 's' : ''}
+            </span>
+          )}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading || (plan !== null && vsls.length >= (VSL_LIMITS[plan ?? 'starter'] ?? 1))}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-xl transition text-sm"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            {uploading ? 'Uploading...' : 'Upload VSL'}
+          </button>
+        </div>
         <input
           ref={fileInputRef}
           type="file"

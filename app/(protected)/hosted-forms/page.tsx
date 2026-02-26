@@ -5,11 +5,11 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { HostedForm } from '@/lib/types'
 
-const PLAN_LIMITS: Record<string, number> = { base: 1, pro: 10, agency: Infinity }
+const PLAN_LIMITS: Record<string, number> = { starter: 1, growth: 3, fully_managed: Infinity }
 const PLAN_LABELS: Record<string, string> = {
-  base: 'Base plan',
-  pro: 'Pro plan',
-  agency: 'Agency plan',
+  starter: 'Starter plan',
+  growth: 'Growth plan',
+  fully_managed: 'Fully Managed',
 }
 
 function esc(s: string) {
@@ -45,7 +45,7 @@ export default function HostedFormsPage() {
         .select('plan')
         .eq('account_id', accId)
         .single()
-      const currentPlan = billing?.plan ?? 'base'
+      const currentPlan = billing?.plan ?? 'starter'
       setPlan(currentPlan)
       setPlanLimit(PLAN_LIMITS[currentPlan] ?? 1)
 
