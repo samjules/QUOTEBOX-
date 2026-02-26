@@ -126,6 +126,43 @@ export default function MetaAdsPage() {
     duration: 14,
   })
 
+  // ─── FB SDK initialisation (fbAsyncInit pattern) ─────────────────────────
+
+  useEffect(() => {
+    const initFB = () => {
+      console.log('[MetaAds] initFB called — window.FB exists:', !!window.FB)
+      window.FB.init({
+        appId: process.env.NEXT_PUBLIC_META_APP_ID!,
+        cookie: true,
+        xfbml: true,
+        version: 'v18.0',
+      })
+      window.FB.AppEvents.logPageView()
+      console.log('[MetaAds] FB.init() complete — setFbReady(true)')
+      setFbReady(true)
+    }
+    console.log('[MetaAds] useEffect mount — window.FB already loaded:', !!window.FB)
+    // The SDK calls window.fbAsyncInit automatically after it loads.
+    // Setting it here (before the <Script> renders) is the correct pattern.
+    window.fbAsyncInit = initFB
+    // If the SDK was already in the page (hot-reload / browser cache), init now.
+    if (window.FB) initFB()
+  }, [])
+
+  // Once FB is ready and on the disconnected screen, check existing login status
+  useEffect(() => {
+    console.log('[MetaAds] fbReady effect — fbReady:', fbReady, 'pageState:', pageState, 'loading:', loading)
+    if (!fbReady || pageState !== 'disconnected' || loading) return
+    console.log('[MetaAds] calling FB.getLoginStatus()')
+    window.FB.getLoginStatus((response) => {
+      console.log('[MetaAds] getLoginStatus response:', response.status)
+      if (response.status === 'connected' && response.authResponse) {
+        exchangeToken(response.authResponse.accessToken, response.authResponse.userID)
+      }
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fbReady, pageState, loading])
+
   // ─── Load account state ──────────────────────────────────────────────────
 
   useEffect(() => {
@@ -205,18 +242,11 @@ export default function MetaAdsPage() {
     }
   }
 
-  function handleFbSdkReady() {
-    // Check if user is already logged into Facebook and authorized the app
-    window.FB.getLoginStatus((response) => {
-      if (response.status === 'connected' && response.authResponse) {
-        exchangeToken(response.authResponse.accessToken, response.authResponse.userID)
-      }
-    })
-  }
-
   function handleConnectMeta() {
+    console.log('[MetaAds] handleConnectMeta — fbReady:', fbReady, 'window.FB:', !!window.FB)
     if (fbReady) {
       window.FB.login((response) => {
+        console.log('[MetaAds] FB.login response:', response.status)
         if (response.status === 'connected' && response.authResponse) {
           exchangeToken(response.authResponse.accessToken, response.authResponse.userID)
         } else if (response.status === 'not_authorized') {
@@ -368,17 +398,6 @@ export default function MetaAdsPage() {
       <Script
         src="https://connect.facebook.net/en_US/sdk.js"
         strategy="afterInteractive"
-        onLoad={() => {
-          window.FB.init({
-            appId: process.env.NEXT_PUBLIC_META_APP_ID!,
-            cookie: true,
-            xfbml: true,
-            version: 'v18.0',
-          })
-          window.FB.AppEvents.logPageView()
-          setFbReady(true)
-          handleFbSdkReady()
-        }}
       />
       <div className="max-w-2xl mx-auto px-4 py-12">
         <div className="text-center mb-10">
