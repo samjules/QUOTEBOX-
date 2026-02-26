@@ -8,23 +8,23 @@ interface ObjectiveConfig {
 }
 
 const OBJECTIVE_MAP: Record<string, ObjectiveConfig> = {
-  LEAD_GENERATION: {
-    objective: 'LEAD_GENERATION',
+  OUTCOME_LEADS: {
+    objective: 'OUTCOME_LEADS',
     optimization_goal: 'LEAD_GENERATION',
     billing_event: 'IMPRESSIONS',
   },
-  TRAFFIC: {
-    objective: 'LINK_CLICKS',
+  OUTCOME_TRAFFIC: {
+    objective: 'OUTCOME_TRAFFIC',
     optimization_goal: 'LINK_CLICKS',
     billing_event: 'LINK_CLICKS',
   },
-  BRAND_AWARENESS: {
-    objective: 'BRAND_AWARENESS',
+  OUTCOME_AWARENESS: {
+    objective: 'OUTCOME_AWARENESS',
     optimization_goal: 'REACH',
     billing_event: 'IMPRESSIONS',
   },
-  CONVERSIONS: {
-    objective: 'CONVERSIONS',
+  OUTCOME_SALES: {
+    objective: 'OUTCOME_SALES',
     optimization_goal: 'OFFSITE_CONVERSIONS',
     billing_event: 'IMPRESSIONS',
   },
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  const objConfig = OBJECTIVE_MAP[body.objective] || OBJECTIVE_MAP.TRAFFIC
+  const objConfig = OBJECTIVE_MAP[body.objective] || OBJECTIVE_MAP.OUTCOME_TRAFFIC
 
   // Create Campaign
   const campaignParams = new URLSearchParams({

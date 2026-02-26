@@ -73,10 +73,10 @@ type PageState = 'disconnected' | 'pick-account' | 'questionnaire' | 'created'
 type Step = 1 | 2 | 3 | 4 | 5
 
 const OBJECTIVES = [
-  { value: 'LEAD_GENERATION', label: 'Lead Generation', desc: 'Collect contact info from interested people' },
-  { value: 'TRAFFIC', label: 'Website Traffic', desc: 'Drive people to your website or landing page' },
-  { value: 'BRAND_AWARENESS', label: 'Brand Awareness', desc: 'Reach people most likely to remember your ad' },
-  { value: 'CONVERSIONS', label: 'Conversions', desc: 'Drive valuable actions on your website' },
+  { value: 'OUTCOME_LEADS', label: 'Lead Generation', desc: 'Collect contact info from interested people' },
+  { value: 'OUTCOME_TRAFFIC', label: 'Website Traffic', desc: 'Drive people to your website or landing page' },
+  { value: 'OUTCOME_AWARENESS', label: 'Brand Awareness', desc: 'Reach people most likely to remember your ad' },
+  { value: 'OUTCOME_SALES', label: 'Conversions', desc: 'Drive valuable actions on your website' },
 ]
 
 const TONES = [
@@ -113,7 +113,7 @@ export default function MetaAdsPage() {
   const [fbReady, setFbReady] = useState(false)
 
   const [questionnaire, setQuestionnaire] = useState<Questionnaire>({
-    objective: 'LEAD_GENERATION',
+    objective: 'OUTCOME_LEADS',
     ageMin: 25,
     ageMax: 55,
     gender: 'all',
@@ -366,7 +366,7 @@ export default function MetaAdsPage() {
     setCreatedCampaign(null)
     setError('')
     setQuestionnaire({
-      objective: 'LEAD_GENERATION',
+      objective: 'OUTCOME_LEADS',
       ageMin: 25,
       ageMax: 55,
       gender: 'all',
