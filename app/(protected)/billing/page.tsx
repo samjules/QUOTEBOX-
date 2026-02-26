@@ -8,6 +8,7 @@ import type { BillingTransaction } from '@/lib/types'
 const COST_PER_LEAD = 15
 const CHECKOUT_FUNCTION_URL = process.env.NEXT_PUBLIC_CHECKOUT_FUNCTION_URL!
 const SUBSCRIPTION_FUNCTION_URL = process.env.NEXT_PUBLIC_SUBSCRIPTION_FUNCTION_URL!
+const PORTAL_FUNCTION_URL = process.env.NEXT_PUBLIC_PORTAL_FUNCTION_URL!
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 interface CreditPackage {
@@ -61,6 +62,8 @@ export default function BillingPage() {
   const [showModal, setShowModal] = useState(false)
   const [purchasing, setPurchasing] = useState(false)
   const [subscribing, setSubscribing] = useState<string | null>(null)
+  const [stripeCustomerId, setStripeCustomerId] = useState<string | null>(null)
+  const [openingPortal, setOpeningPortal] = useState(false)
 
   const loadBillingData = useCallback(
     async (accId: string) => {
@@ -82,6 +85,7 @@ export default function BillingPage() {
       const balance = billing?.credit_balance ?? 0
       const spent = billing?.total_spent ?? 0
       setPlan(billing?.plan ?? null)
+      setStripeCustomerId(billing?.stripe_customer_id ?? null)
       setCurrentBalance(balance)
       setTotalSpent(spent)
 
@@ -251,6 +255,28 @@ export default function BillingPage() {
     }
   }
 
+  async function openPortal() {
+    setOpeningPortal(true)
+    try {
+      const response = await fetch(PORTAL_FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ accountId }),
+      })
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`)
+      const { url, error } = await response.json()
+      if (error) throw new Error(error)
+      window.location.href = url
+    } catch (err) {
+      alert(`Could not open billing portal: ${err instanceof Error ? err.message : 'Unknown error'}`)
+      setOpeningPortal(false)
+    }
+  }
+
   const isLow = currentBalance > 0 && currentBalance < COST_PER_LEAD * 10
   const isEmpty = currentBalance <= 0
 
@@ -264,6 +290,46 @@ export default function BillingPage() {
           Manage your subscription plan and billing information
         </p>
       </div>
+
+      {/* Current Plan Card */}
+      {plan && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 mt-8">
+          <div className={`rounded-xl p-6 flex items-center justify-between ${plan === 'fully_managed' ? 'bg-gray-900 text-white' : 'bg-indigo-50 border border-indigo-200'}`}>
+            <div>
+              <p className={`text-xs font-semibold uppercase tracking-widest mb-1 ${plan === 'fully_managed' ? 'text-gray-400' : 'text-indigo-400'}`}>
+                Current Plan
+              </p>
+              <p className={`text-xl font-bold ${plan === 'fully_managed' ? 'text-white' : 'text-indigo-900'}`}>
+                {plan === 'starter' && 'Starter — $20/month'}
+                {plan === 'growth' && 'Growth — $30/month'}
+                {plan === 'fully_managed' && 'Fully Managed — $15/lead'}
+              </p>
+              <p className={`text-sm mt-1 ${plan === 'fully_managed' ? 'text-gray-400' : 'text-indigo-600'}`}>
+                {plan === 'starter' && '1 quote form · 10 leads/month · 1 VSL'}
+                {plan === 'growth' && '3 quote forms · 50 leads/month · Priority support'}
+                {plan === 'fully_managed' && 'Guaranteed qualified leads · Dedicated account manager'}
+              </p>
+            </div>
+            {plan !== 'fully_managed' && stripeCustomerId && (
+              <button
+                onClick={openPortal}
+                disabled={openingPortal}
+                className="ml-6 flex-shrink-0 px-5 py-2.5 rounded-lg text-sm font-semibold bg-white border border-indigo-300 text-indigo-700 hover:bg-indigo-50 transition disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+              >
+                {openingPortal ? 'Opening…' : 'Manage Subscription'}
+              </button>
+            )}
+            {plan === 'fully_managed' && (
+              <a
+                href="mailto:sales@quote-box.com?subject=Fully%20Managed%20Account%20Changes"
+                className="ml-6 flex-shrink-0 px-5 py-2.5 rounded-lg text-sm font-semibold bg-white text-gray-900 hover:bg-gray-100 transition"
+              >
+                Contact Us
+              </a>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Subscription Plans */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 mt-8">
@@ -295,13 +361,19 @@ export default function BillingPage() {
                 </li>
               ))}
             </ul>
-            <button
-              onClick={() => purchaseSubscription('starter')}
-              disabled={subscribing !== null}
-              className="w-full py-2 px-4 rounded-lg border-2 border-indigo-500 text-indigo-600 font-semibold text-sm hover:bg-indigo-50 transition disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {subscribing === 'starter' ? 'Redirecting…' : 'Get Started'}
-            </button>
+            {plan === 'starter' ? (
+              <div className="w-full py-2 px-4 rounded-lg border-2 border-green-400 bg-green-50 text-green-700 font-semibold text-sm text-center">
+                Current Plan
+              </div>
+            ) : (
+              <button
+                onClick={() => purchaseSubscription('starter')}
+                disabled={subscribing !== null || plan !== null}
+                className="w-full py-2 px-4 rounded-lg border-2 border-indigo-500 text-indigo-600 font-semibold text-sm hover:bg-indigo-50 transition disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {subscribing === 'starter' ? 'Redirecting…' : plan ? 'Switch Plan via Portal' : 'Get Started'}
+              </button>
+            )}
           </div>
 
           {/* Growth */}
@@ -331,13 +403,19 @@ export default function BillingPage() {
                 </li>
               ))}
             </ul>
-            <button
-              onClick={() => purchaseSubscription('growth')}
-              disabled={subscribing !== null}
-              className="w-full py-2 px-4 rounded-lg bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {subscribing === 'growth' ? 'Redirecting…' : 'Upgrade to Growth'}
-            </button>
+            {plan === 'growth' ? (
+              <div className="w-full py-2 px-4 rounded-lg border-2 border-green-400 bg-green-50 text-green-700 font-semibold text-sm text-center">
+                Current Plan
+              </div>
+            ) : (
+              <button
+                onClick={() => purchaseSubscription('growth')}
+                disabled={subscribing !== null || plan !== null}
+                className="w-full py-2 px-4 rounded-lg bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {subscribing === 'growth' ? 'Redirecting…' : plan ? 'Switch Plan via Portal' : 'Upgrade to Growth'}
+              </button>
+            )}
           </div>
 
           {/* Fully Managed */}
