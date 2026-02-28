@@ -9,6 +9,7 @@ const COST_PER_LEAD = 15
 const CHECKOUT_FUNCTION_URL = process.env.NEXT_PUBLIC_CHECKOUT_FUNCTION_URL!
 const SUBSCRIPTION_FUNCTION_URL = process.env.NEXT_PUBLIC_SUBSCRIPTION_FUNCTION_URL!
 const PORTAL_FUNCTION_URL = process.env.NEXT_PUBLIC_PORTAL_FUNCTION_URL!
+const VERIFY_SESSION_FUNCTION_URL = process.env.NEXT_PUBLIC_VERIFY_SESSION_FUNCTION_URL!
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 interface CreditPackage {
@@ -156,25 +157,31 @@ export default function BillingPage() {
       }, 2000)
     }
     if (searchParams.get('subscription') === 'success' && accountId) {
+      const sessionId = searchParams.get('session_id')
       window.history.replaceState({}, document.title, '/billing')
-      // Poll every 2 s (up to 10 attempts) waiting for the Stripe webhook to set the plan
-      let attempts = 0
-      const MAX = 10
-      const poll = setInterval(async () => {
-        attempts++
-        await loadBillingData(accountId)
-        // plan state updates async; check DB directly
-        const { data } = await supabase
-          .from('billing')
-          .select('plan')
-          .eq('account_id', accountId)
-          .single()
-        if (data?.plan || attempts >= MAX) {
-          clearInterval(poll)
+
+      const run = async () => {
+        if (sessionId && VERIFY_SESSION_FUNCTION_URL) {
+          // Verify directly with Stripe — no webhook dependency
+          try {
+            await fetch(VERIFY_SESSION_FUNCTION_URL, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+              },
+              body: JSON.stringify({ sessionId, accountId }),
+            })
+          } catch (_) {
+            // Silently fall through — webhook may still deliver
+          }
         }
-      }, 2000)
+        // Reload billing data after verification
+        await loadBillingData(accountId)
+      }
+      run()
     }
-  }, [searchParams, accountId, loadBillingData, supabase])
+  }, [searchParams, accountId, loadBillingData])
 
   // Real-time lead subscription for credit deduction (fully managed only)
   useEffect(() => {

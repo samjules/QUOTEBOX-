@@ -65,7 +65,7 @@ serve(async (req) => {
       mode: 'subscription',
       // 7-day free trial for the Starter plan
       subscription_data: plan === 'starter' ? { trial_period_days: 7 } : undefined,
-      success_url: `${origin}/billing?subscription=success&plan=${plan}`,
+      success_url: `${origin}/billing?subscription=success&plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/billing?canceled=true`,
       metadata: {
         accountId,
