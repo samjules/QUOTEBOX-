@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import type { ReactNode } from 'react'
 
 const COST_PER_LEAD = 15
@@ -44,15 +45,16 @@ export default async function DashboardPage() {
 
   const leads = allLeads ?? []
 
-  // Fetch billing — create record if missing
-  let { data: billing } = await supabase
+  // Fetch billing — create record if missing (use admin to bypass RLS)
+  const admin = createAdminClient()
+  let { data: billing } = await admin
     .from('billing')
     .select('*')
     .eq('account_id', account.id)
     .single()
 
   if (!billing) {
-    const { data: newBilling } = await supabase
+    const { data: newBilling } = await admin
       .from('billing')
       .insert([{ account_id: account.id, credit_balance: 0, total_spent: 0 }])
       .select()

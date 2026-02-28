@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import type { Lead } from '@/lib/types'
 import LeadsTable from './LeadsTable'
 
@@ -31,7 +32,8 @@ export default async function LeadsPage() {
     )
   }
 
-  const { data: billingData } = await supabase
+  const admin = createAdminClient()
+  const { data: billingData } = await admin
     .from('billing')
     .select('plan, trial_ends_at')
     .eq('account_id', account.id)
@@ -44,14 +46,14 @@ export default async function LeadsPage() {
 
   // Auto-promote held leads to 'new' when account has an active plan
   if (hasAccess) {
-    await supabase
+    await admin
       .from('leads')
       .update({ status: 'new' })
       .eq('account_id', account.id)
       .eq('status', 'held')
   }
 
-  const { data: allLeads } = await supabase
+  const { data: allLeads } = await admin
     .from('leads')
     .select('id, account_id, hosted_form_id, name, email, phone, form_type, form_data, status, created_at')
     .eq('account_id', account.id)
