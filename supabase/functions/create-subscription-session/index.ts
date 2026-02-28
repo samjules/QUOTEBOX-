@@ -33,7 +33,7 @@ serve(async (req) => {
   }
 
   try {
-    const { plan, accountId, userId } = await req.json()
+    const { plan, accountId, userId, trialDays } = await req.json()
 
     if (!plan || !accountId || !userId) {
       throw new Error('Missing required parameters')
@@ -45,6 +45,12 @@ serve(async (req) => {
     }
 
     const origin = req.headers.get('origin') || 'https://quote-box.com'
+
+    // trialDays override (e.g. 14 for the bro deal), else default 7-day trial for starter
+    const resolvedTrialDays: number | undefined =
+      typeof trialDays === 'number' ? trialDays
+      : plan === 'starter' ? 7
+      : undefined
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -63,8 +69,7 @@ serve(async (req) => {
         },
       ],
       mode: 'subscription',
-      // 7-day free trial for the Starter plan
-      subscription_data: plan === 'starter' ? { trial_period_days: 7 } : undefined,
+      subscription_data: resolvedTrialDays ? { trial_period_days: resolvedTrialDays } : undefined,
       success_url: `${origin}/billing?subscription=success&plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/billing?canceled=true`,
       metadata: {

@@ -66,6 +66,8 @@ export default function BillingPage() {
   const [stripeCustomerId, setStripeCustomerId] = useState<string | null>(null)
   const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null)
   const [openingPortal, setOpeningPortal] = useState(false)
+  const [showBroModal, setShowBroModal] = useState(false)
+  const [broSubscribing, setBroSubscribing] = useState<string | null>(null)
 
   const loadBillingData = useCallback(
     async (accId: string) => {
@@ -252,12 +254,16 @@ export default function BillingPage() {
     }
   }
 
-  async function purchaseSubscription(plan: 'starter' | 'growth') {
+  async function purchaseSubscription(plan: 'starter' | 'growth', trialDays?: number) {
     if (!SUBSCRIPTION_FUNCTION_URL) {
       alert('Subscription checkout is not configured. Please contact support.')
       return
     }
-    setSubscribing(plan)
+    if (trialDays) {
+      setBroSubscribing(plan)
+    } else {
+      setSubscribing(plan)
+    }
     try {
       const response = await fetch(SUBSCRIPTION_FUNCTION_URL, {
         method: 'POST',
@@ -265,7 +271,7 @@ export default function BillingPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
         },
-        body: JSON.stringify({ plan, accountId, userId }),
+        body: JSON.stringify({ plan, accountId, userId, ...(trialDays ? { trialDays } : {}) }),
       })
       if (!response.ok)
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -274,6 +280,7 @@ export default function BillingPage() {
     } catch (err) {
       alert(`Checkout failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
       setSubscribing(null)
+      setBroSubscribing(null)
     }
   }
 
@@ -480,6 +487,18 @@ export default function BillingPage() {
           </div>
 
         </div>
+
+        {/* Bro deal button */}
+        {!plan && (
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => setShowBroModal(true)}
+              className="text-xs text-gray-300 hover:text-gray-500 transition font-medium tracking-wide"
+            >
+              🤝 Me and sam are bros
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 mt-8">
@@ -648,6 +667,96 @@ export default function BillingPage() {
           </div>
         )}
       </div>
+
+      {/* Bro Deal Modal */}
+      {showBroModal && (
+        <div className="fixed z-50 inset-0 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div
+              className="fixed inset-0 bg-gray-900 bg-opacity-80 transition-opacity"
+              onClick={() => !broSubscribing && setShowBroModal(false)}
+            />
+            <div className="relative z-10 bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+              {/* Header */}
+              <div style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #2d2d5e 100%)' }} className="px-8 py-8 text-center">
+                <div className="text-5xl mb-4">🤝</div>
+                <h2 className="text-2xl font-extrabold text-white leading-tight">
+                  I didn&apos;t know you were chill like that
+                </h2>
+                <p className="mt-2 text-yellow-400 font-semibold text-sm">
+                  Go ahead — 14 days free, on the house
+                </p>
+              </div>
+
+              {/* Plans */}
+              <div className="px-8 py-6 space-y-4">
+                <p className="text-sm text-gray-500 text-center mb-2">Pick your plan. No charge for 14 days.</p>
+
+                {/* Starter */}
+                <button
+                  onClick={() => purchaseSubscription('starter', 14)}
+                  disabled={!!broSubscribing}
+                  className="w-full text-left rounded-xl border-2 border-gray-200 hover:border-indigo-400 p-4 transition disabled:opacity-60 disabled:cursor-not-allowed group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-bold text-gray-900 group-hover:text-indigo-700 transition">Starter</div>
+                      <div className="text-sm text-gray-500 mt-0.5">1 form · 10 leads/month</div>
+                      <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                        14-day free trial
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-extrabold text-gray-900">$20</div>
+                      <div className="text-xs text-gray-400">/month after</div>
+                      {broSubscribing === 'starter' && (
+                        <div className="text-xs text-indigo-500 mt-1 font-medium">Redirecting…</div>
+                      )}
+                    </div>
+                  </div>
+                </button>
+
+                {/* Growth */}
+                <button
+                  onClick={() => purchaseSubscription('growth', 14)}
+                  disabled={!!broSubscribing}
+                  className="w-full text-left rounded-xl border-2 border-indigo-500 bg-indigo-50 hover:bg-indigo-100 p-4 transition disabled:opacity-60 disabled:cursor-not-allowed relative"
+                >
+                  <div className="absolute -top-2.5 left-4">
+                    <span className="bg-indigo-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full">MOST POPULAR</span>
+                  </div>
+                  <div className="flex items-center justify-between mt-1">
+                    <div>
+                      <div className="font-bold text-indigo-900">Growth</div>
+                      <div className="text-sm text-indigo-600 mt-0.5">3 forms · 50 leads/month</div>
+                      <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                        14-day free trial
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-extrabold text-indigo-900">$30</div>
+                      <div className="text-xs text-indigo-400">/month after</div>
+                      {broSubscribing === 'growth' && (
+                        <div className="text-xs text-indigo-500 mt-1 font-medium">Redirecting…</div>
+                      )}
+                    </div>
+                  </div>
+                </button>
+              </div>
+
+              <div className="px-8 pb-6">
+                <button
+                  onClick={() => setShowBroModal(false)}
+                  disabled={!!broSubscribing}
+                  className="w-full py-2 text-sm text-gray-400 hover:text-gray-600 transition disabled:opacity-40"
+                >
+                  Maybe later
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Credits Modal — fully managed only */}
       {plan === 'fully_managed' && showModal && (
