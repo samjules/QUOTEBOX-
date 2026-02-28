@@ -155,13 +155,26 @@ export default function BillingPage() {
         window.history.replaceState({}, document.title, '/billing')
       }, 2000)
     }
-    if (searchParams.get('subscription') === 'success') {
-      const plan = searchParams.get('plan')
-      const label = plan === 'starter' ? 'Starter' : 'Growth'
-      alert(`You're now subscribed to the ${label} plan! Welcome aboard.`)
+    if (searchParams.get('subscription') === 'success' && accountId) {
       window.history.replaceState({}, document.title, '/billing')
+      // Poll every 2 s (up to 10 attempts) waiting for the Stripe webhook to set the plan
+      let attempts = 0
+      const MAX = 10
+      const poll = setInterval(async () => {
+        attempts++
+        await loadBillingData(accountId)
+        // plan state updates async; check DB directly
+        const { data } = await supabase
+          .from('billing')
+          .select('plan')
+          .eq('account_id', accountId)
+          .single()
+        if (data?.plan || attempts >= MAX) {
+          clearInterval(poll)
+        }
+      }, 2000)
     }
-  }, [searchParams, accountId, loadBillingData])
+  }, [searchParams, accountId, loadBillingData, supabase])
 
   // Real-time lead subscription for credit deduction (fully managed only)
   useEffect(() => {

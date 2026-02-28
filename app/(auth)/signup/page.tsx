@@ -231,18 +231,22 @@ function SignupWizard() {
       return
     }
 
-    const { error: accountError } = await supabase.from('accounts').insert([
-      {
-        business_name: businessName.trim(),
-        owner_id: authData.user.id,
-      },
-    ])
+    const { data: newAccount, error: accountError } = await supabase
+      .from('accounts')
+      .insert([{ business_name: businessName.trim(), owner_id: authData.user.id }])
+      .select('id')
+      .single()
 
-    if (accountError) {
-      setStep1Error(accountError.message)
+    if (accountError || !newAccount) {
+      setStep1Error(accountError?.message ?? 'Failed to create account')
       setStep1Loading(false)
       return
     }
+
+    // Create the billing row immediately so webhook updates always find it
+    await supabase
+      .from('billing')
+      .insert([{ account_id: newAccount.id, credit_balance: 0, total_spent: 0 }])
 
     setStep1Loading(false)
     animateTo(2)

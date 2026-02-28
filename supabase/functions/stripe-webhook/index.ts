@@ -66,13 +66,16 @@ serve(async (req) => {
 
         const { error } = await supabase
           .from('billing')
-          .update({
-            plan: mappedPlan,
-            stripe_customer_id: session.customer as string,
-            stripe_subscription_id: session.subscription as string,
-            trial_ends_at: trialEndsAt,
-          })
-          .eq('account_id', accountId)
+          .upsert(
+            {
+              account_id: accountId,
+              plan: mappedPlan,
+              stripe_customer_id: session.customer as string,
+              stripe_subscription_id: session.subscription as string,
+              trial_ends_at: trialEndsAt,
+            },
+            { onConflict: 'account_id' }
+          )
 
         if (error) throw error
         console.log(`Plan set to '${mappedPlan}' for account ${accountId}${trialEndsAt ? ` (trial until ${trialEndsAt})` : ''}`)
