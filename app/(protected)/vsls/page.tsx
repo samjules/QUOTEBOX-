@@ -224,6 +224,16 @@ export default function VSLsPage() {
             </span>
           )}
           <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading || atLimit}
+            className="flex items-center gap-2 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 font-medium py-2.5 px-4 rounded-xl transition text-sm border border-gray-200"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            Upload
+          </button>
+          <button
             onClick={() => setShowLibrary(true)}
             disabled={uploading}
             className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-xl transition text-sm"

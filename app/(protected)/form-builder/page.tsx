@@ -20,6 +20,15 @@ function esc(s: string) {
     .replace(/"/g, '&quot;')
 }
 
+function isImageFile(fileName: string) {
+  const ext = fileName.split('.').pop()?.toLowerCase() ?? ''
+  return ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'avif'].includes(ext)
+}
+
+function formatMediaDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
 function isColorDark(hex: string): boolean {
   const h = hex.replace('#', '')
   if (h.length < 6) return false
@@ -925,6 +934,10 @@ export default function FormBuilderPage() {
   const [heroUploadLoading, setHeroUploadLoading] = useState(false)
   const heroFileInputRef = useRef<HTMLInputElement>(null)
   const [cropFile, setCropFile] = useState<File | null>(null)
+  const [showHeroMediaPicker, setShowHeroMediaPicker] = useState(false)
+  const [heroMediaFiles, setHeroMediaFiles] = useState<Array<{ id: string; title: string; file_name: string; file_url: string; file_size: number; created_at: string }>>([])
+  const [heroMediaLoading, setHeroMediaLoading] = useState(false)
+  const [heroMediaCopiedId, setHeroMediaCopiedId] = useState<string | null>(null)
   const [disclaimerEnabled, setDisclaimerEnabled] = useState(true)
   const [disclaimerText, setDisclaimerText] = useState(
     'I understand this quote is an estimate and is not final until confirmed in writing.'
@@ -940,7 +953,20 @@ export default function FormBuilderPage() {
     toastTimer.current = setTimeout(() => setToast(null), ms)
   }
 
-  // Called after cropping — receives the final Blob
+  // Load images from the shared media library (vsls bucket)
+  async function loadHeroMedia() {
+    if (!accountId) return
+    setHeroMediaLoading(true)
+    const { data } = await supabase
+      .from('vsls')
+      .select('id, title, file_name, file_url, file_size, created_at')
+      .eq('account_id', accountId)
+      .order('created_at', { ascending: false })
+    setHeroMediaFiles((data ?? []).filter((f) => isImageFile(f.file_name)))
+    setHeroMediaLoading(false)
+  }
+
+  // Called after cropping — uploads to vsls so it appears in the media library
   async function uploadHeroBlob(blob: Blob, ext = 'jpg') {
     if (!accountId) { showToast('Not logged in', 'error'); return }
     if (blob.size > 5 * 1024 * 1024) {
@@ -949,15 +975,29 @@ export default function FormBuilderPage() {
     setHeroUploadLoading(true)
     setCropFile(null)
     const uuid = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
-    const path = `hero/${accountId}/${uuid}.${ext}`
+    const storagePath = `${accountId}/${uuid}.${ext}`
     const { data, error } = await supabase.storage
-      .from('form-images')
-      .upload(path, blob, { contentType: blob.type || 'image/jpeg', upsert: false })
+      .from('vsls')
+      .upload(storagePath, blob, { contentType: blob.type || 'image/jpeg', upsert: false })
+    if (error) {
+      setHeroUploadLoading(false)
+      showToast(`Upload failed: ${error.message}`, 'error')
+      return
+    }
+    const { data: urlData } = supabase.storage.from('vsls').getPublicUrl(data.path)
+    const fileUrl = urlData.publicUrl
+    await supabase.from('vsls').insert({
+      account_id: accountId,
+      title: `Hero image ${new Date().toLocaleDateString()}`,
+      file_name: `hero-image.${ext}`,
+      file_url: fileUrl,
+      storage_path: storagePath,
+      file_size: blob.size,
+    })
+    setHeroImageUrl(fileUrl)
     setHeroUploadLoading(false)
-    if (error) { showToast(`Upload failed: ${error.message}`, 'error'); return }
-    const { data: urlData } = supabase.storage.from('form-images').getPublicUrl(data.path)
-    setHeroImageUrl(urlData.publicUrl)
     showToast('Hero image uploaded', 'success')
+    await loadHeroMedia()
   }
 
   function handleHeroFileSelect(file: File) {
@@ -1605,6 +1645,7 @@ export default function FormBuilderPage() {
                     />
                   </div>
                   <label>Hero Image</label>
+                  {/* Hidden file input — triggered from inside the media picker */}
                   <input
                     ref={heroFileInputRef}
                     type="file"
@@ -1616,36 +1657,40 @@ export default function FormBuilderPage() {
                       e.target.value = ''
                     }}
                   />
-                  <div
-                    className="hero-upload-zone"
-                    onClick={() => !heroUploadLoading && heroFileInputRef.current?.click()}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => {
-                      e.preventDefault()
-                      const file = e.dataTransfer.files?.[0]
-                      if (file && !heroUploadLoading) handleHeroFileSelect(file)
-                    }}
-                  >
-                    {heroUploadLoading ? (
-                      <span className="hero-upload-spinner" />
-                    ) : heroImageUrl ? (
-                      <>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={heroImageUrl} alt="Hero preview" className="hero-upload-preview"
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
-                        <div className="hero-upload-overlay">Click to replace</div>
-                      </>
-                    ) : (
-                      <div className="hero-upload-prompt">
-                        <span style={{ fontSize: '1.4rem' }}>+</span>
-                        <span>Upload hero image</span>
-                        <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>JPG, PNG, WebP · max 5 MB</span>
+                  {heroImageUrl ? (
+                    <div style={{ position: 'relative', marginTop: 4, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border)' }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={heroImageUrl} alt="Hero preview" className="hero-upload-preview"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                      <div style={{ display: 'flex', gap: 6, padding: '6px 8px', background: 'var(--surface2)', borderTop: '1px solid var(--border)' }}>
+                        <button
+                          className="add-opt-btn"
+                          style={{ flex: 1, marginTop: 0, textAlign: 'center' }}
+                          onClick={() => { loadHeroMedia(); setShowHeroMediaPicker(true) }}
+                        >
+                          Change image
+                        </button>
+                        <button className="hero-upload-clear" style={{ padding: '4px 8px' }} onClick={() => setHeroImageUrl('')}>
+                          Remove
+                        </button>
                       </div>
-                    )}
-                  </div>
-                  {heroImageUrl && !heroUploadLoading && (
-                    <button className="hero-upload-clear" onClick={() => setHeroImageUrl('')}>
-                      Remove hero image
+                    </div>
+                  ) : (
+                    <button
+                      className="hero-upload-zone"
+                      style={{ border: '2px dashed var(--border)', cursor: 'pointer', width: '100%', background: 'var(--surface2)', borderRadius: 8, padding: '18px 0' }}
+                      disabled={heroUploadLoading}
+                      onClick={() => { loadHeroMedia(); setShowHeroMediaPicker(true) }}
+                    >
+                      {heroUploadLoading ? (
+                        <span className="hero-upload-spinner" />
+                      ) : (
+                        <div className="hero-upload-prompt">
+                          <span style={{ fontSize: '1.2rem' }}>🖼</span>
+                          <span>Choose from Media Library</span>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>or upload a new image</span>
+                        </div>
+                      )}
                     </button>
                   )}
                 </div>
@@ -1764,6 +1809,104 @@ export default function FormBuilderPage() {
           onSetCondition={setCondition}
         />
       </div>
+
+      {/* ── Hero Media Picker Lightbox ── */}
+      {showHeroMediaPicker && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 9000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, background: 'rgba(0,0,0,0.72)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowHeroMediaPicker(false) }}
+        >
+          <div style={{ background: 'var(--surface)', borderRadius: 16, boxShadow: '0 24px 60px rgba(0,0,0,0.35)', display: 'flex', flexDirection: 'column', width: '100%', maxWidth: 820, maxHeight: '88vh', overflow: 'hidden' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 22px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+              <div>
+                <div style={{ fontFamily: 'Oswald, sans-serif', fontSize: '1rem', fontWeight: 700 }}>Media Library</div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: 2 }}>
+                  {heroMediaFiles.length} image{heroMediaFiles.length !== 1 ? 's' : ''} · click one to set as hero
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <button
+                  className="bb bb-primary"
+                  style={{ padding: '6px 14px', fontSize: '0.78rem' }}
+                  onClick={() => heroFileInputRef.current?.click()}
+                >
+                  Upload New
+                </button>
+                <button
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: 'var(--muted)', fontSize: '1.1rem', lineHeight: 1 }}
+                  onClick={() => setShowHeroMediaPicker(false)}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Grid body */}
+            <div style={{ overflowY: 'auto', flex: 1, padding: 20 }}>
+              {heroMediaLoading ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 0' }}>
+                  <span className="hero-upload-spinner" />
+                </div>
+              ) : heroMediaFiles.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--muted)', fontSize: '0.85rem' }}>
+                  <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>🖼</div>
+                  <div style={{ marginBottom: 14 }}>No images in your media library yet.</div>
+                  <button className="bb bb-primary" onClick={() => heroFileInputRef.current?.click()}>
+                    Upload your first image
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12 }}>
+                  {heroMediaFiles.map((f) => (
+                    <div
+                      key={f.id}
+                      onClick={() => { setHeroImageUrl(f.file_url); setShowHeroMediaPicker(false) }}
+                      style={{
+                        borderRadius: 10,
+                        overflow: 'hidden',
+                        border: heroImageUrl === f.file_url ? '2px solid var(--accent)' : '2px solid var(--border)',
+                        cursor: 'pointer',
+                        background: 'var(--surface2)',
+                        transition: 'all 0.13s',
+                        boxShadow: heroImageUrl === f.file_url ? '0 0 0 3px rgba(79,70,229,0.15)' : undefined,
+                      }}
+                    >
+                      {/* Thumbnail */}
+                      <div style={{ width: '100%', aspectRatio: '16/9', overflow: 'hidden', position: 'relative', background: '#111' }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={f.file_url} alt={f.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                        {heroImageUrl === f.file_url && (
+                          <div style={{ position: 'absolute', top: 6, right: 6, background: 'var(--accent)', color: 'white', borderRadius: '50%', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 700 }}>✓</div>
+                        )}
+                        {/* Copy URL on hover */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            navigator.clipboard.writeText(f.file_url)
+                            setHeroMediaCopiedId(f.id)
+                            setTimeout(() => setHeroMediaCopiedId(null), 2000)
+                          }}
+                          style={{ position: 'absolute', bottom: 6, right: 6, background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: 6, padding: '3px 6px', cursor: 'pointer', color: 'white', fontSize: '0.65rem', opacity: 0 }}
+                          className="media-copy-btn"
+                        >
+                          {heroMediaCopiedId === f.id ? '✓' : 'copy'}
+                        </button>
+                      </div>
+                      {/* Label */}
+                      <div style={{ padding: '7px 9px' }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--fg)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.title}</div>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--muted)', fontFamily: 'monospace', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.id}</div>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginTop: 2 }}>{formatMediaDate(f.created_at)}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast */}
       {cropFile && (
