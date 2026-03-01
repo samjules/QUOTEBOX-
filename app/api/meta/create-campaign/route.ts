@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
     objective: objConfig.objective,
     status: 'PAUSED',
     special_ad_categories: '[]',
+    is_adset_budget_sharing_enabled: 'false',
     access_token: token,
   })
 
