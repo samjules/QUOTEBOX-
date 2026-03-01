@@ -18,6 +18,15 @@ function esc(s: string) {
     .replace(/"/g, '&quot;')
 }
 
+function isColorDark(hex: string): boolean {
+  const h = hex.replace('#', '')
+  if (h.length < 6) return false
+  const r = parseInt(h.slice(0, 2), 16)
+  const g = parseInt(h.slice(2, 4), 16)
+  const b = parseInt(h.slice(4, 6), 16)
+  return (r * 299 + g * 587 + b * 114) / 1000 < 140
+}
+
 function makeField(type: FormField['type']): FormField {
   const defaults: Record<FormField['type'], Omit<FormField, 'id' | 'type'>> = {
     radio: {
@@ -104,7 +113,7 @@ function CanvasPreview({
 }: {
   fields: FormField[]
   selectedId: string | null
-  brandColor: 'yellow' | 'blue'
+  brandColor: string
   activeTab: 0 | 1 | 2
   formName: string
   formDesc: string
@@ -115,8 +124,16 @@ function CanvasPreview({
   onSelectField: (id: string) => void
   onRemoveField: (id: string, e: React.MouseEvent) => void
 }) {
-  const bg = `${brandColor}-bg`
-  const isBlue = brandColor === 'blue'
+  const isDark = isColorDark(brandColor)
+  const textPrimary = isDark ? 'white' : '#1a1a2e'
+  const textSecondary = isDark ? 'rgba(255,255,255,0.7)' : 'rgba(26,26,46,0.65)'
+  const stepDoneStyle = isDark
+    ? { background: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.7)' }
+    : { background: 'rgba(0,0,0,0.15)', color: 'rgba(0,0,0,0.5)' }
+  const stepTodoStyle = isDark
+    ? { background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.3)' }
+    : { background: 'rgba(0,0,0,0.06)', color: 'rgba(0,0,0,0.3)' }
+  const psLineColor = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.12)'
   const stepLabels = [
     'Step 1 of 3 — Your Quote',
     'Step 2 of 3 — Contact Details',
@@ -132,7 +149,7 @@ function CanvasPreview({
 
   return (
     <div className="preview-card">
-      <div className={`preview-card-header ${bg}`}>
+      <div className="preview-card-header" style={{ background: brandColor }}>
         {/* Hero image */}
         {heroImageUrl && activeTab === 0 && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -153,37 +170,19 @@ function CanvasPreview({
         {/* Step dots */}
         <div className="preview-steps">
           {[0, 1, 2].map((i) => {
-            const cls =
-              i < activeTab ? 'done' : i === activeTab ? 'active' : 'todo'
-            const dotStyle = isBlue
-              ? cls === 'active'
-                ? { background: 'white', color: '#1A56FF' }
+            const cls = i < activeTab ? 'done' : i === activeTab ? 'active' : 'todo'
+            const dotStyle =
+              cls === 'active'
+                ? { background: isDark ? 'white' : '#1a1a2e', color: isDark ? brandColor : textPrimary }
                 : cls === 'done'
-                  ? {
-                      background: 'rgba(255,255,255,0.2)',
-                      color: 'rgba(255,255,255,0.7)',
-                    }
-                  : {
-                      background: 'rgba(255,255,255,0.1)',
-                      color: 'rgba(255,255,255,0.3)',
-                    }
-              : cls === 'active'
-                ? { background: '#1a1a2e', color: '#FFE500' }
-                : cls === 'done'
-                  ? {
-                      background: 'rgba(0,0,0,0.15)',
-                      color: 'rgba(0,0,0,0.5)',
-                    }
-                  : {
-                      background: 'rgba(0,0,0,0.06)',
-                      color: 'rgba(0,0,0,0.3)',
-                    }
+                  ? stepDoneStyle
+                  : stepTodoStyle
             return (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', flex: i < 2 ? undefined : undefined }}>
+              <div key={i} style={{ display: 'flex', alignItems: 'center' }}>
                 <div className="ps-dot" style={dotStyle}>
                   {i + 1}
                 </div>
-                {i < 2 && <div className="ps-line" />}
+                {i < 2 && <div className="ps-line" style={{ background: psLineColor }} />}
               </div>
             )
           })}
@@ -195,13 +194,13 @@ function CanvasPreview({
             fontWeight: 600,
             letterSpacing: '0.05em',
             marginBottom: 7,
-            color: isBlue ? 'rgba(255,255,255,0.55)' : 'rgba(26,26,46,0.5)',
+            color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(26,26,46,0.5)',
           }}
         >
           {stepLabels[activeTab]}
         </div>
-        <div className="pv-title">{esc(formName)}</div>
-        <div className="pv-desc">{esc(formDesc)}</div>
+        <div className="pv-title" style={{ color: textPrimary }}>{esc(formName)}</div>
+        <div className="pv-desc" style={{ color: textSecondary }}>{esc(formDesc)}</div>
       </div>
 
       <div className="preview-card-body">
@@ -356,7 +355,7 @@ function CanvasPreview({
                 <div className="total-prev-val">{currency}–</div>
               </div>
             )}
-            <button className={`sub-btn-prev ${bg}`} style={{ marginTop: 10 }}>
+            <button className="sub-btn-prev" style={{ marginTop: 10, background: brandColor, color: textPrimary }}>
               Next →
             </button>
           </>
@@ -373,8 +372,8 @@ function CanvasPreview({
               <div className="contact-prev-field">Phone Number (optional)</div>
             </div>
             <button
-              className={`sub-btn-prev ${bg}`}
-              style={{ marginTop: 14 }}
+              className="sub-btn-prev"
+              style={{ marginTop: 14, background: brandColor, color: textPrimary }}
             >
               {esc(submitLabel)}
             </button>
@@ -383,7 +382,9 @@ function CanvasPreview({
 
         {activeTab === 2 && (
           <div className="email-notice-prev">
-            <div className={`email-icon-prev ${bg}`}>✉</div>
+            <div className="email-icon-prev" style={{ background: brandColor }}>
+              <span style={{ color: textPrimary }}>✉</span>
+            </div>
             <div className="email-notice-txt">Your quote is on its way!</div>
             <div className="email-notice-sub">
               We&apos;ve received your details and will email your personalised
@@ -790,7 +791,7 @@ export default function FormBuilderPage() {
   // ── State ──
   const [fields, setFields] = useState<FormField[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [brandColor, setBrandColor] = useState<'yellow' | 'blue'>('yellow')
+  const [brandColor, setBrandColor] = useState<string>('#FFE500')
   const [activeTab, setActiveTab] = useState<0 | 1 | 2>(0)
   const [formName, setFormName] = useState('My Quote Form')
   const [formDesc, setFormDesc] = useState('Get an instant price for your project.')
@@ -917,7 +918,8 @@ export default function FormBuilderPage() {
     setSubmitLabel(c.submit_label ?? 'Get My Quote →')
     setCurrency(c.currency ?? '$')
     setFields(c.fields ?? [])
-    setBrandColor(c.brand_color ?? 'yellow')
+    const legacyColors: Record<string, string> = { yellow: '#FFE500', blue: '#1A56FF' }
+    setBrandColor(legacyColors[c.brand_color] ?? c.brand_color ?? '#FFE500')
     setMetaPixelId(c.meta_pixel_id ?? '')
     setMinQuote(c.min_quote ?? 0)
     setHeroImageUrl(c.hero_image_url ?? '')
@@ -1214,7 +1216,8 @@ export default function FormBuilderPage() {
     fields: true,
     settings: true,
     rates: false,
-    advertising: false,
+    ui: false,
+    hosting: false,
   })
   function toggleSection(key: string) {
     setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }))
@@ -1227,17 +1230,7 @@ export default function FormBuilderPage() {
       {/* Builder header */}
       <div className="builder-header">
         <div className="builder-logo">
-          wuote<span>.</span>box{' '}
-          <span
-            style={{
-              fontSize: '0.7rem',
-              color: 'var(--muted)',
-              fontWeight: 400,
-              marginLeft: 8,
-            }}
-          >
-            Form Builder
-          </span>
+          Form Builder
         </div>
         <div className="builder-actions">
           <span className="plan-badge">{planBadge}</span>
@@ -1320,15 +1313,6 @@ export default function FormBuilderPage() {
                     value={submitLabel}
                     onChange={(e) => setSubmitLabel(e.target.value)}
                   />
-                  <label>URL Slug</label>
-                  <input
-                    type="text"
-                    value={formSlug}
-                    onChange={(e) => handleSlugChange(e.target.value)}
-                  />
-                  <div className="slug-prev">
-                    quote-box.com/{formSlug || 'my-quote-form'}
-                  </div>
                   <label>Currency</label>
                   <select
                     value={currency}
@@ -1404,63 +1388,82 @@ export default function FormBuilderPage() {
             )}
           </div>
 
-          {/* ── ADVERTISING & HOSTING ── */}
+          {/* ── UI ── */}
           <div className="sidebar-section">
-            <div className="sidebar-cat-header" onClick={() => toggleSection('advertising')}>
-              <span className="sidebar-cat-title">Advertising &amp; Hosting</span>
-              <span className={`sidebar-cat-chevron${openSections.advertising ? ' open' : ''}`}>▼</span>
+            <div className="sidebar-cat-header" onClick={() => toggleSection('ui')}>
+              <span className="sidebar-cat-title">UI</span>
+              <span className={`sidebar-cat-chevron${openSections.ui ? ' open' : ''}`}>▼</span>
             </div>
-            {openSections.advertising && (
+            {openSections.ui && (
               <div className="sidebar-cat-body">
                 <div className="fm">
-                  <label>Meta Pixel ID</label>
-                  {metaPixelsLoading ? (
-                    <div style={{ fontSize: '0.78rem', color: 'var(--muted)', padding: '6px 0' }}>
-                      Loading pixels…
-                    </div>
-                  ) : metaConnected && metaPixels.length > 0 ? (
-                    <select
-                      value={metaPixelId}
-                      onChange={(e) => setMetaPixelId(e.target.value)}
-                    >
-                      <option value="">— Select a pixel —</option>
-                      {metaPixels.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} ({p.id})
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <>
-                      <input
-                        type="text"
-                        value={metaPixelId}
-                        onChange={(e) => setMetaPixelId(e.target.value)}
-                        placeholder="e.g. 1234567890123456"
-                      />
-                      <div className="slug-prev" style={{ marginTop: 2 }}>
-                        {!metaConnected
-                          ? 'Connect Meta in Settings to pick from your pixels'
-                          : 'No pixels found on this Meta account'}
-                      </div>
-                    </>
-                  )}
                   <label>Brand Colour</label>
-                  <div className="color-picker">
-                    <div
-                      className={`cswatch yellow${brandColor === 'yellow' ? ' active' : ''}`}
-                      onClick={() => setBrandColor('yellow')}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 4, marginBottom: 6 }}>
+                    {([
+                      ['#FFE500', 'Yellow'],
+                      ['#1A56FF', 'Blue'],
+                      ['#10B981', 'Green'],
+                      ['#8B5CF6', 'Purple'],
+                      ['#F97316', 'Orange'],
+                      ['#EF4444', 'Red'],
+                    ] as const).map(([hex, name]) => (
+                      <div
+                        key={hex}
+                        title={name}
+                        onClick={() => setBrandColor(hex)}
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: 6,
+                          background: hex,
+                          cursor: 'pointer',
+                          border: brandColor === hex ? '2px solid var(--accent)' : '2px solid transparent',
+                          boxShadow: brandColor === hex ? '0 0 0 3px rgba(79,70,229,0.18)' : undefined,
+                          transition: 'all 0.13s',
+                          flexShrink: 0,
+                        }}
+                      />
+                    ))}
+                    <label
+                      title="Custom colour"
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: 6,
+                        border: '2px dashed var(--border)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.9rem',
+                        color: 'var(--muted)',
+                        flexShrink: 0,
+                        overflow: 'hidden',
+                        position: 'relative',
+                      }}
                     >
-                      <span>☀</span>
-                      <span className="cswatch-lbl">Yellow</span>
-                    </div>
-                    <div
-                      className={`cswatch blue${brandColor === 'blue' ? ' active' : ''}`}
-                      onClick={() => setBrandColor('blue')}
-                    >
-                      <span style={{ color: 'rgba(255,255,255,0.9)' }}>◈</span>
-                      <span className="cswatch-lbl">Blue</span>
-                    </div>
+                      <input
+                        type="color"
+                        value={brandColor}
+                        onChange={(e) => setBrandColor(e.target.value)}
+                        style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer' }}
+                      />
+                      +
+                    </label>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+                    <div style={{ width: 20, height: 20, borderRadius: 4, background: brandColor, border: '1px solid var(--border)', flexShrink: 0 }} />
+                    <input
+                      className="prop-input"
+                      style={{ fontFamily: 'monospace', fontSize: '0.78rem', flex: 1 }}
+                      value={brandColor}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        if (/^#[0-9A-Fa-f]{0,6}$/.test(v)) setBrandColor(v)
+                      }}
+                      maxLength={7}
+                      placeholder="#FFE500"
+                    />
                   </div>
                   <label>Hero Image</label>
                   <input
@@ -1505,6 +1508,61 @@ export default function FormBuilderPage() {
                     <button className="hero-upload-clear" onClick={() => setHeroImageUrl('')}>
                       Remove hero image
                     </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── HOSTING ── */}
+          <div className="sidebar-section">
+            <div className="sidebar-cat-header" onClick={() => toggleSection('hosting')}>
+              <span className="sidebar-cat-title">Hosting</span>
+              <span className={`sidebar-cat-chevron${openSections.hosting ? ' open' : ''}`}>▼</span>
+            </div>
+            {openSections.hosting && (
+              <div className="sidebar-cat-body">
+                <div className="fm">
+                  <label>URL Slug</label>
+                  <input
+                    type="text"
+                    value={formSlug}
+                    onChange={(e) => handleSlugChange(e.target.value)}
+                  />
+                  <div className="slug-prev">
+                    quote-box.com/{formSlug || 'my-quote-form'}
+                  </div>
+                  <label style={{ marginTop: 10 }}>Meta Pixel ID</label>
+                  {metaPixelsLoading ? (
+                    <div style={{ fontSize: '0.78rem', color: 'var(--muted)', padding: '6px 0' }}>
+                      Loading pixels…
+                    </div>
+                  ) : metaConnected && metaPixels.length > 0 ? (
+                    <select
+                      value={metaPixelId}
+                      onChange={(e) => setMetaPixelId(e.target.value)}
+                    >
+                      <option value="">— Select a pixel —</option>
+                      {metaPixels.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} ({p.id})
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <>
+                      <input
+                        type="text"
+                        value={metaPixelId}
+                        onChange={(e) => setMetaPixelId(e.target.value)}
+                        placeholder="e.g. 1234567890123456"
+                      />
+                      <div className="slug-prev" style={{ marginTop: 2 }}>
+                        {!metaConnected
+                          ? 'Connect Meta in Settings to pick from your pixels'
+                          : 'No pixels found on this Meta account'}
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
