@@ -99,8 +99,8 @@ export default function VSLsPage() {
       return
     }
 
-    if (!file.type.startsWith('video/')) {
-      setError('Please select a video file.')
+    if (!file.type.startsWith('video/') && !file.type.startsWith('image/')) {
+      setError('Please select a video or image file.')
       return
     }
 
@@ -244,7 +244,7 @@ export default function VSLsPage() {
         <input
           ref={fileInputRef}
           type="file"
-          accept="video/*"
+          accept="video/*,image/*"
           className="hidden"
           onChange={handleFileSelect}
         />

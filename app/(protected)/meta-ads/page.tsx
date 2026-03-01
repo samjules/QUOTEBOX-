@@ -3,9 +3,15 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import type { VSL } from '@/lib/types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+interface AdCreative {
+  id: string
+  name: string
+  url: string
+  isImage: boolean
+}
 
 interface AdAccount {
   id: string
@@ -90,7 +96,7 @@ export default function MetaAdsPage() {
   const [createdCampaign, setCreatedCampaign] = useState<CreatedCampaign | null>(null)
   const [error, setError] = useState('')
   const [metaAdAccountId, setMetaAdAccountId] = useState<string | null>(null)
-  const [vsls, setVsls] = useState<VSL[]>([])
+  const [creatives, setCreatives] = useState<AdCreative[]>([])
 
   const [questionnaire, setQuestionnaire] = useState<Questionnaire>({
     objective: 'OUTCOME_LEADS',
@@ -130,19 +136,28 @@ export default function MetaAdsPage() {
 
       setMetaAdAccountId(account.meta_ad_account_id || null)
 
-      // Load VSLs for this account
+      // Load ad creatives from storage bucket
       const { data: accountRow } = await supabase
         .from('accounts')
         .select('id')
         .eq('owner_id', user.id)
         .single()
       if (accountRow) {
-        const { data: vslData } = await supabase
+        const { data: files } = await supabase.storage
           .from('vsls')
-          .select('*')
-          .eq('account_id', accountRow.id)
-          .order('created_at', { ascending: false })
-        setVsls(vslData || [])
+          .list(accountRow.id, { sortBy: { column: 'created_at', order: 'desc' } })
+        const creativeList: AdCreative[] = (files || []).map((file) => {
+          const path = `${accountRow.id}/${file.name}`
+          const { data: urlData } = supabase.storage.from('vsls').getPublicUrl(path)
+          const mime = file.metadata?.mimetype || ''
+          return {
+            id: file.id || path,
+            name: file.name,
+            url: urlData.publicUrl,
+            isImage: mime.startsWith('image/'),
+          }
+        })
+        setCreatives(creativeList)
       }
 
       if (!account.meta_ad_account_id) {
@@ -654,43 +669,43 @@ export default function MetaAdsPage() {
                 </div>
               </div>
 
-              {/* VSL Picker */}
+              {/* Ad Creative Picker */}
               <div className="border-t border-gray-100 pt-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Attach a VSL{' '}
+                  Attach Ad Creative{' '}
                   <span className="text-gray-400 font-normal">(optional)</span>
                 </label>
                 <p className="text-xs text-gray-400 mb-2">
-                  Select a video sales letter to include its URL with your campaign.
+                  Select an image or video to include its URL with your campaign.
                 </p>
-                {vsls.length === 0 ? (
+                {creatives.length === 0 ? (
                   <div className="flex items-center gap-2 text-sm text-gray-400 bg-gray-50 rounded-lg px-3 py-2.5">
                     <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.882v6.236a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    No VSLs uploaded yet.{' '}
+                    No creatives uploaded yet.{' '}
                     <Link href="/vsls" className="text-indigo-600 hover:underline font-medium">
-                      Upload one in VSL Library
+                      Upload one in Media Library
                     </Link>
                   </div>
                 ) : (
                   <select
                     value={questionnaire.vslId || ''}
                     onChange={(e) => {
-                      const selected = vsls.find((v) => v.id === e.target.value) || null
+                      const selected = creatives.find((c) => c.id === e.target.value) || null
                       setQuestionnaire((q) => ({
                         ...q,
                         vslId: selected?.id || null,
-                        vslUrl: selected?.file_url || null,
-                        vslTitle: selected?.title || null,
+                        vslUrl: selected?.url || null,
+                        vslTitle: selected?.name || null,
                       }))
                     }}
                     className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
-                    <option value="">No VSL (skip)</option>
-                    {vsls.map((v) => (
-                      <option key={v.id} value={v.id}>
-                        {v.title}
+                    <option value="">No creative (skip)</option>
+                    {creatives.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.isImage ? '🖼 ' : '🎬 '}{c.name}
                       </option>
                     ))}
                   </select>
@@ -781,12 +796,17 @@ export default function MetaAdsPage() {
 
                 {questionnaire.vslUrl && (
                   <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
-                    <p className="text-xs font-medium text-indigo-400 uppercase tracking-wider mb-2">Attached VSL</p>
+                    <p className="text-xs font-medium text-indigo-400 uppercase tracking-wider mb-2">Attached Creative</p>
                     <div className="flex items-center gap-3">
-                      <div className="flex-shrink-0 w-12 h-9 bg-indigo-100 rounded-lg flex items-center justify-center">
-                        <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.882v6.236a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
+                      <div className="flex-shrink-0 w-12 h-9 bg-indigo-100 rounded-lg flex items-center justify-center overflow-hidden">
+                        {creatives.find((c) => c.id === questionnaire.vslId)?.isImage ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={questionnaire.vslUrl} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.882v6.236a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-indigo-900 truncate">{questionnaire.vslTitle}</p>
@@ -802,7 +822,7 @@ export default function MetaAdsPage() {
                       </a>
                     </div>
                     <p className="text-xs text-indigo-500 mt-2">
-                      Copy this URL and attach the video to your ad creative inside Meta Ads Manager.
+                      Copy this URL and attach the creative to your ad inside Meta Ads Manager.
                     </p>
                   </div>
                 )}
