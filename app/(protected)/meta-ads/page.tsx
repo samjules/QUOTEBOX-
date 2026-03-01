@@ -313,6 +313,148 @@ function ZipCodeMap({
   )
 }
 
+// ─── CTA label map ────────────────────────────────────────────────────────────
+const CTA_LABELS: Record<string, string> = {
+  LEARN_MORE: 'Learn More',
+  GET_QUOTE: 'Get Quote',
+  CONTACT_US: 'Contact Us',
+  SIGN_UP: 'Sign Up',
+  BOOK_NOW: 'Book Now',
+  SHOP_NOW: 'Shop Now',
+  APPLY_NOW: 'Apply Now',
+  GET_OFFER: 'Get Offer',
+  SUBSCRIBE: 'Subscribe',
+}
+
+// ─── FacebookAdPreview ────────────────────────────────────────────────────────
+function FacebookAdPreview({
+  pageName,
+  bodyText,
+  headline,
+  destinationUrl,
+  vslUrl,
+  isImage,
+  cta,
+}: {
+  pageName: string
+  bodyText: string
+  headline: string
+  destinationUrl: string
+  vslUrl: string | null
+  isImage: boolean
+  cta: string
+}) {
+  let domain = 'quote-box.com'
+  try {
+    if (destinationUrl) domain = new URL(destinationUrl).hostname.replace(/^www\./, '')
+  } catch { /* keep default */ }
+
+  const pageInitial = (pageName || 'P').charAt(0).toUpperCase()
+  const ctaLabel = CTA_LABELS[cta] ?? 'Learn More'
+
+  return (
+    /* Outer feed wrapper */
+    <div style={{ background: '#f0f2f5', borderRadius: 12, padding: '12px 0', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}>
+      {/* Feed context label */}
+      <p style={{ fontSize: 11, color: '#65676b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', padding: '0 12px 6px' }}>
+        Ad Preview — Facebook Feed
+      </p>
+
+      {/* Ad card */}
+      <div style={{ background: 'white', border: '1px solid #dddfe2', borderRadius: 8, overflow: 'hidden' }}>
+
+        {/* Top bar */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px 8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* Avatar */}
+            <div style={{
+              width: 40, height: 40, borderRadius: '50%', background: '#1877f2',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'white', fontWeight: 700, fontSize: 16, flexShrink: 0,
+            }}>
+              {pageInitial}
+            </div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#050505', lineHeight: 1.3 }}>
+                {pageName || 'Your Page'}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#65676b', lineHeight: 1.3 }}>
+                <span>Sponsored</span>
+                <span style={{ fontSize: 10 }}>·</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="#65676b"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+              </div>
+            </div>
+          </div>
+          {/* Three dots */}
+          <div style={{ display: 'flex', gap: 2 }}>
+            {[0,1,2].map(i => (
+              <div key={i} style={{ width: 4, height: 4, borderRadius: '50%', background: '#65676b' }} />
+            ))}
+          </div>
+        </div>
+
+        {/* Primary text (body copy) */}
+        <div style={{ padding: '0 16px 10px', fontSize: 14, color: '#050505', lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+          {bodyText || (
+            <span style={{ color: '#bcc0c4', fontStyle: 'italic' }}>Your ad body copy will appear here…</span>
+          )}
+        </div>
+
+        {/* Creative / image area */}
+        {vslUrl && isImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={vslUrl} alt="Ad creative" style={{ width: '100%', maxHeight: 320, objectFit: 'cover', display: 'block' }} />
+        ) : vslUrl && !isImage ? (
+          <div style={{ width: '100%', height: 240, background: '#1c1c1e', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+            <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>Video Ad</span>
+          </div>
+        ) : (
+          <div style={{ width: '100%', height: 240, background: 'linear-gradient(135deg, #e8ecf4 0%, #d0d8eb 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="#bcc0c4"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+            <span style={{ fontSize: 12, color: '#bcc0c4', fontWeight: 500 }}>Your Ad Image</span>
+          </div>
+        )}
+
+        {/* Link bar */}
+        <div style={{ background: '#f0f2f5', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 11, color: '#65676b', textTransform: 'uppercase', fontWeight: 500, marginBottom: 2, letterSpacing: '0.03em' }}>
+              {domain}
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#050505', lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+              {headline || <span style={{ color: '#bcc0c4', fontWeight: 400, fontStyle: 'italic' }}>Headline will appear here</span>}
+            </div>
+          </div>
+          <div style={{
+            flexShrink: 0, background: '#e4e6eb', borderRadius: 6,
+            padding: '7px 14px', fontSize: 14, fontWeight: 600, color: '#050505',
+            whiteSpace: 'nowrap', cursor: 'default',
+          }}>
+            {ctaLabel}
+          </div>
+        </div>
+
+        {/* Reaction bar */}
+        <div style={{ borderTop: '1px solid #e4e6eb', display: 'flex', padding: '2px 0' }}>
+          {[
+            { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#65676b" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/></svg>, label: 'Like' },
+            { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#65676b" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>, label: 'Comment' },
+            { icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#65676b" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>, label: 'Share' },
+          ].map(({ icon, label }) => (
+            <button key={label} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '8px 4px', background: 'none', border: 'none', cursor: 'default', color: '#65676b', fontSize: 14, fontWeight: 600, fontFamily: 'inherit' }}>
+              {icon}
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function MetaAdsPage() {
@@ -1185,7 +1327,7 @@ export default function MetaAdsPage() {
         {step === 5 && (
           <div>
             <h2 className="font-semibold text-gray-900 mb-1">AI-Generated Campaign</h2>
-            <p className="text-sm text-gray-500 mb-4">Review your AI-generated copy and targeting suggestions.</p>
+            <p className="text-sm text-gray-500 mb-4">Pick a headline and body copy — the ad preview updates live.</p>
 
             {!generatedCopy && !generating && (
               <button
@@ -1204,53 +1346,42 @@ export default function MetaAdsPage() {
             )}
 
             {generatedCopy && !generating && (
-              <div className="space-y-5">
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Strategy</p>
-                  <p className="text-sm text-gray-700">{generatedCopy.summary}</p>
-                </div>
+              <div className="space-y-6">
 
-                {questionnaire.vslUrl && (
-                  <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
-                    <p className="text-xs font-medium text-indigo-400 uppercase tracking-wider mb-2">Attached Creative</p>
-                    <div className="flex items-center gap-3">
-                      <div className="flex-shrink-0 w-12 h-9 bg-indigo-100 rounded-lg flex items-center justify-center overflow-hidden">
-                        {creatives.find((c) => c.id === questionnaire.vslId)?.isImage ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={questionnaire.vslUrl} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.882v6.236a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-indigo-900 truncate">{questionnaire.vslTitle}</p>
-                        <p className="text-xs text-indigo-400 truncate">{questionnaire.vslUrl}</p>
-                      </div>
-                      <a
-                        href={questionnaire.vslUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-indigo-600 hover:underline flex-shrink-0"
-                      >
-                        Preview
-                      </a>
-                    </div>
-                    <p className="text-xs text-indigo-500 mt-2">
-                      Copy this URL and attach the creative to your ad inside Meta Ads Manager.
-                    </p>
-                  </div>
-                )}
+                {/* ── Live Facebook ad preview ── */}
+                <FacebookAdPreview
+                  pageName={pages.find((p) => p.id === questionnaire.pageId)?.name ?? ''}
+                  bodyText={questionnaire.selectedBodyText}
+                  headline={questionnaire.selectedHeadline}
+                  destinationUrl={questionnaire.destinationUrl}
+                  vslUrl={questionnaire.vslUrl}
+                  isImage={creatives.find((c) => c.id === questionnaire.vslId)?.isImage ?? false}
+                  cta={generatedCopy.cta}
+                />
 
+                {/* ── Strategy (collapsed summary) ── */}
+                <details className="group">
+                  <summary className="flex items-center justify-between cursor-pointer text-xs font-medium text-gray-400 uppercase tracking-wider select-none list-none">
+                    <span>AI Strategy</span>
+                    <svg className="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </summary>
+                  <p className="mt-2 text-sm text-gray-600 leading-relaxed bg-gray-50 rounded-lg p-3">{generatedCopy.summary}</p>
+                </details>
+
+                {/* ── Headline picker ── */}
                 <div>
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Select a Headline</p>
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
+                    Select a Headline
+                    {questionnaire.selectedHeadline && <span className="ml-2 text-indigo-500 normal-case font-normal">← shown in preview</span>}
+                  </p>
                   <div className="space-y-2">
                     {generatedCopy.headlines.map((h, i) => (
                       <button
                         key={i}
                         onClick={() => setQuestionnaire((q) => ({ ...q, selectedHeadline: h }))}
-                        className={`w-full text-left px-3 py-2 rounded-lg border-2 text-sm transition ${
+                        className={`w-full text-left px-3 py-2.5 rounded-lg border-2 text-sm transition ${
                           questionnaire.selectedHeadline === h
                             ? 'border-indigo-600 bg-indigo-50 text-indigo-900 font-medium'
                             : 'border-gray-200 text-gray-800 hover:border-gray-300'
@@ -1262,14 +1393,18 @@ export default function MetaAdsPage() {
                   </div>
                 </div>
 
+                {/* ── Body copy picker ── */}
                 <div>
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Select Body Copy</p>
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
+                    Select Body Copy
+                    {questionnaire.selectedBodyText && <span className="ml-2 text-indigo-500 normal-case font-normal">← shown in preview</span>}
+                  </p>
                   <div className="space-y-2">
                     {generatedCopy.bodyTexts.map((b, i) => (
                       <button
                         key={i}
                         onClick={() => setQuestionnaire((q) => ({ ...q, selectedBodyText: b }))}
-                        className={`w-full text-left px-3 py-2 rounded-lg border-2 text-sm transition ${
+                        className={`w-full text-left px-3 py-2.5 rounded-lg border-2 text-sm transition ${
                           questionnaire.selectedBodyText === b
                             ? 'border-indigo-600 bg-indigo-50 text-indigo-900 font-medium'
                             : 'border-gray-200 text-gray-800 hover:border-gray-300'
@@ -1281,6 +1416,7 @@ export default function MetaAdsPage() {
                   </div>
                 </div>
 
+                {/* ── Targeting keywords ── */}
                 <div>
                   <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Suggested Targeting Keywords</p>
                   <div className="flex flex-wrap gap-2">
@@ -1292,6 +1428,7 @@ export default function MetaAdsPage() {
                   </div>
                 </div>
 
+                {/* ── Facebook page selector ── */}
                 {pages.length > 1 && (
                   <div>
                     <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Facebook Page</label>
@@ -1314,7 +1451,8 @@ export default function MetaAdsPage() {
                   </div>
                 )}
 
-                <div className="flex gap-3 pt-2">
+                {/* ── Actions ── */}
+                <div className="flex gap-3 pt-1">
                   <button
                     onClick={() => { setGeneratedCopy(null); setQuestionnaire((q) => ({ ...q, selectedHeadline: '', selectedBodyText: '' })) }}
                     className="flex-1 text-gray-600 font-medium py-2.5 px-4 rounded-xl border border-gray-200 hover:border-gray-300 transition text-sm"
@@ -1330,7 +1468,7 @@ export default function MetaAdsPage() {
                   </button>
                 </div>
                 {(!questionnaire.selectedHeadline || !questionnaire.selectedBodyText) && (
-                  <p className="text-xs text-gray-400 text-center">Select a headline and body copy above to continue</p>
+                  <p className="text-xs text-gray-400 text-center -mt-2">Select a headline and body copy above to continue</p>
                 )}
               </div>
             )}
