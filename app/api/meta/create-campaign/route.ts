@@ -67,7 +67,8 @@ export async function POST(request: NextRequest) {
     duration: number | 'ongoing'
     targetAge?: { min: number; max: number }
     targetGender?: string
-    targetLocation?: string
+    targetLocation?: string        // 2-letter country code
+    targetPostalCodes?: string[]   // e.g. ["US:90210", "US:10001"]
     destinationUrl?: string
     pageId?: string
     headline?: string
@@ -128,9 +129,16 @@ export async function POST(request: NextRequest) {
     targeting.genders = [2]
   }
 
-  if (body.targetLocation) {
+  if (body.targetPostalCodes && body.targetPostalCodes.length > 0) {
+    // Postal code targeting — format: [{ key: "US:90210" }, ...]
     targeting.geo_locations = {
-      countries: [body.targetLocation.toUpperCase().slice(0, 2)],
+      zips: body.targetPostalCodes.map((z) => ({ key: z })),
+    }
+  } else if (body.targetLocation) {
+    // Country targeting — must be a valid ISO 3166-1 alpha-2 code
+    const countryCode = body.targetLocation.toUpperCase().trim()
+    targeting.geo_locations = {
+      countries: [/^[A-Z]{2}$/.test(countryCode) ? countryCode : 'US'],
     }
   } else {
     targeting.geo_locations = { countries: ['US'] }

@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import 'mapbox-gl/dist/mapbox-gl.css'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
@@ -55,7 +56,10 @@ interface Questionnaire {
   ageMin: number
   ageMax: number
   gender: string
-  location: string
+  locationType: 'country' | 'postal'
+  location: string          // 2-letter country code when locationType === 'country'
+  postalCodes: string[]     // zip codes when locationType === 'postal'
+  postalCountry: string     // country prefix for zip codes
   interests: string
   businessOffer: string
   sellingPoints: string
@@ -97,6 +101,218 @@ const DURATIONS = [
   { value: 'ongoing' as const, label: 'Ongoing (no end date)' },
 ]
 
+const COUNTRIES = [
+  { code: 'US', name: 'United States' },
+  { code: 'CA', name: 'Canada' },
+  { code: 'GB', name: 'United Kingdom' },
+  { code: 'AU', name: 'Australia' },
+  { code: 'NZ', name: 'New Zealand' },
+  { code: 'IE', name: 'Ireland' },
+  { code: 'ZA', name: 'South Africa' },
+  { code: 'IN', name: 'India' },
+  { code: 'SG', name: 'Singapore' },
+  { code: 'DE', name: 'Germany' },
+  { code: 'FR', name: 'France' },
+  { code: 'NL', name: 'Netherlands' },
+  { code: 'AE', name: 'United Arab Emirates' },
+  { code: 'BR', name: 'Brazil' },
+  { code: 'MX', name: 'Mexico' },
+  { code: 'JP', name: 'Japan' },
+  { code: 'PH', name: 'Philippines' },
+  { code: 'MY', name: 'Malaysia' },
+]
+
+const POSTAL_COUNTRIES = [
+  { code: 'US', label: 'US' },
+  { code: 'CA', label: 'CA' },
+  { code: 'GB', label: 'GB' },
+  { code: 'AU', label: 'AU' },
+  { code: 'DE', label: 'DE' },
+  { code: 'FR', label: 'FR' },
+  { code: 'NL', label: 'NL' },
+]
+
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
+
+// ─── ZipCodeMap ───────────────────────────────────────────────────────────────
+
+function ZipCodeMap({
+  postalCodes,
+  postalCountry,
+  onAdd,
+  onRemove,
+  onCountryChange,
+}: {
+  postalCodes: string[]
+  postalCountry: string
+  onAdd: (code: string) => void
+  onRemove: (code: string) => void
+  onCountryChange: (country: string) => void
+}) {
+  const mapContainerRef = useRef<HTMLDivElement>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mapRef = useRef<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const markersRef = useRef<any[]>([])
+  const [mapLoaded, setMapLoaded] = useState(false)
+  const [inputVal, setInputVal] = useState('')
+  const [geocodeCache, setGeocodeCache] = useState<Record<string, [number, number] | null>>({})
+  const [isGeocoding, setIsGeocoding] = useState(false)
+
+  // Init Mapbox map
+  useEffect(() => {
+    if (!mapContainerRef.current || !MAPBOX_TOKEN) return
+    let cancelled = false
+    import('mapbox-gl').then((mod) => {
+      if (cancelled || !mapContainerRef.current) return
+      const mapboxgl = mod.default
+      mapboxgl.accessToken = MAPBOX_TOKEN
+      const map = new mapboxgl.Map({
+        container: mapContainerRef.current,
+        style: 'mapbox://styles/mapbox/light-v11',
+        center: [-95.7, 37.1],
+        zoom: 3,
+      })
+      mapRef.current = map
+      map.on('load', () => { if (!cancelled) setMapLoaded(true) })
+    }).catch(() => {})
+    return () => {
+      cancelled = true
+      mapRef.current?.remove()
+      mapRef.current = null
+    }
+  }, [])
+
+  // Update markers whenever geocodeCache or postalCodes changes
+  useEffect(() => {
+    if (!mapLoaded || !mapRef.current) return
+    import('mapbox-gl').then((mod) => {
+      const mapboxgl = mod.default
+      // Clear existing markers
+      markersRef.current.forEach((m) => m.remove())
+      markersRef.current = []
+
+      const validCoords: [number, number][] = []
+      postalCodes.forEach((code) => {
+        const coords = geocodeCache[code]
+        if (coords) {
+          validCoords.push(coords)
+          const el = document.createElement('div')
+          el.style.cssText =
+            'width:12px;height:12px;border-radius:50%;background:#4f46e5;border:2.5px solid white;box-shadow:0 1px 5px rgba(0,0,0,0.3)'
+          markersRef.current.push(
+            new mapboxgl.Marker({ element: el }).setLngLat(coords).addTo(mapRef.current)
+          )
+        }
+      })
+
+      if (validCoords.length === 1) {
+        mapRef.current.flyTo({ center: validCoords[0], zoom: 10 })
+      } else if (validCoords.length > 1) {
+        const bounds = new mapboxgl.LngLatBounds()
+        validCoords.forEach((c) => bounds.extend(c))
+        mapRef.current.fitBounds(bounds, { padding: 60, maxZoom: 12 })
+      }
+    })
+  }, [postalCodes, geocodeCache, mapLoaded])
+
+  async function geocode(code: string) {
+    if (!MAPBOX_TOKEN) return
+    setIsGeocoding(true)
+    try {
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(code)}.json?access_token=${MAPBOX_TOKEN}&types=postcode&country=${postalCountry.toLowerCase()}&limit=1`
+      const res = await fetch(url)
+      const data = await res.json()
+      const coords = (data.features?.[0]?.center ?? null) as [number, number] | null
+      setGeocodeCache((prev) => ({ ...prev, [code]: coords }))
+    } catch {
+      setGeocodeCache((prev) => ({ ...prev, [code]: null }))
+    }
+    setIsGeocoding(false)
+  }
+
+  function handleAdd() {
+    const code = inputVal.trim().toUpperCase()
+    if (!code || postalCodes.includes(code)) return
+    setInputVal('')
+    onAdd(code)
+    geocode(code)
+  }
+
+  return (
+    <div>
+      {/* Country + zip input row */}
+      <div className="flex gap-2 mb-3">
+        <select
+          value={postalCountry}
+          onChange={(e) => onCountryChange(e.target.value)}
+          className="border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          style={{ minWidth: 72 }}
+        >
+          {POSTAL_COUNTRIES.map((c) => (
+            <option key={c.code} value={c.code}>{c.label}</option>
+          ))}
+        </select>
+        <input
+          type="text"
+          placeholder="Enter zip / postal code…"
+          value={inputVal}
+          onChange={(e) => setInputVal(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAdd() } }}
+          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+        <button
+          onClick={handleAdd}
+          disabled={!inputVal.trim()}
+          className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
+        >
+          Add
+        </button>
+      </div>
+
+      {/* Chips */}
+      {postalCodes.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {postalCodes.map((code) => (
+            <span
+              key={code}
+              className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 text-xs font-medium px-2.5 py-1 rounded-full border border-indigo-100"
+            >
+              {postalCountry}-{code}
+              <button
+                onClick={() => onRemove(code)}
+                className="ml-0.5 hover:text-indigo-900 leading-none"
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+          {isGeocoding && (
+            <span className="text-xs text-gray-400 self-center italic">Locating on map…</span>
+          )}
+        </div>
+      )}
+
+      {/* Map */}
+      <div
+        ref={mapContainerRef}
+        style={{
+          height: 220,
+          borderRadius: 10,
+          overflow: 'hidden',
+          border: '1px solid #e5e4e0',
+          background: '#eef2f7',
+        }}
+      />
+      {postalCodes.length === 0 && (
+        <p className="text-xs text-gray-400 text-center mt-2">
+          Add zip codes above — they&apos;ll appear as pins on the map
+        </p>
+      )}
+    </div>
+  )
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function MetaAdsPage() {
@@ -123,7 +339,10 @@ export default function MetaAdsPage() {
     ageMin: 25,
     ageMax: 55,
     gender: 'all',
+    locationType: 'postal',
     location: 'US',
+    postalCodes: [],
+    postalCountry: 'US',
     interests: '',
     businessOffer: '',
     sellingPoints: '',
@@ -346,7 +565,10 @@ export default function MetaAdsPage() {
           duration: questionnaire.duration,
           targetAge: { min: questionnaire.ageMin, max: questionnaire.ageMax },
           targetGender: questionnaire.gender,
-          targetLocation: questionnaire.location,
+          targetLocation: questionnaire.locationType === 'country' ? questionnaire.location : undefined,
+          targetPostalCodes: questionnaire.locationType === 'postal' && questionnaire.postalCodes.length > 0
+            ? questionnaire.postalCodes.map((z) => `${questionnaire.postalCountry}:${z}`)
+            : undefined,
           destinationUrl: questionnaire.destinationUrl,
           pageId: questionnaire.pageId,
           headline: questionnaire.selectedHeadline,
@@ -382,7 +604,10 @@ export default function MetaAdsPage() {
       ageMin: 25,
       ageMax: 55,
       gender: 'all',
+      locationType: 'postal',
       location: 'US',
+      postalCodes: [],
+      postalCountry: 'US',
       interests: '',
       businessOffer: '',
       sellingPoints: '',
@@ -754,14 +979,50 @@ export default function MetaAdsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Country / Region</label>
-                <input
-                  type="text"
-                  placeholder="e.g. US, CA, GB"
-                  value={questionnaire.location}
-                  onChange={(e) => setQuestionnaire((q) => ({ ...q, location: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Location Targeting</label>
+                {/* Toggle */}
+                <div className="flex gap-2 mb-3">
+                  <button
+                    onClick={() => setQuestionnaire((q) => ({ ...q, locationType: 'postal' }))}
+                    className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition ${
+                      questionnaire.locationType === 'postal'
+                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    }`}
+                  >
+                    📍 Zip Codes
+                  </button>
+                  <button
+                    onClick={() => setQuestionnaire((q) => ({ ...q, locationType: 'country' }))}
+                    className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition ${
+                      questionnaire.locationType === 'country'
+                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    }`}
+                  >
+                    🌐 Country
+                  </button>
+                </div>
+
+                {questionnaire.locationType === 'country' ? (
+                  <select
+                    value={questionnaire.location}
+                    onChange={(e) => setQuestionnaire((q) => ({ ...q, location: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    {COUNTRIES.map((c) => (
+                      <option key={c.code} value={c.code}>{c.name} ({c.code})</option>
+                    ))}
+                  </select>
+                ) : (
+                  <ZipCodeMap
+                    postalCodes={questionnaire.postalCodes}
+                    postalCountry={questionnaire.postalCountry}
+                    onAdd={(code) => setQuestionnaire((q) => ({ ...q, postalCodes: [...q.postalCodes, code] }))}
+                    onRemove={(code) => setQuestionnaire((q) => ({ ...q, postalCodes: q.postalCodes.filter((z) => z !== code) }))}
+                    onCountryChange={(country) => setQuestionnaire((q) => ({ ...q, postalCountry: country, postalCodes: [] }))}
+                  />
+                )}
               </div>
 
               <div>
