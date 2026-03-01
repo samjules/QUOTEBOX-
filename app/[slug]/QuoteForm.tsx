@@ -64,14 +64,15 @@ async function getDirections(
 }
 
 // ── Pricing ────────────────────────────────────────────────────
-function applyConditionalRules(
+// Returns the conditional rate if a rule matches, otherwise the base rate.
+// First matching rule wins.
+function applyConditionalRate(
   rules: ConditionalRule[] | undefined,
-  baseValue: number,
+  baseRate: number,
   fields: FormField[],
   answers: Record<string, unknown>,
 ): number {
-  if (!rules?.length) return baseValue
-  let value = baseValue
+  if (!rules?.length) return baseRate
   for (const rule of rules) {
     if (!rule.whenFieldId || !rule.whenValue) continue
     const watchField = fields.find((f) => f.id === rule.whenFieldId)
@@ -85,12 +86,9 @@ function applyConditionalRules(
       matches = ((watchAnswer as string[]) ?? []).includes(rule.whenValue)
     }
 
-    if (matches) {
-      if (rule.action === 'multiply') value *= rule.amount
-      else if (rule.action === 'add') value += rule.amount
-    }
+    if (matches) return rule.rate
   }
-  return value
+  return baseRate
 }
 
 function computeTotal(
@@ -102,26 +100,24 @@ function computeTotal(
   for (const f of fields) {
     if (f.type === 'radio' || f.type === 'dropdown') {
       const opt = f.options?.find((o) => o.id === (answers[f.id] as string))
-      if (opt) total += applyConditionalRules(f.conditionalRules, opt.price, fields, answers)
+      if (opt) total += opt.price
     } else if (f.type === 'checkbox') {
-      let checkboxTotal = 0
       for (const oid of (answers[f.id] as string[]) ?? []) {
         const opt = f.options?.find((o) => o.id === oid)
-        if (opt) checkboxTotal += opt.price
+        if (opt) total += opt.price
       }
-      total += applyConditionalRules(f.conditionalRules, checkboxTotal, fields, answers)
     } else if (f.type === 'number') {
-      const effectiveRate = applyConditionalRules(f.conditionalRules, f.ratePerUnit ?? 0, fields, answers)
+      const effectiveRate = applyConditionalRate(f.conditionalRules, f.ratePerUnit ?? 0, fields, answers)
       total += (Number(answers[f.id]) || 0) * effectiveRate
     } else if (f.type === 'route') {
       const rd = routeData[f.id]
       if (rd && f.routeChargeType !== 'none') {
-        let routeCost = 0
+        const effectiveMileRate = applyConditionalRate(f.conditionalRules, f.ratePerMile ?? 0, fields, answers)
+        const effectiveMinRate = applyConditionalRate(f.conditionalRules, f.ratePerMinute ?? 0, fields, answers)
         if (f.routeChargeType === 'mileage' || f.routeChargeType === 'both')
-          routeCost += rd.distanceMiles * (f.ratePerMile ?? 0)
+          total += rd.distanceMiles * effectiveMileRate
         if (f.routeChargeType === 'drivetime' || f.routeChargeType === 'both')
-          routeCost += rd.durationMinutes * (f.ratePerMinute ?? 0)
-        total += applyConditionalRules(f.conditionalRules, routeCost, fields, answers)
+          total += rd.durationMinutes * effectiveMinRate
       }
     }
   }

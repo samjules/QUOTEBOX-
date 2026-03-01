@@ -629,7 +629,7 @@ function PropsPanel({
       )}
 
       {/* ── Conditional Rate Rules ── */}
-      {(hasOpts || hasRate || isRoute) && (
+      {(hasRate || isRoute) && (
         <div className="prop-group" style={{ marginTop: 12 }}>
           <div className="prop-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>Conditional Rate Rules</span>
@@ -643,14 +643,13 @@ function PropsPanel({
           </div>
           {(field.conditionalRules ?? []).length === 0 && (
             <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: 4, lineHeight: 1.45 }}>
-              Adjust this field&apos;s rate based on another field&apos;s answer.
+              Set a different rate when a specific answer is selected.
             </div>
           )}
           {(field.conditionalRules ?? []).map((rule) => {
             const triggerField = allFields.find((f) => f.id === rule.whenFieldId)
-            const eligibleFields = allFields.filter(
-              (f) => f.id !== field.id && ['radio', 'dropdown', 'checkbox'].includes(f.type)
-            )
+            const otherFields = allFields.filter((f) => f.id !== field.id)
+            const hasOptions = triggerField && ['radio', 'dropdown', 'checkbox'].includes(triggerField.type)
             return (
               <div
                 key={rule.id}
@@ -678,50 +677,53 @@ function PropsPanel({
                     }}
                   >
                     <option value="">— pick a field —</option>
-                    {eligibleFields.map((f) => (
+                    {otherFields.map((f) => (
                       <option key={f.id} value={f.id}>{f.label}</option>
                     ))}
                   </select>
                 </div>
 
-                {/* When value */}
+                {/* When value — dropdown for option fields, text input for others */}
                 {triggerField && (
                   <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
                     <span style={{ fontSize: '0.72rem', color: 'var(--muted)', whiteSpace: 'nowrap', minWidth: 30 }}>=</span>
-                    <select
-                      className="prop-input"
-                      style={{ flex: 1, fontSize: '0.75rem', padding: '4px 6px' }}
-                      value={rule.whenValue}
-                      onChange={(e) => onSetRule(field.id, rule.id, 'whenValue', e.target.value)}
-                    >
-                      <option value="">— pick a value —</option>
-                      {(triggerField.options ?? []).map((o) => (
-                        <option key={o.id} value={o.id}>{o.label}</option>
-                      ))}
-                    </select>
+                    {hasOptions ? (
+                      <select
+                        className="prop-input"
+                        style={{ flex: 1, fontSize: '0.75rem', padding: '4px 6px' }}
+                        value={rule.whenValue}
+                        onChange={(e) => onSetRule(field.id, rule.id, 'whenValue', e.target.value)}
+                      >
+                        <option value="">— pick a value —</option>
+                        {(triggerField.options ?? []).map((o) => (
+                          <option key={o.id} value={o.id}>{o.label}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        className="prop-input"
+                        style={{ flex: 1, fontSize: '0.75rem', padding: '4px 6px' }}
+                        placeholder="match value…"
+                        value={rule.whenValue}
+                        onChange={(e) => onSetRule(field.id, rule.id, 'whenValue', e.target.value)}
+                      />
+                    )}
                   </div>
                 )}
 
-                {/* Action + amount */}
+                {/* Conditional rate */}
                 <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
-                  <select
-                    className="prop-input"
-                    style={{ flex: 1, fontSize: '0.75rem', padding: '4px 6px' }}
-                    value={rule.action}
-                    onChange={(e) => onSetRule(field.id, rule.id, 'action', e.target.value)}
-                  >
-                    <option value="multiply">Multiply rate ×</option>
-                    <option value="add">Add flat amount +</option>
-                  </select>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--muted)', whiteSpace: 'nowrap', minWidth: 30 }}>Rate</span>
                   <input
                     className="prop-input"
                     type="number"
                     min={0}
                     step={0.01}
-                    style={{ width: 60, fontSize: '0.75rem', padding: '4px 6px' }}
-                    value={rule.amount}
+                    style={{ flex: 1, fontSize: '0.75rem', padding: '4px 6px' }}
+                    placeholder="0.00"
+                    value={rule.rate}
                     onChange={(e) =>
-                      onSetRule(field.id, rule.id, 'amount', parseFloat(e.target.value) || 0)
+                      onSetRule(field.id, rule.id, 'rate', parseFloat(e.target.value) || 0)
                     }
                   />
                 </div>
@@ -976,8 +978,7 @@ export default function FormBuilderPage() {
       id: uid(),
       whenFieldId: '',
       whenValue: '',
-      action: 'multiply',
-      amount: 1,
+      rate: 0,
     }
     setFields((prev) =>
       prev.map((f) =>

@@ -20,9 +20,8 @@ export interface FieldOption {
 export interface ConditionalRule {
   id: string
   whenFieldId: string   // ID of the field to watch
-  whenValue: string     // Option ID to match on the watched field
-  action: 'multiply' | 'add'
-  amount: number        // multiplier (e.g. 1.5) for multiply, flat $ for add
+  whenValue: string     // Option ID (or value) to match on the watched field
+  rate: number          // Conditional rate to use when condition is met
 }
 
 export interface FormField {
