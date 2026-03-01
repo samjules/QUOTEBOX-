@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
 
     if (!campaignRes.ok || !campaignData.id) {
       return NextResponse.json(
-        { error: campaignData.error?.message || 'Campaign creation failed' },
+        { error: campaignData.error?.message || 'Campaign creation failed', meta_error: campaignData.error },
         { status: 400 }
       )
     }
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
 
     if (!adSetRes.ok || !adSetData.id) {
       return NextResponse.json(
-        { error: adSetData.error?.message || 'Ad set creation failed' },
+        { error: adSetData.error?.message || 'Ad set creation failed', meta_error: adSetData.error },
         { status: 400 }
       )
     }
