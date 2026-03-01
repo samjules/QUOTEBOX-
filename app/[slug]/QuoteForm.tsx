@@ -3,7 +3,7 @@
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { FormField, HostedForm } from '@/lib/types'
+import type { FormField, HostedForm, ConditionalRule } from '@/lib/types'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 
@@ -64,6 +64,35 @@ async function getDirections(
 }
 
 // ── Pricing ────────────────────────────────────────────────────
+function applyConditionalRules(
+  rules: ConditionalRule[] | undefined,
+  baseValue: number,
+  fields: FormField[],
+  answers: Record<string, unknown>,
+): number {
+  if (!rules?.length) return baseValue
+  let value = baseValue
+  for (const rule of rules) {
+    if (!rule.whenFieldId || !rule.whenValue) continue
+    const watchField = fields.find((f) => f.id === rule.whenFieldId)
+    if (!watchField) continue
+
+    let matches = false
+    const watchAnswer = answers[rule.whenFieldId]
+    if (watchField.type === 'radio' || watchField.type === 'dropdown') {
+      matches = watchAnswer === rule.whenValue
+    } else if (watchField.type === 'checkbox') {
+      matches = ((watchAnswer as string[]) ?? []).includes(rule.whenValue)
+    }
+
+    if (matches) {
+      if (rule.action === 'multiply') value *= rule.amount
+      else if (rule.action === 'add') value += rule.amount
+    }
+  }
+  return value
+}
+
 function computeTotal(
   fields: FormField[],
   answers: Record<string, unknown>,
@@ -73,21 +102,26 @@ function computeTotal(
   for (const f of fields) {
     if (f.type === 'radio' || f.type === 'dropdown') {
       const opt = f.options?.find((o) => o.id === (answers[f.id] as string))
-      if (opt) total += opt.price
+      if (opt) total += applyConditionalRules(f.conditionalRules, opt.price, fields, answers)
     } else if (f.type === 'checkbox') {
+      let checkboxTotal = 0
       for (const oid of (answers[f.id] as string[]) ?? []) {
         const opt = f.options?.find((o) => o.id === oid)
-        if (opt) total += opt.price
+        if (opt) checkboxTotal += opt.price
       }
+      total += applyConditionalRules(f.conditionalRules, checkboxTotal, fields, answers)
     } else if (f.type === 'number') {
-      total += (Number(answers[f.id]) || 0) * (f.ratePerUnit ?? 0)
+      const effectiveRate = applyConditionalRules(f.conditionalRules, f.ratePerUnit ?? 0, fields, answers)
+      total += (Number(answers[f.id]) || 0) * effectiveRate
     } else if (f.type === 'route') {
       const rd = routeData[f.id]
       if (rd && f.routeChargeType !== 'none') {
+        let routeCost = 0
         if (f.routeChargeType === 'mileage' || f.routeChargeType === 'both')
-          total += rd.distanceMiles * (f.ratePerMile ?? 0)
+          routeCost += rd.distanceMiles * (f.ratePerMile ?? 0)
         if (f.routeChargeType === 'drivetime' || f.routeChargeType === 'both')
-          total += rd.durationMinutes * (f.ratePerMinute ?? 0)
+          routeCost += rd.durationMinutes * (f.ratePerMinute ?? 0)
+        total += applyConditionalRules(f.conditionalRules, routeCost, fields, answers)
       }
     }
   }

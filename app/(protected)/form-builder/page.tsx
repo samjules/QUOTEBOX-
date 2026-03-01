@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { FormField, FieldOption } from '@/lib/types'
+import type { FormField, FieldOption, ConditionalRule } from '@/lib/types'
 
 // ── Helpers ──────────────────────────────────────────────────
 let _ctr = 0
@@ -407,18 +407,26 @@ function CanvasPreview({
 // ── Props Panel ──────────────────────────────────────────────
 function PropsPanel({
   field,
+  allFields,
   onSetProp,
   onToggleProp,
   onSetOpt,
   onAddOpt,
   onRemoveOpt,
+  onAddRule,
+  onRemoveRule,
+  onSetRule,
 }: {
   field: FormField | null
+  allFields: FormField[]
   onSetProp: (id: string, key: string, value: string | number | boolean) => void
   onToggleProp: (id: string, key: string) => void
   onSetOpt: (fid: string, oid: string, key: string, value: string | number) => void
   onAddOpt: (fid: string) => void
   onRemoveOpt: (fid: string, oid: string) => void
+  onAddRule: (fieldId: string) => void
+  onRemoveRule: (fieldId: string, ruleId: string) => void
+  onSetRule: (fieldId: string, ruleId: string, key: string, value: string | number) => void
 }) {
   if (!field) {
     return (
@@ -619,6 +627,117 @@ function PropsPanel({
           </button>
         </div>
       )}
+
+      {/* ── Conditional Rate Rules ── */}
+      {(hasOpts || hasRate || isRoute) && (
+        <div className="prop-group" style={{ marginTop: 12 }}>
+          <div className="prop-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>Conditional Rate Rules</span>
+            <button
+              className="add-opt-btn"
+              style={{ marginTop: 0, padding: '2px 8px', fontSize: '0.72rem' }}
+              onClick={() => onAddRule(field.id)}
+            >
+              + Add rule
+            </button>
+          </div>
+          {(field.conditionalRules ?? []).length === 0 && (
+            <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: 4, lineHeight: 1.45 }}>
+              Adjust this field&apos;s rate based on another field&apos;s answer.
+            </div>
+          )}
+          {(field.conditionalRules ?? []).map((rule) => {
+            const triggerField = allFields.find((f) => f.id === rule.whenFieldId)
+            const eligibleFields = allFields.filter(
+              (f) => f.id !== field.id && ['radio', 'dropdown', 'checkbox'].includes(f.type)
+            )
+            return (
+              <div
+                key={rule.id}
+                style={{
+                  border: '1px solid var(--border)',
+                  borderRadius: 8,
+                  padding: 10,
+                  marginTop: 8,
+                  background: 'var(--surface)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 6,
+                }}
+              >
+                {/* When field */}
+                <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--muted)', whiteSpace: 'nowrap', minWidth: 30 }}>When</span>
+                  <select
+                    className="prop-input"
+                    style={{ flex: 1, fontSize: '0.75rem', padding: '4px 6px' }}
+                    value={rule.whenFieldId}
+                    onChange={(e) => {
+                      onSetRule(field.id, rule.id, 'whenFieldId', e.target.value)
+                      onSetRule(field.id, rule.id, 'whenValue', '')
+                    }}
+                  >
+                    <option value="">— pick a field —</option>
+                    {eligibleFields.map((f) => (
+                      <option key={f.id} value={f.id}>{f.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* When value */}
+                {triggerField && (
+                  <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--muted)', whiteSpace: 'nowrap', minWidth: 30 }}>=</span>
+                    <select
+                      className="prop-input"
+                      style={{ flex: 1, fontSize: '0.75rem', padding: '4px 6px' }}
+                      value={rule.whenValue}
+                      onChange={(e) => onSetRule(field.id, rule.id, 'whenValue', e.target.value)}
+                    >
+                      <option value="">— pick a value —</option>
+                      {(triggerField.options ?? []).map((o) => (
+                        <option key={o.id} value={o.id}>{o.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Action + amount */}
+                <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+                  <select
+                    className="prop-input"
+                    style={{ flex: 1, fontSize: '0.75rem', padding: '4px 6px' }}
+                    value={rule.action}
+                    onChange={(e) => onSetRule(field.id, rule.id, 'action', e.target.value)}
+                  >
+                    <option value="multiply">Multiply rate ×</option>
+                    <option value="add">Add flat amount +</option>
+                  </select>
+                  <input
+                    className="prop-input"
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    style={{ width: 60, fontSize: '0.75rem', padding: '4px 6px' }}
+                    value={rule.amount}
+                    onChange={(e) =>
+                      onSetRule(field.id, rule.id, 'amount', parseFloat(e.target.value) || 0)
+                    }
+                  />
+                </div>
+
+                <button
+                  className="rm-btn"
+                  style={{ alignSelf: 'flex-end', fontSize: '0.72rem' }}
+                  onClick={() => onRemoveRule(field.id, rule.id)}
+                >
+                  Remove rule
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </aside>
   )
 }
@@ -645,6 +764,9 @@ export default function FormBuilderPage() {
   const [editingFormId, setEditingFormId] = useState<string | null>(null)
   const [accountId, setAccountId] = useState<string | null>(null)
   const [planBadge, setPlanBadge] = useState('Loading…')
+  const [metaPixels, setMetaPixels] = useState<Array<{ id: string; name: string }>>([])
+  const [metaConnected, setMetaConnected] = useState(false)
+  const [metaPixelsLoading, setMetaPixelsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [toast, setToast] = useState<{
     msg: string
@@ -704,6 +826,17 @@ export default function FormBuilderPage() {
         return
       }
       setAccountId(account.id)
+
+      // Fetch Meta pixels for the dropdown
+      setMetaPixelsLoading(true)
+      fetch('/api/meta/pixels')
+        .then((r) => r.json())
+        .then((d) => {
+          setMetaConnected(d.connected ?? false)
+          setMetaPixels(d.pixels ?? [])
+          setMetaPixelsLoading(false)
+        })
+        .catch(() => setMetaPixelsLoading(false))
 
       const { data: billing } = await supabase
         .from('billing')
@@ -832,6 +965,49 @@ export default function FormBuilderPage() {
       prev.map((f) =>
         f.id === fid
           ? { ...f, options: (f.options ?? []).filter((o) => o.id !== oid) }
+          : f
+      )
+    )
+  }
+
+  // ── Conditional rule operations ──
+  function addRule(fieldId: string) {
+    const newRule: ConditionalRule = {
+      id: uid(),
+      whenFieldId: '',
+      whenValue: '',
+      action: 'multiply',
+      amount: 1,
+    }
+    setFields((prev) =>
+      prev.map((f) =>
+        f.id === fieldId
+          ? { ...f, conditionalRules: [...(f.conditionalRules ?? []), newRule] }
+          : f
+      )
+    )
+  }
+
+  function removeRule(fieldId: string, ruleId: string) {
+    setFields((prev) =>
+      prev.map((f) =>
+        f.id === fieldId
+          ? { ...f, conditionalRules: (f.conditionalRules ?? []).filter((r) => r.id !== ruleId) }
+          : f
+      )
+    )
+  }
+
+  function setRule(fieldId: string, ruleId: string, key: string, value: string | number) {
+    setFields((prev) =>
+      prev.map((f) =>
+        f.id === fieldId
+          ? {
+              ...f,
+              conditionalRules: (f.conditionalRules ?? []).map((r) =>
+                r.id === ruleId ? { ...r, [key]: value } : r
+              ),
+            }
           : f
       )
     )
@@ -1022,12 +1198,37 @@ export default function FormBuilderPage() {
                 <option value="AU$">AUD (AU$)</option>
               </select>
               <label>Meta Pixel ID</label>
-              <input
-                type="text"
-                value={metaPixelId}
-                onChange={(e) => setMetaPixelId(e.target.value)}
-                placeholder="e.g. 1234567890123456"
-              />
+              {metaPixelsLoading ? (
+                <div style={{ fontSize: '0.78rem', color: 'var(--muted)', padding: '6px 0' }}>
+                  Loading pixels…
+                </div>
+              ) : metaConnected && metaPixels.length > 0 ? (
+                <select
+                  value={metaPixelId}
+                  onChange={(e) => setMetaPixelId(e.target.value)}
+                >
+                  <option value="">— Select a pixel —</option>
+                  {metaPixels.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} ({p.id})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <>
+                  <input
+                    type="text"
+                    value={metaPixelId}
+                    onChange={(e) => setMetaPixelId(e.target.value)}
+                    placeholder="e.g. 1234567890123456"
+                  />
+                  <div className="slug-prev" style={{ marginTop: 2 }}>
+                    {!metaConnected
+                      ? 'Connect Meta in Settings to pick from your pixels'
+                      : 'No pixels found on this Meta account'}
+                  </div>
+                </>
+              )}
               <label>Brand Colour</label>
               <div className="color-picker">
                 <div
@@ -1201,11 +1402,15 @@ export default function FormBuilderPage() {
         {/* ── PROPS PANEL ── */}
         <PropsPanel
           field={selectedField}
+          allFields={fields}
           onSetProp={setProp}
           onToggleProp={toggleProp}
           onSetOpt={setOpt}
           onAddOpt={addOpt}
           onRemoveOpt={removeOpt}
+          onAddRule={addRule}
+          onRemoveRule={removeRule}
+          onSetRule={setRule}
         />
       </div>
 

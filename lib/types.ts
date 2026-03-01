@@ -17,6 +17,14 @@ export interface FieldOption {
   price: number
 }
 
+export interface ConditionalRule {
+  id: string
+  whenFieldId: string   // ID of the field to watch
+  whenValue: string     // Option ID to match on the watched field
+  action: 'multiply' | 'add'
+  amount: number        // multiplier (e.g. 1.5) for multiply, flat $ for add
+}
+
 export interface FormField {
   id: string
   type: 'radio' | 'dropdown' | 'checkbox' | 'number' | 'textarea' | 'route' | 'image'
@@ -31,6 +39,7 @@ export interface FormField {
   ratePerMinute?: number
   imageHint?: string
   imageMaxMb?: number
+  conditionalRules?: ConditionalRule[]
 }
 
 export interface FormConfig {
