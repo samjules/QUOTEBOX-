@@ -19,6 +19,17 @@ interface AdAccount {
   account_id: string
 }
 
+interface HostedFormOption {
+  id: string
+  form_name: string
+  slug: string
+}
+
+interface FacebookPage {
+  id: string
+  name: string
+}
+
 interface GeneratedCopy {
   campaignName: string
   adSetName: string
@@ -32,6 +43,7 @@ interface GeneratedCopy {
 interface CreatedCampaign {
   campaignId: string
   adSetId: string
+  adId: string | null
   campaignName: string
   adSetName: string
   adsManagerUrl: string
@@ -53,6 +65,12 @@ interface Questionnaire {
   vslId: string | null
   vslUrl: string | null
   vslTitle: string | null
+  destinationType: 'form' | 'custom'
+  destinationUrl: string
+  selectedFormId: string | null
+  selectedHeadline: string
+  selectedBodyText: string
+  pageId: string
 }
 
 type PageState = 'disconnected' | 'pick-account' | 'questionnaire' | 'created'
@@ -97,6 +115,8 @@ export default function MetaAdsPage() {
   const [error, setError] = useState('')
   const [metaAdAccountId, setMetaAdAccountId] = useState<string | null>(null)
   const [creatives, setCreatives] = useState<AdCreative[]>([])
+  const [hostedForms, setHostedForms] = useState<HostedFormOption[]>([])
+  const [pages, setPages] = useState<FacebookPage[]>([])
 
   const [questionnaire, setQuestionnaire] = useState<Questionnaire>({
     objective: 'OUTCOME_LEADS',
@@ -113,6 +133,12 @@ export default function MetaAdsPage() {
     vslId: null,
     vslUrl: null,
     vslTitle: null,
+    destinationType: 'form',
+    destinationUrl: '',
+    selectedFormId: null,
+    selectedHeadline: '',
+    selectedBodyText: '',
+    pageId: '',
   })
 
   // ─── Load account state ──────────────────────────────────────────────────
@@ -136,13 +162,14 @@ export default function MetaAdsPage() {
 
       setMetaAdAccountId(account.meta_ad_account_id || null)
 
-      // Load ad creatives from storage bucket
+      // Load ad creatives from storage bucket + hosted forms
       const { data: accountRow } = await supabase
         .from('accounts')
         .select('id')
         .eq('owner_id', user.id)
         .single()
       if (accountRow) {
+        // Creatives
         const { data: files } = await supabase.storage
           .from('vsls')
           .list(accountRow.id, { sortBy: { column: 'created_at', order: 'desc' } })
@@ -158,6 +185,48 @@ export default function MetaAdsPage() {
           }
         })
         setCreatives(creativeList)
+
+        // Hosted forms
+        const { data: formsData } = await supabase
+          .from('hosted_forms')
+          .select('id, form_name, form_config')
+          .eq('account_id', accountRow.id)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+        const formOptions: HostedFormOption[] = (formsData || []).map((f) => ({
+          id: f.id,
+          form_name: f.form_name,
+          slug: f.form_config?.slug || '',
+        }))
+        setHostedForms(formOptions)
+
+        // Pre-fill destination if there's a form
+        if (formOptions.length > 0) {
+          const first = formOptions[0]
+          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+          setQuestionnaire((q) => ({
+            ...q,
+            selectedFormId: first.id,
+            destinationUrl: `${siteUrl}/${first.slug}`,
+          }))
+        }
+      }
+
+      // Load Facebook Pages
+      if (account.meta_access_token) {
+        try {
+          const pagesRes = await fetch(
+            `https://graph.facebook.com/v18.0/me/accounts?fields=id,name&access_token=${account.meta_access_token}`
+          )
+          const pagesData = await pagesRes.json()
+          const pageList: FacebookPage[] = pagesData.data || []
+          setPages(pageList)
+          if (pageList.length === 1) {
+            setQuestionnaire((q) => ({ ...q, pageId: pageList[0].id }))
+          }
+        } catch {
+          // non-fatal
+        }
       }
 
       if (!account.meta_ad_account_id) {
@@ -278,6 +347,11 @@ export default function MetaAdsPage() {
           targetAge: { min: questionnaire.ageMin, max: questionnaire.ageMax },
           targetGender: questionnaire.gender,
           targetLocation: questionnaire.location,
+          destinationUrl: questionnaire.destinationUrl,
+          pageId: questionnaire.pageId,
+          headline: questionnaire.selectedHeadline,
+          bodyText: questionnaire.selectedBodyText,
+          cta: generatedCopy.cta,
         }),
       })
 
@@ -318,6 +392,12 @@ export default function MetaAdsPage() {
       vslId: null,
       vslUrl: null,
       vslTitle: null,
+      destinationType: 'form',
+      destinationUrl: hostedForms[0] ? `${process.env.NEXT_PUBLIC_SITE_URL || window.location.origin}/${hostedForms[0].slug}` : '',
+      selectedFormId: hostedForms[0]?.id || null,
+      selectedHeadline: '',
+      selectedBodyText: '',
+      pageId: pages.length === 1 ? pages[0].id : '',
     })
   }
 
@@ -446,8 +526,14 @@ export default function MetaAdsPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Campaign Created!</h1>
-          <p className="text-gray-500">Your campaign is ready in Meta Ads Manager (PAUSED). Review and activate it when ready.</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">
+            {createdCampaign.adId ? 'Campaign & Ad Created!' : 'Campaign Created!'}
+          </h1>
+          <p className="text-gray-500">
+            {createdCampaign.adId
+              ? 'Your campaign, ad set, and ad are ready in Meta Ads Manager (PAUSED). Review and activate when ready.'
+              : 'Your campaign and ad set are ready in Meta Ads Manager (PAUSED). Review and activate when ready.'}
+          </p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6 space-y-4">
@@ -532,25 +618,94 @@ export default function MetaAdsPage() {
 
         {/* Step 1: Objective */}
         {step === 1 && (
-          <div>
-            <h2 className="font-semibold text-gray-900 mb-4">What is your campaign goal?</h2>
-            <div className="space-y-3">
-              {OBJECTIVES.map((obj) => (
+          <div className="space-y-6">
+            <div>
+              <h2 className="font-semibold text-gray-900 mb-4">What is your campaign goal?</h2>
+              <div className="space-y-3">
+                {OBJECTIVES.map((obj) => (
+                  <button
+                    key={obj.value}
+                    onClick={() => setQuestionnaire((q) => ({ ...q, objective: obj.value }))}
+                    className={`w-full text-left px-4 py-3.5 rounded-xl border-2 transition ${
+                      questionnaire.objective === obj.value
+                        ? 'border-indigo-600 bg-indigo-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <p className={`font-medium ${questionnaire.objective === obj.value ? 'text-indigo-700' : 'text-gray-900'}`}>
+                      {obj.label}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-0.5">{obj.desc}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Destination URL */}
+            <div className="border-t border-gray-100 pt-5">
+              <label className="block text-sm font-medium text-gray-700 mb-3">Where should the ad send people?</label>
+              <div className="flex gap-3 mb-3">
                 <button
-                  key={obj.value}
-                  onClick={() => setQuestionnaire((q) => ({ ...q, objective: obj.value }))}
-                  className={`w-full text-left px-4 py-3.5 rounded-xl border-2 transition ${
-                    questionnaire.objective === obj.value
-                      ? 'border-indigo-600 bg-indigo-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                  onClick={() => setQuestionnaire((q) => ({ ...q, destinationType: 'form' }))}
+                  className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition ${
+                    questionnaire.destinationType === 'form'
+                      ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
                   }`}
                 >
-                  <p className={`font-medium ${questionnaire.objective === obj.value ? 'text-indigo-700' : 'text-gray-900'}`}>
-                    {obj.label}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-0.5">{obj.desc}</p>
+                  QuoteBox Form
                 </button>
-              ))}
+                <button
+                  onClick={() => setQuestionnaire((q) => ({ ...q, destinationType: 'custom' }))}
+                  className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition ${
+                    questionnaire.destinationType === 'custom'
+                      ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                  }`}
+                >
+                  Custom URL
+                </button>
+              </div>
+
+              {questionnaire.destinationType === 'form' ? (
+                hostedForms.length === 0 ? (
+                  <div className="text-sm text-gray-400 bg-gray-50 rounded-lg px-3 py-2.5 flex items-center gap-2">
+                    No active forms found.{' '}
+                    <Link href="/hosted-forms" className="text-indigo-600 hover:underline font-medium">Create one</Link>
+                  </div>
+                ) : (
+                  <select
+                    value={questionnaire.selectedFormId || ''}
+                    onChange={(e) => {
+                      const form = hostedForms.find((f) => f.id === e.target.value)
+                      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+                      setQuestionnaire((q) => ({
+                        ...q,
+                        selectedFormId: form?.id || null,
+                        destinationUrl: form ? `${siteUrl}/${form.slug}` : '',
+                      }))
+                    }}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Select a form...</option>
+                    {hostedForms.map((f) => (
+                      <option key={f.id} value={f.id}>{f.form_name}</option>
+                    ))}
+                  </select>
+                )
+              ) : (
+                <input
+                  type="url"
+                  placeholder="https://yourwebsite.com/landing-page"
+                  value={questionnaire.destinationType === 'custom' ? questionnaire.destinationUrl : ''}
+                  onChange={(e) => setQuestionnaire((q) => ({ ...q, destinationUrl: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              )}
+
+              {questionnaire.destinationUrl && (
+                <p className="text-xs text-indigo-600 mt-1.5 truncate">↗ {questionnaire.destinationUrl}</p>
+              )}
             </div>
           </div>
         )}
@@ -828,23 +983,39 @@ export default function MetaAdsPage() {
                 )}
 
                 <div>
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Headlines (pick one in Meta Ads Manager)</p>
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Select a Headline</p>
                   <div className="space-y-2">
                     {generatedCopy.headlines.map((h, i) => (
-                      <div key={i} className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-sm text-blue-900">
+                      <button
+                        key={i}
+                        onClick={() => setQuestionnaire((q) => ({ ...q, selectedHeadline: h }))}
+                        className={`w-full text-left px-3 py-2 rounded-lg border-2 text-sm transition ${
+                          questionnaire.selectedHeadline === h
+                            ? 'border-indigo-600 bg-indigo-50 text-indigo-900 font-medium'
+                            : 'border-gray-200 text-gray-800 hover:border-gray-300'
+                        }`}
+                      >
                         {h}
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Body Copy</p>
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Select Body Copy</p>
                   <div className="space-y-2">
                     {generatedCopy.bodyTexts.map((b, i) => (
-                      <div key={i} className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800">
+                      <button
+                        key={i}
+                        onClick={() => setQuestionnaire((q) => ({ ...q, selectedBodyText: b }))}
+                        className={`w-full text-left px-3 py-2 rounded-lg border-2 text-sm transition ${
+                          questionnaire.selectedBodyText === b
+                            ? 'border-indigo-600 bg-indigo-50 text-indigo-900 font-medium'
+                            : 'border-gray-200 text-gray-800 hover:border-gray-300'
+                        }`}
+                      >
                         {b}
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -860,21 +1031,46 @@ export default function MetaAdsPage() {
                   </div>
                 </div>
 
+                {pages.length > 1 && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Facebook Page</label>
+                    <select
+                      value={questionnaire.pageId}
+                      onChange={(e) => setQuestionnaire((q) => ({ ...q, pageId: e.target.value }))}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">Select a page...</option>
+                      {pages.map((p) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {pages.length === 0 && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2.5 text-xs text-yellow-700">
+                    No Facebook Pages found on your account. You need a Page to create ads.
+                  </div>
+                )}
+
                 <div className="flex gap-3 pt-2">
                   <button
-                    onClick={() => { setGeneratedCopy(null) }}
+                    onClick={() => { setGeneratedCopy(null); setQuestionnaire((q) => ({ ...q, selectedHeadline: '', selectedBodyText: '' })) }}
                     className="flex-1 text-gray-600 font-medium py-2.5 px-4 rounded-xl border border-gray-200 hover:border-gray-300 transition text-sm"
                   >
                     Regenerate
                   </button>
                   <button
                     onClick={handleCreateCampaign}
-                    disabled={creating}
+                    disabled={creating || !questionnaire.selectedHeadline || !questionnaire.selectedBodyText || !questionnaire.pageId || !questionnaire.destinationUrl}
                     className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl transition text-sm"
                   >
-                    {creating ? 'Creating...' : 'Create Campaign'}
+                    {creating ? 'Creating...' : 'Create Campaign & Ad'}
                   </button>
                 </div>
+                {(!questionnaire.selectedHeadline || !questionnaire.selectedBodyText) && (
+                  <p className="text-xs text-gray-400 text-center">Select a headline and body copy above to continue</p>
+                )}
               </div>
             )}
           </div>

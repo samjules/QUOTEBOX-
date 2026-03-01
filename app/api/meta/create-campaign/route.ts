@@ -68,6 +68,11 @@ export async function POST(request: NextRequest) {
     targetAge?: { min: number; max: number }
     targetGender?: string
     targetLocation?: string
+    destinationUrl?: string
+    pageId?: string
+    headline?: string
+    bodyText?: string
+    cta?: string
   }
 
   try {
@@ -173,11 +178,70 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Ad set creation failed' }, { status: 500 })
   }
 
+  // Create Ad Creative (only if we have a page + destination + copy)
+  let adId: string | null = null
+  if (body.pageId && body.destinationUrl && body.headline && body.bodyText) {
+    const objectStorySpec = {
+      page_id: body.pageId,
+      link_data: {
+        link: body.destinationUrl,
+        message: body.bodyText,
+        name: body.headline,
+        call_to_action: { type: body.cta || 'LEARN_MORE' },
+      },
+    }
+
+    const creativeParams = new URLSearchParams({
+      name: `${body.campaignName} - Creative`,
+      object_story_spec: JSON.stringify(objectStorySpec),
+      access_token: token,
+    })
+
+    let creativeId: string | null = null
+    try {
+      const creativeRes = await fetch(
+        `https://graph.facebook.com/v18.0/act_${adAccountId}/adcreatives`,
+        { method: 'POST', body: creativeParams }
+      )
+      const creativeData = await creativeRes.json()
+      if (creativeRes.ok && creativeData.id) {
+        creativeId = creativeData.id
+      }
+    } catch {
+      // Non-fatal — campaign + ad set still created
+    }
+
+    // Create Ad
+    if (creativeId) {
+      const adParams = new URLSearchParams({
+        name: `${body.campaignName} - Ad`,
+        adset_id: adSetId,
+        creative: JSON.stringify({ creative_id: creativeId }),
+        status: 'PAUSED',
+        access_token: token,
+      })
+
+      try {
+        const adRes = await fetch(
+          `https://graph.facebook.com/v18.0/act_${adAccountId}/ads`,
+          { method: 'POST', body: adParams }
+        )
+        const adData = await adRes.json()
+        if (adRes.ok && adData.id) {
+          adId = adData.id
+        }
+      } catch {
+        // Non-fatal
+      }
+    }
+  }
+
   const adsManagerUrl = `https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=${adAccountId}`
 
   return NextResponse.json({
     campaignId,
     adSetId,
+    adId,
     campaignName: body.campaignName,
     adSetName: body.adSetName,
     adsManagerUrl,
