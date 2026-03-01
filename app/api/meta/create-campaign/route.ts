@@ -16,7 +16,7 @@ const OBJECTIVE_MAP: Record<string, ObjectiveConfig> = {
   OUTCOME_TRAFFIC: {
     objective: 'OUTCOME_TRAFFIC',
     optimization_goal: 'LINK_CLICKS',
-    billing_event: 'LINK_CLICKS',
+    billing_event: 'IMPRESSIONS',
   },
   OUTCOME_AWARENESS: {
     objective: 'OUTCOME_AWARENESS',
@@ -25,7 +25,7 @@ const OBJECTIVE_MAP: Record<string, ObjectiveConfig> = {
   },
   OUTCOME_SALES: {
     objective: 'OUTCOME_SALES',
-    optimization_goal: 'OFFSITE_CONVERSIONS',
+    optimization_goal: 'LINK_CLICKS',
     billing_event: 'IMPRESSIONS',
   },
 }
@@ -154,6 +154,11 @@ export async function POST(request: NextRequest) {
     const endTime = new Date(startTime)
     endTime.setDate(endTime.getDate() + body.duration)
     adSetParams.set('end_time', endTime.toISOString())
+  }
+
+  // OUTCOME_LEADS requires a promoted_object with page_id
+  if (body.objective === 'OUTCOME_LEADS' && body.pageId) {
+    adSetParams.set('promoted_object', JSON.stringify({ page_id: body.pageId }))
   }
 
   let adSetId: string
