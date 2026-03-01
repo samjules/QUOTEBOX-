@@ -1209,6 +1209,17 @@ export default function FormBuilderPage() {
 
   const selectedField = fields.find((f) => f.id === selectedId) ?? null
 
+  // ── Collapsible sidebar sections ──
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    fields: true,
+    settings: true,
+    rates: false,
+    advertising: false,
+  })
+  function toggleSection(key: string) {
+    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
+
   return (
     // The protected layout provides the outer sidebar + flex container.
     // The builder fills the remaining space.
@@ -1247,213 +1258,259 @@ export default function FormBuilderPage() {
       <div className="builder-layout">
         {/* ── LEFT SIDEBAR ── */}
         <aside className="b-sidebar">
+
+          {/* ── FIELDS ── */}
           <div className="sidebar-section">
-            <div className="sidebar-label">Form Settings</div>
-            <div className="fm">
-              <label>Form Name</label>
-              <input
-                type="text"
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-              />
-              <label>Description</label>
-              <textarea
-                rows={2}
-                value={formDesc}
-                onChange={(e) => setFormDesc(e.target.value)}
-                placeholder="Shown to visitors…"
-              />
-              <label>Submit Button Label</label>
-              <input
-                type="text"
-                value={submitLabel}
-                onChange={(e) => setSubmitLabel(e.target.value)}
-              />
-              <label>URL Slug</label>
-              <input
-                type="text"
-                value={formSlug}
-                onChange={(e) => handleSlugChange(e.target.value)}
-              />
-              <div className="slug-prev">
-                quote-box.com/{formSlug || 'my-quote-form'}
-              </div>
-              <label>Currency</label>
-              <select
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-              >
-                <option value="$">USD ($)</option>
-                <option value="£">GBP (£)</option>
-                <option value="€">EUR (€)</option>
-                <option value="CA$">CAD (CA$)</option>
-                <option value="AU$">AUD (AU$)</option>
-              </select>
-              <label>Meta Pixel ID</label>
-              {metaPixelsLoading ? (
-                <div style={{ fontSize: '0.78rem', color: 'var(--muted)', padding: '6px 0' }}>
-                  Loading pixels…
-                </div>
-              ) : metaConnected && metaPixels.length > 0 ? (
-                <select
-                  value={metaPixelId}
-                  onChange={(e) => setMetaPixelId(e.target.value)}
-                >
-                  <option value="">— Select a pixel —</option>
-                  {metaPixels.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} ({p.id})
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <>
-                  <input
-                    type="text"
-                    value={metaPixelId}
-                    onChange={(e) => setMetaPixelId(e.target.value)}
-                    placeholder="e.g. 1234567890123456"
-                  />
-                  <div className="slug-prev" style={{ marginTop: 2 }}>
-                    {!metaConnected
-                      ? 'Connect Meta in Settings to pick from your pixels'
-                      : 'No pixels found on this Meta account'}
-                  </div>
-                </>
-              )}
-              <label>Brand Colour</label>
-              <div className="color-picker">
-                <div
-                  className={`cswatch yellow${brandColor === 'yellow' ? ' active' : ''}`}
-                  onClick={() => setBrandColor('yellow')}
-                >
-                  <span>☀</span>
-                  <span className="cswatch-lbl">Yellow</span>
-                </div>
-                <div
-                  className={`cswatch blue${brandColor === 'blue' ? ' active' : ''}`}
-                  onClick={() => setBrandColor('blue')}
-                >
-                  <span style={{ color: 'rgba(255,255,255,0.9)' }}>◈</span>
-                  <span className="cswatch-lbl">Blue</span>
-                </div>
-              </div>
-              <label>Hero Image</label>
-              <input
-                ref={heroFileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                style={{ display: 'none' }}
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) uploadHeroImage(file)
-                  e.target.value = ''
-                }}
-              />
-              <div
-                className="hero-upload-zone"
-                onClick={() => !heroUploadLoading && heroFileInputRef.current?.click()}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault()
-                  const file = e.dataTransfer.files?.[0]
-                  if (file && !heroUploadLoading) uploadHeroImage(file)
-                }}
-              >
-                {heroUploadLoading ? (
-                  <span className="hero-upload-spinner" />
-                ) : heroImageUrl ? (
-                  <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={heroImageUrl} alt="Hero preview" className="hero-upload-preview"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
-                    <div className="hero-upload-overlay">Click to replace</div>
-                  </>
-                ) : (
-                  <div className="hero-upload-prompt">
-                    <span style={{ fontSize: '1.4rem' }}>+</span>
-                    <span>Upload hero image</span>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>JPG, PNG, WebP · max 5 MB</span>
-                  </div>
-                )}
-              </div>
-              {heroImageUrl && !heroUploadLoading && (
-                <button className="hero-upload-clear" onClick={() => setHeroImageUrl('')}>
-                  Remove hero image
-                </button>
-              )}
-              <label style={{ marginTop: 12 }}>Minimum Quote Amount</label>
-              <input
-                type="number"
-                min={0}
-                step={0.01}
-                value={minQuote || ''}
-                placeholder={`0 (no minimum)`}
-                onChange={(e) => setMinQuote(parseFloat(e.target.value) || 0)}
-              />
-              <div className="slug-prev" style={{ marginTop: 2 }}>
-                {minQuote > 0
-                  ? `Quote will never show below ${currency}${minQuote.toFixed(2)}`
-                  : 'No minimum — quote starts from $0'}
-              </div>
-              <label style={{ marginTop: 12 }}>Quote Total Display</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 2 }}>
-                {([
-                  ['live', '▶ Live — show as user fills in'],
-                  ['after_submit', '✉ After submit — show on confirmation'],
-                  ['hidden', '✕ Hidden — never show total'],
-                ] as const).map(([val, lbl]) => (
-                  <label
-                    key={val}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      fontSize: '0.78rem',
-                      color: quoteDisplay === val ? 'var(--accent)' : 'var(--fg)',
-                      cursor: 'pointer',
-                      fontWeight: quoteDisplay === val ? 600 : 400,
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name="quoteDisplay"
-                      value={val}
-                      checked={quoteDisplay === val}
-                      onChange={() => setQuoteDisplay(val)}
-                      style={{ accentColor: 'var(--accent)' }}
-                    />
-                    {lbl}
-                  </label>
-                ))}
-              </div>
+            <div className="sidebar-cat-header" onClick={() => toggleSection('fields')}>
+              <span className="sidebar-cat-title">Fields</span>
+              <span className={`sidebar-cat-chevron${openSections.fields ? ' open' : ''}`}>▼</span>
             </div>
+            {openSections.fields && (
+              <div className="sidebar-cat-body">
+                <button className="ftype-btn" onClick={() => addField('radio')}>
+                  <span className="icon">◉</span> Radio Cards
+                </button>
+                <button className="ftype-btn" onClick={() => addField('dropdown')}>
+                  <span className="icon">▾</span> Dropdown
+                </button>
+                <button className="ftype-btn" onClick={() => addField('checkbox')}>
+                  <span className="icon">☑</span> Checkboxes
+                </button>
+                <button className="ftype-btn" onClick={() => addField('number')}>
+                  <span className="icon">#</span> Qty / Number
+                </button>
+                <button className="ftype-btn" onClick={() => addField('textarea')}>
+                  <span className="icon">≡</span> Long Text
+                </button>
+                <button className="ftype-btn" onClick={() => addField('route')}>
+                  <span className="icon">⇌</span> Route / Distance
+                </button>
+                <button className="ftype-btn" onClick={() => addField('image')}>
+                  <span className="icon">⬆</span> Image Upload
+                </button>
+              </div>
+            )}
           </div>
 
+          {/* ── SETTINGS ── */}
           <div className="sidebar-section">
-            <div className="sidebar-label">Add Field</div>
-            <button className="ftype-btn" onClick={() => addField('radio')}>
-              <span className="icon">◉</span> Radio Cards
-            </button>
-            <button className="ftype-btn" onClick={() => addField('dropdown')}>
-              <span className="icon">▾</span> Dropdown
-            </button>
-            <button className="ftype-btn" onClick={() => addField('checkbox')}>
-              <span className="icon">☑</span> Checkboxes
-            </button>
-            <button className="ftype-btn" onClick={() => addField('number')}>
-              <span className="icon">#</span> Qty / Number
-            </button>
-            <button className="ftype-btn" onClick={() => addField('textarea')}>
-              <span className="icon">≡</span> Long Text
-            </button>
-            <button className="ftype-btn" onClick={() => addField('route')}>
-              <span className="icon">⇌</span> Route / Distance
-            </button>
-            <button className="ftype-btn" onClick={() => addField('image')}>
-              <span className="icon">⬆</span> Image Upload
-            </button>
+            <div className="sidebar-cat-header" onClick={() => toggleSection('settings')}>
+              <span className="sidebar-cat-title">Settings</span>
+              <span className={`sidebar-cat-chevron${openSections.settings ? ' open' : ''}`}>▼</span>
+            </div>
+            {openSections.settings && (
+              <div className="sidebar-cat-body">
+                <div className="fm">
+                  <label>Form Name</label>
+                  <input
+                    type="text"
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                  />
+                  <label>Description</label>
+                  <textarea
+                    rows={2}
+                    value={formDesc}
+                    onChange={(e) => setFormDesc(e.target.value)}
+                    placeholder="Shown to visitors…"
+                  />
+                  <label>Submit Button Label</label>
+                  <input
+                    type="text"
+                    value={submitLabel}
+                    onChange={(e) => setSubmitLabel(e.target.value)}
+                  />
+                  <label>URL Slug</label>
+                  <input
+                    type="text"
+                    value={formSlug}
+                    onChange={(e) => handleSlugChange(e.target.value)}
+                  />
+                  <div className="slug-prev">
+                    quote-box.com/{formSlug || 'my-quote-form'}
+                  </div>
+                  <label>Currency</label>
+                  <select
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value)}
+                  >
+                    <option value="$">USD ($)</option>
+                    <option value="£">GBP (£)</option>
+                    <option value="€">EUR (€)</option>
+                    <option value="CA$">CAD (CA$)</option>
+                    <option value="AU$">AUD (AU$)</option>
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* ── RATES ── */}
+          <div className="sidebar-section">
+            <div className="sidebar-cat-header" onClick={() => toggleSection('rates')}>
+              <span className="sidebar-cat-title">Rates</span>
+              <span className={`sidebar-cat-chevron${openSections.rates ? ' open' : ''}`}>▼</span>
+            </div>
+            {openSections.rates && (
+              <div className="sidebar-cat-body">
+                <div className="fm">
+                  <label>Minimum Quote Amount</label>
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={minQuote || ''}
+                    placeholder="0 (no minimum)"
+                    onChange={(e) => setMinQuote(parseFloat(e.target.value) || 0)}
+                  />
+                  <div className="slug-prev" style={{ marginTop: 2 }}>
+                    {minQuote > 0
+                      ? `Quote will never show below ${currency}${minQuote.toFixed(2)}`
+                      : 'No minimum — quote starts from $0'}
+                  </div>
+                  <label style={{ marginTop: 12 }}>Quote Total Display</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 2 }}>
+                    {([
+                      ['live', '▶ Live — show as user fills in'],
+                      ['after_submit', '✉ After submit — show on confirmation'],
+                      ['hidden', '✕ Hidden — never show total'],
+                    ] as const).map(([val, lbl]) => (
+                      <label
+                        key={val}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          fontSize: '0.78rem',
+                          color: quoteDisplay === val ? 'var(--accent)' : 'var(--fg)',
+                          cursor: 'pointer',
+                          fontWeight: quoteDisplay === val ? 600 : 400,
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="quoteDisplay"
+                          value={val}
+                          checked={quoteDisplay === val}
+                          onChange={() => setQuoteDisplay(val)}
+                          style={{ accentColor: 'var(--accent)' }}
+                        />
+                        {lbl}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── ADVERTISING & HOSTING ── */}
+          <div className="sidebar-section">
+            <div className="sidebar-cat-header" onClick={() => toggleSection('advertising')}>
+              <span className="sidebar-cat-title">Advertising &amp; Hosting</span>
+              <span className={`sidebar-cat-chevron${openSections.advertising ? ' open' : ''}`}>▼</span>
+            </div>
+            {openSections.advertising && (
+              <div className="sidebar-cat-body">
+                <div className="fm">
+                  <label>Meta Pixel ID</label>
+                  {metaPixelsLoading ? (
+                    <div style={{ fontSize: '0.78rem', color: 'var(--muted)', padding: '6px 0' }}>
+                      Loading pixels…
+                    </div>
+                  ) : metaConnected && metaPixels.length > 0 ? (
+                    <select
+                      value={metaPixelId}
+                      onChange={(e) => setMetaPixelId(e.target.value)}
+                    >
+                      <option value="">— Select a pixel —</option>
+                      {metaPixels.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} ({p.id})
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <>
+                      <input
+                        type="text"
+                        value={metaPixelId}
+                        onChange={(e) => setMetaPixelId(e.target.value)}
+                        placeholder="e.g. 1234567890123456"
+                      />
+                      <div className="slug-prev" style={{ marginTop: 2 }}>
+                        {!metaConnected
+                          ? 'Connect Meta in Settings to pick from your pixels'
+                          : 'No pixels found on this Meta account'}
+                      </div>
+                    </>
+                  )}
+                  <label>Brand Colour</label>
+                  <div className="color-picker">
+                    <div
+                      className={`cswatch yellow${brandColor === 'yellow' ? ' active' : ''}`}
+                      onClick={() => setBrandColor('yellow')}
+                    >
+                      <span>☀</span>
+                      <span className="cswatch-lbl">Yellow</span>
+                    </div>
+                    <div
+                      className={`cswatch blue${brandColor === 'blue' ? ' active' : ''}`}
+                      onClick={() => setBrandColor('blue')}
+                    >
+                      <span style={{ color: 'rgba(255,255,255,0.9)' }}>◈</span>
+                      <span className="cswatch-lbl">Blue</span>
+                    </div>
+                  </div>
+                  <label>Hero Image</label>
+                  <input
+                    ref={heroFileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) uploadHeroImage(file)
+                      e.target.value = ''
+                    }}
+                  />
+                  <div
+                    className="hero-upload-zone"
+                    onClick={() => !heroUploadLoading && heroFileInputRef.current?.click()}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      const file = e.dataTransfer.files?.[0]
+                      if (file && !heroUploadLoading) uploadHeroImage(file)
+                    }}
+                  >
+                    {heroUploadLoading ? (
+                      <span className="hero-upload-spinner" />
+                    ) : heroImageUrl ? (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={heroImageUrl} alt="Hero preview" className="hero-upload-preview"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                        <div className="hero-upload-overlay">Click to replace</div>
+                      </>
+                    ) : (
+                      <div className="hero-upload-prompt">
+                        <span style={{ fontSize: '1.4rem' }}>+</span>
+                        <span>Upload hero image</span>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>JPG, PNG, WebP · max 5 MB</span>
+                      </div>
+                    )}
+                  </div>
+                  {heroImageUrl && !heroUploadLoading && (
+                    <button className="hero-upload-clear" onClick={() => setHeroImageUrl('')}>
+                      Remove hero image
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
         </aside>
 
         {/* ── CANVAS ── */}

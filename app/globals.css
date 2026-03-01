@@ -133,7 +133,12 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .sidebar-section {
-  margin-bottom: 24px;
+  margin-bottom: 0;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-section:last-child {
+  border-bottom: none;
 }
 
 .sidebar-label {
@@ -145,6 +150,43 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--muted);
   margin-bottom: 9px;
   padding: 0 4px;
+}
+
+/* Collapsible sidebar category */
+.sidebar-cat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 7px 8px;
+  margin: 0 -8px;
+  border-radius: 7px;
+  user-select: none;
+  transition: background 0.12s;
+}
+.sidebar-cat-header:hover {
+  background: var(--border);
+}
+.sidebar-cat-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+.sidebar-cat-chevron {
+  font-size: 0.65rem;
+  color: var(--muted);
+  transition: transform 0.18s;
+  line-height: 1;
+}
+.sidebar-cat-chevron.open {
+  transform: rotate(180deg);
+}
+.sidebar-cat-body {
+  padding-top: 10px;
+  overflow: hidden;
 }
 
 .ftype-btn {
