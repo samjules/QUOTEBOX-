@@ -119,6 +119,7 @@ export async function POST(request: NextRequest) {
   const targeting: Record<string, unknown> = {
     age_min: body.targetAge?.min || 18,
     age_max: body.targetAge?.max || 65,
+    targeting_automation: { advantage_audience: 0 },
   }
 
   if (body.targetGender === 'male') {
