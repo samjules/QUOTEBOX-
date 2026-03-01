@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { ReactNode } from 'react'
 
-const COST_PER_LEAD = 15
 const PLAN_LIMITS: Record<string, number> = { starter: 10, growth: 50 }
 
 export default async function DashboardPage() {
@@ -74,6 +73,20 @@ export default async function DashboardPage() {
     .eq('type', 'lead_charge')
     .gte('created_at', startOfMonth.toISOString())
 
+  // Onboarding checklist data
+  const [{ data: vsls }, { data: forms }, { data: campaigns }] = await Promise.all([
+    supabase.from('vsls').select('id').eq('account_id', account.id).limit(1),
+    supabase.from('hosted_forms').select('id').eq('account_id', account.id).limit(1),
+    supabase.from('meta_campaigns').select('id').eq('account_id', account.id).limit(1),
+  ])
+
+  const metaConnected = !!account.meta_access_token
+  const hasBillingPlan = !!billing?.plan
+  const hasCreatives = (vsls?.length ?? 0) > 0
+  const hasForm = (forms?.length ?? 0) > 0
+  const hasCampaign = (campaigns?.length ?? 0) > 0
+  const onboardingComplete = metaConnected && hasBillingPlan && hasCreatives && hasForm
+
   // Compute stats
   const totalLeads = leads.length
   const newLeads = leads.filter((l) => l.status === 'new').length
@@ -85,7 +98,6 @@ export default async function DashboardPage() {
   const monthlySpending = monthlyTxns
     ? Math.abs(monthlyTxns.reduce((sum: number, tx: { amount: number }) => sum + tx.amount, 0))
     : 0
-  const creditBalance = billing?.credit_balance ?? 0
   const plan = billing?.plan ?? null
   const monthlyLeads = leads.filter((l) => new Date(l.created_at) >= startOfMonth).length
 
@@ -96,12 +108,6 @@ export default async function DashboardPage() {
       const qt = (l.form_data as Record<string, unknown> | null)?._quote_total
       return sum + (typeof qt === 'number' ? qt : 0)
     }, 0)
-
-  // All-time pipeline: sum of _quote_total across every lead
-  const allTimePipeline = leads.reduce((sum, l) => {
-    const qt = (l.form_data as Record<string, unknown> | null)?._quote_total
-    return sum + (typeof qt === 'number' ? qt : 0)
-  }, 0)
 
   return (
     <div className="py-6">
@@ -116,6 +122,17 @@ export default async function DashboardPage() {
         <div className="py-4 space-y-6">
           {/* Lead usage banner */}
           <LeadUsageBanner plan={plan} monthlyLeads={monthlyLeads} />
+
+          {/* Onboarding checklist */}
+          {!onboardingComplete && (
+            <OnboardingChecklist
+              metaConnected={metaConnected}
+              hasBillingPlan={hasBillingPlan}
+              hasCreatives={hasCreatives}
+              hasForm={hasForm}
+              hasCampaign={hasCampaign}
+            />
+          )}
 
           {/* Primary Stats Grid */}
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -198,9 +215,6 @@ export default async function DashboardPage() {
             />
           </div>
 
-          {/* Rewards */}
-          <RewardsCard businessName={account.business_name} allTimePipeline={allTimePipeline} />
-
           {/* Quick Actions */}
           <div className="bg-white shadow rounded-xl p-6">
             <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
@@ -225,6 +239,12 @@ export default async function DashboardPage() {
                 title="Billing"
                 desc="Manage credits"
               />
+              <QuickAction
+                href="/rewards"
+                icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 002.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 012.916.52 6.003 6.003 0 01-5.395 4.972m0 0a6.726 6.726 0 01-2.749 1.35m0 0a6.772 6.772 0 01-3.044 0" /></svg>}
+                title="Rewards"
+                desc="View your pipeline tier"
+              />
             </div>
           </div>
         </div>
@@ -233,7 +253,7 @@ export default async function DashboardPage() {
   )
 }
 
-// ── Components — identical structure to original, icon: string → ReactNode ──
+// ── Components ────────────────────────────────────────────────
 
 function StatCard({
   icon,
@@ -317,6 +337,140 @@ function QuickAction({
         <p className="text-sm text-gray-500">{desc}</p>
       </div>
     </Link>
+  )
+}
+
+// ── Onboarding Checklist ──────────────────────────────────────
+
+function OnboardingChecklist({
+  metaConnected,
+  hasBillingPlan,
+  hasCreatives,
+  hasForm,
+  hasCampaign,
+}: {
+  metaConnected: boolean
+  hasBillingPlan: boolean
+  hasCreatives: boolean
+  hasForm: boolean
+  hasCampaign: boolean
+}) {
+  const steps = [
+    {
+      label: 'Connect your Meta account',
+      desc: 'Link your Facebook/Instagram account to enable ad campaigns',
+      href: '/settings',
+      done: metaConnected,
+    },
+    {
+      label: 'Select a billing plan',
+      desc: 'Choose a plan to start receiving leads',
+      href: '/billing',
+      done: hasBillingPlan,
+    },
+    {
+      label: 'Upload ad creatives',
+      desc: 'Add images or videos to use in your ad campaigns',
+      href: '/vsls',
+      done: hasCreatives,
+    },
+    {
+      label: 'Create a QuoteBox',
+      desc: 'Build a quote form to capture and qualify your leads',
+      href: '/form-builder',
+      done: hasForm,
+    },
+    {
+      label: 'Launch an ad campaign',
+      desc: 'Set up your first Meta ad campaign to drive traffic',
+      href: '/meta-ads',
+      done: hasCampaign,
+    },
+  ]
+
+  const completedCount = steps.filter((s) => s.done).length
+  const progressPct = Math.round((completedCount / steps.length) * 100)
+
+  return (
+    <div className="bg-white shadow rounded-xl overflow-hidden">
+      <div className="px-6 pt-5 pb-4 border-b border-gray-100">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900">Get started</h3>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {completedCount} of {steps.length} steps completed
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="w-28 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-indigo-500 rounded-full transition-all duration-500"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+            <span className="text-xs font-semibold text-gray-400 w-8 text-right">{progressPct}%</span>
+          </div>
+        </div>
+      </div>
+      <ul className="divide-y divide-gray-50">
+        {steps.map((step, i) => (
+          <ChecklistStep key={step.label} number={i + 1} {...step} />
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function ChecklistStep({
+  number,
+  label,
+  desc,
+  href,
+  done,
+}: {
+  number: number
+  label: string
+  desc: string
+  href: string
+  done: boolean
+}) {
+  return (
+    <li className={`flex items-center gap-4 px-6 py-3.5 ${done ? 'bg-gray-50/50' : ''}`}>
+      {/* Step indicator */}
+      <div
+        className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+          done
+            ? 'bg-green-500 text-white'
+            : 'bg-gray-100 text-gray-500'
+        }`}
+      >
+        {done ? (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+          </svg>
+        ) : (
+          number
+        )}
+      </div>
+      {/* Text */}
+      <div className="flex-1 min-w-0">
+        <p className={`text-sm font-medium ${done ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+          {label}
+        </p>
+        <p className="text-xs text-gray-400 mt-0.5 truncate">{desc}</p>
+      </div>
+      {/* Action */}
+      {done ? (
+        <span className="flex-shrink-0 text-xs font-medium text-green-600">Done</span>
+      ) : (
+        <Link
+          href={href}
+          className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition whitespace-nowrap"
+        >
+          Start &rarr;
+        </Link>
+      )}
+    </li>
   )
 }
 
@@ -424,223 +578,6 @@ function LeadUsageBanner({
           Nearing your monthly limit — <Link href="/billing" className="underline font-medium">upgrade your plan</Link> to avoid interruptions.
         </p>
       )}
-    </div>
-  )
-}
-
-// ── Rewards ──────────────────────────────────────────────────
-
-const TIERS = [
-  {
-    label: 'Starter',
-    threshold: 0,
-    accentColor: '#94a3b8',
-    bgColor: '#f8fafc',
-    borderColor: '#e2e8f0',
-    textColor: '#64748b',
-  },
-  {
-    label: 'Pro',
-    threshold: 1000,
-    accentColor: '#3b82f6',
-    bgColor: '#eff6ff',
-    borderColor: '#bfdbfe',
-    textColor: '#1d4ed8',
-  },
-  {
-    label: 'Expert',
-    threshold: 5000,
-    accentColor: '#f59e0b',
-    bgColor: '#fffbeb',
-    borderColor: '#fde68a',
-    textColor: '#b45309',
-  },
-]
-
-function RewardsCard({
-  businessName,
-  allTimePipeline,
-}: {
-  businessName: string
-  allTimePipeline: number
-}) {
-  const currentTierIdx = TIERS.reduce(
-    (best, t, i) => (allTimePipeline >= t.threshold ? i : best),
-    0
-  )
-  const currentTier = TIERS[currentTierIdx]
-  const nextTier = TIERS[currentTierIdx + 1] ?? null
-
-  const progressPct = nextTier
-    ? Math.min(
-        100,
-        ((allTimePipeline - currentTier.threshold) /
-          (nextTier.threshold - currentTier.threshold)) *
-          100
-      )
-    : 100
-
-  const remaining = nextTier
-    ? Math.max(0, nextTier.threshold - allTimePipeline)
-    : 0
-
-  const fmt = (n: number) =>
-    n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
-
-  return (
-    <div className="bg-white shadow rounded-xl overflow-hidden">
-      {/* Colour strip at top matching current tier */}
-      <div style={{ height: 4, background: currentTier.accentColor }} />
-
-      <div className="p-6">
-        {/* Header row */}
-        <div className="flex items-start justify-between gap-4 mb-5">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">
-              Rewards
-            </p>
-            <h3 className="text-xl font-bold text-gray-900 leading-tight">
-              {businessName || 'Your Business'}
-            </h3>
-            <p className="text-sm text-gray-500 mt-0.5">
-              {fmt(allTimePipeline)} in total pipeline
-            </p>
-          </div>
-          {/* Current tier badge */}
-          <div
-            style={{
-              background: currentTier.bgColor,
-              border: `1.5px solid ${currentTier.borderColor}`,
-              color: currentTier.textColor,
-            }}
-            className="flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-bold whitespace-nowrap"
-          >
-            {currentTier.label}
-          </div>
-        </div>
-
-        {/* Tier steps */}
-        <div className="flex items-center gap-0 mb-5">
-          {TIERS.map((tier, i) => {
-            const reached = allTimePipeline >= tier.threshold
-            const isCurrent = i === currentTierIdx
-            return (
-              <div key={tier.label} className="flex items-center flex-1 last:flex-none">
-                {/* Node */}
-                <div className="flex flex-col items-center">
-                  <div
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: '50%',
-                      background: reached ? tier.accentColor : '#f1f5f9',
-                      border: `2px solid ${reached ? tier.accentColor : '#e2e8f0'}`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: isCurrent ? `0 0 0 4px ${tier.accentColor}22` : 'none',
-                      transition: 'all 0.2s',
-                    }}
-                  >
-                    {reached ? (
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                        <path d="M2.5 7l3 3 6-6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    ) : (
-                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#cbd5e1' }} />
-                    )}
-                  </div>
-                  <span
-                    style={{
-                      fontSize: '0.7rem',
-                      fontWeight: isCurrent ? 700 : 500,
-                      color: reached ? tier.textColor : '#94a3b8',
-                      marginTop: 5,
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {tier.label}
-                  </span>
-                  <span style={{ fontSize: '0.65rem', color: '#cbd5e1', marginTop: 1 }}>
-                    {tier.threshold === 0 ? 'Base' : fmt(tier.threshold)}
-                  </span>
-                </div>
-                {/* Connector line */}
-                {i < TIERS.length - 1 && (
-                  <div
-                    style={{
-                      flex: 1,
-                      height: 3,
-                      borderRadius: 2,
-                      background: allTimePipeline >= TIERS[i + 1].threshold
-                        ? TIERS[i + 1].accentColor
-                        : '#e2e8f0',
-                      marginBottom: 30,
-                      transition: 'background 0.3s',
-                    }}
-                  />
-                )}
-              </div>
-            )
-          })}
-        </div>
-
-        {/* Progress bar */}
-        {nextTier ? (
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-xs font-semibold text-gray-500">
-                Progress to {nextTier.label}
-              </span>
-              <span className="text-xs font-bold" style={{ color: nextTier.accentColor }}>
-                {fmt(allTimePipeline)} / {fmt(nextTier.threshold)}
-              </span>
-            </div>
-            <div
-              style={{
-                height: 10,
-                background: '#f1f5f9',
-                borderRadius: 6,
-                overflow: 'hidden',
-              }}
-            >
-              <div
-                style={{
-                  height: '100%',
-                  width: `${progressPct}%`,
-                  background: `linear-gradient(90deg, ${currentTier.accentColor}, ${nextTier.accentColor})`,
-                  borderRadius: 6,
-                  transition: 'width 0.6s ease',
-                }}
-              />
-            </div>
-            <p className="text-xs text-gray-400 mt-2">
-              {fmt(remaining)} more to reach{' '}
-              <span style={{ color: nextTier.textColor, fontWeight: 600 }}>{nextTier.label}</span>
-            </p>
-          </div>
-        ) : (
-          <div
-            style={{
-              background: currentTier.bgColor,
-              border: `1px solid ${currentTier.borderColor}`,
-              borderRadius: 8,
-              padding: '10px 14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 1l1.85 3.75 4.15.6-3 2.92.7 4.12L8 10.5l-3.7 1.9.7-4.13L2 5.35l4.15-.6L8 1z"
-                fill={currentTier.accentColor} stroke={currentTier.accentColor} strokeWidth="0.5" strokeLinejoin="round" />
-            </svg>
-            <span className="text-sm font-semibold" style={{ color: currentTier.textColor }}>
-              Max tier reached — you&apos;re an Expert!
-            </span>
-          </div>
-        )}
-      </div>
     </div>
   )
 }
