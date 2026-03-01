@@ -170,7 +170,7 @@ export default function VSLsPage() {
     }
 
     setUploadProgress(100)
-    setSuccess('VSL uploaded successfully.')
+    setSuccess('Creative uploaded successfully.')
     setPendingFile(null)
     setTitleInput('')
     setUploading(false)
@@ -219,9 +219,9 @@ export default function VSLsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">VSL Library</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Ad Creatives</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            Upload and manage your Video Sales Letters. Use them in Meta Ads campaigns.
+            Upload and manage your images and videos. Use them in Meta Ads campaigns.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -238,7 +238,7 @@ export default function VSLsPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
             </svg>
-            {uploading ? 'Uploading...' : 'Upload VSL'}
+            {uploading ? 'Uploading...' : 'Upload Creative'}
           </button>
         </div>
         <input
@@ -293,9 +293,9 @@ export default function VSLsPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.882v6.236a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
           </div>
-          <h3 className="text-base font-semibold text-gray-900 mb-1">No VSLs yet</h3>
+          <h3 className="text-base font-semibold text-gray-900 mb-1">No creatives yet</h3>
           <p className="text-sm text-gray-500 mb-5">
-            Upload a video sales letter to use it in your Meta Ads campaigns.
+            Upload an image or video to use it in your Meta Ads campaigns.
           </p>
           <button
             onClick={() => fileInputRef.current?.click()}
@@ -304,7 +304,7 @@ export default function VSLsPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Upload your first VSL
+            Upload your first creative
           </button>
         </div>
       )}
@@ -389,9 +389,9 @@ export default function VSLsPage() {
       {showUploadModal && pendingFile && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-1">Name your VSL</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">Name your creative</h2>
             <p className="text-sm text-gray-500 mb-4">
-              Give this video a recognizable title so you can find it easily.
+              Give this file a recognizable title so you can find it easily.
             </p>
 
             <div className="mb-4">
@@ -439,8 +439,8 @@ export default function VSLsPage() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <div>
-          <strong>How to use VSLs in Meta Ads:</strong> When creating a Meta Ads campaign, go to{' '}
-          <strong>Step 3 (Business Info)</strong> and select a VSL from the dropdown. The video URL will be
+          <strong>How to use creatives in Meta Ads:</strong> When creating a Meta Ads campaign, go to{' '}
+          <strong>Step 3 (Business Info)</strong> and select a creative from the dropdown. The URL will be
           included with your campaign so you can attach it inside Meta Ads Manager.
         </div>
       </div>
