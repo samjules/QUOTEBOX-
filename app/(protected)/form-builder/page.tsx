@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { FormField, FieldOption, ConditionalRule } from '@/lib/types'
+import type { FormField, FieldOption, ConditionalRule, RuleCondition } from '@/lib/types'
 
 // ── Helpers ──────────────────────────────────────────────────
 let _ctr = 0
@@ -416,6 +416,9 @@ function PropsPanel({
   onAddRule,
   onRemoveRule,
   onSetRule,
+  onAddCondition,
+  onRemoveCondition,
+  onSetCondition,
 }: {
   field: FormField | null
   allFields: FormField[]
@@ -427,6 +430,9 @@ function PropsPanel({
   onAddRule: (fieldId: string) => void
   onRemoveRule: (fieldId: string, ruleId: string) => void
   onSetRule: (fieldId: string, ruleId: string, key: string, value: string | number) => void
+  onAddCondition: (fieldId: string, ruleId: string) => void
+  onRemoveCondition: (fieldId: string, ruleId: string, condId: string) => void
+  onSetCondition: (fieldId: string, ruleId: string, condId: string, key: string, value: string) => void
 }) {
   if (!field) {
     return (
@@ -643,13 +649,11 @@ function PropsPanel({
           </div>
           {(field.conditionalRules ?? []).length === 0 && (
             <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: 4, lineHeight: 1.45 }}>
-              Set a different rate when a specific answer is selected.
+              Set a different rate when specific answers are selected.
             </div>
           )}
           {(field.conditionalRules ?? []).map((rule) => {
-            const triggerField = allFields.find((f) => f.id === rule.whenFieldId)
             const otherFields = allFields.filter((f) => f.id !== field.id)
-            const hasOptions = triggerField && ['radio', 'dropdown', 'checkbox'].includes(triggerField.type)
             return (
               <div
                 key={rule.id}
@@ -661,59 +665,93 @@ function PropsPanel({
                   background: 'var(--surface)',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: 6,
+                  gap: 7,
                 }}
               >
-                {/* When field */}
-                <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--muted)', whiteSpace: 'nowrap', minWidth: 30 }}>When</span>
-                  <select
-                    className="prop-input"
-                    style={{ flex: 1, fontSize: '0.75rem', padding: '4px 6px' }}
-                    value={rule.whenFieldId}
-                    onChange={(e) => {
-                      onSetRule(field.id, rule.id, 'whenFieldId', e.target.value)
-                      onSetRule(field.id, rule.id, 'whenValue', '')
-                    }}
-                  >
-                    <option value="">— pick a field —</option>
-                    {otherFields.map((f) => (
-                      <option key={f.id} value={f.id}>{f.label}</option>
-                    ))}
-                  </select>
-                </div>
+                {/* Conditions — IF / AND rows */}
+                {(rule.conditions ?? []).map((cond, idx) => {
+                  const triggerField = allFields.find((f) => f.id === cond.whenFieldId)
+                  const hasOptions = triggerField && ['radio', 'dropdown', 'checkbox'].includes(triggerField.type)
+                  return (
+                    <div key={cond.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      {/* IF / AND label + remove */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{
+                          fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.05em',
+                          color: idx === 0 ? 'var(--accent)' : 'var(--muted)',
+                          textTransform: 'uppercase',
+                        }}>
+                          {idx === 0 ? 'IF' : 'AND'}
+                        </span>
+                        {(rule.conditions ?? []).length > 1 && (
+                          <button
+                            className="rm-btn"
+                            style={{ fontSize: '0.68rem', padding: '1px 5px' }}
+                            onClick={() => onRemoveCondition(field.id, rule.id, cond.id)}
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
 
-                {/* When value — dropdown for option fields, text input for others */}
-                {triggerField && (
-                  <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--muted)', whiteSpace: 'nowrap', minWidth: 30 }}>=</span>
-                    {hasOptions ? (
+                      {/* Field picker */}
                       <select
                         className="prop-input"
-                        style={{ flex: 1, fontSize: '0.75rem', padding: '4px 6px' }}
-                        value={rule.whenValue}
-                        onChange={(e) => onSetRule(field.id, rule.id, 'whenValue', e.target.value)}
+                        style={{ fontSize: '0.75rem', padding: '4px 6px' }}
+                        value={cond.whenFieldId}
+                        onChange={(e) => {
+                          onSetCondition(field.id, rule.id, cond.id, 'whenFieldId', e.target.value)
+                          onSetCondition(field.id, rule.id, cond.id, 'whenValue', '')
+                        }}
                       >
-                        <option value="">— pick a value —</option>
-                        {(triggerField.options ?? []).map((o) => (
-                          <option key={o.id} value={o.id}>{o.label}</option>
+                        <option value="">— pick a field —</option>
+                        {otherFields.map((f) => (
+                          <option key={f.id} value={f.id}>{f.label}</option>
                         ))}
                       </select>
-                    ) : (
-                      <input
-                        className="prop-input"
-                        style={{ flex: 1, fontSize: '0.75rem', padding: '4px 6px' }}
-                        placeholder="match value…"
-                        value={rule.whenValue}
-                        onChange={(e) => onSetRule(field.id, rule.id, 'whenValue', e.target.value)}
-                      />
-                    )}
-                  </div>
-                )}
 
-                {/* Conditional rate */}
-                <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--muted)', whiteSpace: 'nowrap', minWidth: 30 }}>Rate</span>
+                      {/* Value picker */}
+                      {triggerField && (
+                        hasOptions ? (
+                          <select
+                            className="prop-input"
+                            style={{ fontSize: '0.75rem', padding: '4px 6px' }}
+                            value={cond.whenValue}
+                            onChange={(e) => onSetCondition(field.id, rule.id, cond.id, 'whenValue', e.target.value)}
+                          >
+                            <option value="">— is —</option>
+                            {(triggerField.options ?? []).map((o) => (
+                              <option key={o.id} value={o.id}>{o.label}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            className="prop-input"
+                            style={{ fontSize: '0.75rem', padding: '4px 6px' }}
+                            placeholder="equals…"
+                            value={cond.whenValue}
+                            onChange={(e) => onSetCondition(field.id, rule.id, cond.id, 'whenValue', e.target.value)}
+                          />
+                        )
+                      )}
+                    </div>
+                  )
+                })}
+
+                {/* + AND condition */}
+                <button
+                  className="add-opt-btn"
+                  style={{ marginTop: 0, padding: '2px 8px', fontSize: '0.72rem', alignSelf: 'flex-start' }}
+                  onClick={() => onAddCondition(field.id, rule.id)}
+                >
+                  + AND condition
+                </button>
+
+                {/* THEN rate */}
+                <div style={{ display: 'flex', gap: 5, alignItems: 'center', marginTop: 2, paddingTop: 7, borderTop: '1px solid var(--border)' }}>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.05em', color: 'var(--accent)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+                    THEN rate
+                  </span>
                   <input
                     className="prop-input"
                     type="number"
@@ -974,12 +1012,8 @@ export default function FormBuilderPage() {
 
   // ── Conditional rule operations ──
   function addRule(fieldId: string) {
-    const newRule: ConditionalRule = {
-      id: uid(),
-      whenFieldId: '',
-      whenValue: '',
-      rate: 0,
-    }
+    const firstCond: RuleCondition = { id: uid(), whenFieldId: '', whenValue: '' }
+    const newRule: ConditionalRule = { id: uid(), conditions: [firstCond], rate: 0 }
     setFields((prev) =>
       prev.map((f) =>
         f.id === fieldId
@@ -1007,6 +1041,63 @@ export default function FormBuilderPage() {
               ...f,
               conditionalRules: (f.conditionalRules ?? []).map((r) =>
                 r.id === ruleId ? { ...r, [key]: value } : r
+              ),
+            }
+          : f
+      )
+    )
+  }
+
+  function addCondition(fieldId: string, ruleId: string) {
+    const newCond: RuleCondition = { id: uid(), whenFieldId: '', whenValue: '' }
+    setFields((prev) =>
+      prev.map((f) =>
+        f.id === fieldId
+          ? {
+              ...f,
+              conditionalRules: (f.conditionalRules ?? []).map((r) =>
+                r.id === ruleId
+                  ? { ...r, conditions: [...(r.conditions ?? []), newCond] }
+                  : r
+              ),
+            }
+          : f
+      )
+    )
+  }
+
+  function removeCondition(fieldId: string, ruleId: string, condId: string) {
+    setFields((prev) =>
+      prev.map((f) =>
+        f.id === fieldId
+          ? {
+              ...f,
+              conditionalRules: (f.conditionalRules ?? []).map((r) =>
+                r.id === ruleId
+                  ? { ...r, conditions: (r.conditions ?? []).filter((c) => c.id !== condId) }
+                  : r
+              ),
+            }
+          : f
+      )
+    )
+  }
+
+  function setCondition(fieldId: string, ruleId: string, condId: string, key: string, value: string) {
+    setFields((prev) =>
+      prev.map((f) =>
+        f.id === fieldId
+          ? {
+              ...f,
+              conditionalRules: (f.conditionalRules ?? []).map((r) =>
+                r.id === ruleId
+                  ? {
+                      ...r,
+                      conditions: (r.conditions ?? []).map((c) =>
+                        c.id === condId ? { ...c, [key]: value } : c
+                      ),
+                    }
+                  : r
               ),
             }
           : f
@@ -1412,6 +1503,9 @@ export default function FormBuilderPage() {
           onAddRule={addRule}
           onRemoveRule={removeRule}
           onSetRule={setRule}
+          onAddCondition={addCondition}
+          onRemoveCondition={removeCondition}
+          onSetCondition={setCondition}
         />
       </div>
 

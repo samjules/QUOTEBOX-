@@ -3,7 +3,7 @@
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { FormField, HostedForm, ConditionalRule } from '@/lib/types'
+import type { FormField, HostedForm } from '@/lib/types'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 
@@ -64,29 +64,30 @@ async function getDirections(
 }
 
 // ── Pricing ────────────────────────────────────────────────────
-// Returns the conditional rate if a rule matches, otherwise the base rate.
-// First matching rule wins.
+// Returns the conditional rate if ALL conditions in a rule match (AND logic).
+// First fully-matching rule wins.
 function applyConditionalRate(
-  rules: ConditionalRule[] | undefined,
+  rules: FormField['conditionalRules'],
   baseRate: number,
   fields: FormField[],
   answers: Record<string, unknown>,
 ): number {
   if (!rules?.length) return baseRate
   for (const rule of rules) {
-    if (!rule.whenFieldId || !rule.whenValue) continue
-    const watchField = fields.find((f) => f.id === rule.whenFieldId)
-    if (!watchField) continue
-
-    let matches = false
-    const watchAnswer = answers[rule.whenFieldId]
-    if (watchField.type === 'radio' || watchField.type === 'dropdown') {
-      matches = watchAnswer === rule.whenValue
-    } else if (watchField.type === 'checkbox') {
-      matches = ((watchAnswer as string[]) ?? []).includes(rule.whenValue)
-    }
-
-    if (matches) return rule.rate
+    if (!rule.conditions?.length) continue
+    const allMatch = rule.conditions.every((cond) => {
+      if (!cond.whenFieldId || !cond.whenValue) return false
+      const watchField = fields.find((f) => f.id === cond.whenFieldId)
+      if (!watchField) return false
+      const watchAnswer = answers[cond.whenFieldId]
+      if (watchField.type === 'radio' || watchField.type === 'dropdown') {
+        return watchAnswer === cond.whenValue
+      } else if (watchField.type === 'checkbox') {
+        return ((watchAnswer as string[]) ?? []).includes(cond.whenValue)
+      }
+      return String(watchAnswer ?? '') === cond.whenValue
+    })
+    if (allMatch) return rule.rate
   }
   return baseRate
 }

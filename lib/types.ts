@@ -17,11 +17,16 @@ export interface FieldOption {
   price: number
 }
 
-export interface ConditionalRule {
+export interface RuleCondition {
   id: string
   whenFieldId: string   // ID of the field to watch
   whenValue: string     // Option ID (or value) to match on the watched field
-  rate: number          // Conditional rate to use when condition is met
+}
+
+export interface ConditionalRule {
+  id: string
+  conditions: RuleCondition[]  // ALL must be true (AND logic)
+  rate: number                 // Rate to use when all conditions are met
 }
 
 export interface FormField {
