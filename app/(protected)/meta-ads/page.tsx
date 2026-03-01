@@ -2,33 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import Script from 'next/script'
 import { createClient } from '@/lib/supabase/client'
 import type { VSL } from '@/lib/types'
-
-// ─── FB SDK global types ──────────────────────────────────────────────────────
-
-interface FBStatusResponse {
-  status: 'connected' | 'not_authorized' | 'unknown'
-  authResponse?: {
-    accessToken: string
-    expiresIn: string
-    signedRequest: string
-    userID: string
-  }
-}
-
-declare global {
-  interface Window {
-    FB: {
-      getLoginStatus: (cb: (r: FBStatusResponse) => void) => void
-      login: (cb: (r: FBStatusResponse) => void, opts?: { scope: string }) => void
-      AppEvents: { logPageView: () => void }
-      init: (params: object) => void
-    }
-    fbAsyncInit: () => void
-  }
-}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -115,8 +90,6 @@ export default function MetaAdsPage() {
   const [createdCampaign, setCreatedCampaign] = useState<CreatedCampaign | null>(null)
   const [error, setError] = useState('')
   const [metaAdAccountId, setMetaAdAccountId] = useState<string | null>(null)
-  const [fbReady, setFbReady] = useState(false)
-
   const [vsls, setVsls] = useState<VSL[]>([])
 
   const [questionnaire, setQuestionnaire] = useState<Questionnaire>({
@@ -135,43 +108,6 @@ export default function MetaAdsPage() {
     vslUrl: null,
     vslTitle: null,
   })
-
-  // ─── FB SDK initialisation (fbAsyncInit pattern) ─────────────────────────
-
-  useEffect(() => {
-    const initFB = () => {
-      console.log('[MetaAds] initFB called — window.FB exists:', !!window.FB)
-      window.FB.init({
-        appId: process.env.NEXT_PUBLIC_META_APP_ID!,
-        cookie: true,
-        xfbml: true,
-        version: 'v18.0',
-      })
-      window.FB.AppEvents.logPageView()
-      console.log('[MetaAds] FB.init() complete — setFbReady(true)')
-      setFbReady(true)
-    }
-    console.log('[MetaAds] useEffect mount — window.FB already loaded:', !!window.FB)
-    // The SDK calls window.fbAsyncInit automatically after it loads.
-    // Setting it here (before the <Script> renders) is the correct pattern.
-    window.fbAsyncInit = initFB
-    // If the SDK was already in the page (hot-reload / browser cache), init now.
-    if (window.FB) initFB()
-  }, [])
-
-  // Once FB is ready and on the disconnected screen, check existing login status
-  useEffect(() => {
-    console.log('[MetaAds] fbReady effect — fbReady:', fbReady, 'pageState:', pageState, 'loading:', loading)
-    if (!fbReady || pageState !== 'disconnected' || loading) return
-    console.log('[MetaAds] calling FB.getLoginStatus()')
-    window.FB.getLoginStatus((response) => {
-      console.log('[MetaAds] getLoginStatus response:', response.status)
-      if (response.status === 'connected' && response.authResponse) {
-        exchangeToken(response.authResponse.accessToken, response.authResponse.userID)
-      }
-    })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fbReady, pageState, loading])
 
   // ─── Load account state ──────────────────────────────────────────────────
 
@@ -244,46 +180,8 @@ export default function MetaAdsPage() {
 
   // ─── Handlers ────────────────────────────────────────────────────────────
 
-  async function exchangeToken(accessToken: string, userId: string) {
-    setLoading(true)
-    setError('')
-    try {
-      const res = await fetch('/api/meta/exchange-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accessToken, userId }),
-      })
-      if (!res.ok) {
-        const data = await res.json()
-        setError(data.error || 'Failed to connect Meta account')
-        setLoading(false)
-        return
-      }
-      // Reload account state after token saved
-      window.location.reload()
-    } catch {
-      setError('Failed to connect Meta account')
-      setLoading(false)
-    }
-  }
-
   function handleConnectMeta() {
-    console.log('[MetaAds] handleConnectMeta — fbReady:', fbReady, 'window.FB:', !!window.FB)
-    if (fbReady) {
-      window.FB.login((response) => {
-        console.log('[MetaAds] FB.login response:', response.status)
-        if (response.status === 'connected' && response.authResponse) {
-          exchangeToken(response.authResponse.accessToken, response.authResponse.userID)
-        } else if (response.status === 'not_authorized') {
-          setError('Please authorize the app to access your Meta Ads account.')
-        } else {
-          setError('Login was cancelled or failed. Please try again.')
-        }
-      }, { scope: 'ads_management,ads_read,pages_read_engagement' })
-    } else {
-      // SDK not ready yet — use server-side redirect as fallback
-      window.location.href = '/api/meta/connect'
-    }
+    window.location.href = '/api/meta/connect'
   }
 
   async function handleSaveAdAccount() {
@@ -422,11 +320,6 @@ export default function MetaAdsPage() {
 
   if (pageState === 'disconnected') {
     return (
-      <>
-      <Script
-        src="https://connect.facebook.net/en_US/sdk.js"
-        strategy="afterInteractive"
-      />
       <div className="max-w-2xl mx-auto px-4 py-12">
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-4">
@@ -477,7 +370,6 @@ export default function MetaAdsPage() {
           Connect Meta Account
         </button>
       </div>
-      </>
     )
   }
 
