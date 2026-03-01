@@ -105,9 +105,19 @@ export default function Sidebar() {
         .select('logo_url')
         .eq('owner_id', user.id)
         .single()
-      if (account?.logo_url) setLogoUrl(account.logo_url)
+      setLogoUrl(account?.logo_url ?? null)
     }
     loadLogo()
+  }, [pathname]) // re-fetch on every navigation
+
+  // Also listen for immediate update when logo is changed on Settings page
+  useEffect(() => {
+    function handleLogoUpdated(e: Event) {
+      const evt = e as CustomEvent<{ logoUrl: string | null }>
+      setLogoUrl(evt.detail.logoUrl)
+    }
+    window.addEventListener('logoUpdated', handleLogoUpdated)
+    return () => window.removeEventListener('logoUpdated', handleLogoUpdated)
   }, [])
 
   async function handleLogout() {

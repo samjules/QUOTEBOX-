@@ -166,6 +166,7 @@ export default function SettingsPage() {
       setMessage('Error: Failed to save logo')
     } else {
       setLogoUrl(publicUrl)
+      window.dispatchEvent(new CustomEvent('logoUpdated', { detail: { logoUrl: publicUrl } }))
       setMessage('Logo updated!')
       setTimeout(() => setMessage(''), 2000)
     }
@@ -216,6 +217,7 @@ export default function SettingsPage() {
                     onClick={async () => {
                       await supabase.from('accounts').update({ logo_url: null } as Record<string, null>).eq('id', accountId)
                       setLogoUrl(null)
+                      window.dispatchEvent(new CustomEvent('logoUpdated', { detail: { logoUrl: null } }))
                       setMessage('Logo removed.')
                       setTimeout(() => setMessage(''), 2000)
                     }}
