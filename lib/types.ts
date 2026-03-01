@@ -41,8 +41,7 @@ export interface FormField {
   routeChargeType?: 'mileage' | 'drivetime' | 'both' | 'none'
   ratePerMile?: number
   ratePerMinute?: number
-  imageHint?: string
-  imageMaxMb?: number
+  imageUrl?: string
   conditionalRules?: ConditionalRule[]
 }
 

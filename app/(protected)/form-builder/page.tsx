@@ -83,10 +83,9 @@ function makeField(type: FormField['type']): FormField {
       ratePerMinute: 0,
     },
     image: {
-      label: 'Upload a Photo',
+      label: 'Image',
       required: false,
-      imageHint: 'JPG, PNG or WebP — max 5 MB',
-      imageMaxMb: 5,
+      imageUrl: '',
     },
   }
   return { id: uid(), type, ...defaults[type] }
@@ -427,15 +426,20 @@ function CanvasPreview({
                   )}
 
                   {f.type === 'image' && (
-                    <div className="fprev-image-placeholder">
-                      <div className="fprev-image-icon">⬆</div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
-                        {f.imageHint || 'Click to upload an image'}
+                    f.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={f.imageUrl}
+                        alt={f.label}
+                        style={{ width: '100%', borderRadius: 8, marginTop: 8, display: 'block', maxHeight: 200, objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <div className="fprev-image-placeholder">
+                        <div className="fprev-image-icon" style={{ fontSize: '1.2rem' }}>🖼</div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>No image selected</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--border)', marginTop: 2 }}>Select one in the properties panel</div>
                       </div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--border)', marginTop: 2 }}>
-                        {f.imageMaxMb ?? 5} MB max
-                      </div>
-                    </div>
+                    )
                   )}
 
                   {f.options && (
@@ -537,6 +541,7 @@ function PropsPanel({
   onAddCondition,
   onRemoveCondition,
   onSetCondition,
+  onOpenMediaPicker,
 }: {
   field: FormField | null
   allFields: FormField[]
@@ -551,6 +556,7 @@ function PropsPanel({
   onAddCondition: (fieldId: string, ruleId: string) => void
   onRemoveCondition: (fieldId: string, ruleId: string, condId: string) => void
   onSetCondition: (fieldId: string, ruleId: string, condId: string, key: string, value: string) => void
+  onOpenMediaPicker: (fieldId: string) => void
 }) {
   if (!field) {
     return (
@@ -682,29 +688,47 @@ function PropsPanel({
       )}
 
       {isImage && (
-        <>
-          <div className="prop-group">
-            <div className="prop-label">Hint text</div>
-            <input className="prop-input" value={field.imageHint ?? ''}
-              placeholder="e.g. JPG, PNG — max 5 MB"
-              onChange={(e) => onSetProp(field.id, 'imageHint', e.target.value)} />
-          </div>
-          <div className="prop-group">
-            <div className="prop-label">Max file size (MB)</div>
-            <input className="prop-input" type="number" min={1} max={10} step={1}
-              value={field.imageMaxMb ?? 5}
-              onChange={(e) => onSetProp(field.id, 'imageMaxMb', parseInt(e.target.value) || 5)} />
-          </div>
-        </>
+        <div className="prop-group">
+          <div className="prop-label">Image</div>
+          {field.imageUrl ? (
+            <div style={{ marginTop: 4, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border)' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={field.imageUrl} alt="" style={{ width: '100%', display: 'block', maxHeight: 110, objectFit: 'cover' }} />
+              <div style={{ display: 'flex', gap: 6, padding: '6px 8px', background: 'var(--surface2)', borderTop: '1px solid var(--border)' }}>
+                <button
+                  className="add-opt-btn"
+                  style={{ flex: 1, marginTop: 0, textAlign: 'center' }}
+                  onClick={() => onOpenMediaPicker(field.id)}
+                >
+                  Change image
+                </button>
+                <button className="hero-upload-clear" style={{ padding: '4px 8px' }}
+                  onClick={() => onSetProp(field.id, 'imageUrl', '')}>
+                  Remove
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              style={{ display: 'block', width: '100%', marginTop: 4, background: 'var(--surface2)', border: '2px dashed var(--border)', borderRadius: 8, padding: '18px 8px', cursor: 'pointer', textAlign: 'center' }}
+              onClick={() => onOpenMediaPicker(field.id)}
+            >
+              <div style={{ fontSize: '1.2rem', marginBottom: 4 }}>🖼</div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>Choose from Media Library</div>
+            </button>
+          )}
+        </div>
       )}
 
-      <div className="prop-toggle">
-        <span className="prop-toggle-lbl">Required field</span>
-        <div
-          className={`toggle${field.required ? ' on' : ''}`}
-          onClick={() => onToggleProp(field.id, 'required')}
-        />
-      </div>
+      {field.type !== 'image' && (
+        <div className="prop-toggle">
+          <span className="prop-toggle-lbl">Required field</span>
+          <div
+            className={`toggle${field.required ? ' on' : ''}`}
+            onClick={() => onToggleProp(field.id, 'required')}
+          />
+        </div>
+      )}
 
       {hasOpts && (
         <div className="prop-group">
@@ -934,7 +958,8 @@ export default function FormBuilderPage() {
   const [heroUploadLoading, setHeroUploadLoading] = useState(false)
   const heroFileInputRef = useRef<HTMLInputElement>(null)
   const [cropFile, setCropFile] = useState<File | null>(null)
-  const [showHeroMediaPicker, setShowHeroMediaPicker] = useState(false)
+  // 'hero' = hero image, any other string = field ID for image fields
+  const [mediaPickerTarget, setMediaPickerTarget] = useState<string | null>(null)
   const [heroMediaFiles, setHeroMediaFiles] = useState<Array<{ id: string; title: string; file_name: string; file_url: string; file_size: number; created_at: string }>>([])
   const [heroMediaLoading, setHeroMediaLoading] = useState(false)
   const [heroMediaCopiedId, setHeroMediaCopiedId] = useState<string | null>(null)
@@ -1442,7 +1467,7 @@ export default function FormBuilderPage() {
                   <span className="icon">⇌</span> Route / Distance
                 </button>
                 <button className="ftype-btn" onClick={() => addField('image')}>
-                  <span className="icon">⬆</span> Image Upload
+                  <span className="icon">🖼</span> Image
                 </button>
               </div>
             )}
@@ -1666,7 +1691,7 @@ export default function FormBuilderPage() {
                         <button
                           className="add-opt-btn"
                           style={{ flex: 1, marginTop: 0, textAlign: 'center' }}
-                          onClick={() => { loadHeroMedia(); setShowHeroMediaPicker(true) }}
+                          onClick={() => { loadHeroMedia(); setMediaPickerTarget('hero') }}
                         >
                           Change image
                         </button>
@@ -1680,7 +1705,7 @@ export default function FormBuilderPage() {
                       className="hero-upload-zone"
                       style={{ border: '2px dashed var(--border)', cursor: 'pointer', width: '100%', background: 'var(--surface2)', borderRadius: 8, padding: '18px 0' }}
                       disabled={heroUploadLoading}
-                      onClick={() => { loadHeroMedia(); setShowHeroMediaPicker(true) }}
+                      onClick={() => { loadHeroMedia(); setMediaPickerTarget('hero') }}
                     >
                       {heroUploadLoading ? (
                         <span className="hero-upload-spinner" />
@@ -1807,14 +1832,15 @@ export default function FormBuilderPage() {
           onAddCondition={addCondition}
           onRemoveCondition={removeCondition}
           onSetCondition={setCondition}
+          onOpenMediaPicker={(fieldId) => { loadHeroMedia(); setMediaPickerTarget(fieldId) }}
         />
       </div>
 
       {/* ── Hero Media Picker Lightbox ── */}
-      {showHeroMediaPicker && (
+      {mediaPickerTarget !== null && (
         <div
           style={{ position: 'fixed', inset: 0, zIndex: 9000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, background: 'rgba(0,0,0,0.72)' }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowHeroMediaPicker(false) }}
+          onClick={(e) => { if (e.target === e.currentTarget) setMediaPickerTarget(null) }}
         >
           <div style={{ background: 'var(--surface)', borderRadius: 16, boxShadow: '0 24px 60px rgba(0,0,0,0.35)', display: 'flex', flexDirection: 'column', width: '100%', maxWidth: 820, maxHeight: '88vh', overflow: 'hidden' }}>
             {/* Header */}
@@ -1822,7 +1848,7 @@ export default function FormBuilderPage() {
               <div>
                 <div style={{ fontFamily: 'Oswald, sans-serif', fontSize: '1rem', fontWeight: 700 }}>Media Library</div>
                 <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: 2 }}>
-                  {heroMediaFiles.length} image{heroMediaFiles.length !== 1 ? 's' : ''} · click one to set as hero
+                  {heroMediaFiles.length} image{heroMediaFiles.length !== 1 ? 's' : ''} · click one to select
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -1835,7 +1861,7 @@ export default function FormBuilderPage() {
                 </button>
                 <button
                   style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: 'var(--muted)', fontSize: '1.1rem', lineHeight: 1 }}
-                  onClick={() => setShowHeroMediaPicker(false)}
+                  onClick={() => setMediaPickerTarget(null)}
                 >
                   ✕
                 </button>
@@ -1861,7 +1887,14 @@ export default function FormBuilderPage() {
                   {heroMediaFiles.map((f) => (
                     <div
                       key={f.id}
-                      onClick={() => { setHeroImageUrl(f.file_url); setShowHeroMediaPicker(false) }}
+                      onClick={() => {
+                        if (mediaPickerTarget === 'hero') {
+                          setHeroImageUrl(f.file_url)
+                        } else if (mediaPickerTarget) {
+                          setProp(mediaPickerTarget, 'imageUrl', f.file_url)
+                        }
+                        setMediaPickerTarget(null)
+                      }}
                       style={{
                         borderRadius: 10,
                         overflow: 'hidden',
