@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { FormField, FieldOption, ConditionalRule, RuleCondition } from '@/lib/types'
+import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop'
+import 'react-image-crop/dist/ReactCrop.css'
 
 // ── Helpers ──────────────────────────────────────────────────
 let _ctr = 0
@@ -96,6 +98,102 @@ function Toast({
   )
 }
 
+// ── Crop Modal ───────────────────────────────────────────────
+function CropModal({
+  file,
+  onConfirm,
+  onCancel,
+}: {
+  file: File
+  onConfirm: (blob: Blob) => void
+  onCancel: () => void
+}) {
+  const [imgSrc, setImgSrc] = useState('')
+  const [crop, setCrop] = useState<Crop>()
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop>()
+  const [aspect, setAspect] = useState<number | undefined>(undefined)
+  const imgRef = useRef<HTMLImageElement>(null)
+
+  useEffect(() => {
+    const reader = new FileReader()
+    reader.onload = (e) => setImgSrc(e.target?.result as string)
+    reader.readAsDataURL(file)
+  }, [file])
+
+  function handleConfirm() {
+    if (!imgRef.current || !completedCrop || completedCrop.width === 0) {
+      // No crop drawn — upload original
+      file.arrayBuffer().then((buf) => onConfirm(new Blob([buf], { type: file.type })))
+      return
+    }
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    const scaleX = imgRef.current.naturalWidth / imgRef.current.width
+    const scaleY = imgRef.current.naturalHeight / imgRef.current.height
+    canvas.width = completedCrop.width * scaleX
+    canvas.height = completedCrop.height * scaleY
+    ctx.drawImage(
+      imgRef.current,
+      completedCrop.x * scaleX,
+      completedCrop.y * scaleY,
+      completedCrop.width * scaleX,
+      completedCrop.height * scaleY,
+      0, 0,
+      canvas.width,
+      canvas.height
+    )
+    canvas.toBlob((blob) => { if (blob) onConfirm(blob) }, 'image/jpeg', 0.92)
+  }
+
+  const ASPECTS = [
+    { label: 'Free', value: undefined },
+    { label: '3:1', value: 3 / 1 },
+    { label: '16:9', value: 16 / 9 },
+    { label: '1:1', value: 1 },
+  ] as const
+
+  return (
+    <div className="crop-overlay">
+      <div className="crop-modal">
+        <div className="crop-modal-header">
+          <span className="crop-modal-title">Crop Image</span>
+          <div className="crop-aspect-btns">
+            {ASPECTS.map(({ label, value }) => (
+              <button
+                key={label}
+                className={`crop-aspect-btn${aspect === value ? ' active' : ''}`}
+                onClick={() => { setAspect(value); setCrop(undefined) }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="crop-canvas-wrap">
+          {imgSrc && (
+            <ReactCrop
+              crop={crop}
+              aspect={aspect}
+              onChange={(c) => setCrop(c)}
+              onComplete={(c) => setCompletedCrop(c)}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img ref={imgRef} src={imgSrc} alt="Crop preview" className="crop-img" />
+            </ReactCrop>
+          )}
+        </div>
+        <div className="crop-modal-footer">
+          <button className="bb bb-ghost" onClick={onCancel}>Cancel</button>
+          <button className="bb bb-primary" onClick={handleConfirm}>
+            {completedCrop?.width ? 'Apply & Upload' : 'Upload As-Is'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Canvas Preview ───────────────────────────────────────────
 function CanvasPreview({
   fields,
@@ -108,6 +206,8 @@ function CanvasPreview({
   currency,
   heroImageUrl,
   quoteDisplay,
+  disclaimerEnabled,
+  disclaimerText,
   onSelectField,
   onRemoveField,
 }: {
@@ -121,6 +221,8 @@ function CanvasPreview({
   currency: string
   heroImageUrl: string
   quoteDisplay: 'live' | 'after_submit' | 'hidden'
+  disclaimerEnabled: boolean
+  disclaimerText: string
   onSelectField: (id: string) => void
   onRemoveField: (id: string, e: React.MouseEvent) => void
 }) {
@@ -371,9 +473,15 @@ function CanvasPreview({
               <div className="contact-prev-field">Email Address</div>
               <div className="contact-prev-field">Phone Number (optional)</div>
             </div>
+            {disclaimerEnabled && disclaimerText && (
+              <div className="disclaimer-prev">
+                <input type="checkbox" className="disclaimer-check" readOnly />
+                <span className="disclaimer-text">{disclaimerText}</span>
+              </div>
+            )}
             <button
               className="sub-btn-prev"
-              style={{ marginTop: 14, background: brandColor, color: textPrimary }}
+              style={{ marginTop: 10, background: brandColor, color: textPrimary }}
             >
               {esc(submitLabel)}
             </button>
@@ -816,6 +924,11 @@ export default function FormBuilderPage() {
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [heroUploadLoading, setHeroUploadLoading] = useState(false)
   const heroFileInputRef = useRef<HTMLInputElement>(null)
+  const [cropFile, setCropFile] = useState<File | null>(null)
+  const [disclaimerEnabled, setDisclaimerEnabled] = useState(true)
+  const [disclaimerText, setDisclaimerText] = useState(
+    'I understand this quote is an estimate and is not final until confirmed in writing.'
+  )
 
   function showToast(
     msg: string,
@@ -827,26 +940,32 @@ export default function FormBuilderPage() {
     toastTimer.current = setTimeout(() => setToast(null), ms)
   }
 
-  async function uploadHeroImage(file: File) {
+  // Called after cropping — receives the final Blob
+  async function uploadHeroBlob(blob: Blob, ext = 'jpg') {
     if (!accountId) { showToast('Not logged in', 'error'); return }
-    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
-    if (!['jpg','jpeg','png','webp','gif'].includes(ext)) {
-      showToast('Only JPG, PNG, WebP or GIF images allowed', 'error'); return
-    }
-    if (file.size > 5 * 1024 * 1024) {
+    if (blob.size > 5 * 1024 * 1024) {
       showToast('Image must be under 5 MB', 'error'); return
     }
     setHeroUploadLoading(true)
+    setCropFile(null)
     const uuid = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
     const path = `hero/${accountId}/${uuid}.${ext}`
     const { data, error } = await supabase.storage
       .from('form-images')
-      .upload(path, file, { contentType: file.type, upsert: false })
+      .upload(path, blob, { contentType: blob.type || 'image/jpeg', upsert: false })
     setHeroUploadLoading(false)
     if (error) { showToast(`Upload failed: ${error.message}`, 'error'); return }
     const { data: urlData } = supabase.storage.from('form-images').getPublicUrl(data.path)
     setHeroImageUrl(urlData.publicUrl)
     showToast('Hero image uploaded', 'success')
+  }
+
+  function handleHeroFileSelect(file: File) {
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+    if (!['jpg','jpeg','png','webp','gif'].includes(ext)) {
+      showToast('Only JPG, PNG, WebP or GIF images allowed', 'error'); return
+    }
+    setCropFile(file)
   }
 
   // ── Init ──
@@ -928,6 +1047,8 @@ export default function FormBuilderPage() {
     } else {
       setQuoteDisplay(c.show_total !== false ? 'live' : 'hidden')
     }
+    if (c.disclaimer_enabled !== undefined) setDisclaimerEnabled(c.disclaimer_enabled)
+    if (c.disclaimer_text) setDisclaimerText(c.disclaimer_text)
   }
 
   // ── Field operations ──
@@ -1176,6 +1297,8 @@ export default function FormBuilderPage() {
         fields,
         ...(metaPixelId.trim() ? { meta_pixel_id: metaPixelId.trim() } : {}),
         ...(minQuote > 0 ? { min_quote: minQuote } : {}),
+        disclaimer_enabled: disclaimerEnabled,
+        disclaimer_text: disclaimerText,
       },
       is_active: true,
       updated_at: new Date().toISOString(),
@@ -1324,6 +1447,22 @@ export default function FormBuilderPage() {
                     <option value="CA$">CAD (CA$)</option>
                     <option value="AU$">AUD (AU$)</option>
                   </select>
+                  <div className="prop-toggle" style={{ marginTop: 12 }}>
+                    <span className="prop-toggle-lbl">Quote disclaimer</span>
+                    <div
+                      className={`toggle${disclaimerEnabled ? ' on' : ''}`}
+                      onClick={() => setDisclaimerEnabled((v) => !v)}
+                    />
+                  </div>
+                  {disclaimerEnabled && (
+                    <textarea
+                      rows={3}
+                      value={disclaimerText}
+                      onChange={(e) => setDisclaimerText(e.target.value)}
+                      style={{ marginTop: 6, fontSize: '0.78rem', lineHeight: 1.45, resize: 'vertical' }}
+                      placeholder="Disclaimer shown on the contact step…"
+                    />
+                  )}
                 </div>
               </div>
             )}
@@ -1473,7 +1612,7 @@ export default function FormBuilderPage() {
                     style={{ display: 'none' }}
                     onChange={(e) => {
                       const file = e.target.files?.[0]
-                      if (file) uploadHeroImage(file)
+                      if (file) handleHeroFileSelect(file)
                       e.target.value = ''
                     }}
                   />
@@ -1484,7 +1623,7 @@ export default function FormBuilderPage() {
                     onDrop={(e) => {
                       e.preventDefault()
                       const file = e.dataTransfer.files?.[0]
-                      if (file && !heroUploadLoading) uploadHeroImage(file)
+                      if (file && !heroUploadLoading) handleHeroFileSelect(file)
                     }}
                   >
                     {heroUploadLoading ? (
@@ -1600,6 +1739,8 @@ export default function FormBuilderPage() {
               currency={currency}
               heroImageUrl={heroImageUrl}
               quoteDisplay={quoteDisplay}
+              disclaimerEnabled={disclaimerEnabled}
+              disclaimerText={disclaimerText}
               onSelectField={setSelectedId}
               onRemoveField={removeField}
             />
@@ -1625,6 +1766,16 @@ export default function FormBuilderPage() {
       </div>
 
       {/* Toast */}
+      {cropFile && (
+        <CropModal
+          file={cropFile}
+          onConfirm={(blob) => {
+            const ext = cropFile.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+            uploadHeroBlob(blob, ext)
+          }}
+          onCancel={() => setCropFile(null)}
+        />
+      )}
       {toast && <Toast msg={toast.msg} type={toast.type} />}
     </div>
   )
