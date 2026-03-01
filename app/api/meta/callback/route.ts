@@ -40,8 +40,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${siteUrl}/meta-ads?error=invalid_state`)
   }
 
-  const appId = process.env.NEXT_PUBLIC_META_APP_ID
-  const appSecret = process.env.META_APP_SECRET
+  const appId = process.env.NEXT_PUBLIC_META_APP_ID?.trim()
+  const appSecret = process.env.META_APP_SECRET?.trim()
   const redirectUri = `${siteUrl}/api/meta/callback`
 
   if (!appId || !appSecret) {

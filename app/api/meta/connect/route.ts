@@ -14,8 +14,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const appId = process.env.NEXT_PUBLIC_META_APP_ID
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+  const appId = process.env.NEXT_PUBLIC_META_APP_ID?.trim()
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim()
 
   if (!appId || !siteUrl) {
     return NextResponse.json({ error: 'Meta app not configured' }, { status: 500 })
