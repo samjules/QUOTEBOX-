@@ -1,9 +1,10 @@
 'use client'
 
-// MIGRATION REQUIRED — run once in the Supabase SQL editor before phone saving works:
+// MIGRATION REQUIRED — run once in the Supabase SQL editor:
 //   ALTER TABLE accounts ADD COLUMN IF NOT EXISTS phone TEXT;
+//   ALTER TABLE accounts ADD COLUMN IF NOT EXISTS logo_url TEXT;
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -98,6 +99,11 @@ export default function OnboardingPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
 
+  // Logo state
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
+  const [logoUploading, setLogoUploading] = useState(false)
+  const logoInputRef = useRef<HTMLInputElement>(null)
+
   // AI form gen state
   const [businessDescription, setBusinessDescription] = useState('')
   const [generating, setGenerating] = useState(false)
@@ -135,6 +141,22 @@ export default function OnboardingPage() {
     }
     setError('')
     setStep(1)
+  }
+
+  async function handleLogoUpload(file: File) {
+    if (!accountId) return
+    setLogoUploading(true)
+    const ext = file.name.split('.').pop() ?? 'png'
+    const path = `logos/${accountId}/logo-${Date.now()}.${ext}`
+    const { error: uploadErr } = await supabase.storage.from('vsls').upload(path, file, { upsert: true })
+    if (uploadErr) { setLogoUploading(false); return }
+    const { data: { publicUrl } } = supabase.storage.from('vsls').getPublicUrl(path)
+    await supabase
+      .from('accounts')
+      .update({ logo_url: publicUrl } as Record<string, string>)
+      .eq('id', accountId)
+    setLogoUrl(publicUrl)
+    setLogoUploading(false)
   }
 
   async function handleFinish() {
@@ -298,6 +320,58 @@ export default function OnboardingPage() {
                 />
                 <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 5 }}>
                   Your account email — used to log in
+                </div>
+              </div>
+
+              {/* Logo upload */}
+              <div>
+                <label style={labelStyle}>
+                  Business Logo{' '}
+                  <span style={{ fontWeight: 400, color: '#94a3b8' }}>(optional)</span>
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <div style={{
+                    width: 56, height: 56, borderRadius: 10,
+                    border: '1.5px dashed #e5e4e0', background: '#f8fafc',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    overflow: 'hidden', flexShrink: 0,
+                  }}>
+                    {logoUrl ? (
+                      <img src={logoUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    ) : (
+                      <svg width="22" height="22" fill="none" stroke="#cbd5e1" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => logoInputRef.current?.click()}
+                    disabled={logoUploading}
+                    style={{
+                      padding: '9px 16px', borderRadius: 8,
+                      border: '1.5px solid #e5e4e0', background: 'white',
+                      fontSize: '0.84rem', fontWeight: 600, cursor: 'pointer',
+                      color: '#334155', fontFamily: 'inherit',
+                      opacity: logoUploading ? 0.6 : 1,
+                    }}
+                  >
+                    {logoUploading ? 'Uploading…' : logoUrl ? 'Change Logo' : 'Upload Logo'}
+                  </button>
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) handleLogoUpload(file)
+                      e.target.value = ''
+                    }}
+                  />
+                </div>
+                <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 6 }}>
+                  Shows at the bottom of your sidebar
                 </div>
               </div>
 

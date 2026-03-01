@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import DealNotificationBanner from '@/components/DealNotificationBanner'
 
 const faqs = [
   {
@@ -320,6 +321,9 @@ export default function LandingPage() {
           </Link>
         </div>
       </section>
+
+      {/* Deal notification toasts */}
+      <DealNotificationBanner />
 
       {/* ── Footer ── */}
       <footer style={{ background: '#1a1a2e', padding: '28px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>

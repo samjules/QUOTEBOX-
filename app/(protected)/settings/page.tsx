@@ -1,6 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+// MIGRATION REQUIRED — run once in the Supabase SQL editor before logo saving works:
+//   ALTER TABLE accounts ADD COLUMN IF NOT EXISTS logo_url TEXT;
+
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 interface AdAccount {
@@ -16,6 +19,11 @@ export default function SettingsPage() {
   const [businessName, setBusinessName] = useState('')
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
+
+  // Logo state
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
+  const [logoUploading, setLogoUploading] = useState(false)
+  const logoInputRef = useRef<HTMLInputElement>(null)
 
   // Meta connection state
   const [metaConnected, setMetaConnected] = useState(false)
@@ -44,6 +52,7 @@ export default function SettingsPage() {
       if (account) {
         setAccountId(account.id)
         setBusinessName(account.business_name ?? '')
+        setLogoUrl(account.logo_url ?? null)
         if (account.meta_access_token) {
           setMetaConnected(true)
           setMetaUserId(account.meta_user_id ?? null)
@@ -136,6 +145,33 @@ export default function SettingsPage() {
     setTimeout(() => setMessage(''), 2000)
   }
 
+  async function handleLogoUpload(file: File) {
+    if (!accountId) return
+    setLogoUploading(true)
+    setMessage('')
+    const ext = file.name.split('.').pop() ?? 'png'
+    const path = `logos/${accountId}/logo-${Date.now()}.${ext}`
+    const { error: uploadErr } = await supabase.storage.from('vsls').upload(path, file, { upsert: true })
+    if (uploadErr) {
+      setMessage('Error: Failed to upload logo')
+      setLogoUploading(false)
+      return
+    }
+    const { data: { publicUrl } } = supabase.storage.from('vsls').getPublicUrl(path)
+    const { error: saveErr } = await supabase
+      .from('accounts')
+      .update({ logo_url: publicUrl } as Record<string, string>)
+      .eq('id', accountId)
+    if (saveErr) {
+      setMessage('Error: Failed to save logo')
+    } else {
+      setLogoUrl(publicUrl)
+      setMessage('Logo updated!')
+      setTimeout(() => setMessage(''), 2000)
+    }
+    setLogoUploading(false)
+  }
+
   const embedScript = `<div id="quoteflow-form"></div>
 <script src="https://yourdomain.github.io/embed.js"><\/script>
 <script>
@@ -153,6 +189,57 @@ export default function SettingsPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
         <div className="py-4 space-y-6">
+          {/* Logo */}
+          <div className="bg-white shadow rounded-xl p-6">
+            <h2 className="text-lg font-medium text-gray-900 mb-1">Logo</h2>
+            <p className="text-sm text-gray-500 mb-5">Upload your business logo. It will appear at the bottom of your sidebar.</p>
+            <div className="flex items-center gap-5">
+              <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                {logoUrl ? (
+                  <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                ) : (
+                  <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => logoInputRef.current?.click()}
+                  disabled={logoUploading}
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 text-sm font-medium"
+                >
+                  {logoUploading ? 'Uploading…' : logoUrl ? 'Change Logo' : 'Upload Logo'}
+                </button>
+                {logoUrl && (
+                  <button
+                    onClick={async () => {
+                      await supabase.from('accounts').update({ logo_url: null } as Record<string, null>).eq('id', accountId)
+                      setLogoUrl(null)
+                      setMessage('Logo removed.')
+                      setTimeout(() => setMessage(''), 2000)
+                    }}
+                    className="text-sm text-red-500 hover:text-red-600 font-medium"
+                  >
+                    Remove logo
+                  </button>
+                )}
+                <p className="text-xs text-gray-400">PNG, JPG, SVG — max 2 MB</p>
+              </div>
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) handleLogoUpload(file)
+                  e.target.value = ''
+                }}
+              />
+            </div>
+          </div>
+
           {/* Business Information */}
           <div className="bg-white shadow rounded-xl p-6">
             <h2 className="text-lg font-medium text-gray-900 mb-4">

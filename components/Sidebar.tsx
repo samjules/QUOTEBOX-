@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -92,6 +93,22 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    async function loadLogo() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data: account } = await supabase
+        .from('accounts')
+        .select('logo_url')
+        .eq('owner_id', user.id)
+        .single()
+      if (account?.logo_url) setLogoUrl(account.logo_url)
+    }
+    loadLogo()
+  }, [])
 
   async function handleLogout() {
     const supabase = createClient()
@@ -128,6 +145,16 @@ export default function Sidebar() {
             )
           })}
         </nav>
+        {logoUrl && (
+          <div className="flex items-center justify-center px-4 py-3 border-t border-gray-800">
+            <img
+              src={logoUrl}
+              alt="Business logo"
+              className="max-h-10 max-w-[140px] object-contain"
+            />
+          </div>
+        )}
+
         <div className="p-4 border-t border-gray-800">
           <button
             onClick={handleLogout}
