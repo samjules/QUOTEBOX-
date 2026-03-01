@@ -185,6 +185,9 @@ export async function POST(request: NextRequest) {
 
   // Create Ad Creative (only if we have a page + destination + copy)
   let adId: string | null = null
+  let creativeError: unknown = null
+  let adError: unknown = null
+
   if (body.pageId && body.destinationUrl && body.headline && body.bodyText) {
     const objectStorySpec = {
       page_id: body.pageId,
@@ -203,17 +206,15 @@ export async function POST(request: NextRequest) {
     })
 
     let creativeId: string | null = null
-    try {
-      const creativeRes = await fetch(
-        `https://graph.facebook.com/v18.0/act_${adAccountId}/adcreatives`,
-        { method: 'POST', body: creativeParams }
-      )
-      const creativeData = await creativeRes.json()
-      if (creativeRes.ok && creativeData.id) {
-        creativeId = creativeData.id
-      }
-    } catch {
-      // Non-fatal — campaign + ad set still created
+    const creativeRes = await fetch(
+      `https://graph.facebook.com/v18.0/act_${adAccountId}/adcreatives`,
+      { method: 'POST', body: creativeParams }
+    )
+    const creativeData = await creativeRes.json()
+    if (creativeRes.ok && creativeData.id) {
+      creativeId = creativeData.id
+    } else {
+      creativeError = creativeData.error
     }
 
     // Create Ad
@@ -226,17 +227,15 @@ export async function POST(request: NextRequest) {
         access_token: token,
       })
 
-      try {
-        const adRes = await fetch(
-          `https://graph.facebook.com/v18.0/act_${adAccountId}/ads`,
-          { method: 'POST', body: adParams }
-        )
-        const adData = await adRes.json()
-        if (adRes.ok && adData.id) {
-          adId = adData.id
-        }
-      } catch {
-        // Non-fatal
+      const adRes = await fetch(
+        `https://graph.facebook.com/v18.0/act_${adAccountId}/ads`,
+        { method: 'POST', body: adParams }
+      )
+      const adData = await adRes.json()
+      if (adRes.ok && adData.id) {
+        adId = adData.id
+      } else {
+        adError = adData.error
       }
     }
   }
@@ -247,6 +246,8 @@ export async function POST(request: NextRequest) {
     campaignId,
     adSetId,
     adId,
+    creativeError,
+    adError,
     campaignName: body.campaignName,
     adSetName: body.adSetName,
     adsManagerUrl,
