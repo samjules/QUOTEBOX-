@@ -54,6 +54,9 @@ export default function LandingPage() {
           Quote<span style={{ color: '#FFE500', WebkitTextStroke: '1px #1a1a2e' }}>.</span>Box
         </span>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <Link href="/agency" style={{ fontSize: '0.88rem', fontWeight: 500, color: '#555', textDecoration: 'none' }}>
+            Done for you
+          </Link>
           <Link href="/login" style={{ fontSize: '0.88rem', fontWeight: 500, color: '#555', textDecoration: 'none' }}>
             Log in
           </Link>
@@ -232,40 +235,148 @@ export default function LandingPage() {
       </section>
 
       {/* ── Pricing callout ── */}
-      <section style={{ padding: '72px 24px', background: '#f9fafb', textAlign: 'center' }}>
-        <div style={{ maxWidth: 560, margin: '0 auto' }}>
-          <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '2rem', fontWeight: 700, color: '#1a1a2e', marginBottom: 14 }}>
-            Simple, honest pricing
-          </h2>
-          <p style={{ color: '#6b7280', fontSize: '1rem', lineHeight: 1.7, marginBottom: 36 }}>
-            No subscriptions. No lock-in. No surprises. Just $15 per lead — only when a real customer submits your form.
-          </p>
-          <div style={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '36px 32px', marginBottom: 32 }}>
-            <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: '3.5rem', fontWeight: 800, color: '#FFE500', lineHeight: 1 }}>$15</div>
-            <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.88rem', marginTop: 6, marginBottom: 24 }}>per lead received</div>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10, textAlign: 'left' }}>
-              {[
-                'Meta ads on Facebook & Instagram included',
-                'Unlimited form fields & customisation',
-                'Instant quote calculator built in',
-                'Full lead details in your dashboard',
-                'Leads held safely if credits run low',
-                'No monthly fee, no contract',
-              ].map((item) => (
-                <li key={item} style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem' }}>
-                  <span style={{ color: '#FFE500', fontWeight: 700, flexShrink: 0 }}>✓</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
+      <section id="pricing" style={{ padding: '72px 24px', background: '#f9fafb' }}>
+        <div style={{ maxWidth: 960, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 52 }}>
+            <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '2rem', fontWeight: 700, color: '#1a1a2e', marginBottom: 14 }}>
+              Simple, honest pricing
+            </h2>
+            <p style={{ color: '#6b7280', fontSize: '1rem', lineHeight: 1.7, maxWidth: 500, margin: '0 auto' }}>
+              Start free and self-serve, or let us handle everything. Pick the plan that fits.
+            </p>
           </div>
-          <Link href="/signup" style={{
-            display: 'inline-block', padding: '15px 36px', background: '#1a1a2e',
-            color: '#FFE500', fontWeight: 700, fontSize: '1rem', borderRadius: 10,
-            textDecoration: 'none', fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
-          }}>
-            Start free — no card needed
-          </Link>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24, alignItems: 'start' }}>
+
+            {/* Starter */}
+            <div style={{ background: 'white', borderRadius: 16, padding: '32px 28px', border: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', gap: 0 }}>
+              <div style={{
+                display: 'inline-block', background: '#f3f4f6', color: '#6b7280',
+                fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em',
+                textTransform: 'uppercase', padding: '4px 12px', borderRadius: 99, marginBottom: 20, alignSelf: 'flex-start',
+              }}>
+                Starter
+              </div>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: '2.8rem', fontWeight: 800, color: '#1a1a2e', lineHeight: 1 }}>$20</div>
+              <div style={{ color: '#9ca3af', fontSize: '0.85rem', marginTop: 4, marginBottom: 8 }}>/month</div>
+              <div style={{
+                display: 'inline-block', background: '#dcfce7', color: '#16a34a',
+                fontSize: '0.72rem', fontWeight: 700, padding: '3px 10px', borderRadius: 99, marginBottom: 24, alignSelf: 'flex-start',
+              }}>
+                7-day free trial
+              </div>
+              <p style={{ color: '#6b7280', fontSize: '0.88rem', lineHeight: 1.6, marginBottom: 20 }}>
+                Everything you need to get started with quote generation.
+              </p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'flex', flexDirection: 'column', gap: 9 }}>
+                {[
+                  '1 quote form',
+                  '10 leads per month',
+                  '1 media file',
+                  'Form builder & AI assistant',
+                  'Lead dashboard',
+                ].map((item) => (
+                  <li key={item} style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#374151', fontSize: '0.88rem' }}>
+                    <span style={{ color: '#10b981', fontWeight: 700, flexShrink: 0 }}>✓</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/signup" style={{
+                display: 'block', textAlign: 'center', padding: '12px 24px',
+                border: '2px solid #1a1a2e', color: '#1a1a2e',
+                fontWeight: 700, fontSize: '0.92rem', borderRadius: 10, textDecoration: 'none',
+                fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
+              }}>
+                Start free trial
+              </Link>
+            </div>
+
+            {/* Growth — featured */}
+            <div style={{ background: '#1a1a2e', borderRadius: 16, padding: '32px 28px', border: '2px solid #FFE500', display: 'flex', flexDirection: 'column', gap: 0, position: 'relative' }}>
+              <div style={{
+                position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)',
+                background: '#FFE500', color: '#1a1a2e',
+                fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.08em',
+                textTransform: 'uppercase', padding: '5px 16px', borderRadius: 99, whiteSpace: 'nowrap',
+              }}>
+                Most popular
+              </div>
+              <div style={{
+                display: 'inline-block', background: 'rgba(255,229,0,0.15)', color: '#FFE500',
+                fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em',
+                textTransform: 'uppercase', padding: '4px 12px', borderRadius: 99, marginBottom: 20, alignSelf: 'flex-start',
+              }}>
+                Growth
+              </div>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: '2.8rem', fontWeight: 800, color: '#FFE500', lineHeight: 1 }}>$30</div>
+              <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: 4, marginBottom: 32 }}>/month</div>
+              <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.88rem', lineHeight: 1.6, marginBottom: 20 }}>
+                Scale your lead generation across multiple forms and services.
+              </p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'flex', flexDirection: 'column', gap: 9 }}>
+                {[
+                  '3 quote forms',
+                  '50 leads per month',
+                  'Priority support',
+                  'Form builder & AI assistant',
+                  'Full lead dashboard',
+                ].map((item) => (
+                  <li key={item} style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'rgba(255,255,255,0.85)', fontSize: '0.88rem' }}>
+                    <span style={{ color: '#FFE500', fontWeight: 700, flexShrink: 0 }}>✓</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/signup" style={{
+                display: 'block', textAlign: 'center', padding: '12px 24px',
+                background: '#FFE500', color: '#1a1a2e',
+                fontWeight: 700, fontSize: '0.92rem', borderRadius: 10, textDecoration: 'none',
+                fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
+              }}>
+                Get started
+              </Link>
+            </div>
+
+            {/* Fully Managed */}
+            <div style={{ background: 'white', borderRadius: 16, padding: '32px 28px', border: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', gap: 0 }}>
+              <div style={{
+                display: 'inline-block', background: '#1a1a2e', color: '#FFE500',
+                fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em',
+                textTransform: 'uppercase', padding: '4px 12px', borderRadius: 99, marginBottom: 20, alignSelf: 'flex-start',
+              }}>
+                Fully Managed
+              </div>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: '2.8rem', fontWeight: 800, color: '#1a1a2e', lineHeight: 1 }}>$15</div>
+              <div style={{ color: '#9ca3af', fontSize: '0.85rem', marginTop: 4, marginBottom: 32 }}>/lead received</div>
+              <p style={{ color: '#6b7280', fontSize: '0.88rem', lineHeight: 1.6, marginBottom: 20 }}>
+                We build your form, run your ads, and deliver leads. You just close the jobs.
+              </p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'flex', flexDirection: 'column', gap: 9 }}>
+                {[
+                  'Form built for you',
+                  'Meta ads managed for you',
+                  'Exclusive leads',
+                  'Dedicated account manager',
+                  'Pay only for results',
+                ].map((item) => (
+                  <li key={item} style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#374151', fontSize: '0.88rem' }}>
+                    <span style={{ color: '#10b981', fontWeight: 700, flexShrink: 0 }}>✓</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/agency" style={{
+                display: 'block', textAlign: 'center', padding: '12px 24px',
+                background: '#1a1a2e', color: '#FFE500',
+                fontWeight: 700, fontSize: '0.92rem', borderRadius: 10, textDecoration: 'none',
+                fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
+              }}>
+                Learn more
+              </Link>
+            </div>
+
+          </div>
         </div>
       </section>
 
