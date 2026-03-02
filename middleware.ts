@@ -35,7 +35,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isAuthPage = pathname === '/login' || pathname === '/signup'
   const isProtectedPage = [
-    '/dashboard', '/leads', '/hosted-forms', '/billing', '/settings', '/form-builder', '/meta-ads',
+    '/dashboard', '/leads', '/hosted-forms', '/billing', '/settings', '/form-builder', '/meta-ads', '/admin',
   ].some((p) => pathname.startsWith(p))
   const isPublicPage = isAuthPage || pathname === '/' || !isProtectedPage
 

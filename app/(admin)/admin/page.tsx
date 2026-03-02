@@ -1,0 +1,80 @@
+import { createAdminClient } from '@/lib/supabase/admin'
+import AdminDashboard from './AdminDashboard'
+
+export interface AdminAccount {
+  id: string
+  business_name: string
+  owner_id: string
+  owner_email: string
+  phone: string | null
+  created_at: string
+  plan: string | null
+  credit_balance: number
+  total_spent: number
+  stripe_customer_id: string | null
+  trial_ends_at: string | null
+  leads_total: number
+  leads_this_month: number
+  forms_count: number
+}
+
+export default async function AdminPage() {
+  const admin = createAdminClient()
+
+  const [accountsResult, billingResult, leadsResult, formsResult, usersResult] = await Promise.all([
+    admin.from('accounts').select('*').order('created_at', { ascending: false }),
+    admin.from('billing').select('*'),
+    admin.from('leads').select('account_id, created_at'),
+    admin.from('hosted_forms').select('account_id'),
+    admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+  ])
+
+  const accounts = accountsResult.data ?? []
+  const billing = billingResult.data ?? []
+  const leads = leadsResult.data ?? []
+  const forms = formsResult.data ?? []
+  const users = usersResult.data?.users ?? []
+
+  const userEmailMap = new Map(users.map((u) => [u.id, u.email ?? '']))
+
+  const now = new Date()
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+
+  const leadsPerAccount = new Map<string, { total: number; thisMonth: number }>()
+  for (const lead of leads) {
+    const prev = leadsPerAccount.get(lead.account_id) ?? { total: 0, thisMonth: 0 }
+    prev.total += 1
+    if (new Date(lead.created_at) >= startOfMonth) prev.thisMonth += 1
+    leadsPerAccount.set(lead.account_id, prev)
+  }
+
+  const formsPerAccount = new Map<string, number>()
+  for (const form of forms) {
+    formsPerAccount.set(form.account_id, (formsPerAccount.get(form.account_id) ?? 0) + 1)
+  }
+
+  const billingMap = new Map(billing.map((b) => [b.account_id, b]))
+
+  const combined: AdminAccount[] = accounts.map((acc) => {
+    const b = billingMap.get(acc.id)
+    const l = leadsPerAccount.get(acc.id) ?? { total: 0, thisMonth: 0 }
+    return {
+      id: acc.id,
+      business_name: acc.business_name ?? 'Unnamed',
+      owner_id: acc.owner_id,
+      owner_email: userEmailMap.get(acc.owner_id) ?? '—',
+      phone: acc.phone ?? null,
+      created_at: acc.created_at,
+      plan: b?.plan ?? null,
+      credit_balance: b?.credit_balance ?? 0,
+      total_spent: b?.total_spent ?? 0,
+      stripe_customer_id: b?.stripe_customer_id ?? null,
+      trial_ends_at: b?.trial_ends_at ?? null,
+      leads_total: l.total,
+      leads_this_month: l.thisMonth,
+      forms_count: formsPerAccount.get(acc.id) ?? 0,
+    }
+  })
+
+  return <AdminDashboard accounts={combined} />
+}
