@@ -560,6 +560,56 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
       setFormError('Something went wrong. Please try again.')
       return
     }
+
+    // Build line items for the quote email
+    const lineItems: Array<{ label: string; value: string; price: number }> = []
+    for (const f of config.fields) {
+      if (f.type === 'radio' || f.type === 'dropdown') {
+        const opt = f.options?.find((o) => o.id === answers[f.id])
+        if (opt) lineItems.push({ label: f.label, value: opt.label, price: opt.price })
+      } else if (f.type === 'checkbox') {
+        const selectedIds = (answers[f.id] as string[]) ?? []
+        for (const o of (f.options ?? []).filter((o) => selectedIds.includes(o.id))) {
+          lineItems.push({ label: f.label, value: o.label, price: o.price })
+        }
+      } else if (f.type === 'number') {
+        const val = Number(answers[f.id]) || 0
+        if (val > 0) lineItems.push({ label: f.label, value: String(val), price: val * (f.ratePerUnit ?? 0) })
+      } else if (f.type === 'textarea') {
+        const val = String(answers[f.id] ?? '').trim()
+        if (val) lineItems.push({ label: f.label, value: val, price: 0 })
+      } else if (f.type === 'route') {
+        const rd = routeData[f.id]
+        if (rd) {
+          let routePrice = 0
+          if (f.routeChargeType === 'mileage' || f.routeChargeType === 'both')
+            routePrice += rd.distanceMiles * (f.ratePerMile ?? 0)
+          if (f.routeChargeType === 'drivetime' || f.routeChargeType === 'both')
+            routePrice += rd.durationMinutes * (f.ratePerMinute ?? 0)
+          lineItems.push({
+            label: f.label,
+            value: `${rd.distanceMiles.toFixed(1)} mi — ${rd.startAddress} → ${rd.endAddress}`,
+            price: routePrice,
+          })
+        }
+      }
+    }
+
+    // Fire quote email — intentionally non-blocking so a failure doesn't affect the user
+    fetch('/api/leads/send-quote-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customerName: name.trim(),
+        customerEmail: email.trim(),
+        formName: form.form_name,
+        currency,
+        total: displayTotal,
+        minApplied,
+        lineItems,
+      }),
+    }).catch(() => { /* silently ignore email errors */ })
+
     setStep(2)
   }
 
