@@ -1,4 +1,4 @@
-import { Resend } from 'resend'
+import nodemailer from 'nodemailer'
 import { NextRequest, NextResponse } from 'next/server'
 
 interface LineItem {
@@ -126,8 +126,9 @@ function buildEmailHtml(p: EmailPayload): string {
 }
 
 export async function POST(request: NextRequest) {
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) {
+  const gmailUser = process.env.GMAIL_USER
+  const gmailPass = process.env.GMAIL_APP_PASSWORD
+  if (!gmailUser || !gmailPass) {
     // Silently skip if not configured — don't break the lead flow
     return NextResponse.json({ skipped: true })
   }
@@ -144,18 +145,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
   }
 
-  const resend = new Resend(apiKey)
-
-  const { error } = await resend.emails.send({
-    from: 'leads@quote-box.com',
-    to: customerEmail,
-    subject: `Your quote from ${formName}`,
-    html: buildEmailHtml(payload),
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: gmailUser,
+      pass: gmailPass,
+    },
   })
 
-  if (error) {
-    console.error('Resend error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  try {
+    await transporter.sendMail({
+      from: `"Quote.Box" <${gmailUser}>`,
+      to: customerEmail,
+      subject: `Your quote from ${formName}`,
+      html: buildEmailHtml(payload),
+    })
+  } catch (err) {
+    console.error('Gmail send error:', err)
+    return NextResponse.json({ error: 'Failed to send email' }, { status: 500 })
   }
 
   return NextResponse.json({ sent: true })

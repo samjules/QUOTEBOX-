@@ -13,13 +13,14 @@
     "@supabase/supabase-js": "^2.45.0",
     "mapbox-gl": "^3.18.1",
     "next": "14.2.30",
+    "nodemailer": "^8.0.1",
     "react": "^18",
     "react-dom": "^18",
-    "react-image-crop": "^11.0.10",
-    "resend": "^6.9.3"
+    "react-image-crop": "^11.0.10"
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/nodemailer": "^7.0.11",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.0.1",
