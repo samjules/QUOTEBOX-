@@ -106,6 +106,93 @@ function Toast({
   )
 }
 
+// ── AI Modal ─────────────────────────────────────────────────
+function AiModal({
+  open,
+  defaultName,
+  generating,
+  onGenerate,
+  onClose,
+}: {
+  open: boolean
+  defaultName: string
+  generating: boolean
+  onGenerate: (name: string, desc: string) => void
+  onClose: () => void
+}) {
+  const [name, setName] = useState(defaultName)
+  const [desc, setDesc] = useState('')
+
+  if (!open) return null
+
+  return (
+    <div className="crop-overlay" onClick={(e) => { if (e.target === e.currentTarget && !generating) onClose() }}>
+      <div className="crop-modal" style={{ maxWidth: 480, width: '90%' }}>
+        <div className="crop-modal-header" style={{ borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
+          <span className="crop-modal-title" style={{ fontSize: '1rem', fontWeight: 700 }}>
+            ✨ Build with AI
+          </span>
+        </div>
+
+        <div style={{ padding: '16px 0', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--muted)', lineHeight: 1.5 }}>
+            Describe your business and AI will generate a tailored quote form with realistic pricing fields.
+          </p>
+
+          <div className="fm" style={{ gap: 6 }}>
+            <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text)' }}>
+              Business Name
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Green Lawn Services"
+              disabled={generating}
+              style={{ fontSize: '0.85rem' }}
+            />
+          </div>
+
+          <div className="fm" style={{ gap: 6 }}>
+            <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text)' }}>
+              Describe your business
+            </label>
+            <textarea
+              rows={4}
+              value={desc}
+              onChange={(e) => setDesc(e.target.value)}
+              placeholder="e.g. Residential lawn mowing and landscaping. We offer weekly, bi-weekly and one-time cuts for small to large yards. Add-ons include fertilizing and edging."
+              disabled={generating}
+              style={{ fontSize: '0.82rem', resize: 'vertical', lineHeight: 1.5 }}
+            />
+          </div>
+
+          {generating && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.82rem', color: 'var(--muted)' }}>
+              <span style={{ display: 'inline-block', width: 14, height: 14, border: '2px solid var(--accent)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+              Generating your form…
+            </div>
+          )}
+        </div>
+
+        <div className="crop-modal-footer">
+          <button className="bb bb-ghost" onClick={onClose} disabled={generating}>
+            Cancel
+          </button>
+          <button
+            className="bb bb-primary"
+            disabled={generating || !name.trim() || !desc.trim()}
+            onClick={() => onGenerate(name.trim(), desc.trim())}
+            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            {generating ? 'Generating…' : '✨ Generate Form'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Crop Modal ───────────────────────────────────────────────
 function CropModal({
   file,
@@ -967,6 +1054,8 @@ export default function FormBuilderPage() {
   const [disclaimerText, setDisclaimerText] = useState(
     'I understand this quote is an estimate and is not final until confirmed in writing.'
   )
+  const [aiModalOpen, setAiModalOpen] = useState(false)
+  const [aiGenerating, setAiGenerating] = useState(false)
 
   function showToast(
     msg: string,
@@ -976,6 +1065,34 @@ export default function FormBuilderPage() {
     setToast({ msg, type })
     if (toastTimer.current) clearTimeout(toastTimer.current)
     toastTimer.current = setTimeout(() => setToast(null), ms)
+  }
+
+  // ── AI generation ──
+  async function generateWithAI(businessName: string, businessDesc: string) {
+    setAiGenerating(true)
+    try {
+      const res = await fetch('/api/form-builder/ai-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessName, businessDescription: businessDesc }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.formConfig) {
+        showToast('AI generation failed — try again', 'error')
+        return
+      }
+      const c = data.formConfig
+      if (c.fields?.length) setFields(c.fields)
+      if (c.description) setFormDesc(c.description)
+      if (c.submit_label) setSubmitLabel(c.submit_label)
+      if (!formName || formName === 'My Quote Form') setFormName(`${businessName} Quote Form`)
+      setAiModalOpen(false)
+      showToast('Form generated! Review and save when ready.', 'success', 4000)
+    } catch {
+      showToast('AI generation failed — try again', 'error')
+    } finally {
+      setAiGenerating(false)
+    }
   }
 
   // Load images from the shared media library (vsls bucket)
@@ -1448,6 +1565,21 @@ export default function FormBuilderPage() {
             </div>
             {openSections.fields && (
               <div className="sidebar-cat-body">
+                <button
+                  className="ftype-btn"
+                  onClick={() => setAiModalOpen(true)}
+                  style={{
+                    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                    color: '#fff',
+                    fontWeight: 600,
+                    border: 'none',
+                    marginBottom: 8,
+                    letterSpacing: '0.01em',
+                  }}
+                >
+                  <span className="icon">✨</span> Build with AI
+                </button>
+                <div style={{ height: 1, background: 'var(--border)', margin: '0 0 8px' }} />
                 <button className="ftype-btn" onClick={() => addField('radio')}>
                   <span className="icon">◉</span> Radio Cards
                 </button>
@@ -1952,6 +2084,13 @@ export default function FormBuilderPage() {
           onCancel={() => setCropFile(null)}
         />
       )}
+      <AiModal
+        open={aiModalOpen}
+        defaultName={formName}
+        generating={aiGenerating}
+        onGenerate={generateWithAI}
+        onClose={() => { if (!aiGenerating) setAiModalOpen(false) }}
+      />
       {toast && <Toast msg={toast.msg} type={toast.type} />}
     </div>
   )
