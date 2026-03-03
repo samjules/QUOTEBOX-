@@ -66,12 +66,21 @@ serve(async (req) => {
       }
     }
 
-    // Delete all data (FK-safe order)
-    await supabaseAdmin.from('billing_transactions').delete().eq('account_id', account.id)
-    await supabaseAdmin.from('billing').delete().eq('account_id', account.id)
-    await supabaseAdmin.from('leads').delete().eq('account_id', account.id)
-    await supabaseAdmin.from('hosted_forms').delete().eq('account_id', account.id)
-    await supabaseAdmin.from('accounts').delete().eq('id', account.id)
+    // Delete all data (FK-safe order) — check each step for errors
+    const { error: e1 } = await supabaseAdmin.from('billing_transactions').delete().eq('account_id', account.id)
+    if (e1) throw new Error(`Failed to delete billing_transactions: ${e1.message}`)
+
+    const { error: e2 } = await supabaseAdmin.from('billing').delete().eq('account_id', account.id)
+    if (e2) throw new Error(`Failed to delete billing: ${e2.message}`)
+
+    const { error: e3 } = await supabaseAdmin.from('leads').delete().eq('account_id', account.id)
+    if (e3) throw new Error(`Failed to delete leads: ${e3.message}`)
+
+    const { error: e4 } = await supabaseAdmin.from('hosted_forms').delete().eq('account_id', account.id)
+    if (e4) throw new Error(`Failed to delete hosted_forms: ${e4.message}`)
+
+    const { error: e5 } = await supabaseAdmin.from('accounts').delete().eq('id', account.id)
+    if (e5) throw new Error(`Failed to delete account: ${e5.message}`)
 
     // Delete the auth user last
     const { error: deleteUserError } = await supabaseAdmin.auth.admin.deleteUser(user.id)
