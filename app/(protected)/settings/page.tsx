@@ -4,7 +4,11 @@
 //   ALTER TABLE accounts ADD COLUMN IF NOT EXISTS logo_url TEXT;
 
 import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+
+const DELETE_ACCOUNT_FUNCTION_URL = process.env.NEXT_PUBLIC_DELETE_ACCOUNT_FUNCTION_URL!
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 interface AdAccount {
   id: string
@@ -14,6 +18,7 @@ interface AdAccount {
 
 export default function SettingsPage() {
   const supabase = createClient()
+  const router = useRouter()
 
   const [accountId, setAccountId] = useState('')
   const [businessName, setBusinessName] = useState('')
@@ -35,6 +40,11 @@ export default function SettingsPage() {
   const [loadingAdAccounts, setLoadingAdAccounts] = useState(false)
   const [savingAdAccount, setSavingAdAccount] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
+
+  // Delete account state
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -171,6 +181,32 @@ export default function SettingsPage() {
       setTimeout(() => setMessage(''), 2000)
     }
     setLogoUploading(false)
+  }
+
+  async function handleDeleteAccount() {
+    setDeleting(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Not authenticated')
+
+      const res = await fetch(DELETE_ACCOUNT_FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+          apikey: SUPABASE_ANON_KEY,
+        },
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'Failed to delete account')
+
+      await supabase.auth.signOut()
+      router.replace('/login')
+    } catch (err) {
+      setMessage(`Error: ${err instanceof Error ? err.message : 'Failed to delete account'}`)
+      setDeleting(false)
+      setShowDeleteModal(false)
+    }
   }
 
   const embedScript = `<div id="quoteflow-form"></div>
@@ -420,8 +456,83 @@ export default function SettingsPage() {
               <p className="text-sm font-medium">{message}</p>
             </div>
           )}
+
+          {/* Danger Zone */}
+          <div className="bg-white shadow rounded-xl p-6 border border-red-200">
+            <h2 className="text-lg font-medium text-red-600 mb-1">Danger Zone</h2>
+            <p className="text-sm text-gray-500 mb-5">
+              Permanently delete your account and all associated data. This action cannot be undone.
+            </p>
+            <button
+              onClick={() => { setShowDeleteModal(true); setDeleteConfirmText('') }}
+              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition text-sm font-medium"
+            >
+              Delete Account
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed z-50 inset-0 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div
+              className="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"
+              onClick={() => !deleting && setShowDeleteModal(false)}
+            />
+            <div className="relative z-10 bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Delete your account?</h3>
+              </div>
+
+              <p className="text-sm text-gray-600 mb-4">
+                This will permanently delete:
+              </p>
+              <ul className="text-sm text-gray-600 space-y-1 mb-5 pl-4 list-disc">
+                <li>All your leads and hosted forms</li>
+                <li>All billing records and transactions</li>
+                <li>Your active subscription (cancelled immediately)</li>
+                <li>Your account and login access</li>
+              </ul>
+
+              <p className="text-sm font-medium text-gray-700 mb-2">
+                Type <span className="font-bold text-red-600">DELETE</span> to confirm:
+              </p>
+              <input
+                type="text"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="DELETE"
+                disabled={deleting}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm mb-5 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
+              />
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={deleting}
+                  className="flex-1 px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={deleteConfirmText !== 'DELETE' || deleting}
+                  className="flex-1 px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deleting ? 'Deleting…' : 'Permanently Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
