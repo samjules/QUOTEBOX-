@@ -79,8 +79,11 @@ serve(async (req) => {
     const { error: e4 } = await supabaseAdmin.from('hosted_forms').delete().eq('account_id', account.id)
     if (e4) throw new Error(`Failed to delete hosted_forms: ${e4.message}`)
 
-    const { error: e5 } = await supabaseAdmin.from('accounts').delete().eq('id', account.id)
-    if (e5) throw new Error(`Failed to delete account: ${e5.message}`)
+    const { error: e5 } = await supabaseAdmin.from('deal_notifications').delete().eq('account_id', account.id)
+    if (e5) throw new Error(`Failed to delete deal_notifications: ${e5.message}`)
+
+    const { error: e6 } = await supabaseAdmin.from('accounts').delete().eq('id', account.id)
+    if (e6) throw new Error(`Failed to delete account: ${e6.message}`)
 
     // Delete the auth user last
     const { error: deleteUserError } = await supabaseAdmin.auth.admin.deleteUser(user.id)
