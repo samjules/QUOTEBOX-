@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import DealNotificationBanner from '@/components/DealNotificationBanner'
 import type { ReactNode } from 'react'
 
 const PLAN_LIMITS: Record<string, number> = { starter: 10, growth: 50 }
@@ -111,6 +112,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="py-6">
+      <DealNotificationBanner position="top" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
         <p className="mt-2 text-sm text-gray-600">
@@ -398,7 +400,7 @@ function OnboardingChecklist({
           <div>
             <h3 className="text-base font-semibold text-gray-900">Get started</h3>
             <p className="text-sm text-gray-500 mt-0.5">
-              {completedCount} of {steps.length} steps completed
+              {completedCount} of {steps.length} steps completed — close your first job this week!
             </p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
