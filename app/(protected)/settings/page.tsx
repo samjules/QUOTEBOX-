@@ -193,9 +193,9 @@ export default function SettingsPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
         },
+        body: JSON.stringify({ userToken: session.access_token }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'Failed to delete account')

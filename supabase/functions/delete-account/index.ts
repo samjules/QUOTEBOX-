@@ -26,14 +26,15 @@ serve(async (req) => {
   }
 
   try {
-    // Verify the caller's JWT
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) throw new Error('Missing Authorization header')
+    // Caller passes the user's access token in the body for verification
+    const { userToken } = await req.json()
+    if (!userToken) throw new Error('Missing userToken')
 
+    // Verify the token and get the user
     const userClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } }
+      { global: { headers: { Authorization: `Bearer ${userToken}` } } }
     )
 
     const { data: { user }, error: authError } = await userClient.auth.getUser()
