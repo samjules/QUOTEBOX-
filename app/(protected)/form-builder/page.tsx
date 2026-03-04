@@ -628,6 +628,8 @@ function PropsPanel({
   onAddCondition,
   onRemoveCondition,
   onSetCondition,
+  onSetOptRateOverride,
+  onSetOptRouteOverride,
   onOpenMediaPicker,
 }: {
   field: FormField | null
@@ -643,6 +645,8 @@ function PropsPanel({
   onAddCondition: (fieldId: string, ruleId: string) => void
   onRemoveCondition: (fieldId: string, ruleId: string, condId: string) => void
   onSetCondition: (fieldId: string, ruleId: string, condId: string, key: string, value: string) => void
+  onSetOptRateOverride: (fid: string, oid: string, targetFid: string, rateStr: string) => void
+  onSetOptRouteOverride: (fid: string, oid: string, targetFid: string, key: 'mile' | 'min', rateStr: string) => void
   onOpenMediaPicker: (fieldId: string) => void
 }) {
   if (!field) {
@@ -862,6 +866,94 @@ function PropsPanel({
           </button>
         </div>
       )}
+
+      {/* ── Rate Overrides per Service ── */}
+      {hasOpts && (() => {
+        const rateFields = allFields.filter(
+          (f) =>
+            f.id !== field.id &&
+            (f.type === 'number' || (f.type === 'route' && f.routeChargeType !== 'none'))
+        )
+        if (rateFields.length === 0) return null
+        return (
+          <div className="prop-group" style={{ marginTop: 12 }}>
+            <div className="prop-label">Rate Overrides per Service</div>
+            <div style={{ fontSize: '0.74rem', color: 'var(--muted)', marginBottom: 8, lineHeight: 1.45 }}>
+              Set different rates when each option is selected.
+            </div>
+            {(field.options ?? []).map((opt) => (
+              <div
+                key={opt.id}
+                style={{
+                  border: '1px solid var(--border)',
+                  borderRadius: 8,
+                  padding: '7px 9px',
+                  marginBottom: 6,
+                  background: 'var(--surface)',
+                }}
+              >
+                <div style={{ fontSize: '0.73rem', fontWeight: 700, color: 'var(--accent)', marginBottom: 6, letterSpacing: '0.02em' }}>
+                  {opt.label || '(unnamed)'}
+                </div>
+                {rateFields.map((rf) => (
+                  <div key={rf.id} style={{ marginBottom: 5 }}>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginBottom: 3, fontWeight: 500 }}>{rf.label}</div>
+                    {rf.type === 'number' && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <input
+                          className="prop-input"
+                          type="number"
+                          min={0}
+                          step={0.01}
+                          placeholder={String(rf.ratePerUnit ?? 0)}
+                          value={opt.rateOverrides?.[rf.id] ?? ''}
+                          onChange={(e) => onSetOptRateOverride(field.id, opt.id, rf.id, e.target.value)}
+                          style={{ flex: 1, fontSize: '0.73rem', padding: '3px 5px' }}
+                        />
+                        <span style={{ fontSize: '0.68rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>/unit</span>
+                      </div>
+                    )}
+                    {rf.type === 'route' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        {(rf.routeChargeType === 'mileage' || rf.routeChargeType === 'both') && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <input
+                              className="prop-input"
+                              type="number"
+                              min={0}
+                              step={0.01}
+                              placeholder={String(rf.ratePerMile ?? 0)}
+                              value={opt.routeOverrides?.[rf.id]?.mile ?? ''}
+                              onChange={(e) => onSetOptRouteOverride(field.id, opt.id, rf.id, 'mile', e.target.value)}
+                              style={{ flex: 1, fontSize: '0.73rem', padding: '3px 5px' }}
+                            />
+                            <span style={{ fontSize: '0.68rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>/mi</span>
+                          </div>
+                        )}
+                        {(rf.routeChargeType === 'drivetime' || rf.routeChargeType === 'both') && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <input
+                              className="prop-input"
+                              type="number"
+                              min={0}
+                              step={0.001}
+                              placeholder={String(rf.ratePerMinute ?? 0)}
+                              value={opt.routeOverrides?.[rf.id]?.min ?? ''}
+                              onChange={(e) => onSetOptRouteOverride(field.id, opt.id, rf.id, 'min', e.target.value)}
+                              style={{ flex: 1, fontSize: '0.73rem', padding: '3px 5px' }}
+                            />
+                            <span style={{ fontSize: '0.68rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>/min</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )
+      })()}
 
       {/* ── Conditional Rate Rules ── */}
       {(hasRate || isRoute) && (
@@ -1406,6 +1498,58 @@ export default function FormBuilderPage() {
               ),
             }
           : f
+      )
+    )
+  }
+
+  // ── Option rate override handlers ──
+  function setOptRateOverride(fid: string, oid: string, targetFid: string, rateStr: string) {
+    const rate = parseFloat(rateStr)
+    setFields((prev) =>
+      prev.map((f) =>
+        f.id !== fid
+          ? f
+          : {
+              ...f,
+              options: (f.options ?? []).map((o) => {
+                if (o.id !== oid) return o
+                const rateOverrides = { ...(o.rateOverrides ?? {}) }
+                if (rateStr === '' || isNaN(rate)) {
+                  delete rateOverrides[targetFid]
+                } else {
+                  rateOverrides[targetFid] = rate
+                }
+                return { ...o, rateOverrides }
+              }),
+            }
+      )
+    )
+  }
+
+  function setOptRouteOverride(fid: string, oid: string, targetFid: string, key: 'mile' | 'min', rateStr: string) {
+    const rate = parseFloat(rateStr)
+    setFields((prev) =>
+      prev.map((f) =>
+        f.id !== fid
+          ? f
+          : {
+              ...f,
+              options: (f.options ?? []).map((o) => {
+                if (o.id !== oid) return o
+                const existing = o.routeOverrides?.[targetFid] ?? {}
+                const updated = { ...existing }
+                if (rateStr === '' || isNaN(rate)) {
+                  delete updated[key]
+                } else {
+                  updated[key] = rate
+                }
+                const routeOverrides = { ...(o.routeOverrides ?? {}), [targetFid]: updated }
+                if (Object.keys(routeOverrides[targetFid]).length === 0) {
+                  delete routeOverrides[targetFid]
+                }
+                return { ...o, routeOverrides }
+              }),
+            }
       )
     )
   }
@@ -1964,6 +2108,8 @@ export default function FormBuilderPage() {
           onAddCondition={addCondition}
           onRemoveCondition={removeCondition}
           onSetCondition={setCondition}
+          onSetOptRateOverride={setOptRateOverride}
+          onSetOptRouteOverride={setOptRouteOverride}
           onOpenMediaPicker={(fieldId) => { loadHeroMedia(); setMediaPickerTarget(fieldId) }}
         />
       </div>

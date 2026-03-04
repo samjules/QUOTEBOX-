@@ -97,6 +97,25 @@ function computeTotal(
   answers: Record<string, unknown>,
   routeData: Record<string, RouteResult | null>,
 ): number {
+  // Collect active rate overrides from all selected options
+  const activeRateOverrides: Record<string, number> = {}
+  const activeRouteOverrides: Record<string, { mile?: number; min?: number }> = {}
+
+  for (const f of fields) {
+    if (f.type === 'radio' || f.type === 'dropdown') {
+      const selId = answers[f.id] as string
+      const selOpt = f.options?.find((o) => o.id === selId)
+      if (selOpt?.rateOverrides) Object.assign(activeRateOverrides, selOpt.rateOverrides)
+      if (selOpt?.routeOverrides) Object.assign(activeRouteOverrides, selOpt.routeOverrides)
+    } else if (f.type === 'checkbox') {
+      for (const oid of (answers[f.id] as string[]) ?? []) {
+        const selOpt = f.options?.find((o) => o.id === oid)
+        if (selOpt?.rateOverrides) Object.assign(activeRateOverrides, selOpt.rateOverrides)
+        if (selOpt?.routeOverrides) Object.assign(activeRouteOverrides, selOpt.routeOverrides)
+      }
+    }
+  }
+
   let total = 0
   for (const f of fields) {
     if (f.type === 'radio' || f.type === 'dropdown') {
@@ -108,13 +127,20 @@ function computeTotal(
         if (opt) total += opt.price
       }
     } else if (f.type === 'number') {
-      const effectiveRate = applyConditionalRate(f.conditionalRules, f.ratePerUnit ?? 0, fields, answers)
+      const effectiveRate = activeRateOverrides[f.id] !== undefined
+        ? activeRateOverrides[f.id]
+        : applyConditionalRate(f.conditionalRules, f.ratePerUnit ?? 0, fields, answers)
       total += (Number(answers[f.id]) || 0) * effectiveRate
     } else if (f.type === 'route') {
       const rd = routeData[f.id]
       if (rd && f.routeChargeType !== 'none') {
-        const effectiveMileRate = applyConditionalRate(f.conditionalRules, f.ratePerMile ?? 0, fields, answers)
-        const effectiveMinRate = applyConditionalRate(f.conditionalRules, f.ratePerMinute ?? 0, fields, answers)
+        const routeOvr = activeRouteOverrides[f.id]
+        const effectiveMileRate = routeOvr?.mile !== undefined
+          ? routeOvr.mile
+          : applyConditionalRate(f.conditionalRules, f.ratePerMile ?? 0, fields, answers)
+        const effectiveMinRate = routeOvr?.min !== undefined
+          ? routeOvr.min
+          : applyConditionalRate(f.conditionalRules, f.ratePerMinute ?? 0, fields, answers)
         if (f.routeChargeType === 'mileage' || f.routeChargeType === 'both')
           total += rd.distanceMiles * effectiveMileRate
         if (f.routeChargeType === 'drivetime' || f.routeChargeType === 'both')
