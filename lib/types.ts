@@ -38,12 +38,13 @@ export interface FormField {
   label: string
   required: boolean
   options?: FieldOption[]
+  showPrices?: boolean       // default true — show/hide price badges on options
   placeholder?: string
   ratePerUnit?: number
   // Route field
   routeChargeType?: 'mileage' | 'drivetime' | 'both' | 'none'
   ratePerMile?: number
-  ratePerMinute?: number
+  ratePerMinute?: number     // stored as per-minute; UI displays as per-hour
   imageUrl?: string
   conditionalRules?: ConditionalRule[]
 }

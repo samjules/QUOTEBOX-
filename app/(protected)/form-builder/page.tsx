@@ -504,7 +504,7 @@ function CanvasPreview({
                           )}
                           {(f.routeChargeType === 'drivetime' || f.routeChargeType === 'both') && (
                             <span style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 7px' }}>
-                              {currency}{f.ratePerMinute ?? 0}/min
+                              {currency}{parseFloat(((f.ratePerMinute ?? 0) * 60).toFixed(2))}/hr
                             </span>
                           )}
                         </div>
@@ -534,9 +534,11 @@ function CanvasPreview({
                       {f.options.map((o) => (
                         <div key={o.id} className="fprev-opt">
                           <span>{esc(o.label)}</span>
-                          <span className="ptag">
-                            {o.price > 0 ? `+${currency}${o.price}` : 'free'}
-                          </span>
+                          {f.showPrices !== false && (
+                            <span className="ptag">
+                              {o.price > 0 ? `+${currency}${o.price}` : 'free'}
+                            </span>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -762,15 +764,15 @@ function PropsPanel({
 
           {(field.routeChargeType === 'drivetime' || field.routeChargeType === 'both') && (
             <div className="prop-group">
-              <div className="prop-label">Rate per minute ($)</div>
+              <div className="prop-label">Rate per hour ($)</div>
               <input
                 className="prop-input"
                 type="number"
                 min={0}
-                step={0.001}
-                value={field.ratePerMinute ?? 0}
+                step={0.01}
+                value={parseFloat(((field.ratePerMinute ?? 0) * 60).toFixed(4))}
                 onChange={(e) =>
-                  onSetProp(field.id, 'ratePerMinute', parseFloat(e.target.value) || 0)
+                  onSetProp(field.id, 'ratePerMinute', parseFloat(e.target.value) / 60 || 0)
                 }
               />
             </div>
@@ -817,6 +819,16 @@ function PropsPanel({
           <div
             className={`toggle${field.required ? ' on' : ''}`}
             onClick={() => onToggleProp(field.id, 'required')}
+          />
+        </div>
+      )}
+
+      {hasOpts && (
+        <div className="prop-toggle">
+          <span className="prop-toggle-lbl">Show prices on options</span>
+          <div
+            className={`toggle${field.showPrices !== false ? ' on' : ''}`}
+            onClick={() => onSetProp(field.id, 'showPrices', field.showPrices !== false ? false : true)}
           />
         </div>
       )}
@@ -936,13 +948,16 @@ function PropsPanel({
                               className="prop-input"
                               type="number"
                               min={0}
-                              step={0.001}
-                              placeholder={String(rf.ratePerMinute ?? 0)}
-                              value={opt.routeOverrides?.[rf.id]?.min ?? ''}
-                              onChange={(e) => onSetOptRouteOverride(field.id, opt.id, rf.id, 'min', e.target.value)}
+                              step={0.01}
+                              placeholder={String(parseFloat(((rf.ratePerMinute ?? 0) * 60).toFixed(4)))}
+                              value={(() => { const m = opt.routeOverrides?.[rf.id]?.min; return m !== undefined ? parseFloat((m * 60).toFixed(4)) : '' })()}
+                              onChange={(e) => {
+                                const h = parseFloat(e.target.value)
+                                onSetOptRouteOverride(field.id, opt.id, rf.id, 'min', isNaN(h) ? '' : String(h / 60))
+                              }}
                               style={{ flex: 1, fontSize: '0.73rem', padding: '3px 5px' }}
                             />
-                            <span style={{ fontSize: '0.68rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>/min</span>
+                            <span style={{ fontSize: '0.68rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>/hr</span>
                           </div>
                         )}
                       </div>

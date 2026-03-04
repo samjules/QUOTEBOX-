@@ -794,7 +794,7 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
                               </div>
                               <span style={{ fontSize: '0.9rem', fontWeight: 500, color: '#1a1a2e' }}>{o.label}</span>
                             </div>
-                            {o.price > 0 && (
+                            {f.showPrices !== false && o.price > 0 && (
                               <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#475569' }}>
                                 +{currency}{o.price}
                               </span>
@@ -822,7 +822,7 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
                       <option value="">Select an option…</option>
                       {(f.options ?? []).map((o) => (
                         <option key={o.id} value={o.id}>
-                          {o.label}{o.price > 0 ? ` (+${currency}${o.price})` : ''}
+                          {o.label}{f.showPrices !== false && o.price > 0 ? ` (+${currency}${o.price})` : ''}
                         </option>
                       ))}
                     </select>
@@ -861,7 +861,7 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
                               </div>
                               <span style={{ fontSize: '0.9rem', fontWeight: 500, color: '#1a1a2e' }}>{o.label}</span>
                             </div>
-                            {o.price > 0 && (
+                            {f.showPrices !== false && o.price > 0 && (
                               <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#475569' }}>
                                 +{currency}{o.price}
                               </span>
