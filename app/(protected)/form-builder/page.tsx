@@ -91,6 +91,257 @@ function makeField(type: FormField['type']): FormField {
   return { id: uid(), type, ...defaults[type] }
 }
 
+// ── Templates ─────────────────────────────────────────────────
+interface TemplateConfig {
+  id: string
+  icon: string
+  name: string
+  tagline: string
+  brandColor: string
+  formName: string
+  formDesc: string
+  submitLabel: string
+  fields: Omit<FormField, 'id'>[]
+}
+
+const TEMPLATES: TemplateConfig[] = [
+  {
+    id: 'lawn',
+    icon: '🌿',
+    name: 'Lawn & Garden',
+    tagline: 'Mowing, landscaping, hedging & more',
+    brandColor: '#10B981',
+    formName: 'Lawn & Garden Quote',
+    formDesc: 'Get an instant quote for your lawn care service.',
+    submitLabel: 'Get My Quote →',
+    fields: [
+      { type: 'dropdown', label: 'Service Type', required: true, options: [
+        { id: 'x', label: 'Lawn Mowing', price: 0 },
+        { id: 'x', label: 'Hedge Trimming', price: 0 },
+        { id: 'x', label: 'Full Landscaping', price: 0 },
+        { id: 'x', label: 'Leaf Removal', price: 0 },
+      ]},
+      { type: 'number', label: 'Lawn Size (sq ft)', required: true, placeholder: '1000', ratePerUnit: 0.05 },
+      { type: 'route', label: 'Service Location', required: true, routeChargeType: 'mileage', ratePerMile: 1.5, ratePerMinute: 0 },
+    ],
+  },
+  {
+    id: 'cleaning',
+    icon: '🧹',
+    name: 'Cleaning Service',
+    tagline: 'Residential & commercial cleaning',
+    brandColor: '#3B82F6',
+    formName: 'Cleaning Service Quote',
+    formDesc: 'Get an instant quote for your cleaning needs.',
+    submitLabel: 'Get My Quote →',
+    fields: [
+      { type: 'radio', label: 'Home Size', required: true, options: [
+        { id: 'x', label: 'Studio / 1 Bed', price: 89 },
+        { id: 'x', label: '2 Bedrooms', price: 129 },
+        { id: 'x', label: '3 Bedrooms', price: 169 },
+        { id: 'x', label: '4+ Bedrooms', price: 209 },
+      ]},
+      { type: 'checkbox', label: 'Add-ons', required: false, options: [
+        { id: 'x', label: 'Deep Clean', price: 50 },
+        { id: 'x', label: 'Oven & Appliances', price: 30 },
+        { id: 'x', label: 'Window Cleaning', price: 40 },
+        { id: 'x', label: 'Carpet Steam Clean', price: 60 },
+      ]},
+      { type: 'textarea', label: 'Anything else we should know?', required: false, placeholder: 'Special instructions, pets, access details…' },
+    ],
+  },
+  {
+    id: 'moving',
+    icon: '🚛',
+    name: 'Moving Service',
+    tagline: 'Local & long-distance moves',
+    brandColor: '#F97316',
+    formName: 'Moving Service Quote',
+    formDesc: 'Tell us about your move and get an instant estimate.',
+    submitLabel: 'Get My Quote →',
+    fields: [
+      { type: 'radio', label: 'Move Size', required: true, options: [
+        { id: 'x', label: 'Studio / 1 Bed', price: 299 },
+        { id: 'x', label: '2 Bedrooms', price: 449 },
+        { id: 'x', label: '3 Bedrooms', price: 599 },
+        { id: 'x', label: '4+ Bedrooms', price: 799 },
+      ]},
+      { type: 'route', label: 'Moving Route', required: true, routeChargeType: 'both', ratePerMile: 2.0, ratePerMinute: 0.5 },
+      { type: 'checkbox', label: 'Additional Services', required: false, options: [
+        { id: 'x', label: 'Packing & Unpacking', price: 150 },
+        { id: 'x', label: 'Piano / Heavy Items', price: 100 },
+        { id: 'x', label: 'Storage (1 month)', price: 80 },
+      ]},
+    ],
+  },
+  {
+    id: 'photography',
+    icon: '📷',
+    name: 'Photography',
+    tagline: 'Portraits, events & weddings',
+    brandColor: '#8B5CF6',
+    formName: 'Photography Quote',
+    formDesc: 'Tell us about your shoot and get a quote in minutes.',
+    submitLabel: 'Get My Quote →',
+    fields: [
+      { type: 'radio', label: 'Session Type', required: true, options: [
+        { id: 'x', label: 'Portrait / Headshots', price: 199 },
+        { id: 'x', label: 'Family Session', price: 299 },
+        { id: 'x', label: 'Corporate Event', price: 499 },
+        { id: 'x', label: 'Wedding', price: 1499 },
+      ]},
+      { type: 'number', label: 'Extra Hours', required: false, placeholder: '0', ratePerUnit: 150 },
+      { type: 'checkbox', label: 'Add-ons', required: false, options: [
+        { id: 'x', label: 'Drone Footage', price: 200 },
+        { id: 'x', label: 'Rush Editing (48 hrs)', price: 100 },
+        { id: 'x', label: 'Printed Album', price: 120 },
+      ]},
+    ],
+  },
+  {
+    id: 'pressure',
+    icon: '💧',
+    name: 'Pressure Washing',
+    tagline: 'Driveways, decks & house exteriors',
+    brandColor: '#06B6D4',
+    formName: 'Pressure Washing Quote',
+    formDesc: 'Get a quick quote for pressure washing services.',
+    submitLabel: 'Get My Quote →',
+    fields: [
+      { type: 'radio', label: 'Surface Type', required: true, options: [
+        { id: 'x', label: 'Driveway', price: 99 },
+        { id: 'x', label: 'Deck / Patio', price: 129 },
+        { id: 'x', label: 'House Exterior', price: 249 },
+        { id: 'x', label: 'Fence', price: 79 },
+      ]},
+      { type: 'number', label: 'Square Footage', required: false, placeholder: '500', ratePerUnit: 0.08 },
+      { type: 'route', label: 'Service Address', required: true, routeChargeType: 'mileage', ratePerMile: 1.5, ratePerMinute: 0 },
+    ],
+  },
+  {
+    id: 'handyman',
+    icon: '🔧',
+    name: 'Handyman',
+    tagline: 'Home repairs & installations',
+    brandColor: '#EF4444',
+    formName: 'Handyman Quote',
+    formDesc: 'Describe the job and get an instant hourly estimate.',
+    submitLabel: 'Get My Quote →',
+    fields: [
+      { type: 'dropdown', label: 'Service Type', required: true, options: [
+        { id: 'x', label: 'Furniture Assembly', price: 0 },
+        { id: 'x', label: 'TV Mounting', price: 0 },
+        { id: 'x', label: 'Shelf / Cabinet Install', price: 0 },
+        { id: 'x', label: 'General Repairs', price: 0 },
+        { id: 'x', label: 'Painting', price: 0 },
+      ]},
+      { type: 'number', label: 'Estimated Hours', required: true, placeholder: '2', ratePerUnit: 85 },
+      { type: 'textarea', label: 'Job Description', required: false, placeholder: 'Tell us more about the work needed…' },
+    ],
+  },
+]
+
+// ── Template Picker ───────────────────────────────────────────
+function TemplatePicker({
+  onSelect,
+  onBlank,
+  onAi,
+}: {
+  onSelect: (tpl: TemplateConfig) => void
+  onBlank: () => void
+  onAi: () => void
+}) {
+  const [hovered, setHovered] = useState<string | null>(null)
+
+  const fieldTypeLabel: Record<string, string> = {
+    radio: '◉ radio',
+    dropdown: '▾ dropdown',
+    checkbox: '☑ checkbox',
+    number: '# number',
+    route: '⇌ route',
+    textarea: '≡ text',
+    image: '🖼 image',
+  }
+
+  return (
+    <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 24px 60px', background: 'var(--bg)' }}>
+      <div style={{ maxWidth: 880, width: '100%' }}>
+
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: 36 }}>
+          <div style={{ fontFamily: 'Oswald, sans-serif', fontSize: '1.6rem', fontWeight: 700, color: 'var(--fg)', marginBottom: 8 }}>
+            Start with a template
+          </div>
+          <div style={{ fontSize: '0.88rem', color: 'var(--muted)', lineHeight: 1.55, maxWidth: 420, margin: '0 auto' }}>
+            Pick a template to get started fast — every field, label and price is fully customisable after.
+          </div>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 20 }}>
+            <button
+              className="bb bb-primary"
+              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', border: 'none', color: '#fff' }}
+              onClick={onAi}
+            >
+              ✨ Build with AI
+            </button>
+            <button className="bb bb-ghost" onClick={onBlank}>
+              Start blank
+            </button>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, color: 'var(--muted)', fontSize: '0.75rem' }}>
+          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+          <span style={{ whiteSpace: 'nowrap' }}>or choose a template</span>
+          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+        </div>
+
+        {/* Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 14 }}>
+          {TEMPLATES.map((tpl) => {
+            const isHov = hovered === tpl.id
+            return (
+              <div
+                key={tpl.id}
+                onClick={() => onSelect(tpl)}
+                onMouseEnter={() => setHovered(tpl.id)}
+                onMouseLeave={() => setHovered(null)}
+                style={{
+                  border: `2px solid ${isHov ? tpl.brandColor : 'var(--border)'}`,
+                  borderRadius: 14,
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  transition: 'all 0.14s',
+                  background: 'var(--surface)',
+                  boxShadow: isHov ? `0 6px 24px ${tpl.brandColor}30` : '0 1px 4px rgba(0,0,0,0.06)',
+                  transform: isHov ? 'translateY(-3px)' : 'none',
+                }}
+              >
+                {/* Coloured top strip with icon */}
+                <div style={{ height: 76, background: tpl.brandColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.1rem' }}>
+                  {tpl.icon}
+                </div>
+                {/* Card body */}
+                <div style={{ padding: '13px 15px 15px' }}>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--fg)', marginBottom: 4 }}>{tpl.name}</div>
+                  <div style={{ fontSize: '0.76rem', color: 'var(--muted)', lineHeight: 1.4, marginBottom: 11 }}>{tpl.tagline}</div>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    {tpl.fields.map((f, i) => (
+                      <span key={i} style={{ fontSize: '0.64rem', fontWeight: 500, background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 5, padding: '2px 6px', color: 'var(--muted)' }}>
+                        {fieldTypeLabel[f.type] ?? f.type}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Toast component ──────────────────────────────────────────
 function Toast({
   msg,
@@ -1124,6 +1375,7 @@ export default function FormBuilderPage() {
   const searchParams = useSearchParams()
 
   // ── State ──
+  const [screen, setScreen] = useState<'picker' | 'builder'>('picker')
   const [fields, setFields] = useState<FormField[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [brandColor, setBrandColor] = useState<string>('#FFE500')
@@ -1304,6 +1556,7 @@ export default function FormBuilderPage() {
       const editId = searchParams.get('form_id')
       if (editId) {
         await loadExistingForm(editId)
+        setScreen('builder')
       }
     }
     init()
@@ -1338,6 +1591,22 @@ export default function FormBuilderPage() {
     }
     if (c.disclaimer_enabled !== undefined) setDisclaimerEnabled(c.disclaimer_enabled)
     if (c.disclaimer_text) setDisclaimerText(c.disclaimer_text)
+  }
+
+  // ── Template apply ──
+  function applyTemplate(tpl: TemplateConfig) {
+    const fields: FormField[] = tpl.fields.map((f) => ({
+      ...f,
+      id: uid(),
+      options: f.options?.map((o) => ({ ...o, id: uid() })),
+    }))
+    setFields(fields)
+    setFormName(tpl.formName)
+    setFormDesc(tpl.formDesc)
+    setBrandColor(tpl.brandColor)
+    setSubmitLabel(tpl.submitLabel)
+    setSelectedId(null)
+    setScreen('builder')
   }
 
   // ── Field operations ──
@@ -1693,26 +1962,46 @@ export default function FormBuilderPage() {
     <div className="flex-1 overflow-hidden builder-wrap h-full">
       {/* Builder header */}
       <div className="builder-header">
-        <div className="builder-logo">
-          Form Builder
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div className="builder-logo">Form Builder</div>
+          {screen === 'builder' && !editingFormId && (
+            <button
+              className="bb bb-ghost"
+              style={{ fontSize: '0.78rem', padding: '4px 10px' }}
+              onClick={() => setScreen('picker')}
+            >
+              ← Templates
+            </button>
+          )}
         </div>
-        <div className="builder-actions">
-          <span className="plan-badge">{planBadge}</span>
-          <button className="bb bb-ghost" onClick={copyShareLink}>
-            Copy Link
-          </button>
-          <button
-            className="bb bb-primary"
-            onClick={saveForm}
-            disabled={isSaving}
-          >
-            {isSaving ? 'Saving…' : 'Save Form'}
-          </button>
-        </div>
+        {screen === 'builder' && (
+          <div className="builder-actions">
+            <span className="plan-badge">{planBadge}</span>
+            <button className="bb bb-ghost" onClick={copyShareLink}>
+              Copy Link
+            </button>
+            <button
+              className="bb bb-primary"
+              onClick={saveForm}
+              disabled={isSaving}
+            >
+              {isSaving ? 'Saving…' : 'Save Form'}
+            </button>
+          </div>
+        )}
       </div>
 
+      {/* Template picker or builder */}
+      {screen === 'picker' ? (
+        <TemplatePicker
+          onSelect={applyTemplate}
+          onBlank={() => setScreen('builder')}
+          onAi={() => { setScreen('builder'); setAiModalOpen(true) }}
+        />
+      ) : null}
+
       {/* 3-panel layout */}
-      <div className="builder-layout">
+      <div className="builder-layout" style={{ display: screen === 'builder' ? undefined : 'none' }}>
         {/* ── LEFT SIDEBAR ── */}
         <aside className="b-sidebar">
 
