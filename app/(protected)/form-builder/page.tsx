@@ -87,6 +87,11 @@ function makeField(type: FormField['type']): FormField {
       required: false,
       imageUrl: '',
     },
+    draw_area: {
+      label: 'Draw Your Area',
+      required: true,
+      ratePerSqFt: 0.10,
+    },
   }
   return { id: uid(), type, ...defaults[type] }
 }
@@ -261,6 +266,7 @@ function TemplatePicker({
     route: '⇌ route',
     textarea: '≡ text',
     image: '🖼 image',
+    draw_area: '⬡ draw area',
   }
 
   return (
@@ -780,6 +786,28 @@ function CanvasPreview({
                     )
                   )}
 
+                  {f.type === 'draw_area' && (
+                    <div style={{ marginTop: 8 }}>
+                      <div style={{
+                        borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border)',
+                        height: 90, background: 'linear-gradient(160deg,#2d4a22 0%,#1a3a1a 40%,#0f2d0f 100%)',
+                        position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }} viewBox="0 0 240 90" preserveAspectRatio="none">
+                          <polygon points="60,20 180,15 195,70 70,75 45,50" fill="rgba(255,230,0,0.2)" stroke="#ffe500" strokeWidth="2" strokeDasharray="5,3"/>
+                        </svg>
+                        <span style={{ fontSize: '0.68rem', color: '#fff', background: 'rgba(0,0,0,0.55)', padding: '2px 8px', borderRadius: 10, zIndex: 1, fontWeight: 600 }}>
+                          Draw area on satellite map
+                        </span>
+                      </div>
+                      {(f.ratePerSqFt ?? 0) > 0 && (
+                        <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: 4, display: 'block' }}>
+                          × {currency}{f.ratePerSqFt}/sq ft
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   {f.options && (
                     <div className="fprev-opts">
                       {f.options.map((o) => (
@@ -919,6 +947,7 @@ function PropsPanel({
   const hasPH = ['number', 'textarea'].includes(field.type)
   const isRoute = field.type === 'route'
   const isImage = field.type === 'image'
+  const isDrawArea = field.type === 'draw_area'
 
   return (
     <aside className="props-panel">
@@ -1064,7 +1093,26 @@ function PropsPanel({
         </div>
       )}
 
-      {field.type !== 'image' && (
+      {isDrawArea && (
+        <div className="prop-group">
+          <div className="prop-label">Rate per sq ft ($)</div>
+          <input
+            className="prop-input"
+            type="number"
+            min={0}
+            step={0.001}
+            value={field.ratePerSqFt ?? 0}
+            onChange={(e) =>
+              onSetProp(field.id, 'ratePerSqFt', parseFloat(e.target.value) || 0)
+            }
+          />
+          <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: 4, lineHeight: 1.4 }}>
+            Customer draws a polygon on a satellite map — sq ft calculated automatically.
+          </div>
+        </div>
+      )}
+
+      {field.type !== 'image' && field.type !== 'draw_area' && (
         <div className="prop-toggle">
           <span className="prop-toggle-lbl">Required field</span>
           <div
@@ -2048,6 +2096,9 @@ export default function FormBuilderPage() {
                 </button>
                 <button className="ftype-btn" onClick={() => addField('image')}>
                   <span className="icon">🖼</span> Image
+                </button>
+                <button className="ftype-btn" onClick={() => addField('draw_area')}>
+                  <span className="icon">⬡</span> Draw Area
                 </button>
               </div>
             )}

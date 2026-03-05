@@ -1,9 +1,11 @@
 'use client'
 
 import 'mapbox-gl/dist/mapbox-gl.css'
+import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { FormField, HostedForm } from '@/lib/types'
+import area from '@turf/area'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 
@@ -96,6 +98,7 @@ function computeTotal(
   fields: FormField[],
   answers: Record<string, unknown>,
   routeData: Record<string, RouteResult | null>,
+  drawAreaData: Record<string, number | null> = {},
 ): number {
   // Collect active rate overrides from all selected options
   const activeRateOverrides: Record<string, number> = {}
@@ -146,6 +149,8 @@ function computeTotal(
         if (f.routeChargeType === 'drivetime' || f.routeChargeType === 'both')
           total += rd.durationMinutes * effectiveMinRate
       }
+    } else if (f.type === 'draw_area') {
+      total += (drawAreaData[f.id] ?? 0) * (f.ratePerSqFt ?? 0)
     }
   }
   return total
@@ -239,6 +244,175 @@ function AddressInput({
               {s.place_name}
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── DrawAreaField ──────────────────────────────────────────────
+function DrawAreaField({
+  field,
+  currency,
+  accentColor,
+  onAreaChange,
+}: {
+  field: FormField
+  currency: string
+  accentColor: string
+  onAreaChange: (sqFt: number | null) => void
+}) {
+  const mapContainerRef = useRef<HTMLDivElement>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mapRef = useRef<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const drawRef = useRef<any>(null)
+  const onAreaChangeRef = useRef(onAreaChange)
+  useEffect(() => { onAreaChangeRef.current = onAreaChange }, [onAreaChange])
+
+  const [mapError, setMapError] = useState(false)
+  const [sqFt, setSqFt] = useState<number | null>(null)
+  const [addressQuery, setAddressQuery] = useState('')
+  const [suggestions, setSuggestions] = useState<{ place_name: string; center: [number, number] }[]>([])
+
+  // Debounced geocode for address search
+  useEffect(() => {
+    if (addressQuery.length < 3) { setSuggestions([]); return }
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(addressQuery)}.json?access_token=${MAPBOX_TOKEN}&limit=5&types=address,place`)
+        const data = await res.json()
+        setSuggestions((data.features ?? []).map((f: { place_name: string; center: [number, number] }) => ({ place_name: f.place_name, center: f.center })))
+      } catch { /* ignore */ }
+    }, 300)
+    return () => clearTimeout(t)
+  }, [addressQuery])
+
+  function flyTo(center: [number, number]) {
+    setSuggestions([])
+    if (mapRef.current) mapRef.current.flyTo({ center, zoom: 19 })
+  }
+
+  // Init map + draw plugin
+  useEffect(() => {
+    if (!mapContainerRef.current || !MAPBOX_TOKEN) { setMapError(true); return }
+    let cancelled = false
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let mapInstance: any = null
+
+    Promise.all([import('mapbox-gl'), import('@mapbox/mapbox-gl-draw')]).then(([mod, drawMod]) => {
+      if (cancelled || !mapContainerRef.current) return
+      try {
+        const mapboxgl = mod.default
+        const MapboxDraw = drawMod.default
+        mapboxgl.accessToken = MAPBOX_TOKEN
+
+        mapInstance = new mapboxgl.Map({
+          container: mapContainerRef.current,
+          style: 'mapbox://styles/mapbox/satellite-streets-v12',
+          center: [-98.5795, 39.8283],
+          zoom: 3,
+        })
+        mapRef.current = mapInstance
+
+        const draw = new MapboxDraw({
+          displayControlsDefault: false,
+          controls: { polygon: true, trash: true },
+          defaultMode: 'simple_select',
+        })
+        drawRef.current = draw
+        mapInstance.addControl(draw)
+
+        const recalculate = () => {
+          const data = draw.getAll()
+          if (!data.features.length) {
+            setSqFt(null)
+            onAreaChangeRef.current(null)
+            return
+          }
+          // Sum all drawn polygons
+          let totalSqM = 0
+          for (const feature of data.features) {
+            totalSqM += area(feature as Parameters<typeof area>[0])
+          }
+          const totalSqFt = Math.round(totalSqM * 10.7639)
+          setSqFt(totalSqFt)
+          onAreaChangeRef.current(totalSqFt)
+        }
+
+        mapInstance.on('draw.create', recalculate)
+        mapInstance.on('draw.update', recalculate)
+        mapInstance.on('draw.delete', recalculate)
+        mapInstance.on('error', () => { if (!cancelled) setMapError(true) })
+      } catch {
+        if (!cancelled) setMapError(true)
+      }
+    }).catch(() => { if (!cancelled) setMapError(true) })
+
+    return () => {
+      cancelled = true
+      if (mapInstance) mapInstance.remove()
+      mapRef.current = null
+      drawRef.current = null
+    }
+  }, [])
+
+  const price = sqFt != null ? sqFt * (field.ratePerSqFt ?? 0) : 0
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* Address search */}
+      <div style={{ position: 'relative' }}>
+        <input
+          type="text"
+          placeholder="Search your address to zoom in…"
+          value={addressQuery}
+          autoComplete="off"
+          onChange={(e) => setAddressQuery(e.target.value)}
+          style={{ width: '100%', padding: '11px 13px', borderRadius: 8, border: '1.5px solid #e5e4e0', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', color: '#1a1a2e', background: 'white' }}
+        />
+        {suggestions.length > 0 && (
+          <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'white', border: '1px solid #e5e4e0', borderRadius: 8, boxShadow: '0 4px 18px rgba(0,0,0,0.11)', zIndex: 30, marginTop: 3, overflow: 'hidden' }}>
+            {suggestions.map((s, i) => (
+              <div key={i} style={{ padding: '10px 14px', cursor: 'pointer', fontSize: '0.85rem', color: '#334155', borderBottom: i < suggestions.length - 1 ? '1px solid #f5f5f4' : 'none' }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#f8fafc' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'white' }}
+                onMouseDown={() => { setAddressQuery(s.place_name); flyTo(s.center) }}
+              >
+                {s.place_name}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Instructions */}
+      <div style={{ fontSize: '0.78rem', color: '#64748b', lineHeight: 1.5 }}>
+        Zoom in then click <strong style={{ color: accentColor === '#ffe500' ? '#1a1a2e' : accentColor }}>✎ draw</strong> to trace the area. Click each corner of the lawn or roof — double-click to close.
+      </div>
+
+      {/* Map */}
+      <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', border: '1px solid #e5e4e0' }}>
+        <div ref={mapContainerRef} style={{ height: 280, width: '100%', background: '#1a3a1a', display: mapError ? 'none' : undefined }} />
+        {mapError && (
+          <div style={{ height: 280, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', flexDirection: 'column', gap: 6 }}>
+            <span style={{ fontSize: '1.4rem' }}>🗺️</span>
+            <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 500 }}>Satellite map unavailable</span>
+          </div>
+        )}
+      </div>
+
+      {/* Result strip */}
+      {sqFt != null && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 14px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+          <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>
+            ⬡ {sqFt.toLocaleString()} sq ft
+          </span>
+          {(field.ratePerSqFt ?? 0) > 0 && (
+            <span style={{ fontSize: '0.88rem', color: '#059669', fontWeight: 700 }}>
+              +{currency}{price.toFixed(2)}
+            </span>
+          )}
         </div>
       )}
     </div>
@@ -516,6 +690,7 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
   const [step, setStep] = useState<0 | 1 | 2>(0)
   const [answers, setAnswers] = useState<Record<string, unknown>>({})
   const [routeData, setRouteData] = useState<Record<string, RouteResult | null>>({})
+  const [drawAreaData, setDrawAreaData] = useState<Record<string, number | null>>({})
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -523,8 +698,8 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
   const [formError, setFormError] = useState('')
 
   const total = useMemo(
-    () => computeTotal(config.fields, answers, routeData),
-    [config.fields, answers, routeData]
+    () => computeTotal(config.fields, answers, routeData, drawAreaData),
+    [config.fields, answers, routeData, drawAreaData]
   )
 
   const minQuote = config.min_quote ?? 0
@@ -533,6 +708,10 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
 
   const handleRouteChange = useCallback((fieldId: string, result: RouteResult | null) => {
     setRouteData((prev) => ({ ...prev, [fieldId]: result }))
+  }, [])
+
+  const handleDrawAreaChange = useCallback((fieldId: string, sqFt: number | null) => {
+    setDrawAreaData((prev) => ({ ...prev, [fieldId]: sqFt }))
   }, [])
 
   function canProceedStep0(): boolean {
@@ -548,6 +727,8 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
         if (!String(answers[f.id] ?? '').trim()) return false
       } else if (f.type === 'route') {
         if (!routeData[f.id]) return false
+      } else if (f.type === 'draw_area') {
+        if (drawAreaData[f.id] == null) return false
       }
     }
     return true
@@ -618,6 +799,15 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
             price: routePrice,
           })
         }
+      } else if (f.type === 'draw_area') {
+        const sqFt = drawAreaData[f.id]
+        if (sqFt != null) {
+          lineItems.push({
+            label: f.label,
+            value: `${sqFt.toLocaleString()} sq ft`,
+            price: sqFt * (f.ratePerSqFt ?? 0),
+          })
+        }
       }
     }
 
@@ -679,7 +869,8 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
     (f) =>
       ['radio', 'dropdown', 'checkbox'].includes(f.type) ||
       (f.type === 'number' && (f.ratePerUnit ?? 0) > 0) ||
-      (f.type === 'route' && f.routeChargeType !== 'none')
+      (f.type === 'route' && f.routeChargeType !== 'none') ||
+      (f.type === 'draw_area' && (f.ratePerSqFt ?? 0) > 0)
   )
 
   return (
@@ -914,6 +1105,15 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
                       currency={currency}
                       accentColor={accentBg}
                       onRouteChange={(result) => handleRouteChange(f.id, result)}
+                    />
+                  )}
+
+                  {f.type === 'draw_area' && (
+                    <DrawAreaField
+                      field={f}
+                      currency={currency}
+                      accentColor={accentBg}
+                      onAreaChange={(sqFt) => handleDrawAreaChange(f.id, sqFt)}
                     />
                   )}
                 </div>

@@ -9,8 +9,10 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@mapbox/mapbox-gl-draw": "^1.5.1",
     "@supabase/ssr": "^0.5.1",
     "@supabase/supabase-js": "^2.45.0",
+    "@turf/area": "^7.3.4",
     "mapbox-gl": "^3.18.1",
     "next": "14.2.30",
     "nodemailer": "^8.0.1",
@@ -19,6 +21,7 @@
     "react-image-crop": "^11.0.10"
   },
   "devDependencies": {
+    "@types/mapbox__mapbox-gl-draw": "^1.4.9",
     "@types/node": "^20",
     "@types/nodemailer": "^7.0.11",
     "@types/react": "^18",

@@ -34,7 +34,7 @@ export interface ConditionalRule {
 
 export interface FormField {
   id: string
-  type: 'radio' | 'dropdown' | 'checkbox' | 'number' | 'textarea' | 'route' | 'image'
+  type: 'radio' | 'dropdown' | 'checkbox' | 'number' | 'textarea' | 'route' | 'image' | 'draw_area'
   label: string
   required: boolean
   options?: FieldOption[]
@@ -47,6 +47,8 @@ export interface FormField {
   ratePerMinute?: number     // stored as per-minute; UI displays as per-hour
   imageUrl?: string
   conditionalRules?: ConditionalRule[]
+  // Draw Area field
+  ratePerSqFt?: number
 }
 
 export interface FormConfig {
