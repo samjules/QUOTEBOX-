@@ -297,6 +297,7 @@ function DrawAreaField({
   useEffect(() => {
     if (!mapContainerRef.current || !MAPBOX_TOKEN) { setMapError(true); return }
     let cancelled = false
+    let mapHasLoaded = false
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let mapInstance: any = null
 
@@ -314,13 +315,23 @@ function DrawAreaField({
           style: 'mapbox://styles/mapbox/satellite-streets-v12',
           center: [-98.5795, 39.8283],
           zoom: 3,
+          accessToken: MAPBOX_TOKEN,
         })
         mapRef.current = mapInstance
 
-        mapInstance.on('error', () => { if (!cancelled) setMapError(true) })
+        // Only treat errors as fatal if they occur before the map has loaded.
+        // Post-load errors (e.g. individual tile failures) are non-fatal and
+        // should not hide the satellite view.
+        mapInstance.on('error', () => {
+          if (!cancelled && !mapHasLoaded) setMapError(true)
+        })
 
         mapInstance.on('load', () => {
           if (cancelled) return
+          mapHasLoaded = true
+          // Attempt to add draw controls. If this fails for any reason (e.g.
+          // a version incompatibility) we leave the satellite view visible so
+          // the user can at least see the map.
           try {
             const draw = new MapboxDraw({
               displayControlsDefault: false,
@@ -351,7 +362,8 @@ function DrawAreaField({
             mapInstance.on('draw.update', recalculate)
             mapInstance.on('draw.delete', recalculate)
           } catch {
-            if (!cancelled) setMapError(true)
+            // Draw controls failed — map is still usable as a reference view
+            console.warn('[DrawAreaField] MapboxDraw addControl failed:', 'draw controls unavailable')
           }
         })
       } catch {
