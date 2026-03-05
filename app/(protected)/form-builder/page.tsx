@@ -244,6 +244,55 @@ const TEMPLATES: TemplateConfig[] = [
       { type: 'textarea', label: 'Job Description', required: false, placeholder: 'Tell us more about the work needed…' },
     ],
   },
+  {
+    id: 'roofing',
+    icon: '🏠',
+    name: 'Roofing',
+    tagline: 'Repairs, replacement & inspections',
+    brandColor: '#78350F',
+    formName: 'Roofing Quote',
+    formDesc: 'Trace your roof on the map for an instant estimate.',
+    submitLabel: 'Get My Quote →',
+    fields: [
+      { type: 'radio', label: 'Service Type', required: true, options: [
+        { id: 'x', label: 'Roof Inspection', price: 99 },
+        { id: 'x', label: 'Repair / Patching', price: 0 },
+        { id: 'x', label: 'Full Replacement', price: 0 },
+        { id: 'x', label: 'New Installation', price: 0 },
+      ]},
+      { type: 'dropdown', label: 'Roofing Material', required: true, options: [
+        { id: 'x', label: 'Asphalt Shingles', price: 0 },
+        { id: 'x', label: 'Metal Roofing', price: 0 },
+        { id: 'x', label: 'Tile / Slate', price: 0 },
+        { id: 'x', label: 'Flat / TPO', price: 0 },
+      ]},
+      { type: 'draw_area', label: 'Trace Your Roof', required: true, ratePerSqFt: 4.50 },
+    ],
+  },
+  {
+    id: 'painting',
+    icon: '🎨',
+    name: 'Painting',
+    tagline: 'Interior & exterior house painting',
+    brandColor: '#D97706',
+    formName: 'Painting Quote',
+    formDesc: 'Trace the area to be painted for an instant price.',
+    submitLabel: 'Get My Quote →',
+    fields: [
+      { type: 'radio', label: 'Project Type', required: true, options: [
+        { id: 'x', label: 'Interior Walls', price: 0 },
+        { id: 'x', label: 'Exterior Siding', price: 0 },
+        { id: 'x', label: 'Fence / Deck', price: 0 },
+        { id: 'x', label: 'Ceiling', price: 0 },
+      ]},
+      { type: 'draw_area', label: 'Draw the Area', required: true, ratePerSqFt: 2.00 },
+      { type: 'checkbox', label: 'Add-ons', required: false, options: [
+        { id: 'x', label: 'Primer Coat', price: 80 },
+        { id: 'x', label: 'Trim & Doors', price: 120 },
+        { id: 'x', label: 'Ceiling Paint', price: 90 },
+      ]},
+    ],
+  },
 ]
 
 // ── Template Picker ───────────────────────────────────────────

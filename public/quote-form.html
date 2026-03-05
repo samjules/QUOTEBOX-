@@ -131,12 +131,18 @@
   .draw-addr-input:focus { border-color: #1a1a2e; box-shadow: 0 0 0 3px rgba(26,26,46,0.06); }
   .draw-addr-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #e2e2ec; border-radius: 10px; box-shadow: 0 4px 18px rgba(0,0,0,0.1); z-index: 50; margin-top: 3px; overflow: hidden; display: none; }
   .draw-map-wrap { position: relative; border-radius: 10px; overflow: hidden; border: 1px solid #e2e2ec; }
-  .draw-map-canvas { height: 280px; width: 100%; background: #1a3a1a; }
-  .draw-map-error { display: none; height: 280px; align-items: center; justify-content: center; background: #f8fafc; flex-direction: column; gap: 6px; font-size: 0.8rem; color: #94a3b8; font-weight: 500; }
-  .draw-hint { font-size: 0.78rem; color: #64748b; line-height: 1.5; }
-  .draw-result { display: none; align-items: center; justify-content: space-between; padding: 9px 14px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e2ec; }
+  .draw-map-canvas { height: 260px; width: 100%; background: #1a3a1a; }
+  .draw-map-error { display: none; height: 260px; align-items: center; justify-content: center; background: #f8fafc; flex-direction: column; gap: 6px; font-size: 0.8rem; color: #94a3b8; font-weight: 500; }
+  .draw-hint { font-size: 0.78rem; color: #64748b; line-height: 1.6; padding: 4px 2px; }
+  .draw-result { display: none; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 9px 14px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e2ec; }
   .draw-result-sqft { font-size: 0.83rem; color: #334155; font-weight: 600; }
   .draw-result-price { font-size: 0.86rem; color: #059669; font-weight: 700; }
+  /* Mobile: taller map so fingers have room to draw */
+  @media (max-width: 480px) {
+    .draw-map-canvas { height: 52vw; min-height: 220px; }
+    .draw-map-error { height: 52vw; min-height: 220px; }
+    .draw-hint { font-size: 0.8rem; }
+  }
 
   /* ── Image upload field ── */
   .image-upload-zone { border: 2px dashed #e2e2ec; border-radius: 10px; padding: 24px 16px; text-align: center; cursor: pointer; transition: border-color .15s; background: #fafafa; }
@@ -521,9 +527,11 @@ function renderStep1(wrap,limitReached){
       addrWrap.appendChild(addrInp); addrWrap.appendChild(addrSug);
       df.appendChild(addrWrap);
 
-      // Hint text
+      // Hint text — touch-aware
       const hint=document.createElement('div'); hint.className='draw-hint';
-      hint.innerHTML='Zoom in then click <strong>✎ draw</strong> to trace the area. Click each corner — double-click to close.';
+      const isTouch='ontouchstart' in window||navigator.maxTouchPoints>0;
+      hint.innerHTML='Zoom in, then tap <strong>✎ draw</strong> to trace the area. '
+        +(isTouch?'Tap each corner of the area — tap the first point again to close.':'Click each corner — double-click to close.');
       df.appendChild(hint);
 
       // Map container
