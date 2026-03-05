@@ -304,7 +304,9 @@ function DrawAreaField({
       if (cancelled || !mapContainerRef.current) return
       try {
         const mapboxgl = mod.default
-        const MapboxDraw = drawMod.default
+        // Handle both ESM (.default) and CJS/UMD (module.exports = ...) export patterns
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const MapboxDraw = (drawMod as any).default ?? drawMod
         mapboxgl.accessToken = MAPBOX_TOKEN
 
         mapInstance = new mapboxgl.Map({
@@ -315,35 +317,43 @@ function DrawAreaField({
         })
         mapRef.current = mapInstance
 
-        const draw = new MapboxDraw({
-          displayControlsDefault: false,
-          controls: { polygon: true, trash: true },
-          defaultMode: 'simple_select',
-        })
-        drawRef.current = draw
-        mapInstance.addControl(draw)
-
-        const recalculate = () => {
-          const data = draw.getAll()
-          if (!data.features.length) {
-            setSqFt(null)
-            onAreaChangeRef.current(null)
-            return
-          }
-          // Sum all drawn polygons
-          let totalSqM = 0
-          for (const feature of data.features) {
-            totalSqM += area(feature as Parameters<typeof area>[0])
-          }
-          const totalSqFt = Math.round(totalSqM * 10.7639)
-          setSqFt(totalSqFt)
-          onAreaChangeRef.current(totalSqFt)
-        }
-
-        mapInstance.on('draw.create', recalculate)
-        mapInstance.on('draw.update', recalculate)
-        mapInstance.on('draw.delete', recalculate)
         mapInstance.on('error', () => { if (!cancelled) setMapError(true) })
+
+        mapInstance.on('load', () => {
+          if (cancelled) return
+          try {
+            const draw = new MapboxDraw({
+              displayControlsDefault: false,
+              controls: { polygon: true, trash: true },
+              defaultMode: 'simple_select',
+            })
+            drawRef.current = draw
+            mapInstance.addControl(draw)
+
+            const recalculate = () => {
+              const data = draw.getAll()
+              if (!data.features.length) {
+                setSqFt(null)
+                onAreaChangeRef.current(null)
+                return
+              }
+              // Sum all drawn polygons
+              let totalSqM = 0
+              for (const feature of data.features) {
+                totalSqM += area(feature as Parameters<typeof area>[0])
+              }
+              const totalSqFt = Math.round(totalSqM * 10.7639)
+              setSqFt(totalSqFt)
+              onAreaChangeRef.current(totalSqFt)
+            }
+
+            mapInstance.on('draw.create', recalculate)
+            mapInstance.on('draw.update', recalculate)
+            mapInstance.on('draw.delete', recalculate)
+          } catch {
+            if (!cancelled) setMapError(true)
+          }
+        })
       } catch {
         if (!cancelled) setMapError(true)
       }
