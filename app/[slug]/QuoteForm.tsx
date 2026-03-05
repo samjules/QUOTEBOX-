@@ -295,21 +295,29 @@ function DrawAreaField({
 
   // Init map + draw plugin
   useEffect(() => {
-    if (!mapContainerRef.current || !MAPBOX_TOKEN) { setMapError(true); return }
+    console.log('[DrawAreaField] useEffect start — token:', MAPBOX_TOKEN ? MAPBOX_TOKEN.slice(0, 20) + '…' : 'MISSING', '| containerRef:', !!mapContainerRef.current)
+    if (!mapContainerRef.current || !MAPBOX_TOKEN) {
+      console.error('[DrawAreaField] Aborting — missing container or token. container:', !!mapContainerRef.current, 'token:', !!MAPBOX_TOKEN)
+      setMapError(true)
+      return
+    }
     let cancelled = false
     let mapHasLoaded = false
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let mapInstance: any = null
 
     Promise.all([import('mapbox-gl'), import('@mapbox/mapbox-gl-draw')]).then(([mod, drawMod]) => {
+      console.log('[DrawAreaField] imports resolved — cancelled:', cancelled, 'container still mounted:', !!mapContainerRef.current)
       if (cancelled || !mapContainerRef.current) return
       try {
         const mapboxgl = mod.default
         // Handle both ESM (.default) and CJS/UMD (module.exports = ...) export patterns
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const MapboxDraw = (drawMod as any).default ?? drawMod
+        console.log('[DrawAreaField] mapboxgl type:', typeof mapboxgl, '| Map:', typeof mapboxgl?.Map, '| MapboxDraw type:', typeof MapboxDraw)
         mapboxgl.accessToken = MAPBOX_TOKEN
 
+        console.log('[DrawAreaField] creating mapboxgl.Map...')
         mapInstance = new mapboxgl.Map({
           container: mapContainerRef.current,
           style: 'mapbox://styles/mapbox/satellite-streets-v12',
@@ -318,21 +326,25 @@ function DrawAreaField({
           accessToken: MAPBOX_TOKEN,
         })
         mapRef.current = mapInstance
+        console.log('[DrawAreaField] Map instance created OK')
 
         // Only treat errors as fatal if they occur before the map has loaded.
         // Post-load errors (e.g. individual tile failures) are non-fatal and
         // should not hide the satellite view.
-        mapInstance.on('error', () => {
+        mapInstance.on('error', (e: unknown) => {
+          console.error('[DrawAreaField] map error event (hasLoaded=' + mapHasLoaded + '):', e)
           if (!cancelled && !mapHasLoaded) setMapError(true)
         })
 
         mapInstance.on('load', () => {
+          console.log('[DrawAreaField] map load event fired — cancelled:', cancelled)
           if (cancelled) return
           mapHasLoaded = true
           // Attempt to add draw controls. If this fails for any reason (e.g.
           // a version incompatibility) we leave the satellite view visible so
           // the user can at least see the map.
           try {
+            console.log('[DrawAreaField] adding MapboxDraw control...')
             const draw = new MapboxDraw({
               displayControlsDefault: false,
               controls: { polygon: true, trash: true },
@@ -340,6 +352,7 @@ function DrawAreaField({
             })
             drawRef.current = draw
             mapInstance.addControl(draw)
+            console.log('[DrawAreaField] MapboxDraw control added OK')
 
             const recalculate = () => {
               const data = draw.getAll()
@@ -354,6 +367,7 @@ function DrawAreaField({
                 totalSqM += area(feature as Parameters<typeof area>[0])
               }
               const totalSqFt = Math.round(totalSqM * 10.7639)
+              console.log('[DrawAreaField] area recalculated:', totalSqFt, 'sq ft')
               setSqFt(totalSqFt)
               onAreaChangeRef.current(totalSqFt)
             }
@@ -361,15 +375,19 @@ function DrawAreaField({
             mapInstance.on('draw.create', recalculate)
             mapInstance.on('draw.update', recalculate)
             mapInstance.on('draw.delete', recalculate)
-          } catch {
+          } catch (err) {
             // Draw controls failed — map is still usable as a reference view
-            console.warn('[DrawAreaField] MapboxDraw addControl failed:', 'draw controls unavailable')
+            console.warn('[DrawAreaField] MapboxDraw addControl failed:', err)
           }
         })
-      } catch {
+      } catch (err) {
+        console.error('[DrawAreaField] outer try/catch — setting mapError:', err)
         if (!cancelled) setMapError(true)
       }
-    }).catch(() => { if (!cancelled) setMapError(true) })
+    }).catch((err) => {
+      console.error('[DrawAreaField] dynamic import failed:', err)
+      if (!cancelled) setMapError(true)
+    })
 
     return () => {
       cancelled = true
