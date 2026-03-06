@@ -258,7 +258,7 @@ function ZipCodeMap({
   }
 
   function selectSuggestion(sug: PostalSuggestion) {
-    const code = sug.text.toUpperCase()
+    const code = `${postalCountry}:${sug.text.toUpperCase()}`
     setInputVal('')
     setSuggestions([])
     setShowSuggestions(false)
@@ -272,7 +272,11 @@ function ZipCodeMap({
     if (!MAPBOX_TOKEN) return
     setIsGeocoding(true)
     try {
-      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(code)}.json?access_token=${MAPBOX_TOKEN}&types=postcode&country=${postalCountry.toLowerCase()}&limit=1`
+      // code is in COUNTRY:CODE format (e.g. "US:90210") — extract the raw postal code for Mapbox
+      const parts = code.split(':')
+      const rawCode = parts.length === 2 ? parts[1] : code
+      const country = parts.length === 2 ? parts[0].toLowerCase() : postalCountry.toLowerCase()
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(rawCode)}.json?access_token=${MAPBOX_TOKEN}&types=postcode&country=${country}&limit=1`
       const res = await fetch(url)
       const data = await res.json()
       const coords = (data.features?.[0]?.center ?? null) as [number, number] | null
@@ -284,8 +288,10 @@ function ZipCodeMap({
   }
 
   function handleAdd() {
-    const code = inputVal.trim().toUpperCase()
-    if (!code || postalCodes.includes(code)) return
+    const raw = inputVal.trim().toUpperCase()
+    if (!raw) return
+    const code = `${postalCountry}:${raw}`
+    if (postalCodes.includes(code)) return
     setInputVal('')
     setSuggestions([])
     setShowSuggestions(false)
@@ -313,9 +319,10 @@ function ZipCodeMap({
             placeholder="Type to search zip / postal code…"
             value={inputVal}
             onChange={(e) => {
-              setInputVal(e.target.value)
+              const val = e.target.value
+              setInputVal(val)
               if (suggestTimer.current) clearTimeout(suggestTimer.current)
-              suggestTimer.current = setTimeout(() => fetchSuggestions(e.target.value), 250)
+              suggestTimer.current = setTimeout(() => fetchSuggestions(val), 250)
             }}
             onKeyDown={(e) => {
               if (e.key === 'Enter') { e.preventDefault(); if (suggestions.length > 0) selectSuggestion(suggestions[0]); else handleAdd() }
@@ -362,7 +369,7 @@ function ZipCodeMap({
               className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 text-xs font-medium px-2.5 py-1 rounded-full border border-indigo-100"
               title="Meta targeting format"
             >
-              <span className="font-mono">{postalCountry}:{code}</span>
+              <span className="font-mono">{code}</span>
               <button
                 onClick={() => onRemove(code)}
                 className="ml-0.5 hover:text-indigo-900 leading-none"
@@ -809,7 +816,7 @@ export default function MetaAdsPage() {
           targetGender: questionnaire.gender,
           targetLocation: questionnaire.locationType === 'country' ? questionnaire.location : undefined,
           targetPostalCodes: questionnaire.locationType === 'postal' && questionnaire.postalCodes.length > 0
-            ? questionnaire.postalCodes.map((z) => `${questionnaire.postalCountry}:${z}`)
+            ? questionnaire.postalCodes
             : undefined,
           destinationUrl: questionnaire.destinationUrl,
           pageId: questionnaire.pageId,
