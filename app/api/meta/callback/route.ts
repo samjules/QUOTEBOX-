@@ -12,11 +12,11 @@ export async function GET(request: NextRequest) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
   if (error) {
-    return NextResponse.redirect(`${siteUrl}/meta-ads?error=oauth_denied`)
+    return NextResponse.redirect(`${siteUrl}/lead-machine?error=oauth_denied`)
   }
 
   if (!code || !state) {
-    return NextResponse.redirect(`${siteUrl}/meta-ads?error=missing_params`)
+    return NextResponse.redirect(`${siteUrl}/lead-machine?error=missing_params`)
   }
 
   // Decode state — supports both new JSON format and legacy plain base64 userId
@@ -32,12 +32,12 @@ export async function GET(request: NextRequest) {
     try {
       userId = Buffer.from(state, 'base64').toString('utf-8')
     } catch {
-      return NextResponse.redirect(`${siteUrl}/meta-ads?error=invalid_state`)
+      return NextResponse.redirect(`${siteUrl}/lead-machine?error=invalid_state`)
     }
   }
 
   if (!userId) {
-    return NextResponse.redirect(`${siteUrl}/meta-ads?error=invalid_state`)
+    return NextResponse.redirect(`${siteUrl}/lead-machine?error=invalid_state`)
   }
 
   const appId = process.env.NEXT_PUBLIC_META_APP_ID?.trim()
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
   const redirectUri = `${siteUrl}/api/meta/callback`
 
   if (!appId || !appSecret) {
-    return NextResponse.redirect(`${siteUrl}/meta-ads?error=config_error`)
+    return NextResponse.redirect(`${siteUrl}/lead-machine?error=config_error`)
   }
 
   // Exchange code for short-lived token
@@ -60,11 +60,11 @@ export async function GET(request: NextRequest) {
     const tokenRes = await fetch(tokenUrl.toString())
     const tokenData = await tokenRes.json()
     if (!tokenData.access_token) {
-      return NextResponse.redirect(`${siteUrl}/meta-ads?error=token_exchange_failed`)
+      return NextResponse.redirect(`${siteUrl}/lead-machine?error=token_exchange_failed`)
     }
     shortLivedToken = tokenData.access_token
   } catch {
-    return NextResponse.redirect(`${siteUrl}/meta-ads?error=token_exchange_failed`)
+    return NextResponse.redirect(`${siteUrl}/lead-machine?error=token_exchange_failed`)
   }
 
   // Exchange short-lived token for long-lived token
@@ -79,11 +79,11 @@ export async function GET(request: NextRequest) {
     const longTokenRes = await fetch(longTokenUrl.toString())
     const longTokenData = await longTokenRes.json()
     if (!longTokenData.access_token) {
-      return NextResponse.redirect(`${siteUrl}/meta-ads?error=long_token_failed`)
+      return NextResponse.redirect(`${siteUrl}/lead-machine?error=long_token_failed`)
     }
     longLivedToken = longTokenData.access_token
   } catch {
-    return NextResponse.redirect(`${siteUrl}/meta-ads?error=long_token_failed`)
+    return NextResponse.redirect(`${siteUrl}/lead-machine?error=long_token_failed`)
   }
 
   // Fetch Meta user ID
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
     const meData = await meRes.json()
     metaUserId = meData.id
   } catch {
-    return NextResponse.redirect(`${siteUrl}/meta-ads?error=user_fetch_failed`)
+    return NextResponse.redirect(`${siteUrl}/lead-machine?error=user_fetch_failed`)
   }
 
   // Fetch ad accounts
@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
     .single()
 
   if (!account) {
-    return NextResponse.redirect(`${siteUrl}/meta-ads?error=account_not_found`)
+    return NextResponse.redirect(`${siteUrl}/lead-machine?error=account_not_found`)
   }
 
   // Build update payload
@@ -141,5 +141,5 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${siteUrl}/signup?step=2&meta=connected`)
   }
 
-  return NextResponse.redirect(`${siteUrl}/meta-ads?connected=true`)
+  return NextResponse.redirect(`${siteUrl}/lead-machine?connected=true`)
 }

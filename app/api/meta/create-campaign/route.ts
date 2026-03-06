@@ -76,6 +76,9 @@ export async function POST(request: NextRequest) {
     cta?: string
     customConversionId?: string
     pixelId?: string
+    splitTest?: boolean
+    headlines?: string[]
+    bodyTexts?: string[]
   }
 
   try {
@@ -200,69 +203,90 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Ad set creation failed' }, { status: 500 })
   }
 
-  // Create Ad Creative (only if we have a page + destination + copy)
-  let adId: string | null = null
+  // Create Ad Creative(s) and Ad(s)
+  const adIds: string[] = []
   let creativeError: unknown = null
   let adError: unknown = null
 
-  if (body.pageId && body.destinationUrl && body.headline && body.bodyText) {
-    const objectStorySpec = {
-      page_id: body.pageId,
-      link_data: {
-        link: body.destinationUrl,
-        message: body.bodyText,
-        name: body.headline,
-        call_to_action: { type: body.cta || 'LEARN_MORE' },
-      },
+  const adsManagerUrl = `https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=${adAccountId}`
+
+  if (body.pageId && body.destinationUrl) {
+    // Build variant list — split test uses all headlines/bodyTexts, otherwise single headline/bodyText
+    const variants: Array<{ headline: string; bodyText: string; label: string }> = []
+
+    if (body.splitTest && body.headlines && body.bodyTexts && body.headlines.length > 0) {
+      body.headlines.forEach((h, i) => {
+        variants.push({
+          headline: h,
+          bodyText: body.bodyTexts?.[i] || body.bodyTexts?.[0] || '',
+          label: String.fromCharCode(65 + i), // A, B, C
+        })
+      })
+    } else if (body.headline && body.bodyText) {
+      variants.push({ headline: body.headline, bodyText: body.bodyText, label: '' })
     }
 
-    const creativeParams = new URLSearchParams({
-      name: `${body.campaignName} - Creative`,
-      object_story_spec: JSON.stringify(objectStorySpec),
-      access_token: token,
-    })
+    for (const variant of variants) {
+      const objectStorySpec = {
+        page_id: body.pageId,
+        link_data: {
+          link: body.destinationUrl,
+          message: variant.bodyText,
+          name: variant.headline,
+          call_to_action: { type: body.cta || 'LEARN_MORE' },
+        },
+      }
 
-    let creativeId: string | null = null
-    const creativeRes = await fetch(
-      `https://graph.facebook.com/v18.0/act_${adAccountId}/adcreatives`,
-      { method: 'POST', body: creativeParams }
-    )
-    const creativeData = await creativeRes.json()
-    if (creativeRes.ok && creativeData.id) {
-      creativeId = creativeData.id
-    } else {
-      creativeError = creativeData.error
-    }
+      const creativeName = variant.label
+        ? `${body.campaignName} - Creative ${variant.label}`
+        : `${body.campaignName} - Creative`
 
-    // Create Ad
-    if (creativeId) {
-      const adParams = new URLSearchParams({
-        name: `${body.campaignName} - Ad`,
-        adset_id: adSetId,
-        creative: JSON.stringify({ creative_id: creativeId }),
-        status: 'PAUSED',
+      const creativeParams = new URLSearchParams({
+        name: creativeName,
+        object_story_spec: JSON.stringify(objectStorySpec),
         access_token: token,
       })
 
-      const adRes = await fetch(
-        `https://graph.facebook.com/v18.0/act_${adAccountId}/ads`,
-        { method: 'POST', body: adParams }
+      const creativeRes = await fetch(
+        `https://graph.facebook.com/v18.0/act_${adAccountId}/adcreatives`,
+        { method: 'POST', body: creativeParams }
       )
-      const adData = await adRes.json()
-      if (adRes.ok && adData.id) {
-        adId = adData.id
+      const creativeData = await creativeRes.json()
+
+      if (creativeRes.ok && creativeData.id) {
+        const adName = variant.label
+          ? `${body.campaignName} - Ad ${variant.label}`
+          : `${body.campaignName} - Ad`
+
+        const adParams = new URLSearchParams({
+          name: adName,
+          adset_id: adSetId,
+          creative: JSON.stringify({ creative_id: creativeData.id }),
+          status: 'PAUSED',
+          access_token: token,
+        })
+
+        const adRes = await fetch(
+          `https://graph.facebook.com/v18.0/act_${adAccountId}/ads`,
+          { method: 'POST', body: adParams }
+        )
+        const adData = await adRes.json()
+        if (adRes.ok && adData.id) {
+          adIds.push(adData.id)
+        } else {
+          adError = adData.error
+        }
       } else {
-        adError = adData.error
+        creativeError = creativeData.error
       }
     }
   }
 
-  const adsManagerUrl = `https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=${adAccountId}`
-
   return NextResponse.json({
     campaignId,
     adSetId,
-    adId,
+    adIds,
+    adId: adIds[0] || null, // backwards compat
     creativeError,
     adError,
     campaignName: body.campaignName,
