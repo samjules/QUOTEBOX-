@@ -24,6 +24,7 @@ interface HostedFormOption {
   id: string
   form_name: string
   slug: string
+  pixelId?: string
 }
 
 interface FacebookPage {
@@ -51,6 +52,15 @@ interface CreatedCampaign {
   status: string
 }
 
+interface CustomConversion {
+  id: string
+  name: string
+  custom_event_type: string
+  pixel_id: string
+  rule?: string
+  creation_time?: string
+}
+
 interface Questionnaire {
   objective: string
   ageMin: number
@@ -75,6 +85,8 @@ interface Questionnaire {
   selectedHeadline: string
   selectedBodyText: string
   pageId: string
+  customConversionId: string | null
+  pixelId: string | null
 }
 
 type PageState = 'disconnected' | 'pick-account' | 'questionnaire' | 'created'
@@ -136,6 +148,12 @@ const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
 // ─── ZipCodeMap ───────────────────────────────────────────────────────────────
 
+interface PostalSuggestion {
+  text: string          // canonical postal code from Mapbox (e.g. "90210")
+  place_name: string    // full description (e.g. "90210, Beverly Hills, CA")
+  center: [number, number]
+}
+
 function ZipCodeMap({
   postalCodes,
   postalCountry,
@@ -158,6 +176,10 @@ function ZipCodeMap({
   const [inputVal, setInputVal] = useState('')
   const [geocodeCache, setGeocodeCache] = useState<Record<string, [number, number] | null>>({})
   const [isGeocoding, setIsGeocoding] = useState(false)
+  const [suggestions, setSuggestions] = useState<PostalSuggestion[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const suggestTimer = useRef<any>(null)
 
   // Init Mapbox map
   useEffect(() => {
@@ -216,6 +238,36 @@ function ZipCodeMap({
     })
   }, [postalCodes, geocodeCache, mapLoaded])
 
+  async function fetchSuggestions(query: string) {
+    if (!MAPBOX_TOKEN || query.length < 2) { setSuggestions([]); setShowSuggestions(false); return }
+    try {
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&types=postcode&country=${postalCountry.toLowerCase()}&limit=5`
+      const res = await fetch(url)
+      const data = await res.json()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sugs: PostalSuggestion[] = (data.features || []).map((f: any) => ({
+        text: f.text as string,
+        place_name: f.place_name as string,
+        center: f.center as [number, number],
+      }))
+      setSuggestions(sugs)
+      setShowSuggestions(sugs.length > 0)
+    } catch {
+      setSuggestions([])
+    }
+  }
+
+  function selectSuggestion(sug: PostalSuggestion) {
+    const code = sug.text.toUpperCase()
+    setInputVal('')
+    setSuggestions([])
+    setShowSuggestions(false)
+    if (!postalCodes.includes(code)) {
+      onAdd(code)
+      setGeocodeCache((prev) => ({ ...prev, [code]: sug.center }))
+    }
+  }
+
   async function geocode(code: string) {
     if (!MAPBOX_TOKEN) return
     setIsGeocoding(true)
@@ -235,6 +287,8 @@ function ZipCodeMap({
     const code = inputVal.trim().toUpperCase()
     if (!code || postalCodes.includes(code)) return
     setInputVal('')
+    setSuggestions([])
+    setShowSuggestions(false)
     onAdd(code)
     geocode(code)
   }
@@ -245,7 +299,7 @@ function ZipCodeMap({
       <div className="flex gap-2 mb-3">
         <select
           value={postalCountry}
-          onChange={(e) => onCountryChange(e.target.value)}
+          onChange={(e) => { onCountryChange(e.target.value); setSuggestions([]) }}
           className="border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           style={{ minWidth: 72 }}
         >
@@ -253,14 +307,43 @@ function ZipCodeMap({
             <option key={c.code} value={c.code}>{c.label}</option>
           ))}
         </select>
-        <input
-          type="text"
-          placeholder="Enter zip / postal code…"
-          value={inputVal}
-          onChange={(e) => setInputVal(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAdd() } }}
-          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        />
+        <div className="relative flex-1">
+          <input
+            type="text"
+            placeholder="Type to search zip / postal code…"
+            value={inputVal}
+            onChange={(e) => {
+              setInputVal(e.target.value)
+              if (suggestTimer.current) clearTimeout(suggestTimer.current)
+              suggestTimer.current = setTimeout(() => fetchSuggestions(e.target.value), 250)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') { e.preventDefault(); if (suggestions.length > 0) selectSuggestion(suggestions[0]); else handleAdd() }
+              if (e.key === 'Escape') { setSuggestions([]); setShowSuggestions(false) }
+            }}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+            onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true) }}
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          {/* Autocomplete suggestions dropdown */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+              {suggestions.map((sug) => (
+                <button
+                  key={sug.text}
+                  onMouseDown={(e) => { e.preventDefault(); selectSuggestion(sug) }}
+                  className="w-full text-left px-3 py-2.5 text-sm hover:bg-indigo-50 border-b border-gray-100 last:border-0 flex items-center justify-between gap-2"
+                >
+                  <span className="text-gray-700 truncate">{sug.place_name}</span>
+                  <span className="font-mono text-xs font-semibold text-indigo-600 shrink-0 bg-indigo-50 px-1.5 py-0.5 rounded">
+                    {postalCountry}:{sug.text.toUpperCase()}
+                  </span>
+                </button>
+              ))}
+              <p className="px-3 py-1.5 text-xs text-gray-400 bg-gray-50">Meta targeting format: {postalCountry}:CODE</p>
+            </div>
+          )}
+        </div>
         <button
           onClick={handleAdd}
           disabled={!inputVal.trim()}
@@ -270,15 +353,16 @@ function ZipCodeMap({
         </button>
       </div>
 
-      {/* Chips */}
+      {/* Chips — displayed in Meta's exact format COUNTRY:CODE */}
       {postalCodes.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-3">
           {postalCodes.map((code) => (
             <span
               key={code}
               className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 text-xs font-medium px-2.5 py-1 rounded-full border border-indigo-100"
+              title="Meta targeting format"
             >
-              {postalCountry}-{code}
+              <span className="font-mono">{postalCountry}:{code}</span>
               <button
                 onClick={() => onRemove(code)}
                 className="ml-0.5 hover:text-indigo-900 leading-none"
@@ -475,6 +559,10 @@ export default function MetaAdsPage() {
   const [creatives, setCreatives] = useState<AdCreative[]>([])
   const [hostedForms, setHostedForms] = useState<HostedFormOption[]>([])
   const [pages, setPages] = useState<FacebookPage[]>([])
+  const [customConversions, setCustomConversions] = useState<CustomConversion[]>([])
+  const [conversionsLoading, setConversionsLoading] = useState(false)
+  const [creatingConversion, setCreatingConversion] = useState(false)
+  const [step1Tab, setStep1Tab] = useState<'setup' | 'conversions'>('setup')
 
   const [questionnaire, setQuestionnaire] = useState<Questionnaire>({
     objective: 'OUTCOME_LEADS',
@@ -500,6 +588,8 @@ export default function MetaAdsPage() {
     selectedHeadline: '',
     selectedBodyText: '',
     pageId: '',
+    customConversionId: null,
+    pixelId: null,
   })
 
   // ─── Load account state ──────────────────────────────────────────────────
@@ -558,6 +648,7 @@ export default function MetaAdsPage() {
           id: f.id,
           form_name: f.form_name,
           slug: f.form_config?.slug || '',
+          pixelId: f.form_config?.meta_pixel_id || undefined,
         }))
         setHostedForms(formOptions)
 
@@ -573,21 +664,30 @@ export default function MetaAdsPage() {
         }
       }
 
-      // Load Facebook Pages
+      // Load Facebook Pages + custom conversions in parallel
       if (account.meta_access_token) {
-        try {
-          const pagesRes = await fetch(
-            `https://graph.facebook.com/v18.0/me/accounts?fields=id,name&access_token=${account.meta_access_token}`
-          )
-          const pagesData = await pagesRes.json()
-          const pageList: FacebookPage[] = pagesData.data || []
-          setPages(pageList)
-          if (pageList.length === 1) {
-            setQuestionnaire((q) => ({ ...q, pageId: pageList[0].id }))
-          }
-        } catch {
-          // non-fatal
-        }
+        await Promise.allSettled([
+          // Facebook pages
+          fetch(`https://graph.facebook.com/v18.0/me/accounts?fields=id,name&access_token=${account.meta_access_token}`)
+            .then((r) => r.json())
+            .then((pagesData) => {
+              const pageList: FacebookPage[] = pagesData.data || []
+              setPages(pageList)
+              if (pageList.length === 1) {
+                setQuestionnaire((q) => ({ ...q, pageId: pageList[0].id }))
+              }
+            }),
+          // Custom conversions
+          (async () => {
+            setConversionsLoading(true)
+            try {
+              const cvRes = await fetch('/api/meta/conversions')
+              const cvData = await cvRes.json()
+              setCustomConversions(cvData.conversions || [])
+            } catch { /* non-fatal */ }
+            setConversionsLoading(false)
+          })(),
+        ])
       }
 
       if (!account.meta_ad_account_id) {
@@ -716,6 +816,8 @@ export default function MetaAdsPage() {
           headline: questionnaire.selectedHeadline,
           bodyText: questionnaire.selectedBodyText,
           cta: generatedCopy.cta,
+          customConversionId: questionnaire.customConversionId || undefined,
+          pixelId: questionnaire.pixelId || undefined,
         }),
       })
 
@@ -733,6 +835,33 @@ export default function MetaAdsPage() {
     }
 
     setCreating(false)
+  }
+
+  async function handleCreateQuoteBoxConversion(pixelId: string) {
+    if (!pixelId) return
+    setCreatingConversion(true)
+    setError('')
+    try {
+      const res = await fetch('/api/meta/conversions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'QuoteBox — Lead Form Submission',
+          pixel_id: pixelId,
+          custom_event_type: 'LEAD',
+          url_contains: 'quote-box.com',
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setError(data.error || 'Failed to create conversion'); return }
+      // Add to list and auto-select
+      const newConv: CustomConversion = { id: data.id, name: data.name, custom_event_type: data.custom_event_type, pixel_id: pixelId }
+      setCustomConversions((prev) => [newConv, ...prev])
+      setQuestionnaire((q) => ({ ...q, customConversionId: data.id, pixelId }))
+    } catch {
+      setError('Failed to create conversion')
+    }
+    setCreatingConversion(false)
   }
 
   function handleReset() {
@@ -765,7 +894,10 @@ export default function MetaAdsPage() {
       selectedHeadline: '',
       selectedBodyText: '',
       pageId: pages.length === 1 ? pages[0].id : '',
+      customConversionId: null,
+      pixelId: null,
     })
+    setStep1Tab('setup')
   }
 
   // ─── Render helpers ───────────────────────────────────────────────────────
@@ -983,33 +1115,56 @@ export default function MetaAdsPage() {
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
 
-        {/* Step 1: Objective */}
+        {/* Step 1: Objective + Conversions */}
         {step === 1 && (
           <div className="space-y-6">
-            <div>
-              <h2 className="font-semibold text-gray-900 mb-4">What is your campaign goal?</h2>
-              <div className="space-y-3">
-                {OBJECTIVES.map((obj) => (
-                  <button
-                    key={obj.value}
-                    onClick={() => setQuestionnaire((q) => ({ ...q, objective: obj.value }))}
-                    className={`w-full text-left px-4 py-3.5 rounded-xl border-2 transition ${
-                      questionnaire.objective === obj.value
-                        ? 'border-indigo-600 bg-indigo-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <p className={`font-medium ${questionnaire.objective === obj.value ? 'text-indigo-700' : 'text-gray-900'}`}>
-                      {obj.label}
-                    </p>
-                    <p className="text-sm text-gray-500 mt-0.5">{obj.desc}</p>
-                  </button>
-                ))}
-              </div>
+            {/* Tab switcher */}
+            <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+              {(['setup', 'conversions'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setStep1Tab(tab)}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
+                    step1Tab === tab
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {tab === 'setup' ? 'Campaign Setup' : 'Conversions'}
+                  {tab === 'conversions' && questionnaire.customConversionId && (
+                    <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] font-bold">✓</span>
+                  )}
+                </button>
+              ))}
             </div>
 
-            {/* Destination URL */}
-            <div className="border-t border-gray-100 pt-5">
+            {/* ── Tab: Campaign Setup ── */}
+            {step1Tab === 'setup' && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="font-semibold text-gray-900 mb-4">What is your campaign goal?</h2>
+                <div className="space-y-3">
+                  {OBJECTIVES.map((obj) => (
+                    <button
+                      key={obj.value}
+                      onClick={() => setQuestionnaire((q) => ({ ...q, objective: obj.value }))}
+                      className={`w-full text-left px-4 py-3.5 rounded-xl border-2 transition ${
+                        questionnaire.objective === obj.value
+                          ? 'border-indigo-600 bg-indigo-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <p className={`font-medium ${questionnaire.objective === obj.value ? 'text-indigo-700' : 'text-gray-900'}`}>
+                        {obj.label}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-0.5">{obj.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Destination URL */}
+              <div className="border-t border-gray-100 pt-5">
               <label className="block text-sm font-medium text-gray-700 mb-3">Where should the ad send people?</label>
               <div className="flex gap-3 mb-3">
                 <button
@@ -1073,7 +1228,115 @@ export default function MetaAdsPage() {
               {questionnaire.destinationUrl && (
                 <p className="text-xs text-indigo-600 mt-1.5 truncate">↗ {questionnaire.destinationUrl}</p>
               )}
+              </div> {/* end destination URL */}
             </div>
+            )}
+
+            {/* ── Tab: Conversions ── */}
+            {step1Tab === 'conversions' && (
+            <div className="space-y-4">
+              <div>
+                <h2 className="font-semibold text-gray-900 mb-1">Custom Conversions</h2>
+                <p className="text-sm text-gray-500 mb-4">Select an existing custom conversion to optimise for, or create a QuoteBox one instantly.</p>
+
+                {/* Create QuoteBox conversion CTA */}
+                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center mt-0.5">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-indigo-900 text-sm">Create QuoteBox Lead Conversion</p>
+                      <p className="text-xs text-indigo-700 mt-0.5 mb-3">
+                        Fires when a visitor submits your QuoteBox form (tracks the Meta Pixel <code className="bg-indigo-100 px-1 rounded">Lead</code> event on quote-box.com).
+                      </p>
+                      {/* Pixel selector */}
+                      {hostedForms.some((f) => f.slug) ? (
+                        <div className="flex gap-2">
+                          <select
+                            value={questionnaire.pixelId || ''}
+                            onChange={(e) => setQuestionnaire((q) => ({ ...q, pixelId: e.target.value || null }))}
+                            className="flex-1 border border-indigo-200 bg-white rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          >
+                            <option value="">Select a pixel…</option>
+                            {/* Pixels come from hosted forms' meta_pixel_id */}
+                            {Array.from(new Set(
+                              hostedForms
+                                .filter((f: HostedFormOption & { pixelId?: string }) => f.pixelId)
+                                .map((f: HostedFormOption & { pixelId?: string }) => f.pixelId!)
+                            )).map((pid) => (
+                              <option key={pid} value={pid}>{pid}</option>
+                            ))}
+                          </select>
+                          <button
+                            onClick={() => questionnaire.pixelId && handleCreateQuoteBoxConversion(questionnaire.pixelId)}
+                            disabled={!questionnaire.pixelId || creatingConversion}
+                            className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition"
+                          >
+                            {creatingConversion ? 'Creating…' : 'Create'}
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-xs text-indigo-700 bg-indigo-100 rounded-lg px-3 py-2">
+                          Add a Meta Pixel ID to one of your quote forms first — go to <strong>Form Builder → Settings → Meta Pixel ID</strong>.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Existing conversions list */}
+                {conversionsLoading ? (
+                  <div className="flex items-center gap-2 py-4 text-sm text-gray-400">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500" />
+                    Loading conversions…
+                  </div>
+                ) : customConversions.length === 0 ? (
+                  <p className="text-sm text-gray-400 bg-gray-50 rounded-lg px-3 py-2.5">
+                    No custom conversions found on this ad account yet.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Existing Conversions</p>
+                    {/* None option */}
+                    <button
+                      onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: null }))}
+                      className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 text-sm transition ${
+                        !questionnaire.customConversionId
+                          ? 'border-indigo-600 bg-indigo-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <span className={!questionnaire.customConversionId ? 'text-indigo-700 font-medium' : 'text-gray-500'}>
+                        None — don&apos;t use a custom conversion
+                      </span>
+                    </button>
+                    {customConversions.map((cv) => (
+                      <button
+                        key={cv.id}
+                        onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: cv.id, pixelId: cv.pixel_id }))}
+                        className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 transition ${
+                          questionnaire.customConversionId === cv.id
+                            ? 'border-indigo-600 bg-indigo-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <p className={`font-medium text-sm ${questionnaire.customConversionId === cv.id ? 'text-indigo-700' : 'text-gray-900'}`}>
+                          {cv.name}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          Event: {cv.custom_event_type} · Pixel: {cv.pixel_id}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            )} {/* end conversions tab */}
+
           </div>
         )}
 

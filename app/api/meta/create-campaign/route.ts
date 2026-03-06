@@ -74,6 +74,8 @@ export async function POST(request: NextRequest) {
     headline?: string
     bodyText?: string
     cta?: string
+    customConversionId?: string
+    pixelId?: string
   }
 
   try {
@@ -165,9 +167,15 @@ export async function POST(request: NextRequest) {
     adSetParams.set('end_time', endTime.toISOString())
   }
 
-  // OUTCOME_LEADS requires a promoted_object with page_id
-  if (body.objective === 'OUTCOME_LEADS' && body.pageId) {
-    adSetParams.set('promoted_object', JSON.stringify({ page_id: body.pageId }))
+  // Build promoted_object — page_id required for LEADS; custom conversion adds pixel + conversion
+  const promotedObject: Record<string, string> = {}
+  if (body.pageId) promotedObject.page_id = body.pageId
+  if (body.customConversionId) {
+    promotedObject.custom_conversion_id = body.customConversionId
+    if (body.pixelId) promotedObject.pixel_id = body.pixelId
+  }
+  if (Object.keys(promotedObject).length > 0) {
+    adSetParams.set('promoted_object', JSON.stringify(promotedObject))
   }
 
   let adSetId: string
