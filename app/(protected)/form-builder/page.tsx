@@ -1625,6 +1625,16 @@ export default function FormBuilderPage() {
       }
       setAccountId(account.id)
 
+      // Default slug to business name for new forms (not editing an existing one)
+      if (!searchParams.get('form_id') && account.business_name) {
+        const defaultSlug = account.business_name
+          .toLowerCase()
+          .replace(/[^a-z0-9-]/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '')
+        setFormSlug(defaultSlug)
+      }
+
       // Fetch Meta pixels for the dropdown
       setMetaPixelsLoading(true)
       fetch('/api/meta/pixels')
