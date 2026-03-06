@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
 
   const params = new URLSearchParams({
     name: body.name,
-    pixel_id: body.pixel_id,
+    event_source_id: body.pixel_id,
     custom_event_type: eventType,
     rule,
     access_token: creds.token,
