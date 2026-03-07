@@ -425,12 +425,7 @@ function ZipCodeMap({
               : 'bg-white border-gray-200 text-violet-600 hover:border-violet-400 hover:bg-violet-50'
           }`}
         >
-          {/* Sparkle / AI icon */}
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2l2.09 6.26L20 10l-5.91 1.74L12 18l-2.09-6.26L4 10l5.91-1.74L12 2z"/>
-            <path d="M19 15l1.09 3.26L23 19l-2.91.74L19 23l-1.09-3.26L15 19l2.91-.74L19 15z" opacity=".6"/>
-            <path d="M5 3l.73 2.27L8 6l-2.27.73L5 9l-.73-2.27L2 6l2.27-.73L5 3z" opacity=".6"/>
-          </svg>
+          <img src="/icons/logo-1772578089154.jpg" alt="AI" className="w-5 h-5 rounded-full object-cover" />
           AI
         </button>
       </div>
@@ -439,11 +434,7 @@ function ZipCodeMap({
       {showAiPanel && (
         <div className="mb-3 rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50 p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
-            <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-violet-600 text-white">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2l2.09 6.26L20 10l-5.91 1.74L12 18l-2.09-6.26L4 10l5.91-1.74L12 2z"/>
-              </svg>
-            </div>
+            <img src="/icons/logo-1772578089154.jpg" alt="AI" className="w-9 h-9 rounded-full object-cover border-2 border-violet-300" />
             <div>
               <p className="text-sm font-semibold text-violet-900">AI Zip Code Generator</p>
               <p className="text-xs text-violet-600">Describe your service area in plain English</p>
