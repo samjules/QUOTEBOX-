@@ -465,11 +465,17 @@ function RouteField({
   currency,
   accentColor,
   onRouteChange,
+  subStep,
+  onStartCoordsChange,
+  onEndCoordsChange,
 }: {
   field: FormField
   currency: string
   accentColor: string
   onRouteChange: (result: RouteResult | null) => void
+  subStep: number
+  onStartCoordsChange: (coords: [number, number] | null) => void
+  onEndCoordsChange: (coords: [number, number] | null) => void
 }) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -479,7 +485,11 @@ function RouteField({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const endMarkerRef = useRef<any>(null)
   const onRouteChangeRef = useRef(onRouteChange)
+  const onStartCoordsChangeRef = useRef(onStartCoordsChange)
+  const onEndCoordsChangeRef = useRef(onEndCoordsChange)
   useEffect(() => { onRouteChangeRef.current = onRouteChange }, [onRouteChange])
+  useEffect(() => { onStartCoordsChangeRef.current = onStartCoordsChange }, [onStartCoordsChange])
+  useEffect(() => { onEndCoordsChangeRef.current = onEndCoordsChange }, [onEndCoordsChange])
 
   const [mapLoaded, setMapLoaded] = useState(false)
   const [mapError, setMapError] = useState(false)
@@ -492,6 +502,17 @@ function RouteField({
   const [routeInfo, setRouteInfo] = useState<{ distanceMiles: number; durationMinutes: number } | null>(null)
   const [routeGeometry, setRouteGeometry] = useState<RouteGeometry | null>(null)
   const [isLoadingRoute, setIsLoadingRoute] = useState(false)
+
+  // Notify parent of individual coord changes so it can gate canAdvance()
+  useEffect(() => { onStartCoordsChangeRef.current(startCoords) }, [startCoords])
+  useEffect(() => { onEndCoordsChangeRef.current(endCoords) }, [endCoords])
+
+  // Resize map when sub-step 2 becomes visible
+  useEffect(() => {
+    if (subStep === 2 && mapRef.current && mapLoaded) {
+      setTimeout(() => { mapRef.current?.resize() }, 60)
+    }
+  }, [subStep, mapLoaded])
 
   // Debounced start geocode
   useEffect(() => {
@@ -537,7 +558,7 @@ function RouteField({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startCoords, endCoords])
 
-  // Init map
+  // Init map — always mounts so the ref stays stable across sub-steps
   useEffect(() => {
     if (!mapContainerRef.current) return
     if (!MAPBOX_TOKEN) { setMapError(true); return }
@@ -644,41 +665,110 @@ function RouteField({
     : 0
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <AddressInput
-        placeholder="Starting location…"
-        dotColor="#22c55e"
-        query={startQuery}
-        setQuery={setStartQuery}
-        coords={startCoords}
-        setCoords={setStartCoords}
-        suggestions={startSuggestions}
-        setSuggestions={setStartSuggestions}
-      />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-      <div style={{ paddingLeft: 13, margin: '-2px 0' }}>
-        <div style={{ width: 2, height: 10, background: '#cbd5e1', borderRadius: 1 }} />
-      </div>
+      {/* ── Sub-step 0: Starting location ── */}
+      {subStep === 0 && (
+        <AddressInput
+          placeholder="e.g. 123 Main St, Chicago, IL"
+          dotColor="#22c55e"
+          query={startQuery}
+          setQuery={setStartQuery}
+          coords={startCoords}
+          setCoords={setStartCoords}
+          suggestions={startSuggestions}
+          setSuggestions={setStartSuggestions}
+        />
+      )}
 
-      <AddressInput
-        placeholder="Ending location…"
-        dotColor="#ef4444"
-        query={endQuery}
-        setQuery={setEndQuery}
-        coords={endCoords}
-        setCoords={setEndCoords}
-        suggestions={endSuggestions}
-        setSuggestions={setEndSuggestions}
-      />
+      {/* ── Sub-step 1: Destination ── */}
+      {subStep === 1 && (
+        <>
+          {/* Confirmed start address context pill */}
+          {startQuery && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '9px 13px', borderRadius: 10,
+              background: '#f0fdf4', border: '1.5px solid #bbf7d0',
+              fontSize: '0.83rem', color: '#166534',
+            }}>
+              <span style={{ fontSize: 9, color: '#22c55e', lineHeight: 1 }}>●</span>
+              <span style={{ fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {startQuery}
+              </span>
+              <span style={{ fontSize: '0.72rem', opacity: 0.6, flexShrink: 0 }}>Start</span>
+            </div>
+          )}
+          <AddressInput
+            placeholder="e.g. 456 Oak Ave, Chicago, IL"
+            dotColor="#ef4444"
+            query={endQuery}
+            setQuery={setEndQuery}
+            coords={endCoords}
+            setCoords={setEndCoords}
+            suggestions={endSuggestions}
+            setSuggestions={setEndSuggestions}
+          />
+        </>
+      )}
 
-      {/* Map container — always rendered so the ref is stable */}
-      <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', border: '1px solid #e5e4e0', marginTop: 4 }}>
+      {/* ── Sub-step 2: Map view ── */}
+      {subStep === 2 && (
+        <>
+          {/* Address summary */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: '9px 13px',
+              background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: 10,
+              fontSize: '0.83rem', color: '#166534',
+            }}>
+              <span style={{ fontSize: 9, color: '#22c55e', lineHeight: 1 }}>●</span>
+              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }}>
+                {startQuery || 'Starting location'}
+              </span>
+            </div>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: '9px 13px',
+              background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: 10,
+              fontSize: '0.83rem', color: '#991b1b',
+            }}>
+              <span style={{ fontSize: 9, color: '#ef4444', lineHeight: 1 }}>●</span>
+              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }}>
+                {endQuery || 'Destination'}
+              </span>
+            </div>
+          </div>
+
+          {/* Route info strip (shown once calculated) */}
+          {routeInfo && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 14, padding: '9px 14px',
+              background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0', flexWrap: 'wrap',
+            }}>
+              <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>
+                📍 {routeInfo.distanceMiles.toFixed(1)} mi
+              </span>
+              <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>
+                ⏱ {Math.round(routeInfo.durationMinutes)} min
+              </span>
+              {field.routeChargeType !== 'none' && priceContribution > 0 && (
+                <span style={{ marginLeft: 'auto', fontSize: '0.88rem', color: '#059669', fontWeight: 700 }}>
+                  +{currency}{priceContribution.toFixed(2)}
+                </span>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Map container — single element, always in DOM for stable Mapbox ref */}
+      <div style={{
+        display: subStep === 2 ? 'block' : 'none',
+        position: 'relative', borderRadius: 10, overflow: 'hidden', border: '1px solid #e5e4e0',
+      }}>
         <div ref={mapContainerRef} style={{ height: 220, width: '100%', background: '#e8ecef', display: mapError ? 'none' : undefined }} />
         {mapError && (
-          <div style={{
-            height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: '#f8fafc', flexDirection: 'column', gap: 6,
-          }}>
+          <div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', flexDirection: 'column', gap: 6 }}>
             <span style={{ fontSize: '1.4rem' }}>🗺️</span>
             <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 500 }}>Map unavailable</span>
           </div>
@@ -693,26 +783,6 @@ function RouteField({
           </div>
         )}
       </div>
-
-      {/* Route info strip */}
-      {routeInfo && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 14, padding: '9px 14px',
-          background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0', flexWrap: 'wrap',
-        }}>
-          <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>
-            📍 {routeInfo.distanceMiles.toFixed(1)} mi
-          </span>
-          <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>
-            ⏱ {Math.round(routeInfo.durationMinutes)} min
-          </span>
-          {field.routeChargeType !== 'none' && priceContribution > 0 && (
-            <span style={{ marginLeft: 'auto', fontSize: '0.88rem', color: '#059669', fontWeight: 700 }}>
-              +{currency}{priceContribution.toFixed(2)}
-            </span>
-          )}
-        </div>
-      )}
     </div>
   )
 }
@@ -736,6 +806,9 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
   const [answers, setAnswers] = useState<Record<string, unknown>>({})
   const [routeData, setRouteData] = useState<Record<string, RouteResult | null>>({})
   const [drawAreaData, setDrawAreaData] = useState<Record<string, number | null>>({})
+  // Route field sub-steps: 0=start address, 1=end address, 2=map
+  const [routeSubStep, setRouteSubStep] = useState(0)
+  const [routeCoords, setRouteCoords] = useState<Record<string, { start: [number, number] | null; end: [number, number] | null }>>({})
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -751,12 +824,23 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
   const displayTotal = minQuote > 0 ? Math.max(total, minQuote) : total
   const minApplied = minQuote > 0 && total < minQuote
 
+  // Reset sub-step whenever main step changes (entering a new field)
+  useEffect(() => { setRouteSubStep(0) }, [step])
+
   const handleRouteChange = useCallback((fieldId: string, result: RouteResult | null) => {
     setRouteData((prev) => ({ ...prev, [fieldId]: result }))
   }, [])
 
   const handleDrawAreaChange = useCallback((fieldId: string, sqFt: number | null) => {
     setDrawAreaData((prev) => ({ ...prev, [fieldId]: sqFt }))
+  }, [])
+
+  const handleStartCoordsChange = useCallback((fieldId: string, coords: [number, number] | null) => {
+    setRouteCoords((prev) => ({ ...prev, [fieldId]: { ...prev[fieldId], start: coords } }))
+  }, [])
+
+  const handleEndCoordsChange = useCallback((fieldId: string, coords: [number, number] | null) => {
+    setRouteCoords((prev) => ({ ...prev, [fieldId]: { ...prev[fieldId], end: coords } }))
   }, [])
 
   const isFieldStep = step < totalFieldSteps
@@ -768,18 +852,42 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
   function canAdvance(): boolean {
     if (!isFieldStep || !currentField) return true
     const f = currentField
+    if (f.type === 'route') {
+      if (routeSubStep === 0) return !f.required || !!(routeCoords[f.id]?.start)
+      if (routeSubStep === 1) return !f.required || !!(routeCoords[f.id]?.end)
+      return !f.required || !!routeData[f.id]
+    }
     if (!f.required) return true
     if (f.type === 'radio' || f.type === 'dropdown') return !!answers[f.id]
     if (f.type === 'checkbox') return ((answers[f.id] as string[])?.length ?? 0) > 0
     if (f.type === 'number') return !!(answers[f.id] as number)
     if (f.type === 'textarea') return !!String(answers[f.id] ?? '').trim()
-    if (f.type === 'route') return !!routeData[f.id]
     if (f.type === 'draw_area') return drawAreaData[f.id] != null
     return true
   }
 
-  function handleNext() { setStep((s) => s + 1) }
-  function handleBack() { if (step > 0) setStep((s) => s - 1) }
+  function handleNext() {
+    // Route field: advance sub-step before advancing main step
+    if (isFieldStep && currentField?.type === 'route') {
+      if (routeSubStep < 2) { setRouteSubStep((s) => s + 1); return }
+      // Sub-step 2 done — fall through to advance main step
+    }
+    setStep((s) => s + 1)
+  }
+
+  function handleBack() {
+    // Route field: go back within sub-steps first
+    if (isFieldStep && currentField?.type === 'route' && routeSubStep > 0) {
+      setRouteSubStep((s) => s - 1)
+      return
+    }
+    if (step > 0) {
+      // If the previous field is a route, land on its map sub-step (2)
+      const prevField = fields[step - 1]
+      if (prevField?.type === 'route') setRouteSubStep(2)
+      setStep((s) => s - 1)
+    }
+  }
 
   // Auto-advance for radio — show selection briefly then move on
   function selectRadio(fieldId: string, optId: string) {
@@ -1025,6 +1133,11 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
                 {currentField.type === 'checkbox' && (
                   <p style={{ margin: '7px 0 0', fontSize: '0.82rem', color: '#64748b' }}>Select all that apply</p>
                 )}
+                {currentField.type === 'route' && (
+                  <p style={{ margin: '7px 0 0', fontSize: '0.82rem', color: '#64748b' }}>
+                    {routeSubStep === 0 ? 'Enter your starting address' : routeSubStep === 1 ? 'Now enter your destination' : 'Review and confirm your route'}
+                  </p>
+                )}
               </div>
 
               {/* ── Radio: big tap targets + auto-advance ── */}
@@ -1220,10 +1333,13 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
                     currency={currency}
                     accentColor={accentBg}
                     onRouteChange={(result) => handleRouteChange(currentField.id, result)}
+                    subStep={routeSubStep}
+                    onStartCoordsChange={(coords) => handleStartCoordsChange(currentField.id, coords)}
+                    onEndCoordsChange={(coords) => handleEndCoordsChange(currentField.id, coords)}
                   />
                   <button onClick={handleNext} disabled={!canAdvance()}
                     style={{ ...continueBtn, opacity: canAdvance() ? 1 : 0.35, cursor: canAdvance() ? 'pointer' : 'not-allowed' }}>
-                    Continue →
+                    {routeSubStep < 2 ? 'Continue →' : 'Confirm Route →'}
                   </button>
                 </>
               )}
