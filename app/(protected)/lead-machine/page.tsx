@@ -418,15 +418,15 @@ function ZipCodeMap({
         {/* AI Suggest button */}
         <button
           onClick={() => { setShowAiPanel((v) => !v); setAiResults([]); setAiError(''); setAiDescription('') }}
-          title="Describe your service area and let AI generate zip codes"
+          title="Describe your service area and let Robert generate zip codes"
           className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition ${
             showAiPanel
               ? 'bg-violet-600 border-violet-600 text-white'
               : 'bg-white border-gray-200 text-violet-600 hover:border-violet-400 hover:bg-violet-50'
           }`}
         >
-          <img src="/icons/logo-1772578089154.jpg" alt="AI" className="w-5 h-5 rounded-full object-cover" />
-          AI
+          <img src="/icons/logo-1772578089154.jpg" alt="Robert" className="w-5 h-5 rounded-full object-cover" />
+          Robert
         </button>
       </div>
 
@@ -434,9 +434,9 @@ function ZipCodeMap({
       {showAiPanel && (
         <div className="mb-3 rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50 p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
-            <img src="/icons/logo-1772578089154.jpg" alt="AI" className="w-9 h-9 rounded-full object-cover border-2 border-violet-300" />
+            <img src="/icons/logo-1772578089154.jpg" alt="Robert" className="w-9 h-9 rounded-full object-cover border-2 border-violet-300" />
             <div>
-              <p className="text-sm font-semibold text-violet-900">AI Zip Code Generator</p>
+              <p className="text-sm font-semibold text-violet-900">Robert — Zip Code Generator</p>
               <p className="text-xs text-violet-600">Describe your service area in plain English</p>
             </div>
           </div>
@@ -485,7 +485,7 @@ function ZipCodeMap({
           {aiResults.length > 0 && (
             <div className="mt-3 pt-3 border-t border-violet-200">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-semibold text-violet-800">{aiResults.length} zip codes generated</p>
+                <p className="text-xs font-semibold text-violet-800">Robert generated {aiResults.length} zip codes</p>
                 <button
                   onClick={addAllAiResults}
                   className="text-xs bg-violet-600 hover:bg-violet-700 text-white font-medium px-3 py-1.5 rounded-lg transition"

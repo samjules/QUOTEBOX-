@@ -239,14 +239,14 @@ export default function OnboardingPage() {
   const stepTitles = [
     'Welcome to Quote Box!',
     'Your contact details',
-    'Build your first form with AI',
+    'Build your first form with Robert',
     "You're all set!",
   ]
   const stepSubtitles = [
     "Let's confirm your company info so clients know who they're getting a quote from.",
     'Add a phone number so leads know how to reach you.',
-    `Tell us what ${businessName} does and our AI will build a ready-to-use quote form for you.`,
-    `${businessName} is ready. Your AI-generated form is live and ready to capture leads.`,
+    `Tell us what ${businessName} does and Robert will build a ready-to-use quote form for you.`,
+    `${businessName} is ready. Your Robert-generated form is live and ready to capture leads.`,
   ]
 
   return (
@@ -438,9 +438,9 @@ export default function OnboardingPage() {
                 borderRadius: 10,
                 border: '1px solid #e0e7ff',
               }}>
-                <span style={{ fontSize: '1.1rem' }}>✦</span>
+                <img src="/icons/logo-1772578089154.jpg" alt="Robert" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                 <span style={{ fontSize: '0.8rem', color: '#4338ca', fontWeight: 600 }}>
-                  Powered by Claude AI — your form will be ready in seconds
+                  Powered by Robert — your form will be ready in seconds
                 </span>
               </div>
 
@@ -520,8 +520,9 @@ export default function OnboardingPage() {
                   {/* Show generated field summary */}
                   {generatedFields.length > 0 && (
                     <div style={{ textAlign: 'left', marginBottom: 22 }}>
-                      <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 10 }}>
-                        AI generated {generatedFields.length} fields:
+                      <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <img src="/icons/logo-1772578089154.jpg" alt="Robert" style={{ width: 16, height: 16, borderRadius: '50%', objectFit: 'cover' }} />
+                        Robert generated {generatedFields.length} fields:
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                         {generatedFields.map((f, i) => (
@@ -534,7 +535,7 @@ export default function OnboardingPage() {
                     </div>
                   )}
                   <div style={{ fontSize: '0.9rem', color: '#64748b', lineHeight: 1.65, marginBottom: 24 }}>
-                    Your AI-generated form is live. Open the form builder to preview it, tweak pricing, or add more fields.
+                    Your Robert-generated form is live. Open the form builder to preview it, tweak pricing, or add more fields.
                   </div>
                   <button
                     style={{ ...primaryBtn, marginBottom: 12 }}

@@ -273,7 +273,7 @@ export default function LandingPage() {
                   '1 quote form',
                   '10 leads per month',
                   '1 media file',
-                  'Form builder & AI assistant',
+                  'Form builder & Robert (AI)',
                   'Lead dashboard',
                 ].map((item) => (
                   <li key={item} style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#374151', fontSize: '0.88rem' }}>
@@ -319,7 +319,7 @@ export default function LandingPage() {
                   '3 quote forms',
                   '50 leads per month',
                   'Priority support',
-                  'Form builder & AI assistant',
+                  'Form builder & Robert (AI)',
                   'Full lead dashboard',
                 ].map((item) => (
                   <li key={item} style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'rgba(255,255,255,0.85)', fontSize: '0.88rem' }}>

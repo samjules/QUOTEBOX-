@@ -336,7 +336,8 @@ function TemplatePicker({
               style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', border: 'none', color: '#fff' }}
               onClick={onAi}
             >
-              ✨ Build with AI
+              <img src="/icons/logo-1772578089154.jpg" alt="Robert" style={{ width: 18, height: 18, borderRadius: '50%', objectFit: 'cover' }} />
+              Build with Robert
             </button>
             <button className="bb bb-ghost" onClick={onBlank}>
               Start blank
@@ -435,14 +436,15 @@ function AiModal({
     <div className="crop-overlay" onClick={(e) => { if (e.target === e.currentTarget && !generating) onClose() }}>
       <div className="crop-modal" style={{ maxWidth: 480, width: '90%' }}>
         <div className="crop-modal-header" style={{ borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
-          <span className="crop-modal-title" style={{ fontSize: '1rem', fontWeight: 700 }}>
-            ✨ Build with AI
+          <span className="crop-modal-title" style={{ fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <img src="/icons/logo-1772578089154.jpg" alt="Robert" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover' }} />
+            Build with Robert
           </span>
         </div>
 
         <div style={{ padding: '16px 0', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--muted)', lineHeight: 1.5 }}>
-            Describe your business and AI will generate a tailored quote form with realistic pricing fields.
+            Describe your business and Robert will generate a tailored quote form with realistic pricing fields.
           </p>
 
           <div className="fm" style={{ gap: 6 }}>
@@ -491,7 +493,12 @@ function AiModal({
             onClick={() => onGenerate(name.trim(), desc.trim())}
             style={{ display: 'flex', alignItems: 'center', gap: 6 }}
           >
-            {generating ? 'Generating…' : '✨ Generate Form'}
+            {generating ? 'Generating…' : (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <img src="/icons/logo-1772578089154.jpg" alt="Robert" style={{ width: 16, height: 16, borderRadius: '50%', objectFit: 'cover' }} />
+                Generate Form
+              </span>
+            )}
           </button>
         </div>
       </div>
