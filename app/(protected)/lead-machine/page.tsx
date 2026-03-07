@@ -715,6 +715,15 @@ export default function LeadMachinePage() {
   const [suggestionsLoading, setSuggestionsLoading] = useState(false)
   const [suggestionsOpen, setSuggestionsOpen] = useState(true)
 
+  // Robert chat state
+  const [chatOpen, setChatOpen] = useState(false)
+  const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
+    { role: 'assistant', content: "Hey! I'm Robert. Ask me anything about your Meta campaigns — budgets, targeting, ad copy, you name it." }
+  ])
+  const [chatInput, setChatInput] = useState('')
+  const [chatLoading, setChatLoading] = useState(false)
+  const chatEndRef = useRef<HTMLDivElement>(null)
+
   const [questionnaire, setQuestionnaire] = useState<Questionnaire>({
     objective: 'OUTCOME_LEADS',
     ageMin: 25,
@@ -1052,6 +1061,30 @@ export default function LeadMachinePage() {
     setCreatingConversion(false)
   }
 
+  async function handleChat(e?: React.FormEvent) {
+    e?.preventDefault()
+    const text = chatInput.trim()
+    if (!text || chatLoading) return
+    const userMsg = { role: 'user' as const, content: text }
+    const nextMessages = [...chatMessages, userMsg]
+    setChatMessages(nextMessages)
+    setChatInput('')
+    setChatLoading(true)
+    try {
+      const res = await fetch('/api/meta/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: nextMessages }),
+      })
+      const data = await res.json()
+      setChatMessages((prev) => [...prev, { role: 'assistant', content: data.reply || 'Something went wrong.' }])
+    } catch {
+      setChatMessages((prev) => [...prev, { role: 'assistant', content: 'Oops, something went wrong. Try again.' }])
+    }
+    setChatLoading(false)
+    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+  }
+
   function handleReset() {
     setPageState('questionnaire')
     setStep(1)
@@ -1109,7 +1142,7 @@ export default function LeadMachinePage() {
             </svg>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Lead Machine</h1>
-          <p className="text-gray-500 text-lg">Connect your Meta Ads account to create AI-powered campaigns, view live analytics, and get smart suggestions.</p>
+          <p className="text-gray-500 text-lg">Connect your Meta Ads account and let Robert create campaigns, view live analytics, and get smart suggestions.</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-6">
@@ -1117,9 +1150,9 @@ export default function LeadMachinePage() {
           <ul className="space-y-3">
             {[
               'Live analytics — spend, leads, CPL across all campaigns',
-              'AI creates headlines, body copy, and targeting in seconds',
+              'Robert creates headlines, body copy, and targeting in seconds',
               'Auto split test — 3 ad variants created automatically',
-              'AI-powered suggestions to optimize your campaigns',
+              "Robert's suggestions to optimize your campaigns",
               'Campaign starts PAUSED — no spend until you activate it',
             ].map((item) => (
               <li key={item} className="flex items-start gap-3">
@@ -1341,7 +1374,8 @@ export default function LeadMachinePage() {
               className="w-full flex items-center justify-between px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition"
             >
               <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-gray-900">AI Suggestions</span>
+                <img src="/icons/logo-1772578089154.jpg" alt="Robert" className="w-6 h-6 rounded-full object-cover" />
+                <span className="text-sm font-semibold text-gray-900">Robert&apos;s Suggestions</span>
                 {suggestionsLoading && (
                   <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-indigo-500" />
                 )}
@@ -1362,7 +1396,7 @@ export default function LeadMachinePage() {
             {suggestionsOpen && (
               <div className="px-4 py-4">
                 {suggestionsLoading && !suggestions && (
-                  <p className="text-sm text-gray-400 text-center py-4">Analyzing your campaigns with AI…</p>
+                  <p className="text-sm text-gray-400 text-center py-4">Robert is analyzing your campaigns…</p>
                 )}
                 {!suggestionsLoading && !suggestions && (
                   <p className="text-sm text-gray-400 text-center py-4">No suggestions available yet.</p>
@@ -1997,14 +2031,18 @@ export default function LeadMachinePage() {
                 {/* Step 5: AI Preview + Split Test */}
                 {step === 5 && (
                   <div>
-                    <h2 className="font-semibold text-gray-900 mb-1">AI-Generated Split Test</h2>
+                    <div className="flex items-center gap-2 mb-1">
+                      <img src="/icons/logo-1772578089154.jpg" alt="Robert" className="w-6 h-6 rounded-full object-cover" />
+                      <h2 className="font-semibold text-gray-900">Robert&apos;s Split Test</h2>
+                    </div>
                     <p className="text-sm text-gray-500 mb-4">3 ad variants will be created automatically — let Meta find the winner.</p>
 
                     {!generatedCopy && !generating && (
                       <button onClick={handleGenerate}
-                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-xl transition"
+                        className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-xl transition"
                       >
-                        Generate with AI
+                        <img src="/icons/logo-1772578089154.jpg" alt="Robert" className="w-5 h-5 rounded-full object-cover" />
+                        Generate with Robert
                       </button>
                     )}
 
@@ -2020,7 +2058,7 @@ export default function LeadMachinePage() {
                         {/* Strategy */}
                         <details className="group">
                           <summary className="flex items-center justify-between cursor-pointer text-xs font-medium text-gray-400 uppercase tracking-wider select-none list-none">
-                            <span>AI Strategy</span>
+                            <span>Robert&apos;s Strategy</span>
                             <svg className="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                             </svg>
@@ -2147,6 +2185,89 @@ export default function LeadMachinePage() {
           )}
         </div>
       )}
+
+      {/* ── Robert Chat Widget ── */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+
+        {/* Chat panel */}
+        {chatOpen && (
+          <div className="w-[340px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden"
+            style={{ height: 480 }}>
+            {/* Header */}
+            <div className="flex items-center gap-3 px-4 py-3 bg-violet-600 text-white flex-shrink-0">
+              <img src="/icons/logo-1772578089154.jpg" alt="Robert" className="w-9 h-9 rounded-full object-cover border-2 border-white/40" />
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm leading-none">Robert</p>
+                <p className="text-xs text-violet-200 mt-0.5">Meta Ads Expert</p>
+              </div>
+              <button onClick={() => setChatOpen(false)} className="text-white/70 hover:text-white transition">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+              {chatMessages.map((msg, i) => (
+                <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                  {msg.role === 'assistant' && (
+                    <img src="/icons/logo-1772578089154.jpg" alt="Robert" className="w-7 h-7 rounded-full object-cover flex-shrink-0 mt-0.5" />
+                  )}
+                  <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
+                    msg.role === 'user'
+                      ? 'bg-violet-600 text-white rounded-tr-sm'
+                      : 'bg-gray-100 text-gray-800 rounded-tl-sm'
+                  }`}>
+                    {msg.content}
+                  </div>
+                </div>
+              ))}
+              {chatLoading && (
+                <div className="flex gap-2">
+                  <img src="/icons/logo-1772578089154.jpg" alt="Robert" className="w-7 h-7 rounded-full object-cover flex-shrink-0 mt-0.5" />
+                  <div className="bg-gray-100 rounded-2xl rounded-tl-sm px-3 py-2 flex gap-1 items-center">
+                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Input */}
+            <form onSubmit={handleChat} className="flex items-center gap-2 px-3 py-3 border-t border-gray-100 flex-shrink-0">
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Ask Robert anything…"
+                disabled={chatLoading}
+                className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={chatLoading || !chatInput.trim()}
+                className="w-9 h-9 flex-shrink-0 bg-violet-600 hover:bg-violet-700 disabled:opacity-40 text-white rounded-xl flex items-center justify-center transition"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Toggle button */}
+        <button
+          onClick={() => setChatOpen((o) => !o)}
+          className="w-14 h-14 rounded-full shadow-lg overflow-hidden border-2 border-violet-400 hover:scale-105 transition-transform"
+          title="Chat with Robert"
+        >
+          <img src="/icons/logo-1772578089154.jpg" alt="Robert" className="w-full h-full object-cover" />
+        </button>
+      </div>
     </div>
   )
 }
