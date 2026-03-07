@@ -129,16 +129,12 @@ export default function HostedFormsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">
-              Hosted Forms
-            </h1>
-            <p className="mt-1 text-sm text-gray-600">
-              All your live quote forms
-            </p>
+            <h1 className="text-2xl font-semibold text-gray-900">Hosted Forms</h1>
+            <p className="mt-1 text-sm text-gray-500">Your live multi-step quote forms</p>
           </div>
           <Link
             href="/form-builder"
-            className={`inline-flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-indigo-700 transition shadow-sm ${atLimit ? 'opacity-50 pointer-events-none' : ''}`}
+            className={`inline-flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-indigo-700 transition shadow-sm text-sm ${atLimit ? 'opacity-50 pointer-events-none' : ''}`}
           >
             + New Form
           </Link>
@@ -148,28 +144,28 @@ export default function HostedFormsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
         {/* Plan usage bar */}
         {!loading && (
-          <div className="bg-white shadow rounded-xl p-5 mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">
-                Forms used
-              </span>
-              <span className="text-sm text-gray-500">
-                {forms.length} /{' '}
-                {planLimit === Infinity ? '∞' : planLimit}
-              </span>
+          <div style={{ background: 'white', borderRadius: 14, padding: '16px 20px', marginBottom: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#374151' }}>Forms used</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 500 }}>
+                  {forms.length} / {planLimit === Infinity ? '∞' : planLimit}
+                </span>
+                <span style={{
+                  fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em',
+                  background: '#ede9fe', color: '#6d28d9', borderRadius: 6, padding: '2px 8px',
+                }}>
+                  {PLAN_LABELS[plan]}
+                </span>
+              </div>
             </div>
-            <div className="w-full bg-gray-100 rounded-full h-2">
-              <div
-                className="bg-indigo-600 h-2 rounded-full transition-all"
-                style={{
-                  width:
-                    planLimit === Infinity
-                      ? '10%'
-                      : `${Math.min((forms.length / planLimit) * 100, 100)}%`,
-                }}
-              />
+            <div style={{ height: 6, background: '#f1f5f9', borderRadius: 3, overflow: 'hidden' }}>
+              <div style={{
+                height: '100%', borderRadius: 3, background: 'linear-gradient(90deg, #6366f1, #4f46e5)',
+                width: planLimit === Infinity ? '8%' : `${Math.min((forms.length / planLimit) * 100, 100)}%`,
+                transition: 'width 0.4s ease',
+              }} />
             </div>
-            <p className="mt-2 text-xs text-gray-400">{PLAN_LABELS[plan]}</p>
           </div>
         )}
 
@@ -234,104 +230,139 @@ export default function HostedFormsPage() {
               const slug = cfg.slug ?? ''
               const color = cfg.brand_color ?? 'yellow'
               const currency = cfg.currency ?? '$'
-              const fieldCount = (cfg.fields ?? []).length
+              const fields: Array<{ id: string; type: string; label: string }> = cfg.fields ?? []
+              const fieldCount = fields.length
               const created = new Date(form.created_at).toLocaleDateString(
                 'en-US',
                 { month: 'short', day: 'numeric', year: 'numeric' }
               )
-              const liveUrl = `/quote-form.html?slug=${slug}`
+              const liveUrl = `/${slug}`
               const absoluteUrl = typeof window !== 'undefined'
-                ? `${window.location.origin}/quote-form.html?slug=${slug}`
-                : `/quote-form.html?slug=${slug}`
-              const headerStyle =
-                color === 'blue'
-                  ? { background: '#1A56FF', color: 'white' }
-                  : { background: '#FFE500', color: '#1a1a2e' }
+                ? `${window.location.origin}/${slug}`
+                : `/${slug}`
+
+              const isBlue = color === 'blue'
+              const headerBg = isBlue ? '#1a56ff' : '#ffe500'
+              const headerFg = isBlue ? '#ffffff' : '#1a1a2e'
+              const progressBg = isBlue ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.14)'
+              const progressFill = isBlue ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.38)'
+              const pillBg = isBlue ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)'
+              const pillFg = isBlue ? 'rgba(255,255,255,0.82)' : 'rgba(0,0,0,0.58)'
+
+              const FIELD_TYPE_ICONS: Record<string, string> = {
+                radio: '◉', checkbox: '☑', dropdown: '▾', number: '#',
+                textarea: '¶', route: '📍', draw_area: '✏', image: '🖼',
+              }
 
               return (
                 <div
                   key={form.id}
-                  className="bg-white shadow rounded-xl overflow-hidden flex flex-col"
+                  style={{
+                    background: 'white',
+                    borderRadius: 18,
+                    overflow: 'hidden',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.05)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}
                 >
-                  {/* Colour header */}
-                  <div style={{ ...headerStyle, padding: '20px 20px 16px' }}>
-                    <div
-                      style={{
-                        fontSize: '0.65rem',
-                        fontWeight: 700,
-                        letterSpacing: '0.08em',
+                  {/* ── Branded header — mini form preview ── */}
+                  <div style={{ background: headerBg }}>
+                    {/* Progress bar */}
+                    <div style={{ height: 4, background: progressBg }}>
+                      <div style={{
+                        height: '100%', width: '33%',
+                        background: progressFill,
+                        borderRadius: '0 2px 2px 0',
+                      }} />
+                    </div>
+
+                    <div style={{ padding: '16px 18px 18px' }}>
+                      {/* Step label */}
+                      <div style={{
+                        fontSize: '0.58rem', fontWeight: 800, letterSpacing: '0.13em',
                         textTransform: 'uppercase',
-                        opacity: 0.6,
-                        marginBottom: 4,
-                      }}
-                    >
-                      Quote Form
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: 'Syne, sans-serif',
-                        fontSize: '1.1rem',
-                        fontWeight: 800,
-                        lineHeight: 1.2,
-                      }}
-                    >
-                      {esc(form.form_name)}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: '0.75rem',
-                        marginTop: 4,
-                        opacity: 0.65,
-                        fontFamily: 'monospace',
-                      }}
-                    >
-                      {slug ? absoluteUrl : 'No slug set'}
+                        color: isBlue ? 'rgba(255,255,255,0.52)' : 'rgba(0,0,0,0.42)',
+                        marginBottom: 6,
+                      }}>
+                        {fieldCount > 0 ? `${fieldCount} step${fieldCount !== 1 ? 's' : ''} · quote form` : 'Quote Form'}
+                      </div>
+
+                      {/* Form name */}
+                      <div style={{
+                        fontFamily: "'Oswald', sans-serif",
+                        fontSize: '1.12rem', fontWeight: 800,
+                        color: headerFg, lineHeight: 1.2, marginBottom: 12,
+                      }}>
+                        {esc(form.form_name)}
+                      </div>
+
+                      {/* Field type pills */}
+                      {fieldCount > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                          {fields.slice(0, 5).map((f) => (
+                            <span key={f.id} style={{
+                              fontSize: '0.62rem', fontWeight: 700,
+                              letterSpacing: '0.06em', textTransform: 'uppercase',
+                              background: pillBg, color: pillFg,
+                              borderRadius: 6, padding: '3px 8px',
+                              display: 'flex', alignItems: 'center', gap: 4,
+                            }}>
+                              <span style={{ fontSize: '0.7rem' }}>{FIELD_TYPE_ICONS[f.type] ?? '·'}</span>
+                              {f.type}
+                            </span>
+                          ))}
+                          {fieldCount > 5 && (
+                            <span style={{ fontSize: '0.62rem', fontWeight: 700, color: pillFg, padding: '3px 4px' }}>
+                              +{fieldCount - 5}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Stats row */}
-                  <div className="flex divide-x divide-gray-100 border-b border-gray-100">
-                    <div className="flex-1 px-4 py-3 text-center">
-                      <div className="text-xl font-bold text-gray-900">
-                        {countMap[form.id] ?? 0}
+                  {/* ── Stats ── */}
+                  <div style={{ display: 'flex', borderBottom: '1px solid #f1f5f9' }}>
+                    {[
+                      { value: countMap[form.id] ?? 0, label: 'Leads' },
+                      { value: fieldCount, label: 'Steps' },
+                      { value: currency, label: 'Currency' },
+                    ].map(({ value, label }, i) => (
+                      <div key={label} style={{
+                        flex: 1, padding: '13px 8px', textAlign: 'center',
+                        borderLeft: i > 0 ? '1px solid #f1f5f9' : 'none',
+                      }}>
+                        <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>{value}</div>
+                        <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: 3, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
                       </div>
-                      <div className="text-xs text-gray-500">Leads</div>
-                    </div>
-                    <div className="flex-1 px-4 py-3 text-center">
-                      <div className="text-xl font-bold text-gray-900">
-                        {fieldCount}
-                      </div>
-                      <div className="text-xs text-gray-500">Fields</div>
-                    </div>
-                    <div className="flex-1 px-4 py-3 text-center">
-                      <div className="text-xl font-bold text-gray-900">
-                        {currency}
-                      </div>
-                      <div className="text-xs text-gray-500">Currency</div>
-                    </div>
+                    ))}
                   </div>
 
-                  {/* Meta */}
-                  <div className="px-4 py-3 flex items-center justify-between">
-                    {form.is_active ? (
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
-                        ● Live
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                        ○ Inactive
-                      </span>
-                    )}
-                    <span className="text-xs text-gray-400">
-                      Created {created}
+                  {/* ── Status + date ── */}
+                  <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                      fontSize: '0.7rem', fontWeight: 700,
+                      padding: '4px 10px', borderRadius: 20,
+                      background: form.is_active ? '#dcfce7' : '#f1f5f9',
+                      color: form.is_active ? '#15803d' : '#64748b',
+                    }}>
+                      <span style={{ fontSize: 7 }}>{form.is_active ? '●' : '○'}</span>
+                      {form.is_active ? 'Live' : 'Inactive'}
                     </span>
+                    <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{created}</span>
                   </div>
 
-                  {/* Actions */}
-                  <div className="px-4 pb-4 mt-auto flex gap-2">
+                  {/* ── Actions ── */}
+                  <div style={{ padding: '0 14px 14px', display: 'flex', gap: 6, marginTop: 'auto' }}>
                     <Link
                       href={`/form-builder?form_id=${form.id}`}
-                      className="flex-1 text-center bg-indigo-600 text-white px-3 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition"
+                      style={{
+                        flex: 1, textAlign: 'center', background: '#4f46e5', color: 'white',
+                        padding: '9px 12px', borderRadius: 10, fontSize: '0.82rem', fontWeight: 700,
+                        textDecoration: 'none',
+                      }}
                     >
                       Edit
                     </Link>
@@ -340,28 +371,32 @@ export default function HostedFormsPage() {
                         href={liveUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex-1 text-center border border-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+                        style={{
+                          flex: 1, textAlign: 'center', border: '1.5px solid #e2e8f0', color: '#374151',
+                          padding: '9px 12px', borderRadius: 10, fontSize: '0.82rem', fontWeight: 600,
+                          textDecoration: 'none',
+                        }}
                       >
-                        View Live ↗
+                        Preview ↗
                       </a>
                     )}
                     <button
                       onClick={() => copyLink(absoluteUrl)}
-                      className="border border-gray-200 text-gray-500 px-3 py-2 rounded-lg text-sm hover:bg-gray-50 transition"
+                      style={{ border: '1.5px solid #e2e8f0', background: 'white', color: '#64748b', padding: '9px 11px', borderRadius: 10, fontSize: '0.85rem', cursor: 'pointer' }}
                       title="Copy link"
                     >
                       🔗
                     </button>
                     <button
                       onClick={() => toggleActive(form.id, form.is_active)}
-                      className="border border-gray-200 text-gray-500 px-3 py-2 rounded-lg text-sm hover:bg-gray-50 transition"
+                      style={{ border: '1.5px solid #e2e8f0', background: 'white', color: '#64748b', padding: '9px 11px', borderRadius: 10, fontSize: '0.85rem', cursor: 'pointer' }}
                       title={form.is_active ? 'Deactivate' : 'Activate'}
                     >
                       {form.is_active ? '⏸' : '▶'}
                     </button>
                     <button
                       onClick={() => setDeleteFormId(form.id)}
-                      className="border border-red-100 text-red-400 px-3 py-2 rounded-lg text-sm hover:bg-red-50 transition"
+                      style={{ border: '1.5px solid #fee2e2', background: 'white', color: '#f87171', padding: '9px 11px', borderRadius: 10, fontSize: '0.85rem', cursor: 'pointer' }}
                       title="Delete"
                     >
                       🗑
