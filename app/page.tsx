@@ -155,6 +155,184 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Product Screenshots ── */}
+      <section style={{ padding: '100px 24px', background: 'white', overflow: 'hidden' }}>
+        <div style={{ maxWidth: 1060, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 100 }}>
+
+          {/* Row 1 — Quote form */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: 56,
+            alignItems: 'center',
+          }}>
+            {/* Screenshot */}
+            <div style={{ display: 'flex', justifyContent: 'center', position: 'relative' }}>
+              {/* Glow blob */}
+              <div style={{
+                position: 'absolute', inset: -32,
+                background: 'radial-gradient(ellipse at center, #FFE50033 0%, transparent 70%)',
+                borderRadius: '50%', zIndex: 0,
+              }} />
+              <div style={{
+                position: 'relative', zIndex: 1,
+                maxWidth: 300, width: '100%',
+                borderRadius: 24,
+                boxShadow: '0 32px 80px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08)',
+                border: '1px solid rgba(0,0,0,0.06)',
+                overflow: 'hidden',
+                transform: 'rotate(-1.5deg)',
+              }}>
+                <img
+                  src="/screenshots/Movingquote.png"
+                  alt="QuoteBox instant quote form on mobile"
+                  style={{ width: '100%', display: 'block' }}
+                />
+              </div>
+            </div>
+
+            {/* Copy */}
+            <div>
+              <div style={{
+                display: 'inline-block', background: '#FFE500', color: '#1a1a2e',
+                fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.1em',
+                textTransform: 'uppercase', padding: '5px 14px', borderRadius: 99, marginBottom: 22,
+              }}>
+                Instant quote landing page
+              </div>
+              <h2 style={{
+                fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
+                fontWeight: 800, lineHeight: 1.15, color: '#1a1a2e', marginBottom: 20,
+              }}>
+                Your quote form is a<br />live landing page.<br />Share it anywhere.
+              </h2>
+              <p style={{ color: '#6b7280', fontSize: '1rem', lineHeight: 1.8, marginBottom: 28 }}>
+                Every Quote Box form is a publicly deployed URL that works on any device — no website, no hosting, no setup. Customers fill it in, see an instant price estimate, and submit their details in under two minutes.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {[
+                  { icon: '⚡', text: 'Live instantly — share your link the same day you build it' },
+                  { icon: '📱', text: 'Beautiful on mobile and desktop — no responsive headaches' },
+                  { icon: '💰', text: 'Auto-calculated quotes shown step-by-step as customers answer' },
+                  { icon: '📍', text: 'Route & distance pricing built in — perfect for movers, cleaners, drivers' },
+                ].map(({ icon, text }) => (
+                  <div key={text} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: '1rem', flexShrink: 0, marginTop: 1 }}>{icon}</span>
+                    <span style={{ color: '#374151', fontSize: '0.93rem', lineHeight: 1.6 }}>{text}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: 36 }}>
+                <Link href="/signup" style={{
+                  display: 'inline-block', padding: '13px 28px',
+                  background: '#1a1a2e', color: '#FFE500',
+                  fontWeight: 700, fontSize: '0.93rem', borderRadius: 10, textDecoration: 'none',
+                  fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
+                }}>
+                  Build your form free →
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Row 2 — Robert & Meta Ads */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: 56,
+            alignItems: 'center',
+          }}>
+            {/* Copy — left on desktop, bottom on mobile via order */}
+            <div style={{ order: 0 }}>
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                background: '#f5f3ff', border: '1px solid #ddd6fe',
+                borderRadius: 99, padding: '5px 14px', marginBottom: 22,
+              }}>
+                <img src="/icons/logo-1772578089154.jpg" alt="Robert" style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'cover' }} />
+                <span style={{ color: '#7c3aed', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                  Meet Robert
+                </span>
+              </div>
+              <h2 style={{
+                fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
+                fontWeight: 800, lineHeight: 1.15, color: '#1a1a2e', marginBottom: 20,
+              }}>
+                Run Meta ads with<br />Robert — your built-in<br />AI ad expert.
+              </h2>
+              <p style={{ color: '#6b7280', fontSize: '1rem', lineHeight: 1.8, marginBottom: 28 }}>
+                Robert lives inside your Lead Machine dashboard. Tell him your target area, budget, and offer — he generates your campaign copy, targeting, and split-test variants automatically. No ad agency. No guessing.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {[
+                  { icon: '🎯', text: 'Describe your service area in plain English — Robert turns it into precise zip codes' },
+                  { icon: '✍️', text: 'AI-written headlines, body copy, and 3 split-test variants ready to launch' },
+                  { icon: '💬', text: 'Chat with Robert anytime to optimize spend, CPL, and targeting' },
+                  { icon: '📊', text: 'Live analytics — spend, leads, CPL, and top performer all in one place' },
+                ].map(({ icon, text }) => (
+                  <div key={text} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: '1rem', flexShrink: 0, marginTop: 1 }}>{icon}</span>
+                    <span style={{ color: '#374151', fontSize: '0.93rem', lineHeight: 1.6 }}>{text}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: 36 }}>
+                <Link href="/signup" style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8, padding: '13px 28px',
+                  background: '#7c3aed', color: 'white',
+                  fontWeight: 700, fontSize: '0.93rem', borderRadius: 10, textDecoration: 'none',
+                  fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
+                }}>
+                  <img src="/icons/logo-1772578089154.jpg" alt="" style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'cover' }} />
+                  Launch ads with Robert →
+                </Link>
+              </div>
+            </div>
+
+            {/* Screenshot — right on desktop */}
+            <div style={{ display: 'flex', justifyContent: 'center', position: 'relative', order: 1 }}>
+              <div style={{
+                position: 'absolute', inset: -32,
+                background: 'radial-gradient(ellipse at center, #7c3aed22 0%, transparent 70%)',
+                borderRadius: '50%', zIndex: 0,
+              }} />
+              <div style={{
+                position: 'relative', zIndex: 1,
+                maxWidth: 520, width: '100%',
+                borderRadius: 16,
+                boxShadow: '0 32px 80px rgba(124,58,237,0.18), 0 2px 8px rgba(0,0,0,0.08)',
+                border: '1px solid rgba(0,0,0,0.06)',
+                overflow: 'hidden',
+                transform: 'rotate(1deg)',
+              }}>
+                {/* Fake browser chrome */}
+                <div style={{
+                  background: '#f3f4f6', padding: '10px 16px',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  borderBottom: '1px solid #e5e7eb',
+                }}>
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+                  <div style={{
+                    flex: 1, background: 'white', borderRadius: 4, padding: '3px 10px',
+                    fontSize: '0.68rem', color: '#9ca3af', marginLeft: 8,
+                  }}>
+                    quote-box.com/lead-machine
+                  </div>
+                </div>
+                <img
+                  src="/screenshots/robertads.png"
+                  alt="Robert AI zip code generator for Meta ads targeting"
+                  style={{ width: '100%', display: 'block' }}
+                />
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
       {/* ── Meta Ads callout ── */}
       <section style={{ padding: '72px 24px', background: '#1a1a2e' }}>
         <div style={{ maxWidth: 860, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 48, alignItems: 'center' }}>
