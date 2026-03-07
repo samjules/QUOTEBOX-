@@ -798,7 +798,28 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
   const currency = config.currency ?? '$'
 
   const fields = config.fields
-  const totalFieldSteps = fields.length
+
+  // Expand route fields into 3 real steps (start / end / map) so normal
+  // step+1 / step-1 navigation works without any special-casing.
+  interface ExpandedStep {
+    field: FormField
+    routeSubStep?: 0 | 1 | 2
+  }
+  const expandedSteps = useMemo<ExpandedStep[]>(() => {
+    const result: ExpandedStep[] = []
+    for (const field of fields) {
+      if (field.type === 'route') {
+        result.push({ field, routeSubStep: 0 })
+        result.push({ field, routeSubStep: 1 })
+        result.push({ field, routeSubStep: 2 })
+      } else {
+        result.push({ field })
+      }
+    }
+    return result
+  }, [fields])
+
+  const totalFieldSteps = expandedSteps.length
   const contactStep = totalFieldSteps
   const confirmStep = totalFieldSteps + 1
 
@@ -806,8 +827,6 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
   const [answers, setAnswers] = useState<Record<string, unknown>>({})
   const [routeData, setRouteData] = useState<Record<string, RouteResult | null>>({})
   const [drawAreaData, setDrawAreaData] = useState<Record<string, number | null>>({})
-  // Route field sub-steps: 0=start address, 1=end address, 2=map
-  const [routeSubStep, setRouteSubStep] = useState(0)
   const [routeCoords, setRouteCoords] = useState<Record<string, { start: [number, number] | null; end: [number, number] | null }>>({})
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -823,9 +842,6 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
   const minQuote = config.min_quote ?? 0
   const displayTotal = minQuote > 0 ? Math.max(total, minQuote) : total
   const minApplied = minQuote > 0 && total < minQuote
-
-  // Reset sub-step whenever main step changes (entering a new field)
-  useEffect(() => { setRouteSubStep(0) }, [step])
 
   const handleRouteChange = useCallback((fieldId: string, result: RouteResult | null) => {
     setRouteData((prev) => ({ ...prev, [fieldId]: result }))
@@ -846,15 +862,17 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
   const isFieldStep = step < totalFieldSteps
   const isContactStep = step === contactStep
   const isConfirmStep = step === confirmStep
-  const currentField = isFieldStep ? fields[step] : null
+  const currentExpanded = isFieldStep ? expandedSteps[step] : null
+  const currentField = currentExpanded?.field ?? null
+  const currentRouteSubStep = currentExpanded?.routeSubStep ?? 0
   const progressPercent = Math.round((step / (totalFieldSteps + 1)) * 100)
 
   function canAdvance(): boolean {
     if (!isFieldStep || !currentField) return true
     const f = currentField
     if (f.type === 'route') {
-      if (routeSubStep === 0) return !f.required || !!(routeCoords[f.id]?.start)
-      if (routeSubStep === 1) return !f.required || !!(routeCoords[f.id]?.end)
+      if (currentRouteSubStep === 0) return !f.required || !!(routeCoords[f.id]?.start)
+      if (currentRouteSubStep === 1) return !f.required || !!(routeCoords[f.id]?.end)
       return !f.required || !!routeData[f.id]
     }
     if (!f.required) return true
@@ -866,28 +884,8 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
     return true
   }
 
-  function handleNext() {
-    // Route field: advance sub-step before advancing main step
-    if (isFieldStep && currentField?.type === 'route') {
-      if (routeSubStep < 2) { setRouteSubStep((s) => s + 1); return }
-      // Sub-step 2 done — fall through to advance main step
-    }
-    setStep((s) => s + 1)
-  }
-
-  function handleBack() {
-    // Route field: go back within sub-steps first
-    if (isFieldStep && currentField?.type === 'route' && routeSubStep > 0) {
-      setRouteSubStep((s) => s - 1)
-      return
-    }
-    if (step > 0) {
-      // If the previous field is a route, land on its map sub-step (2)
-      const prevField = fields[step - 1]
-      if (prevField?.type === 'route') setRouteSubStep(2)
-      setStep((s) => s - 1)
-    }
-  }
+  function handleNext() { setStep((s) => s + 1) }
+  function handleBack() { if (step > 0) setStep((s) => s - 1) }
 
   // Auto-advance for radio — show selection briefly then move on
   function selectRadio(fieldId: string, optId: string) {
@@ -1135,7 +1133,7 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
                 )}
                 {currentField.type === 'route' && (
                   <p style={{ margin: '7px 0 0', fontSize: '0.82rem', color: '#64748b' }}>
-                    {routeSubStep === 0 ? 'Enter your starting address' : routeSubStep === 1 ? 'Now enter your destination' : 'Review and confirm your route'}
+                    {currentRouteSubStep === 0 ? 'Enter your starting address' : currentRouteSubStep === 1 ? 'Now enter your destination' : 'Review and confirm your route'}
                   </p>
                 )}
               </div>
@@ -1329,17 +1327,18 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
               {currentField.type === 'route' && (
                 <>
                   <RouteField
+                    key={currentField.id}
                     field={currentField}
                     currency={currency}
                     accentColor={accentBg}
                     onRouteChange={(result) => handleRouteChange(currentField.id, result)}
-                    subStep={routeSubStep}
+                    subStep={currentRouteSubStep}
                     onStartCoordsChange={(coords) => handleStartCoordsChange(currentField.id, coords)}
                     onEndCoordsChange={(coords) => handleEndCoordsChange(currentField.id, coords)}
                   />
                   <button onClick={handleNext} disabled={!canAdvance()}
                     style={{ ...continueBtn, opacity: canAdvance() ? 1 : 0.35, cursor: canAdvance() ? 'pointer' : 'not-allowed' }}>
-                    {routeSubStep < 2 ? 'Continue →' : 'Confirm Route →'}
+                    {currentRouteSubStep < 2 ? 'Continue →' : 'Confirm Route →'}
                   </button>
                 </>
               )}
