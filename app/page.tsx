@@ -72,44 +72,128 @@ export default function LandingPage() {
       {/* ── Hero ── */}
       <section style={{
         background: '#1a1a2e', color: 'white',
-        padding: '90px 24px 80px', textAlign: 'center',
+        padding: '80px 24px 0', overflow: 'hidden',
       }}>
-        <div style={{ maxWidth: 720, margin: '0 auto' }}>
+        <div style={{
+          maxWidth: 1100, margin: '0 auto',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gap: '48px 72px',
+          alignItems: 'flex-end',
+        }}>
+
+          {/* Left — copy */}
+          <div style={{ paddingBottom: 80 }}>
+            <div style={{
+              display: 'inline-block', background: '#FFE500', color: '#1a1a2e',
+              fontSize: '0.73rem', fontWeight: 700, letterSpacing: '0.08em',
+              textTransform: 'uppercase', padding: '5px 14px', borderRadius: 99, marginBottom: 28,
+            }}>
+              Pay per lead — no monthly fees
+            </div>
+            <h1 style={{
+              fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(2.6rem, 5.5vw, 4.2rem)',
+              fontWeight: 800, lineHeight: 1.08, marginBottom: 24,
+            }}>
+              Get quality leads.<br />No website needed.
+            </h1>
+            <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.68)', lineHeight: 1.75, marginBottom: 38, maxWidth: 480 }}>
+              Quote Box deploys a branded instant-quote landing page for your business and runs paid Meta ads on Facebook &amp; Instagram to fill it with customers. Warm leads, real prices, $15 per result.
+            </p>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <Link href="/signup" style={{
+                padding: '15px 32px', background: '#FFE500', color: '#1a1a2e',
+                fontWeight: 700, fontSize: '1rem', borderRadius: 10, textDecoration: 'none',
+                fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
+              }}>
+                Build your form — it&apos;s free
+              </Link>
+              <Link href="/login" style={{
+                padding: '15px 28px', background: 'rgba(255,255,255,0.08)', color: 'white',
+                fontWeight: 600, fontSize: '0.92rem', borderRadius: 10, textDecoration: 'none',
+                border: '1px solid rgba(255,255,255,0.15)',
+              }}>
+                Log in to dashboard
+              </Link>
+            </div>
+            <p style={{ marginTop: 20, fontSize: '0.78rem', color: 'rgba(255,255,255,0.35)' }}>
+              No credit card required to sign up
+            </p>
+          </div>
+
+          {/* Right — floating screenshots */}
           <div style={{
-            display: 'inline-block', background: '#FFE500', color: '#1a1a2e',
-            fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em',
-            textTransform: 'uppercase', padding: '5px 14px', borderRadius: 99, marginBottom: 28,
+            display: 'flex', justifyContent: 'center', alignItems: 'flex-end',
+            position: 'relative', paddingTop: 20,
           }}>
-            Pay per lead — no monthly fees
-          </div>
-          <h1 style={{
-            fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(2.4rem, 6vw, 4rem)',
-            fontWeight: 800, lineHeight: 1.1, marginBottom: 22,
-          }}>
-            Get quality leads.<br />No website needed.
-          </h1>
-          <p style={{ fontSize: '1.1rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, marginBottom: 40, maxWidth: 580, margin: '0 auto 40px' }}>
-            Quote Box builds your branded quote form and runs paid Meta ads on Facebook &amp; Instagram to drive real customers to it. You get warm leads with instant price estimates. You only pay $15 when it works.
-          </p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/signup" style={{
-              padding: '15px 32px', background: '#FFE500', color: '#1a1a2e',
-              fontWeight: 700, fontSize: '1rem', borderRadius: 10, textDecoration: 'none',
-              fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
+
+            {/* Form builder — back layer, desktop */}
+            <div style={{
+              position: 'absolute',
+              bottom: 0,
+              left: '50%',
+              transform: 'translateX(-62%) rotate(-4deg)',
+              width: '62%',
+              minWidth: 200,
+              borderRadius: '14px 14px 0 0',
+              overflow: 'hidden',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              zIndex: 1,
             }}>
-              Build your form — it&apos;s free
-            </Link>
-            <Link href="/login" style={{
-              padding: '15px 28px', background: 'rgba(255,255,255,0.08)', color: 'white',
-              fontWeight: 600, fontSize: '0.92rem', borderRadius: 10, textDecoration: 'none',
-              border: '1px solid rgba(255,255,255,0.18)',
+              <div style={{
+                background: '#2a2a3e', padding: '8px 12px',
+                display: 'flex', alignItems: 'center', gap: 5,
+              }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+              </div>
+              <img
+                src="/screenshots/Form%20builder.png"
+                alt="QuoteBox form builder"
+                style={{ width: '100%', display: 'block' }}
+              />
+            </div>
+
+            {/* Quote form — front layer, mobile */}
+            <div style={{
+              position: 'relative', zIndex: 2,
+              width: 200,
+              marginLeft: '28%',
+              borderRadius: '20px 20px 0 0',
+              overflow: 'hidden',
+              boxShadow: '0 28px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.1)',
             }}>
-              Log in to dashboard
-            </Link>
+              <img
+                src="/screenshots/Movingquote.png"
+                alt="QuoteBox instant quote form on mobile"
+                style={{ width: '100%', display: 'block' }}
+              />
+            </div>
+
+            {/* Floating "New Lead" badge */}
+            <div style={{
+              position: 'absolute', top: 32, right: '4%', zIndex: 3,
+              background: 'white', borderRadius: 12,
+              padding: '10px 14px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+              display: 'flex', alignItems: 'center', gap: 10,
+              minWidth: 170,
+            }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: '50%', background: '#dcfce7',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0, fontSize: '1rem',
+              }}>🔔</div>
+              <div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#1a1a2e', lineHeight: 1.2 }}>New lead received</div>
+                <div style={{ fontSize: '0.65rem', color: '#10b981', fontWeight: 600 }}>Quote: $216.29 · Just now</div>
+              </div>
+            </div>
+
           </div>
-          <p style={{ marginTop: 22, fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)' }}>
-            No credit card required to sign up
-          </p>
+
         </div>
       </section>
 
