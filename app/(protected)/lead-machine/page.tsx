@@ -202,6 +202,13 @@ function ZipCodeMap({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const suggestTimer = useRef<any>(null)
 
+  // AI zip suggest state
+  const [showAiPanel, setShowAiPanel] = useState(false)
+  const [aiDescription, setAiDescription] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiResults, setAiResults] = useState<string[]>([])
+  const [aiError, setAiError] = useState('')
+
   useEffect(() => {
     if (!mapContainerRef.current || !MAPBOX_TOKEN) return
     let cancelled = false
@@ -316,6 +323,41 @@ function ZipCodeMap({
     geocode(code)
   }
 
+  async function handleAiSuggest() {
+    if (!aiDescription.trim()) return
+    setAiLoading(true)
+    setAiError('')
+    setAiResults([])
+    try {
+      const res = await fetch('/api/meta/zip-suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: aiDescription, country: postalCountry }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setAiError(data.error || 'Failed to generate zip codes')
+      } else {
+        setAiResults(data.postalCodes || [])
+      }
+    } catch {
+      setAiError('Failed to reach AI service')
+    }
+    setAiLoading(false)
+  }
+
+  function addAllAiResults() {
+    aiResults.forEach((code) => {
+      if (!postalCodes.includes(code)) {
+        onAdd(code)
+        geocode(code)
+      }
+    })
+    setShowAiPanel(false)
+    setAiDescription('')
+    setAiResults([])
+  }
+
   return (
     <div>
       <div className="flex gap-2 mb-3">
@@ -373,7 +415,116 @@ function ZipCodeMap({
         >
           Add
         </button>
+        {/* AI Suggest button */}
+        <button
+          onClick={() => { setShowAiPanel((v) => !v); setAiResults([]); setAiError(''); setAiDescription('') }}
+          title="Describe your service area and let AI generate zip codes"
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition ${
+            showAiPanel
+              ? 'bg-violet-600 border-violet-600 text-white'
+              : 'bg-white border-gray-200 text-violet-600 hover:border-violet-400 hover:bg-violet-50'
+          }`}
+        >
+          {/* Sparkle / AI icon */}
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2l2.09 6.26L20 10l-5.91 1.74L12 18l-2.09-6.26L4 10l5.91-1.74L12 2z"/>
+            <path d="M19 15l1.09 3.26L23 19l-2.91.74L19 23l-1.09-3.26L15 19l2.91-.74L19 15z" opacity=".6"/>
+            <path d="M5 3l.73 2.27L8 6l-2.27.73L5 9l-.73-2.27L2 6l2.27-.73L5 3z" opacity=".6"/>
+          </svg>
+          AI
+        </button>
       </div>
+
+      {/* AI Service Area Panel */}
+      {showAiPanel && (
+        <div className="mb-3 rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50 p-4 shadow-sm">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-violet-600 text-white">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l2.09 6.26L20 10l-5.91 1.74L12 18l-2.09-6.26L4 10l5.91-1.74L12 2z"/>
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-violet-900">AI Zip Code Generator</p>
+              <p className="text-xs text-violet-600">Describe your service area in plain English</p>
+            </div>
+          </div>
+          <textarea
+            value={aiDescription}
+            onChange={(e) => setAiDescription(e.target.value)}
+            placeholder="e.g. Within 25 miles of Austin, TX — or — All of Orange County, California — or — Downtown Chicago and surrounding suburbs"
+            rows={3}
+            className="w-full border border-violet-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white resize-none mb-3"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={handleAiSuggest}
+              disabled={aiLoading || !aiDescription.trim()}
+              className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
+            >
+              {aiLoading ? (
+                <>
+                  <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                  </svg>
+                  Generating…
+                </>
+              ) : (
+                <>
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l2.09 6.26L20 10l-5.91 1.74L12 18l-2.09-6.26L4 10l5.91-1.74L12 2z"/>
+                  </svg>
+                  Generate Zip Codes
+                </>
+              )}
+            </button>
+            <button
+              onClick={() => setShowAiPanel(false)}
+              className="text-sm text-gray-500 hover:text-gray-700 px-3 py-2 rounded-lg hover:bg-white transition"
+            >
+              Cancel
+            </button>
+          </div>
+
+          {aiError && (
+            <p className="mt-2 text-xs text-red-600">{aiError}</p>
+          )}
+
+          {aiResults.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-violet-200">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-semibold text-violet-800">{aiResults.length} zip codes generated</p>
+                <button
+                  onClick={addAllAiResults}
+                  className="text-xs bg-violet-600 hover:bg-violet-700 text-white font-medium px-3 py-1.5 rounded-lg transition"
+                >
+                  Add All to Targeting
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
+                {aiResults.map((code) => (
+                  <span
+                    key={code}
+                    className="inline-flex items-center gap-1 bg-white text-violet-700 text-xs font-mono font-medium px-2 py-0.5 rounded-full border border-violet-200"
+                  >
+                    {code}
+                    <button
+                      onClick={() => {
+                        if (!postalCodes.includes(code)) { onAdd(code); geocode(code) }
+                        setAiResults((prev) => prev.filter((c) => c !== code))
+                      }}
+                      className="hover:text-violet-900 leading-none ml-0.5 text-violet-400 hover:text-violet-700"
+                      title="Add this code"
+                    >+</button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
 
       {postalCodes.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-3">
