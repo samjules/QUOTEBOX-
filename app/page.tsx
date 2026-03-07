@@ -330,6 +330,172 @@ export default function LandingPage() {
             </div>
           </div>
 
+          {/* Row 3 — Form Builder */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: 56,
+            alignItems: 'center',
+          }}>
+            {/* Copy */}
+            <div>
+              <div style={{
+                display: 'inline-block', background: '#1a1a2e', color: '#FFE500',
+                fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.1em',
+                textTransform: 'uppercase', padding: '5px 14px', borderRadius: 99, marginBottom: 22,
+              }}>
+                Form Builder
+              </div>
+              <h2 style={{
+                fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
+                fontWeight: 800, lineHeight: 1.15, color: '#1a1a2e', marginBottom: 20,
+              }}>
+                Build your perfect<br />quote form in minutes.<br />No code required.
+              </h2>
+              <p style={{ color: '#6b7280', fontSize: '1rem', lineHeight: 1.8, marginBottom: 28 }}>
+                Drag and drop the fields you need — radio cards, dropdowns, checkboxes, number inputs, route &amp; distance, draw area, and more. Set your prices, see a live preview, and go live the same day. Or let Robert generate the whole form from a one-sentence description of your business.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {[
+                  { icon: '🧱', text: '8 field types — radio, checkbox, dropdown, number, route, draw area &amp; more' },
+                  { icon: '👁️', text: 'Live preview updates as you build — see exactly what customers see' },
+                  { icon: '🚀', text: 'Start from a template or let Robert generate your form with AI in seconds' },
+                  { icon: '💲', text: 'Set prices per option, per mile, per sq ft — auto-totalled for the customer' },
+                ].map(({ icon, text }) => (
+                  <div key={icon} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: '1rem', flexShrink: 0, marginTop: 1 }}>{icon}</span>
+                    <span style={{ color: '#374151', fontSize: '0.93rem', lineHeight: 1.6 }} dangerouslySetInnerHTML={{ __html: text }} />
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: 36 }}>
+                <Link href="/signup" style={{
+                  display: 'inline-block', padding: '13px 28px',
+                  background: '#1a1a2e', color: '#FFE500',
+                  fontWeight: 700, fontSize: '0.93rem', borderRadius: 10, textDecoration: 'none',
+                  fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
+                }}>
+                  Open the form builder →
+                </Link>
+              </div>
+            </div>
+
+            {/* Screenshot */}
+            <div style={{ display: 'flex', justifyContent: 'center', position: 'relative' }}>
+              <div style={{
+                position: 'absolute', inset: -32,
+                background: 'radial-gradient(ellipse at center, #FFE50026 0%, transparent 70%)',
+                borderRadius: '50%', zIndex: 0,
+              }} />
+              <div style={{
+                position: 'relative', zIndex: 1,
+                maxWidth: 520, width: '100%',
+                borderRadius: 16,
+                boxShadow: '0 32px 80px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.07)',
+                border: '1px solid rgba(0,0,0,0.06)',
+                overflow: 'hidden',
+                transform: 'rotate(-1deg)',
+              }}>
+                {/* Browser chrome */}
+                <div style={{
+                  background: '#f3f4f6', padding: '10px 16px',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  borderBottom: '1px solid #e5e7eb',
+                }}>
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+                  <div style={{
+                    flex: 1, background: 'white', borderRadius: 4, padding: '3px 10px',
+                    fontSize: '0.68rem', color: '#9ca3af', marginLeft: 8,
+                  }}>
+                    quote-box.com/form-builder
+                  </div>
+                </div>
+                <img
+                  src="/screenshots/Form%20builder.png"
+                  alt="QuoteBox drag-and-drop form builder"
+                  style={{ width: '100%', display: 'block' }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Row 4 — CRM / Leads */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: 56,
+            alignItems: 'center',
+          }}>
+            {/* Screenshot */}
+            <div style={{ display: 'flex', justifyContent: 'center', position: 'relative', order: 0 }}>
+              <div style={{
+                position: 'absolute', inset: -32,
+                background: 'radial-gradient(ellipse at center, #10b98122 0%, transparent 70%)',
+                borderRadius: '50%', zIndex: 0,
+              }} />
+              <div style={{
+                position: 'relative', zIndex: 1,
+                maxWidth: 280, width: '100%',
+                borderRadius: 20,
+                boxShadow: '0 32px 80px rgba(16,185,129,0.15), 0 2px 8px rgba(0,0,0,0.08)',
+                border: '1px solid rgba(0,0,0,0.06)',
+                overflow: 'hidden',
+                transform: 'rotate(1.5deg)',
+              }}>
+                <img
+                  src="/screenshots/Customer.png"
+                  alt="QuoteBox lead CRM with contact info and quote total"
+                  style={{ width: '100%', display: 'block' }}
+                />
+              </div>
+            </div>
+
+            {/* Copy */}
+            <div style={{ order: 1 }}>
+              <div style={{
+                display: 'inline-block', background: '#dcfce7', color: '#15803d',
+                fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.1em',
+                textTransform: 'uppercase', padding: '5px 14px', borderRadius: 99, marginBottom: 22,
+              }}>
+                Built-in CRM
+              </div>
+              <h2 style={{
+                fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
+                fontWeight: 800, lineHeight: 1.15, color: '#1a1a2e', marginBottom: 20,
+              }}>
+                Every lead lands<br />in your dashboard<br />with the quote attached.
+              </h2>
+              <p style={{ color: '#6b7280', fontSize: '1rem', lineHeight: 1.8, marginBottom: 28 }}>
+                No spreadsheets. No chasing forms. The moment a customer submits, their name, contact details, and calculated quote total appear instantly in your lead dashboard. See exactly what they selected, follow up in one tap, and track status from new to booked.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {[
+                  { icon: '📋', text: 'Full contact info — name, email, and phone captured on every lead' },
+                  { icon: '💵', text: 'Estimated quote total calculated and shown right on the lead card' },
+                  { icon: '🔄', text: 'Track each lead from new → contacted → booked → closed' },
+                  { icon: '🔒', text: "Low on credits? Leads are held safely and unlocked the moment you top up — never lost" },
+                ].map(({ icon, text }) => (
+                  <div key={icon} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                    <span style={{ fontSize: '1rem', flexShrink: 0, marginTop: 1 }}>{icon}</span>
+                    <span style={{ color: '#374151', fontSize: '0.93rem', lineHeight: 1.6 }}>{text}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: 36 }}>
+                <Link href="/signup" style={{
+                  display: 'inline-block', padding: '13px 28px',
+                  background: '#15803d', color: 'white',
+                  fontWeight: 700, fontSize: '0.93rem', borderRadius: 10, textDecoration: 'none',
+                  fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
+                }}>
+                  Start capturing leads →
+                </Link>
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
 
