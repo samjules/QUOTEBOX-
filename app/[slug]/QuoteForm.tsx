@@ -910,20 +910,25 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
       formData._quote_currency = currency
     }
 
-    const { error } = await supabase.from('leads').insert({
-      account_id: form.account_id,
-      hosted_form_id: form.id,
-      name: name.trim(),
-      email: email.trim(),
-      phone: phone.trim() || null,
-      form_type: form.form_type,
-      form_data: formData,
-      status: hasCredits ? 'new' : 'held',
+    const submitRes = await fetch('/api/leads/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        account_id: form.account_id,
+        hosted_form_id: form.id,
+        name: name.trim(),
+        email: email.trim(),
+        phone: phone.trim() || null,
+        form_type: form.form_type,
+        form_data: formData,
+        status: hasCredits ? 'new' : 'held',
+      }),
     })
 
     setIsSubmitting(false)
-    if (error) {
-      setFormError('Something went wrong. Please try again.')
+    if (!submitRes.ok) {
+      const errData = await submitRes.json().catch(() => ({}))
+      setFormError(errData.error || 'Something went wrong. Please try again.')
       return
     }
 
