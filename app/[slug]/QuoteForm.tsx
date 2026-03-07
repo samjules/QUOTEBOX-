@@ -727,7 +727,12 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
   const accentFg = isBlue ? '#ffffff' : '#1a1a2e'
   const currency = config.currency ?? '$'
 
-  const [step, setStep] = useState<0 | 1 | 2>(0)
+  const fields = config.fields
+  const totalFieldSteps = fields.length
+  const contactStep = totalFieldSteps
+  const confirmStep = totalFieldSteps + 1
+
+  const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState<Record<string, unknown>>({})
   const [routeData, setRouteData] = useState<Record<string, RouteResult | null>>({})
   const [drawAreaData, setDrawAreaData] = useState<Record<string, number | null>>({})
@@ -754,24 +759,32 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
     setDrawAreaData((prev) => ({ ...prev, [fieldId]: sqFt }))
   }, [])
 
-  function canProceedStep0(): boolean {
-    for (const f of config.fields) {
-      if (!f.required) continue
-      if (f.type === 'radio' || f.type === 'dropdown') {
-        if (!answers[f.id]) return false
-      } else if (f.type === 'checkbox') {
-        if (!((answers[f.id] as string[])?.length)) return false
-      } else if (f.type === 'number') {
-        if (!answers[f.id]) return false
-      } else if (f.type === 'textarea') {
-        if (!String(answers[f.id] ?? '').trim()) return false
-      } else if (f.type === 'route') {
-        if (!routeData[f.id]) return false
-      } else if (f.type === 'draw_area') {
-        if (drawAreaData[f.id] == null) return false
-      }
-    }
+  const isFieldStep = step < totalFieldSteps
+  const isContactStep = step === contactStep
+  const isConfirmStep = step === confirmStep
+  const currentField = isFieldStep ? fields[step] : null
+  const progressPercent = Math.round((step / (totalFieldSteps + 1)) * 100)
+
+  function canAdvance(): boolean {
+    if (!isFieldStep || !currentField) return true
+    const f = currentField
+    if (!f.required) return true
+    if (f.type === 'radio' || f.type === 'dropdown') return !!answers[f.id]
+    if (f.type === 'checkbox') return ((answers[f.id] as string[])?.length ?? 0) > 0
+    if (f.type === 'number') return !!(answers[f.id] as number)
+    if (f.type === 'textarea') return !!String(answers[f.id] ?? '').trim()
+    if (f.type === 'route') return !!routeData[f.id]
+    if (f.type === 'draw_area') return drawAreaData[f.id] != null
     return true
+  }
+
+  function handleNext() { setStep((s) => s + 1) }
+  function handleBack() { if (step > 0) setStep((s) => s - 1) }
+
+  // Auto-advance for radio — show selection briefly then move on
+  function selectRadio(fieldId: string, optId: string) {
+    setAnswers((p) => ({ ...p, [fieldId]: optId }))
+    setTimeout(() => setStep((s) => s + 1), 300)
   }
 
   async function handleSubmit() {
@@ -851,7 +864,6 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
       }
     }
 
-    // Fire quote email — intentionally non-blocking so a failure doesn't affect the user
     fetch('/api/leads/send-quote-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -866,43 +878,7 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
       }),
     }).catch(() => { /* silently ignore email errors */ })
 
-    setStep(2)
-  }
-
-  // ── Shared styles ──
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '11px 13px',
-    borderRadius: 8,
-    border: '1.5px solid #e5e4e0',
-    fontSize: '0.9rem',
-    outline: 'none',
-    boxSizing: 'border-box',
-    fontFamily: 'inherit',
-    color: '#1a1a2e',
-    background: 'white',
-  }
-
-  const labelStyle: React.CSSProperties = {
-    display: 'block',
-    fontSize: '0.85rem',
-    fontWeight: 600,
-    color: '#334155',
-    marginBottom: 8,
-  }
-
-  const primaryBtn: React.CSSProperties = {
-    width: '100%',
-    padding: '14px',
-    borderRadius: 10,
-    border: 'none',
-    background: accentBg,
-    color: accentFg,
-    fontSize: '1rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-    letterSpacing: '0.01em',
+    setStep(confirmStep)
   }
 
   const hasPricing = config.fields.some(
@@ -913,357 +889,480 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
       (f.type === 'draw_area' && (f.ratePerSqFt ?? 0) > 0)
   )
 
+  // ── Shared styles ──
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '14px 16px',
+    borderRadius: 12,
+    border: '2px solid #e2e8f0',
+    fontSize: '0.95rem',
+    outline: 'none',
+    boxSizing: 'border-box',
+    fontFamily: 'inherit',
+    color: '#0f172a',
+    background: 'white',
+    transition: 'border-color 0.15s',
+  }
+
+  const continueBtn: React.CSSProperties = {
+    width: '100%',
+    padding: '17px',
+    borderRadius: 14,
+    border: 'none',
+    background: accentBg,
+    color: accentFg,
+    fontSize: '1rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    letterSpacing: '0.01em',
+    marginTop: 20,
+  }
+
+  const backBtn: React.CSSProperties = {
+    display: 'block',
+    background: 'none',
+    border: 'none',
+    color: '#94a3b8',
+    fontSize: '0.85rem',
+    cursor: 'pointer',
+    padding: '10px 0 0',
+    fontFamily: 'inherit',
+    fontWeight: 500,
+  }
+
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#f7f6f3',
+      background: isBlue
+        ? 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 60%, #eff6ff 100%)'
+        : 'linear-gradient(135deg, #fffde7 0%, #fff8e1 60%, #fef9e7 100%)',
       display: 'flex',
       alignItems: 'flex-start',
       justifyContent: 'center',
-      padding: '40px 16px 60px',
+      padding: '28px 16px 60px',
     }}>
       <div style={{
         width: '100%',
         maxWidth: 520,
         background: 'white',
-        borderRadius: 18,
-        boxShadow: '0 8px 40px rgba(0,0,0,0.11)',
+        borderRadius: 22,
+        boxShadow: '0 4px 6px rgba(0,0,0,0.04), 0 20px 60px rgba(0,0,0,0.13)',
         overflow: 'hidden',
       }}>
-        {/* ── Header ── */}
-        <div style={{ background: accentBg, padding: '28px 28px 24px', color: accentFg }}>
-          {/* Progress dots */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 20 }}>
-            {[0, 1, 2].map((i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <div style={{
-                  width: 24, height: 24, borderRadius: '50%',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '0.72rem', fontWeight: 700,
-                  background: i < step
-                    ? (isBlue ? 'rgba(255,255,255,0.25)' : 'rgba(26,26,46,0.15)')
-                    : i === step
-                      ? (isBlue ? 'white' : '#1a1a2e')
-                      : (isBlue ? 'rgba(255,255,255,0.1)' : 'rgba(26,26,46,0.08)'),
-                  color: i === step
-                    ? (isBlue ? '#1a56ff' : '#ffe500')
-                    : i < step
-                      ? (isBlue ? 'rgba(255,255,255,0.7)' : 'rgba(26,26,46,0.5)')
-                      : (isBlue ? 'rgba(255,255,255,0.3)' : 'rgba(26,26,46,0.3)'),
-                }}>
-                  {i < step ? '✓' : i + 1}
-                </div>
-                {i < 2 && (
-                  <div style={{ width: 24, height: 2, borderRadius: 1, background: isBlue ? 'rgba(255,255,255,0.2)' : 'rgba(26,26,46,0.12)' }} />
-                )}
-              </div>
-            ))}
-            <span style={{
-              marginLeft: 6, fontSize: '0.68rem', fontWeight: 600,
-              letterSpacing: '0.06em', textTransform: 'uppercase', opacity: isBlue ? 0.6 : 0.5,
-            }}>
-              {step === 0 ? 'Your Quote' : step === 1 ? 'Contact Details' : 'All Done'}
-            </span>
-          </div>
 
+        {/* ── Header ── */}
+        <div style={{ background: accentBg }}>
+          {/* Progress bar */}
+          {!isConfirmStep && (
+            <div style={{ height: 4, background: isBlue ? 'rgba(255,255,255,0.18)' : 'rgba(26,26,46,0.1)' }}>
+              <div style={{
+                height: '100%',
+                width: `${progressPercent}%`,
+                background: isBlue ? 'rgba(255,255,255,0.8)' : 'rgba(26,26,46,0.45)',
+                borderRadius: '0 2px 2px 0',
+                transition: 'width 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
+              }} />
+            </div>
+          )}
+
+          {/* Hero image on step 0 */}
           {config.hero_image_url && step === 0 && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={config.hero_image_url}
               alt="Hero"
-              style={{ width: 'calc(100% + 56px)', marginLeft: -28, marginTop: -28, marginBottom: 20, height: 140, objectFit: 'cover', display: 'block' }}
+              style={{ width: '100%', height: 150, objectFit: 'cover', display: 'block' }}
             />
           )}
 
-          <div style={{ fontSize: '1.45rem', fontWeight: 800, lineHeight: 1.2, marginBottom: 6 }}>
-            {form.form_name}
-          </div>
-          {config.description && (
-            <div style={{ fontSize: '0.88rem', lineHeight: 1.55, opacity: isBlue ? 0.75 : 0.65 }}>
-              {config.description}
+          <div style={{ padding: '20px 26px 22px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <span style={{
+                fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
+                color: isBlue ? 'rgba(255,255,255,0.6)' : 'rgba(26,26,46,0.45)',
+              }}>
+                {isConfirmStep ? 'All Done! 🎉' : isContactStep ? 'Almost There' : step === 0 ? 'Get Your Quote' : `Step ${step + 1} of ${totalFieldSteps + 1}`}
+              </span>
+              {/* Live running total pill */}
+              {hasPricing && config.quote_display === 'live' && displayTotal > 0 && !isConfirmStep && (
+                <span style={{
+                  fontSize: '0.88rem', fontWeight: 800,
+                  background: isBlue ? 'rgba(255,255,255,0.18)' : 'rgba(26,26,46,0.12)',
+                  color: accentFg,
+                  padding: '5px 13px', borderRadius: 99,
+                  transition: 'all 0.2s',
+                }}>
+                  {currency}{displayTotal.toFixed(2)}
+                </span>
+              )}
             </div>
-          )}
+            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: accentFg, lineHeight: 1.25 }}>
+              {form.form_name}
+            </div>
+            {config.description && step === 0 && (
+              <div style={{ fontSize: '0.84rem', color: isBlue ? 'rgba(255,255,255,0.7)' : 'rgba(26,26,46,0.58)', marginTop: 5, lineHeight: 1.55 }}>
+                {config.description}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ── Body ── */}
-        <div style={{ padding: '26px 28px 32px', display: 'flex', flexDirection: 'column', gap: 22 }}>
+        <div style={{ padding: '30px 26px 36px' }}>
 
-          {/* ── Step 0: Quote fields ── */}
-          {step === 0 && (
-            <>
-              {config.fields.map((f) => (
-                <div key={f.id}>
-                  <label style={labelStyle}>
-                    {f.required && <span style={{ color: '#ef4444', marginRight: 3 }}>*</span>}
-                    {f.label}
-                  </label>
+          {/* ── Field step: one question at a time ── */}
+          {isFieldStep && currentField && (
+            <div>
+              {/* Question heading */}
+              <div style={{ marginBottom: 24 }}>
+                <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.3 }}>
+                  {currentField.label}
+                  {currentField.required && (
+                    <span style={{ color: isBlue ? '#1a56ff' : '#d97706', fontSize: '1rem', marginLeft: 4 }}> *</span>
+                  )}
+                </h2>
+                {currentField.type === 'checkbox' && (
+                  <p style={{ margin: '7px 0 0', fontSize: '0.82rem', color: '#64748b' }}>Select all that apply</p>
+                )}
+              </div>
 
-                  {/* Radio */}
-                  {f.type === 'radio' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {(f.options ?? []).map((o) => {
-                        const sel = answers[f.id] === o.id
-                        return (
-                          <label key={o.id} style={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            padding: '12px 14px', borderRadius: 10,
-                            border: `1.5px solid ${sel ? accentBg : '#e5e4e0'}`,
-                            cursor: 'pointer',
-                            background: sel ? (isBlue ? '#eef2ff' : '#fffde7') : 'white',
+              {/* ── Radio: big tap targets + auto-advance ── */}
+              {currentField.type === 'radio' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {(currentField.options ?? []).map((o) => {
+                    const sel = answers[currentField.id] === o.id
+                    return (
+                      <button
+                        key={o.id}
+                        onClick={() => selectRadio(currentField.id, o.id)}
+                        style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          padding: '16px 18px', borderRadius: 14,
+                          border: `2px solid ${sel ? accentBg : '#e2e8f0'}`,
+                          cursor: 'pointer', background: sel ? (isBlue ? '#eff6ff' : '#fffde7') : 'white',
+                          textAlign: 'left', fontFamily: 'inherit', transition: 'all 0.12s', width: '100%',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
+                          <div style={{
+                            width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+                            border: `2.5px solid ${sel ? accentBg : '#cbd5e1'}`,
+                            background: sel ? accentBg : 'white',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
                             transition: 'all 0.12s',
-                          }}
-                            onClick={() => setAnswers((p) => ({ ...p, [f.id]: o.id }))}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                              <div style={{
-                                width: 17, height: 17, borderRadius: '50%', flexShrink: 0,
-                                border: `2px solid ${sel ? accentBg : '#d1d5db'}`,
-                                background: sel ? accentBg : 'white',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              }}>
-                                {sel && <div style={{ width: 6, height: 6, borderRadius: '50%', background: accentFg }} />}
-                              </div>
-                              <span style={{ fontSize: '0.9rem', fontWeight: 500, color: '#1a1a2e' }}>{o.label}</span>
-                            </div>
-                            {f.showPrices !== false && o.price > 0 && (
-                              <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#475569' }}>
-                                +{currency}{o.price}
-                              </span>
-                            )}
-                          </label>
-                        )
-                      })}
-                    </div>
-                  )}
-
-                  {/* Dropdown */}
-                  {f.type === 'dropdown' && (
-                    <select
-                      value={(answers[f.id] as string) ?? ''}
-                      onChange={(e) => setAnswers((p) => ({ ...p, [f.id]: e.target.value }))}
-                      style={{
-                        ...inputStyle,
-                        appearance: 'none',
-                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24'%3E%3Cpath fill='%23666' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E")`,
-                        backgroundRepeat: 'no-repeat',
-                        backgroundPosition: 'right 12px center',
-                        paddingRight: 36,
-                      }}
-                    >
-                      <option value="">Select an option…</option>
-                      {(f.options ?? []).map((o) => (
-                        <option key={o.id} value={o.id}>
-                          {o.label}{f.showPrices !== false && o.price > 0 ? ` (+${currency}${o.price})` : ''}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-
-                  {/* Checkbox */}
-                  {f.type === 'checkbox' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {(f.options ?? []).map((o) => {
-                        const sel = ((answers[f.id] as string[]) ?? []).includes(o.id)
-                        return (
-                          <label key={o.id} style={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            padding: '12px 14px', borderRadius: 10,
-                            border: `1.5px solid ${sel ? accentBg : '#e5e4e0'}`,
-                            cursor: 'pointer',
-                            background: sel ? (isBlue ? '#eef2ff' : '#fffde7') : 'white',
-                            transition: 'all 0.12s',
-                          }}
-                            onClick={() => {
-                              const prev = (answers[f.id] as string[]) ?? []
-                              setAnswers((p) => ({
-                                ...p,
-                                [f.id]: sel ? prev.filter((id) => id !== o.id) : [...prev, o.id],
-                              }))
-                            }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                              <div style={{
-                                width: 17, height: 17, borderRadius: 5, flexShrink: 0,
-                                border: `2px solid ${sel ? accentBg : '#d1d5db'}`,
-                                background: sel ? accentBg : 'white',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              }}>
-                                {sel && <span style={{ color: accentFg, fontSize: 11, lineHeight: 1, fontWeight: 700 }}>✓</span>}
-                              </div>
-                              <span style={{ fontSize: '0.9rem', fontWeight: 500, color: '#1a1a2e' }}>{o.label}</span>
-                            </div>
-                            {f.showPrices !== false && o.price > 0 && (
-                              <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#475569' }}>
-                                +{currency}{o.price}
-                              </span>
-                            )}
-                          </label>
-                        )
-                      })}
-                    </div>
-                  )}
-
-                  {/* Number */}
-                  {f.type === 'number' && (
-                    <>
-                      <input
-                        type="number"
-                        min={0}
-                        placeholder={f.placeholder ?? '0'}
-                        value={(answers[f.id] as number) ?? ''}
-                        onChange={(e) => setAnswers((p) => ({ ...p, [f.id]: parseFloat(e.target.value) || 0 }))}
-                        style={inputStyle}
-                      />
-                      {(f.ratePerUnit ?? 0) > 0 && (
-                        <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: 5, display: 'flex', justifyContent: 'space-between' }}>
-                          <span>× {currency}{f.ratePerUnit} per unit</span>
-                          {answers[f.id] ? (
-                            <span style={{ fontWeight: 600, color: '#334155' }}>
-                              = {currency}{(Number(answers[f.id]) * (f.ratePerUnit ?? 0)).toFixed(2)}
-                            </span>
-                          ) : null}
+                          }}>
+                            {sel && <div style={{ width: 7, height: 7, borderRadius: '50%', background: accentFg }} />}
+                          </div>
+                          <span style={{ fontSize: '0.97rem', fontWeight: sel ? 700 : 500, color: sel ? (isBlue ? '#1e40af' : '#92400e') : '#0f172a' }}>
+                            {o.label}
+                          </span>
                         </div>
-                      )}
-                    </>
+                        {currentField.showPrices !== false && o.price > 0 && (
+                          <span style={{
+                            fontSize: '0.82rem', fontWeight: 700, flexShrink: 0, marginLeft: 10,
+                            background: sel ? (isBlue ? '#1a56ff' : '#1a1a2e') : '#f1f5f9',
+                            color: sel ? 'white' : '#475569',
+                            padding: '3px 11px', borderRadius: 8, transition: 'all 0.12s',
+                          }}>
+                            +{currency}{o.price}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                  {/* Skip required badge — if not required show next anyway */}
+                  {!currentField.required && (
+                    <button onClick={handleNext} style={{ ...backBtn, paddingTop: 14, color: '#64748b', fontSize: '0.88rem', fontWeight: 600 }}>
+                      Skip →
+                    </button>
                   )}
-
-                  {/* Textarea */}
-                  {f.type === 'textarea' && (
-                    <textarea
-                      rows={3}
-                      placeholder={f.placeholder ?? ''}
-                      value={(answers[f.id] as string) ?? ''}
-                      onChange={(e) => setAnswers((p) => ({ ...p, [f.id]: e.target.value }))}
-                      style={{ ...inputStyle, resize: 'vertical', minHeight: 80 }}
-                    />
-                  )}
-
-                  {/* Route */}
-                  {f.type === 'route' && (
-                    <RouteField
-                      field={f}
-                      currency={currency}
-                      accentColor={accentBg}
-                      onRouteChange={(result) => handleRouteChange(f.id, result)}
-                    />
-                  )}
-
-                  {f.type === 'draw_area' && (
-                    <DrawAreaField
-                      field={f}
-                      currency={currency}
-                      accentColor={accentBg}
-                      onAreaChange={(sqFt) => handleDrawAreaChange(f.id, sqFt)}
-                    />
-                  )}
-                </div>
-              ))}
-
-              {/* Live total */}
-              {hasPricing && config.quote_display === 'live' && displayTotal > 0 && (
-                <div style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '14px 16px', background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0',
-                }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <span style={{ fontSize: '0.88rem', color: '#475569', fontWeight: 500 }}>Estimated Total</span>
-                    {minApplied && (
-                      <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Minimum booking fee applies</span>
-                    )}
-                  </div>
-                  <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1a1a2e' }}>
-                    {currency}{displayTotal.toFixed(2)}
-                  </span>
                 </div>
               )}
 
-              <button
-                style={{ ...primaryBtn, opacity: canProceedStep0() ? 1 : 0.42, cursor: canProceedStep0() ? 'pointer' : 'not-allowed' }}
-                disabled={!canProceedStep0()}
-                onClick={() => setStep(1)}
-              >
-                Next →
-              </button>
-            </>
+              {/* ── Dropdown ── */}
+              {currentField.type === 'dropdown' && (
+                <>
+                  <select
+                    value={(answers[currentField.id] as string) ?? ''}
+                    onChange={(e) => setAnswers((p) => ({ ...p, [currentField.id]: e.target.value }))}
+                    style={{
+                      ...inputStyle,
+                      appearance: 'none',
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'%3E%3Cpath fill='%23666' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E")`,
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'right 14px center',
+                      paddingRight: 44,
+                    }}
+                  >
+                    <option value="">Choose an option…</option>
+                    {(currentField.options ?? []).map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.label}{currentField.showPrices !== false && o.price > 0 ? ` (+${currency}${o.price})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <button onClick={handleNext} disabled={!canAdvance()}
+                    style={{ ...continueBtn, opacity: canAdvance() ? 1 : 0.35, cursor: canAdvance() ? 'pointer' : 'not-allowed' }}>
+                    Continue →
+                  </button>
+                </>
+              )}
+
+              {/* ── Checkbox ── */}
+              {currentField.type === 'checkbox' && (
+                <>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {(currentField.options ?? []).map((o) => {
+                      const sel = ((answers[currentField.id] as string[]) ?? []).includes(o.id)
+                      return (
+                        <button
+                          key={o.id}
+                          onClick={() => {
+                            const prev = (answers[currentField.id] as string[]) ?? []
+                            setAnswers((p) => ({
+                              ...p,
+                              [currentField.id]: sel ? prev.filter((id) => id !== o.id) : [...prev, o.id],
+                            }))
+                          }}
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            padding: '16px 18px', borderRadius: 14,
+                            border: `2px solid ${sel ? accentBg : '#e2e8f0'}`,
+                            cursor: 'pointer', background: sel ? (isBlue ? '#eff6ff' : '#fffde7') : 'white',
+                            textAlign: 'left', fontFamily: 'inherit', transition: 'all 0.12s', width: '100%',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
+                            <div style={{
+                              width: 22, height: 22, borderRadius: 7, flexShrink: 0,
+                              border: `2.5px solid ${sel ? accentBg : '#cbd5e1'}`,
+                              background: sel ? accentBg : 'white',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              transition: 'all 0.12s',
+                            }}>
+                              {sel && <span style={{ color: accentFg, fontSize: 13, fontWeight: 800, lineHeight: 1 }}>✓</span>}
+                            </div>
+                            <span style={{ fontSize: '0.97rem', fontWeight: sel ? 700 : 500, color: sel ? (isBlue ? '#1e40af' : '#92400e') : '#0f172a' }}>
+                              {o.label}
+                            </span>
+                          </div>
+                          {currentField.showPrices !== false && o.price > 0 && (
+                            <span style={{
+                              fontSize: '0.82rem', fontWeight: 700, flexShrink: 0, marginLeft: 10,
+                              background: sel ? (isBlue ? '#1a56ff' : '#1a1a2e') : '#f1f5f9',
+                              color: sel ? 'white' : '#475569',
+                              padding: '3px 11px', borderRadius: 8, transition: 'all 0.12s',
+                            }}>
+                              +{currency}{o.price}
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <button onClick={handleNext} disabled={!canAdvance()}
+                    style={{ ...continueBtn, opacity: canAdvance() ? 1 : 0.35, cursor: canAdvance() ? 'pointer' : 'not-allowed' }}>
+                    Continue →
+                  </button>
+                </>
+              )}
+
+              {/* ── Number ── */}
+              {currentField.type === 'number' && (
+                <>
+                  <input
+                    type="number" min={0}
+                    placeholder={currentField.placeholder ?? '0'}
+                    value={(answers[currentField.id] as number) ?? ''}
+                    onChange={(e) => setAnswers((p) => ({ ...p, [currentField.id]: parseFloat(e.target.value) || 0 }))}
+                    style={inputStyle}
+                  />
+                  {(currentField.ratePerUnit ?? 0) > 0 && (
+                    <div style={{ fontSize: '0.82rem', color: '#64748b', marginTop: 9, display: 'flex', justifyContent: 'space-between' }}>
+                      <span>× {currency}{currentField.ratePerUnit} per unit</span>
+                      {answers[currentField.id] ? (
+                        <span style={{ fontWeight: 700, color: '#0f172a' }}>
+                          = {currency}{(Number(answers[currentField.id]) * (currentField.ratePerUnit ?? 0)).toFixed(2)}
+                        </span>
+                      ) : null}
+                    </div>
+                  )}
+                  <button onClick={handleNext} disabled={!canAdvance()}
+                    style={{ ...continueBtn, opacity: canAdvance() ? 1 : 0.35, cursor: canAdvance() ? 'pointer' : 'not-allowed' }}>
+                    Continue →
+                  </button>
+                </>
+              )}
+
+              {/* ── Textarea ── */}
+              {currentField.type === 'textarea' && (
+                <>
+                  <textarea
+                    rows={4}
+                    placeholder={currentField.placeholder ?? ''}
+                    value={(answers[currentField.id] as string) ?? ''}
+                    onChange={(e) => setAnswers((p) => ({ ...p, [currentField.id]: e.target.value }))}
+                    style={{ ...inputStyle, resize: 'vertical', minHeight: 110 }}
+                  />
+                  <button onClick={handleNext} disabled={!canAdvance()}
+                    style={{ ...continueBtn, opacity: canAdvance() ? 1 : 0.35, cursor: canAdvance() ? 'pointer' : 'not-allowed' }}>
+                    Continue →
+                  </button>
+                </>
+              )}
+
+              {/* ── Route ── */}
+              {currentField.type === 'route' && (
+                <>
+                  <RouteField
+                    field={currentField}
+                    currency={currency}
+                    accentColor={accentBg}
+                    onRouteChange={(result) => handleRouteChange(currentField.id, result)}
+                  />
+                  <button onClick={handleNext} disabled={!canAdvance()}
+                    style={{ ...continueBtn, opacity: canAdvance() ? 1 : 0.35, cursor: canAdvance() ? 'pointer' : 'not-allowed' }}>
+                    Continue →
+                  </button>
+                </>
+              )}
+
+              {/* ── Draw Area ── */}
+              {currentField.type === 'draw_area' && (
+                <>
+                  <DrawAreaField
+                    field={currentField}
+                    currency={currency}
+                    accentColor={accentBg}
+                    onAreaChange={(sqFt) => handleDrawAreaChange(currentField.id, sqFt)}
+                  />
+                  <button onClick={handleNext} disabled={!canAdvance()}
+                    style={{ ...continueBtn, opacity: canAdvance() ? 1 : 0.35, cursor: canAdvance() ? 'pointer' : 'not-allowed' }}>
+                    Continue →
+                  </button>
+                </>
+              )}
+
+              {/* ── Image ── */}
+              {currentField.type === 'image' && currentField.imageUrl && (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={currentField.imageUrl}
+                    alt={currentField.label}
+                    style={{ width: '100%', borderRadius: 14, display: 'block', maxHeight: 300, objectFit: 'cover', marginBottom: 4 }}
+                  />
+                  <button onClick={handleNext} style={continueBtn}>Continue →</button>
+                </>
+              )}
+
+              {/* Back link */}
+              {step > 0 && (
+                <button onClick={handleBack} style={backBtn}>← Back</button>
+              )}
+            </div>
           )}
 
-          {/* ── Step 1: Contact ── */}
-          {step === 1 && (
-            <>
-              <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b', lineHeight: 1.5 }}>
-                Tell us how to reach you with your quote.
+          {/* ── Contact step ── */}
+          {isContactStep && (
+            <div>
+              <h2 style={{ margin: '0 0 6px', fontSize: '1.3rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.3 }}>
+                Almost done — how should we reach you?
+              </h2>
+              <p style={{ margin: '0 0 26px', fontSize: '0.86rem', color: '#64748b', lineHeight: 1.6 }}>
+                We&apos;ll send your personalised quote straight to your inbox.
               </p>
 
-              <div>
-                <label style={labelStyle}><span style={{ color: '#ef4444', marginRight: 3 }}>*</span>Full Name</label>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Smith" style={inputStyle} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#64748b', marginBottom: 7, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    Full Name *
+                  </label>
+                  <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Smith" style={inputStyle} autoComplete="name" />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#64748b', marginBottom: 7, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    Email Address *
+                  </label>
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@example.com" style={inputStyle} autoComplete="email" />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#64748b', marginBottom: 7, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    Phone <span style={{ fontWeight: 400, textTransform: 'none' }}>(optional)</span>
+                  </label>
+                  <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 555 000 0000" style={inputStyle} autoComplete="tel" />
+                </div>
               </div>
 
-              <div>
-                <label style={labelStyle}><span style={{ color: '#ef4444', marginRight: 3 }}>*</span>Email Address</label>
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@example.com" style={inputStyle} />
-              </div>
-
-              <div>
-                <label style={labelStyle}>
-                  Phone Number{' '}
-                  <span style={{ fontWeight: 400, color: '#94a3b8' }}>(optional)</span>
-                </label>
-                <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 555 000 0000" style={inputStyle} />
-              </div>
+              {/* Quote total preview */}
+              {hasPricing && config.quote_display !== 'hidden' && displayTotal > 0 && (
+                <div style={{
+                  marginTop: 22, padding: '15px 18px',
+                  background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)',
+                  borderRadius: 14, border: '1px solid #e2e8f0',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                }}>
+                  <div>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      {config.quote_display === 'live' ? 'Your Estimate' : 'Quote Total'}
+                    </div>
+                    {minApplied && <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 2 }}>Min. fee applies</div>}
+                  </div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a' }}>
+                    {currency}{displayTotal.toFixed(2)}
+                  </div>
+                </div>
+              )}
 
               {formError && (
-                <div style={{ fontSize: '0.85rem', color: '#ef4444', fontWeight: 500 }}>{formError}</div>
+                <div style={{ marginTop: 14, fontSize: '0.85rem', color: '#ef4444', fontWeight: 500 }}>{formError}</div>
               )}
 
               <button
-                style={{ ...primaryBtn, opacity: isSubmitting ? 0.6 : 1 }}
-                disabled={isSubmitting}
                 onClick={handleSubmit}
+                disabled={isSubmitting}
+                style={{ ...continueBtn, opacity: isSubmitting ? 0.6 : 1 }}
               >
                 {isSubmitting ? 'Submitting…' : (config.submit_label ?? 'Get My Quote →')}
               </button>
-
-              <button
-                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.82rem', cursor: 'pointer', padding: 0, fontFamily: 'inherit', alignSelf: 'flex-start' }}
-                onClick={() => setStep(0)}
-              >
-                ← Back
-              </button>
-            </>
+              <button onClick={handleBack} style={backBtn}>← Back</button>
+            </div>
           )}
 
-          {/* ── Step 2: Confirmation ── */}
-          {step === 2 && (
-            <div style={{ textAlign: 'center', padding: '12px 0 4px' }}>
+          {/* ── Confirmation ── */}
+          {isConfirmStep && (
+            <div style={{ textAlign: 'center', padding: '12px 0 8px' }}>
               <div style={{
-                width: 60, height: 60, borderRadius: '50%', background: accentBg,
+                width: 76, height: 76, borderRadius: '50%', background: accentBg,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                margin: '0 auto 18px', fontSize: 26,
+                margin: '0 auto 22px', fontSize: 32,
+                boxShadow: `0 8px 24px ${isBlue ? 'rgba(26,86,255,0.3)' : 'rgba(255,229,0,0.4)'}`,
               }}>
-                <span style={{ color: accentFg }}>✉</span>
+                <span style={{ color: accentFg }}>✓</span>
               </div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1a1a2e', marginBottom: 10 }}>
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0f172a', marginBottom: 10 }}>
                 Your quote is on its way!
               </div>
-              <div style={{ fontSize: '0.88rem', color: '#64748b', lineHeight: 1.65 }}>
+              <div style={{ fontSize: '0.9rem', color: '#64748b', lineHeight: 1.7, maxWidth: 340, margin: '0 auto' }}>
                 We&apos;ve received your details and will email your personalised quote to{' '}
                 <strong style={{ color: '#334155' }}>{email}</strong> shortly.
               </div>
 
               {hasPricing && config.quote_display !== 'hidden' && displayTotal > 0 && (
                 <div style={{
-                  marginTop: 22, padding: '16px 20px',
-                  background: '#f8fafc', borderRadius: 12, border: '1px solid #e2e8f0',
+                  marginTop: 28, padding: '22px',
+                  background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)',
+                  borderRadius: 16, border: '1px solid #e2e8f0',
                 }}>
-                  <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginBottom: 5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    {config.quote_display === 'after_submit' ? 'Your Estimated Total' : 'Estimated Total'}
+                  <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    {config.quote_display === 'after_submit' ? 'Your Estimated Quote' : 'Estimated Total'}
                   </div>
-                  <div style={{ fontSize: '1.7rem', fontWeight: 800, color: '#1a1a2e' }}>
+                  <div style={{ fontSize: '2.2rem', fontWeight: 800, color: '#0f172a' }}>
                     {currency}{displayTotal.toFixed(2)}
                   </div>
                   {minApplied && (
-                    <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: 4 }}>
+                    <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: 5 }}>
                       Minimum booking fee applies
                     </div>
                   )}

@@ -629,18 +629,16 @@ function CanvasPreview({
 }) {
   const isDark = isColorDark(brandColor)
   const textPrimary = isDark ? 'white' : '#1a1a2e'
-  const textSecondary = isDark ? 'rgba(255,255,255,0.7)' : 'rgba(26,26,46,0.65)'
-  const stepDoneStyle = isDark
-    ? { background: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.7)' }
-    : { background: 'rgba(0,0,0,0.15)', color: 'rgba(0,0,0,0.5)' }
-  const stepTodoStyle = isDark
-    ? { background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.3)' }
-    : { background: 'rgba(0,0,0,0.06)', color: 'rgba(0,0,0,0.3)' }
-  const psLineColor = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.12)'
-  const stepLabels = [
-    'Step 1 of 3 — Your Quote',
-    'Step 2 of 3 — Contact Details',
-    'Step 3 of 3',
+  const textSecondary = isDark ? 'rgba(255,255,255,0.72)' : 'rgba(26,26,46,0.62)'
+  const progressBarBg = isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.15)'
+  const progressBarFill = isDark ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.45)'
+  const progressWidths = [40, 72, 100]
+  const progressWidth = progressWidths[activeTab]
+
+  const tabLabels = [
+    fields.length > 0 ? `${fields.length} STEP${fields.length !== 1 ? 'S' : ''} · QUOTE FORM` : 'QUOTE FORM',
+    'CONTACT DETAILS',
+    'CONFIRMATION',
   ]
 
   const hasPricing = fields.some(
@@ -650,85 +648,111 @@ function CanvasPreview({
       (f.type === 'route' && f.routeChargeType !== 'none')
   )
 
+  const totalSteps = fields.length + 2
+  const currentStepNum = activeTab === 0 ? 1 : activeTab === 1 ? fields.length + 1 : totalSteps
+
   return (
     <div className="preview-card">
-      <div className="preview-card-header" style={{ background: brandColor }}>
+      {/* ── Branded header ── */}
+      <div style={{ background: brandColor }}>
         {/* Hero image */}
         {heroImageUrl && activeTab === 0 && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={heroImageUrl}
             alt="Hero"
-            style={{
-              width: 'calc(100% + 32px)',
-              marginLeft: -16,
-              marginTop: -16,
-              marginBottom: 16,
-              height: 120,
-              objectFit: 'cover',
-              display: 'block',
-            }}
+            style={{ width: '100%', height: 110, objectFit: 'cover', display: 'block' }}
           />
         )}
-        {/* Step dots */}
-        <div className="preview-steps">
-          {[0, 1, 2].map((i) => {
-            const cls = i < activeTab ? 'done' : i === activeTab ? 'active' : 'todo'
-            const dotStyle =
-              cls === 'active'
-                ? { background: isDark ? 'white' : '#1a1a2e', color: isDark ? brandColor : textPrimary }
-                : cls === 'done'
-                  ? stepDoneStyle
-                  : stepTodoStyle
-            return (
-              <div key={i} style={{ display: 'flex', alignItems: 'center' }}>
-                <div className="ps-dot" style={dotStyle}>
-                  {i + 1}
-                </div>
-                {i < 2 && <div className="ps-line" style={{ background: psLineColor }} />}
-              </div>
-            )
-          })}
+
+        {/* Slim progress bar */}
+        <div style={{ height: 4, background: progressBarBg, position: 'relative' }}>
+          <div style={{
+            position: 'absolute', left: 0, top: 0, bottom: 0,
+            width: `${progressWidth}%`,
+            background: progressBarFill,
+            borderRadius: '0 2px 2px 0',
+            transition: 'width 0.35s ease',
+          }} />
         </div>
 
-        <div
-          style={{
-            fontSize: '0.68rem',
-            fontWeight: 600,
-            letterSpacing: '0.05em',
-            marginBottom: 7,
-            color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(26,26,46,0.5)',
-          }}
-        >
-          {stepLabels[activeTab]}
+        <div style={{ padding: '18px 20px 20px' }}>
+          {/* Step counter + tab label */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9 }}>
+            <span style={{
+              fontSize: '0.58rem', fontWeight: 800, letterSpacing: '0.12em',
+              color: textSecondary, textTransform: 'uppercase',
+            }}>
+              {tabLabels[activeTab]}
+            </span>
+            <span style={{
+              fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.08em',
+              color: textSecondary, marginLeft: 'auto',
+            }}>
+              {currentStepNum}/{totalSteps}
+            </span>
+          </div>
+
+          <div style={{
+            fontFamily: "'Oswald', sans-serif",
+            fontSize: '1.35rem', fontWeight: 800,
+            lineHeight: 1.2, color: textPrimary,
+          }}>
+            {esc(formName) || 'My Quote Form'}
+          </div>
+          {formDesc && (
+            <div style={{ fontSize: '0.82rem', marginTop: 5, color: textSecondary, lineHeight: 1.4 }}>
+              {esc(formDesc)}
+            </div>
+          )}
         </div>
-        <div className="pv-title" style={{ color: textPrimary }}>{esc(formName)}</div>
-        <div className="pv-desc" style={{ color: textSecondary }}>{esc(formDesc)}</div>
       </div>
 
+      {/* ── Body ── */}
       <div className="preview-card-body">
+
+        {/* ── Tab 0: Quote Fields ── */}
         {activeTab === 0 && (
           <>
-            <div className="sec-label">Quote Fields</div>
             {fields.length === 0 ? (
               <div className="empty-step">
                 No quote fields yet
                 <p>Add fields from the left panel.</p>
               </div>
             ) : (
-              fields.map((f) => (
+              fields.map((f, idx) => (
                 <div
                   key={f.id}
-                  className={`field-card${selectedId === f.id ? ' selected' : ''}`}
                   onClick={() => onSelectField(f.id)}
+                  style={{
+                    border: `2px solid ${selectedId === f.id ? 'var(--accent)' : 'var(--border)'}`,
+                    borderRadius: 16,
+                    padding: '14px 15px',
+                    marginBottom: 10,
+                    cursor: 'pointer',
+                    background: selectedId === f.id ? 'rgba(79,70,229,0.03)' : 'white',
+                    boxShadow: selectedId === f.id ? '0 0 0 3px rgba(79,70,229,0.08)' : '0 1px 3px rgba(0,0,0,0.04)',
+                    transition: 'border-color 0.15s, box-shadow 0.15s',
+                    position: 'relative',
+                  }}
                 >
-                  <div className="field-card-hdr">
-                    <div className="field-card-lbl">
-                      {f.required && <span className="req-dot" />}
-                      {esc(f.label)}
+                  {/* Step badge + type badge + remove */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <div style={{
+                      fontSize: '0.58rem', fontWeight: 800, letterSpacing: '0.1em',
+                      textTransform: 'uppercase', color: 'var(--muted)',
+                      background: 'var(--bg)', border: '1px solid var(--border)',
+                      borderRadius: 6, padding: '2px 7px',
+                    }}>
+                      Step {idx + 1}
                     </div>
-                    <div className="field-card-acts">
-                      <span className="ftype-badge">{f.type}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <span style={{
+                        fontSize: '0.58rem', textTransform: 'uppercase', letterSpacing: '0.08em',
+                        color: 'var(--muted)', background: 'var(--border)', borderRadius: 4, padding: '2px 6px',
+                      }}>
+                        {f.type}
+                      </span>
                       <button
                         className="bb bb-sm bb-danger"
                         onClick={(e) => onRemoveField(f.id, e)}
@@ -738,71 +762,103 @@ function CanvasPreview({
                     </div>
                   </div>
 
+                  {/* Question label */}
+                  <div style={{
+                    fontSize: '0.92rem', fontWeight: 700, color: '#111827',
+                    lineHeight: 1.35, marginBottom: 11,
+                    display: 'flex', alignItems: 'center', gap: 7,
+                  }}>
+                    {f.required && (
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ef4444', flexShrink: 0, display: 'inline-block' }} />
+                    )}
+                    {esc(f.label) || <em style={{ color: 'var(--muted)', fontWeight: 400 }}>Untitled field</em>}
+                  </div>
+
+                  {/* Radio / Checkbox / Dropdown → big tap-target buttons */}
+                  {(f.type === 'radio' || f.type === 'checkbox' || f.type === 'dropdown') && f.options && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                      {f.options.slice(0, 4).map((o) => (
+                        <div key={o.id} style={{
+                          display: 'flex', alignItems: 'center', gap: 11,
+                          border: '1.5px solid #e5e7eb', borderRadius: 11,
+                          padding: '10px 13px', background: 'white',
+                        }}>
+                          <div style={{
+                            width: 18, height: 18, flexShrink: 0,
+                            borderRadius: f.type === 'checkbox' ? 4 : '50%',
+                            border: '2px solid #d1d5db',
+                          }} />
+                          <span style={{ fontSize: '0.84rem', fontWeight: 500, color: '#374151', flex: 1 }}>
+                            {esc(o.label)}
+                          </span>
+                          {f.showPrices !== false && o.price > 0 && (
+                            <span style={{ fontSize: '0.72rem', color: 'var(--accent2)', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                              +{currency}{o.price}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                      {f.options.length > 4 && (
+                        <div style={{ fontSize: '0.72rem', color: 'var(--muted)', textAlign: 'center', padding: '3px 0' }}>
+                          +{f.options.length - 4} more options
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Textarea / Number → styled input */}
                   {(f.type === 'textarea' || f.type === 'number') && (
                     <>
-                      <div className="fprev-input">
-                        {esc(f.placeholder ?? '')}
+                      <div style={{
+                        background: '#f9fafb', border: '1.5px solid #e5e7eb', borderRadius: 10,
+                        color: '#9ca3af', fontSize: '0.83rem', padding: '11px 13px', lineHeight: 1.4,
+                      }}>
+                        {esc(f.placeholder ?? (f.type === 'number' ? 'Enter a number…' : 'Type your answer…'))}
                       </div>
                       {f.type === 'number' && (f.ratePerUnit ?? 0) > 0 && (
-                        <span
-                          style={{
-                            fontSize: '0.72rem',
-                            color: 'var(--muted)',
-                            marginTop: 3,
-                            display: 'block',
-                          }}
-                        >
-                          × {currency}
-                          {f.ratePerUnit} per unit
+                        <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: 4, display: 'block' }}>
+                          × {currency}{f.ratePerUnit} per unit
                         </span>
                       )}
                     </>
                   )}
 
+                  {/* Route → two address inputs + mini map */}
                   {f.type === 'route' && (
-                    <div style={{ marginTop: 6 }}>
-                      <div className="fprev-input" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ color: '#22c55e', fontSize: '0.8rem' }}>●</span>
+                    <div>
+                      <div style={{
+                        background: '#f9fafb', border: '1.5px solid #e5e7eb', borderRadius: 10,
+                        color: '#9ca3af', fontSize: '0.83rem', padding: '10px 13px',
+                        display: 'flex', alignItems: 'center', gap: 7, marginBottom: 5,
+                      }}>
+                        <span style={{ color: '#22c55e', fontSize: '0.85rem', lineHeight: 1 }}>●</span>
                         Starting location…
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', paddingLeft: 7, margin: '2px 0' }}>
-                        <div style={{ width: 2, height: 10, background: 'var(--border)', borderRadius: 1 }} />
-                      </div>
-                      <div className="fprev-input" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ color: '#ef4444', fontSize: '0.8rem' }}>●</span>
+                      <div style={{
+                        background: '#f9fafb', border: '1.5px solid #e5e7eb', borderRadius: 10,
+                        color: '#9ca3af', fontSize: '0.83rem', padding: '10px 13px',
+                        display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8,
+                      }}>
+                        <span style={{ color: '#ef4444', fontSize: '0.85rem', lineHeight: 1 }}>●</span>
                         Ending location…
                       </div>
-                      {/* Map placeholder */}
                       <div style={{
-                        marginTop: 8,
-                        borderRadius: 8,
-                        overflow: 'hidden',
-                        border: '1px solid var(--border)',
-                        height: 90,
-                        background: 'linear-gradient(135deg, #e8f4e8 0%, #d4ecd4 30%, #c8e6c9 60%, #dcedc8 100%)',
-                        position: 'relative',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        borderRadius: 10, overflow: 'hidden', border: '1.5px solid #e5e7eb',
+                        height: 80, background: 'linear-gradient(135deg,#e8f4e8 0%,#c8e6c9 60%,#dcedc8 100%)',
+                        position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}>
-                        <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }} viewBox="0 0 240 90" preserveAspectRatio="none">
-                          {/* fake road lines */}
-                          <path d="M20,75 Q80,20 160,40 Q200,50 220,30" stroke="#94a3b8" strokeWidth="2" fill="none" strokeDasharray="4,3" opacity="0.5"/>
-                          <path d="M0,55 Q60,70 120,50 Q180,30 240,45" stroke="#94a3b8" strokeWidth="1.5" fill="none" opacity="0.3"/>
-                          {/* route line */}
-                          <path d="M30,70 Q100,15 210,25" stroke="#3b82f6" strokeWidth="3" fill="none" strokeLinecap="round"/>
-                          {/* start dot */}
-                          <circle cx="30" cy="70" r="5" fill="#22c55e" stroke="white" strokeWidth="1.5"/>
-                          {/* end dot */}
-                          <circle cx="210" cy="25" r="5" fill="#ef4444" stroke="white" strokeWidth="1.5"/>
+                        <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }} viewBox="0 0 240 80" preserveAspectRatio="none">
+                          <path d="M20,65 Q80,20 160,35 Q200,45 220,25" stroke="#94a3b8" strokeWidth="2" fill="none" strokeDasharray="4,3" opacity="0.45"/>
+                          <path d="M30,60 Q100,15 210,20" stroke="#3b82f6" strokeWidth="3" fill="none" strokeLinecap="round"/>
+                          <circle cx="30" cy="60" r="5" fill="#22c55e" stroke="white" strokeWidth="1.5"/>
+                          <circle cx="210" cy="20" r="5" fill="#ef4444" stroke="white" strokeWidth="1.5"/>
                         </svg>
-                        <span style={{ fontSize: '0.68rem', color: '#475569', background: 'rgba(255,255,255,0.85)', padding: '2px 7px', borderRadius: 10, zIndex: 1, fontWeight: 600 }}>
+                        <span style={{ fontSize: '0.65rem', color: '#475569', background: 'rgba(255,255,255,0.92)', padding: '2px 8px', borderRadius: 10, zIndex: 1, fontWeight: 700 }}>
                           12.4 mi · 22 min
                         </span>
                       </div>
-                      {/* Charge info */}
                       {f.routeChargeType !== 'none' && (
-                        <div style={{ marginTop: 6, fontSize: '0.72rem', color: 'var(--muted)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <div style={{ marginTop: 7, fontSize: '0.7rem', color: 'var(--muted)', display: 'flex', gap: 7, flexWrap: 'wrap' }}>
                           {(f.routeChargeType === 'mileage' || f.routeChargeType === 'both') && (
                             <span style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 7px' }}>
                               {currency}{f.ratePerMile ?? 0}/mi
@@ -818,122 +874,184 @@ function CanvasPreview({
                     </div>
                   )}
 
+                  {/* Image field */}
                   {f.type === 'image' && (
                     f.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={f.imageUrl}
                         alt={f.label}
-                        style={{ width: '100%', borderRadius: 8, marginTop: 8, display: 'block', maxHeight: 200, objectFit: 'cover' }}
+                        style={{ width: '100%', borderRadius: 10, display: 'block', maxHeight: 180, objectFit: 'cover' }}
                       />
                     ) : (
-                      <div className="fprev-image-placeholder">
-                        <div className="fprev-image-icon" style={{ fontSize: '1.2rem' }}>🖼</div>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>No image selected</div>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--border)', marginTop: 2 }}>Select one in the properties panel</div>
+                      <div style={{
+                        border: '2px dashed #e5e7eb', borderRadius: 10, padding: '22px 16px',
+                        textAlign: 'center', color: '#9ca3af',
+                      }}>
+                        <div style={{ fontSize: '1.6rem', marginBottom: 5 }}>🖼</div>
+                        <div style={{ fontSize: '0.78rem', fontWeight: 500 }}>No image selected</div>
+                        <div style={{ fontSize: '0.7rem', color: '#d1d5db', marginTop: 2 }}>Select in properties panel</div>
                       </div>
                     )
                   )}
 
+                  {/* Draw area field */}
                   {f.type === 'draw_area' && (
-                    <div style={{ marginTop: 8 }}>
+                    <div>
                       <div style={{
-                        borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border)',
-                        height: 90, background: 'linear-gradient(160deg,#2d4a22 0%,#1a3a1a 40%,#0f2d0f 100%)',
+                        borderRadius: 10, overflow: 'hidden', border: '1.5px solid #e5e7eb',
+                        height: 80, background: 'linear-gradient(160deg,#2d4a22 0%,#1a3a1a 40%,#0f2d0f 100%)',
                         position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}>
-                        <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }} viewBox="0 0 240 90" preserveAspectRatio="none">
-                          <polygon points="60,20 180,15 195,70 70,75 45,50" fill="rgba(255,230,0,0.2)" stroke="#ffe500" strokeWidth="2" strokeDasharray="5,3"/>
+                        <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }} viewBox="0 0 240 80" preserveAspectRatio="none">
+                          <polygon points="55,18 175,13 190,65 65,70 40,45" fill="rgba(255,230,0,0.2)" stroke="#ffe500" strokeWidth="2" strokeDasharray="5,3"/>
                         </svg>
-                        <span style={{ fontSize: '0.68rem', color: '#fff', background: 'rgba(0,0,0,0.55)', padding: '2px 8px', borderRadius: 10, zIndex: 1, fontWeight: 600 }}>
+                        <span style={{ fontSize: '0.65rem', color: '#fff', background: 'rgba(0,0,0,0.55)', padding: '2px 9px', borderRadius: 10, zIndex: 1, fontWeight: 700 }}>
                           Draw area on satellite map
                         </span>
                       </div>
                       {(f.ratePerSqFt ?? 0) > 0 && (
-                        <span style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: 4, display: 'block' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: 4, display: 'block' }}>
                           × {currency}{f.ratePerSqFt}/sq ft
                         </span>
                       )}
-                    </div>
-                  )}
-
-                  {f.options && (
-                    <div className="fprev-opts">
-                      {f.options.map((o) => (
-                        <div key={o.id} className="fprev-opt">
-                          <span>{esc(o.label)}</span>
-                          {f.showPrices !== false && (
-                            <span className="ptag">
-                              {o.price > 0 ? `+${currency}${o.price}` : 'free'}
-                            </span>
-                          )}
-                        </div>
-                      ))}
                     </div>
                   )}
                 </div>
               ))
             )}
 
+            {/* Live total */}
             {hasPricing && quoteDisplay === 'live' && (
-              <div className="total-prev">
-                <div className="total-prev-lbl">Estimated Total</div>
-                <div className="total-prev-val">{currency}0</div>
+              <div style={{
+                background: 'linear-gradient(135deg,rgba(79,70,229,0.07),rgba(16,185,129,0.04))',
+                border: '1px solid rgba(79,70,229,0.15)', borderRadius: 12,
+                padding: '12px 16px', display: 'flex', alignItems: 'center',
+                justifyContent: 'space-between', marginTop: 4, marginBottom: 10,
+              }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>Estimated Total</span>
+                <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)' }}>{currency}0</span>
               </div>
             )}
             {hasPricing && quoteDisplay === 'after_submit' && (
-              <div className="total-prev" style={{ opacity: 0.4 }}>
-                <div className="total-prev-lbl">Total shown after submit</div>
-                <div className="total-prev-val">{currency}–</div>
+              <div style={{
+                background: 'rgba(0,0,0,0.03)', border: '1px dashed var(--border)', borderRadius: 12,
+                padding: '12px 16px', display: 'flex', alignItems: 'center',
+                justifyContent: 'space-between', marginTop: 4, marginBottom: 10, opacity: 0.55,
+              }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>Total shown after submit</span>
+                <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.25rem', fontWeight: 800, color: 'var(--muted)' }}>{currency}–</span>
               </div>
             )}
-            <button className="sub-btn-prev" style={{ marginTop: 10, background: brandColor, color: textPrimary }}>
-              Next →
+
+            <button style={{
+              width: '100%', padding: '13px 16px',
+              fontFamily: "'Oswald', sans-serif", fontWeight: 800, fontSize: '0.95rem',
+              letterSpacing: '0.04em', border: 'none', borderRadius: 12, cursor: 'default',
+              background: brandColor, color: textPrimary,
+            }}>
+              Next Step →
             </button>
           </>
         )}
 
+        {/* ── Tab 1: Contact ── */}
         {activeTab === 1 && (
           <>
-            <div className="sec-label">
-              Contact Details (always included)
+            <div style={{ marginBottom: 14 }}>
+              {[
+                { label: 'Full Name', placeholder: 'Jane Smith' },
+                { label: 'Email Address', placeholder: 'jane@example.com' },
+                { label: 'Phone Number', placeholder: '+1 (555) 000-0000', optional: true },
+              ].map(({ label, placeholder, optional }) => (
+                <div key={label} style={{ marginBottom: 11 }}>
+                  <div style={{
+                    fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.1em',
+                    textTransform: 'uppercase', color: '#6b7280', marginBottom: 5,
+                  }}>
+                    {label}{optional && <span style={{ fontWeight: 500, letterSpacing: 0, textTransform: 'none', marginLeft: 5 }}>(optional)</span>}
+                  </div>
+                  <div style={{
+                    background: '#f9fafb', border: '1.5px solid #e5e7eb', borderRadius: 10,
+                    color: '#9ca3af', fontSize: '0.84rem', padding: '11px 14px',
+                  }}>
+                    {placeholder}
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="contact-prev">
-              <div className="contact-prev-field">Full Name</div>
-              <div className="contact-prev-field">Email Address</div>
-              <div className="contact-prev-field">Phone Number (optional)</div>
-            </div>
+
             {disclaimerEnabled && disclaimerText && (
-              <div className="disclaimer-prev">
-                <input type="checkbox" className="disclaimer-check" readOnly />
-                <span className="disclaimer-text">{disclaimerText}</span>
+              <div style={{
+                display: 'flex', alignItems: 'flex-start', gap: 10,
+                padding: '11px 13px',
+                background: 'rgba(79,70,229,0.04)', border: '1px solid rgba(79,70,229,0.12)',
+                borderRadius: 10, marginBottom: 14,
+              }}>
+                <input type="checkbox" readOnly style={{ marginTop: 2, flexShrink: 0, accentColor: brandColor }} />
+                <span style={{ fontSize: '0.74rem', color: '#6b7280', lineHeight: 1.5 }}>{disclaimerText}</span>
               </div>
             )}
-            <button
-              className="sub-btn-prev"
-              style={{ marginTop: 10, background: brandColor, color: textPrimary }}
-            >
-              {esc(submitLabel)}
+
+            {hasPricing && quoteDisplay === 'live' && (
+              <div style={{
+                background: 'linear-gradient(135deg,rgba(79,70,229,0.07),rgba(16,185,129,0.04))',
+                border: '1px solid rgba(79,70,229,0.15)', borderRadius: 12,
+                padding: '12px 16px', display: 'flex', alignItems: 'center',
+                justifyContent: 'space-between', marginBottom: 12,
+              }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>Your Estimate</span>
+                <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)' }}>{currency}0</span>
+              </div>
+            )}
+
+            <button style={{
+              width: '100%', padding: '13px 16px',
+              fontFamily: "'Oswald', sans-serif", fontWeight: 800, fontSize: '0.95rem',
+              letterSpacing: '0.04em', border: 'none', borderRadius: 12, cursor: 'default',
+              background: brandColor, color: textPrimary,
+            }}>
+              {esc(submitLabel) || 'Get My Quote'}
             </button>
           </>
         )}
 
+        {/* ── Tab 2: Confirmation ── */}
         {activeTab === 2 && (
-          <div className="email-notice-prev">
-            <div className="email-icon-prev" style={{ background: brandColor }}>
-              <span style={{ color: textPrimary }}>✉</span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '28px 12px 16px', textAlign: 'center', gap: 10 }}>
+            {/* Checkmark circle */}
+            <div style={{
+              width: 66, height: 66, borderRadius: '50%',
+              background: brandColor,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: `0 10px 28px ${brandColor}55`,
+              marginBottom: 4,
+            }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+                stroke={textPrimary} strokeWidth="2.5"
+                strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
             </div>
-            <div className="email-notice-txt">Your quote is on its way!</div>
-            <div className="email-notice-sub">
-              We&apos;ve received your details and will email your personalised
-              quote to you shortly.
+
+            <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.2rem', fontWeight: 800, color: '#111827', lineHeight: 1.2 }}>
+              You&apos;re all set!
             </div>
+            <div style={{ fontSize: '0.82rem', color: '#6b7280', maxWidth: 230, lineHeight: 1.55 }}>
+              We&apos;ve received your details and will send your personalised quote shortly.
+            </div>
+
             {hasPricing && quoteDisplay !== 'hidden' && (
-              <div className="total-prev" style={{ marginTop: 14, width: '100%' }}>
-                <div className="total-prev-lbl">
-                  {quoteDisplay === 'after_submit' ? 'Your Estimated Quote (shown here)' : 'Your Estimated Quote'}
-                </div>
-                <div className="total-prev-val">{currency}–</div>
+              <div style={{
+                background: 'linear-gradient(135deg,rgba(79,70,229,0.07),rgba(16,185,129,0.04))',
+                border: '1px solid rgba(79,70,229,0.15)', borderRadius: 12,
+                padding: '13px 18px', marginTop: 8, width: '100%',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
+                  {quoteDisplay === 'after_submit' ? 'Your Estimate (revealed)' : 'Your Estimate'}
+                </span>
+                <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.3rem', fontWeight: 800, color: 'var(--accent)' }}>{currency}–</span>
               </div>
             )}
           </div>
