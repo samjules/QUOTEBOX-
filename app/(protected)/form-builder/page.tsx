@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { FormField, FieldOption, ConditionalRule, RuleCondition } from '@/lib/types'
 import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop'
@@ -1595,6 +1595,7 @@ function PropsPanel({
 export default function FormBuilderPage() {
   const supabase = createClient()
   const searchParams = useSearchParams()
+  const router = useRouter()
 
   // ── State ──
   const [screen, setScreen] = useState<'picker' | 'builder'>('picker')
@@ -1613,6 +1614,8 @@ export default function FormBuilderPage() {
   const [quoteDisplay, setQuoteDisplay] = useState<'live' | 'after_submit' | 'hidden'>('live')
   const [editingFormId, setEditingFormId] = useState<string | null>(null)
   const [accountId, setAccountId] = useState<string | null>(null)
+  const [existingForms, setExistingForms] = useState<Array<{ id: string; form_name: string; form_config: { slug?: string } }>>([])
+  const [existingFormsLoading, setExistingFormsLoading] = useState(false)
   const [planBadge, setPlanBadge] = useState('Loading…')
   const [metaPixels, setMetaPixels] = useState<Array<{ id: string; name: string }>>([])
   const [metaConnected, setMetaConnected] = useState(false)
@@ -1749,6 +1752,18 @@ export default function FormBuilderPage() {
         return
       }
       setAccountId(account.id)
+
+      // Fetch existing forms for the picker screen
+      setExistingFormsLoading(true)
+      supabase
+        .from('hosted_forms')
+        .select('id, form_name, form_config')
+        .eq('account_id', account.id)
+        .order('updated_at', { ascending: false })
+        .then(({ data }) => {
+          setExistingForms(data ?? [])
+          setExistingFormsLoading(false)
+        })
 
       // Default slug to business name for new forms (not editing an existing one)
       if (!searchParams.get('form_id') && account.business_name) {
@@ -2153,6 +2168,10 @@ export default function FormBuilderPage() {
           .update(payload)
           .eq('id', editingFormId)
         if (error) throw error
+        // Refresh existing forms list
+        setExistingForms((prev) => prev.map((f) =>
+          f.id === editingFormId ? { ...f, form_name: name, form_config: { slug } } : f
+        ))
       } else {
         const { data, error } = await supabase
           .from('hosted_forms')
@@ -2161,6 +2180,9 @@ export default function FormBuilderPage() {
           .single()
         if (error) throw error
         setEditingFormId(data.id)
+        // Update URL so refreshes don't create duplicate forms
+        router.replace(`/form-builder?form_id=${data.id}`, { scroll: false } as never)
+        setExistingForms((prev) => [{ id: data.id, form_name: name, form_config: { slug } }, ...prev])
       }
       showToast(`✓ Saved! Live at quote-box.com/${slug}`, 'success')
     } catch (e: unknown) {
@@ -2196,13 +2218,13 @@ export default function FormBuilderPage() {
       <div className="builder-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div className="builder-logo">Form Builder</div>
-          {screen === 'builder' && !editingFormId && (
+          {screen === 'builder' && (
             <button
               className="bb bb-ghost"
               style={{ fontSize: '0.78rem', padding: '4px 10px' }}
               onClick={() => setScreen('picker')}
             >
-              ← Templates
+              ← {editingFormId ? 'All Forms' : 'Templates'}
             </button>
           )}
         </div>
@@ -2225,11 +2247,57 @@ export default function FormBuilderPage() {
 
       {/* Template picker or builder */}
       {screen === 'picker' ? (
-        <TemplatePicker
-          onSelect={applyTemplate}
-          onBlank={() => setScreen('builder')}
-          onAi={() => { setScreen('builder'); setAiModalOpen(true) }}
-        />
+        <div style={{ overflowY: 'auto', height: 'calc(100vh - 56px)' }}>
+          {/* ── Existing forms ── */}
+          {(existingForms.length > 0 || existingFormsLoading) && (
+            <div style={{ maxWidth: 960, margin: '0 auto', padding: '28px 28px 0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.05rem', fontWeight: 700, color: 'var(--fg)', margin: 0 }}>
+                  Your Forms
+                </h2>
+              </div>
+              {existingFormsLoading ? (
+                <p style={{ fontSize: '0.82rem', color: 'var(--muted)' }}>Loading…</p>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12, marginBottom: 32 }}>
+                  {existingForms.map((f) => (
+                    <div key={f.id} style={{
+                      background: 'var(--surface)', border: '2px solid var(--border)',
+                      borderRadius: 12, padding: '16px 18px',
+                      display: 'flex', flexDirection: 'column', gap: 8,
+                    }}>
+                      <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--fg)', lineHeight: 1.3 }}>{f.form_name}</div>
+                      {f.form_config?.slug && (
+                        <div style={{ fontSize: '0.72rem', color: 'var(--muted)', fontFamily: 'monospace' }}>
+                          /{f.form_config.slug}
+                        </div>
+                      )}
+                      <button
+                        onClick={async () => {
+                          await loadExistingForm(f.id)
+                          setScreen('builder')
+                        }}
+                        style={{
+                          marginTop: 4, background: '#4f46e5', color: 'white',
+                          border: 'none', borderRadius: 8, padding: '8px 0',
+                          fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
+                        }}
+                      >
+                        Edit Form →
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div style={{ height: 1, background: 'var(--border)', marginBottom: 8 }} />
+            </div>
+          )}
+          <TemplatePicker
+            onSelect={applyTemplate}
+            onBlank={() => setScreen('builder')}
+            onAi={() => { setScreen('builder'); setAiModalOpen(true) }}
+          />
+        </div>
       ) : null}
 
       {/* 3-panel layout */}
