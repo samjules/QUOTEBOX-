@@ -2162,15 +2162,50 @@ export default function FormBuilderPage() {
     }
 
     try {
+      // Check if any form (any account) already owns this slug
+      const { data: slugConflicts } = await supabase
+        .from('hosted_forms')
+        .select('id, account_id')
+        .eq('form_config->>slug', slug)
+
+      const otherAccountConflict = (slugConflicts ?? []).find(
+        (f) => f.account_id !== accountId && f.id !== editingFormId
+      )
+      if (otherAccountConflict) {
+        showToast('That URL is already taken — choose a different one', 'error', 5000)
+        setIsSaving(false)
+        return
+      }
+
+      // Same-account forms with this slug (could be ghost duplicates)
+      const sameAccountWithSlug = (slugConflicts ?? []).filter(
+        (f) => f.account_id === accountId && f.id !== editingFormId
+      )
+
+      let savedId = editingFormId
+
       if (editingFormId) {
         const { error } = await supabase
           .from('hosted_forms')
           .update(payload)
           .eq('id', editingFormId)
         if (error) throw error
-        // Refresh existing forms list
         setExistingForms((prev) => prev.map((f) =>
           f.id === editingFormId ? { ...f, form_name: name, form_config: { slug } } : f
+        ))
+      } else if (sameAccountWithSlug.length > 0) {
+        // Reuse existing form at this slug instead of creating a duplicate
+        const existingId = sameAccountWithSlug[0].id
+        const { error } = await supabase
+          .from('hosted_forms')
+          .update(payload)
+          .eq('id', existingId)
+        if (error) throw error
+        savedId = existingId
+        setEditingFormId(existingId)
+        router.replace(`/form-builder?form_id=${existingId}`, { scroll: false } as never)
+        setExistingForms((prev) => prev.map((f) =>
+          f.id === existingId ? { ...f, form_name: name, form_config: { slug } } : f
         ))
       } else {
         const { data, error } = await supabase
@@ -2179,16 +2214,26 @@ export default function FormBuilderPage() {
           .select()
           .single()
         if (error) throw error
+        savedId = data.id
         setEditingFormId(data.id)
-        // Update URL so refreshes don't create duplicate forms
         router.replace(`/form-builder?form_id=${data.id}`, { scroll: false } as never)
         setExistingForms((prev) => [{ id: data.id, form_name: name, form_config: { slug } }, ...prev])
       }
+
+      // Clean up any remaining ghost duplicates for this slug (old bug artifacts)
+      const ghostIds = (slugConflicts ?? [])
+        .filter((f) => f.account_id === accountId && f.id !== savedId)
+        .map((f) => f.id)
+      if (ghostIds.length > 0) {
+        await supabase.from('hosted_forms').delete().in('id', ghostIds)
+        setExistingForms((prev) => prev.filter((f) => !ghostIds.includes(f.id)))
+      }
+
       showToast(`✓ Saved! Live at quote-box.com/${slug}`, 'success')
     } catch (e: unknown) {
       const err = e as { code?: string; message?: string }
       if (err.code === '23505')
-        showToast('Slug already taken — try another', 'error')
+        showToast('URL already taken — try another', 'error')
       else
         showToast(`Error: ${err.message ?? 'Unknown'}`, 'error', 5000)
     } finally {

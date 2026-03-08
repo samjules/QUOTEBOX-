@@ -3,6 +3,9 @@ import { notFound } from 'next/navigation'
 import type { HostedForm } from '@/lib/types'
 import QuoteForm from './QuoteForm'
 
+// Never cache — always fetch fresh form data so edits/deletes are instant
+export const dynamic = 'force-dynamic'
+
 export default async function PublicFormPage({
   params,
 }: {
@@ -20,6 +23,7 @@ export default async function PublicFormPage({
     .select('*')
     .eq('form_config->>slug', params.slug)
     .eq('is_active', true)
+    .order('updated_at', { ascending: false })
     .limit(1)
 
   const form = rows?.[0] ?? null
