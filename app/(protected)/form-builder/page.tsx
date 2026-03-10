@@ -1197,6 +1197,41 @@ function PropsPanel({
       {isRoute && (
         <>
           <div className="prop-group">
+            <div className="prop-label">Location mode</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 2 }}>
+              {([
+                ['point_to_point', '🔀 Point-to-point — customer enters start & end'],
+                ['single', '📍 Single location — customer enters their address only'],
+              ] as const).map(([val, lbl]) => (
+                <label
+                  key={val}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 7,
+                    fontSize: '0.78rem', cursor: 'pointer',
+                    color: (field.locationMode ?? 'point_to_point') === val ? 'var(--accent)' : 'var(--fg)',
+                    fontWeight: (field.locationMode ?? 'point_to_point') === val ? 600 : 400,
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name={`locationMode_${field.id}`}
+                    value={val}
+                    checked={(field.locationMode ?? 'point_to_point') === val}
+                    onChange={() => onSetProp(field.id, 'locationMode', val)}
+                    style={{ accentColor: 'var(--accent)' }}
+                  />
+                  {lbl}
+                </label>
+              ))}
+            </div>
+            {(field.locationMode ?? 'point_to_point') === 'single' && (
+              <div style={{ fontSize: '0.71rem', color: 'var(--muted)', marginTop: 6, lineHeight: 1.45, padding: '6px 8px', background: 'var(--surface2)', borderRadius: 6 }}>
+                Customer enters one address. Set a Base Address below to calculate travel cost.
+              </div>
+            )}
+          </div>
+
+          <div className="prop-group">
             <div className="prop-label">Charge type</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 2 }}>
               {([
@@ -1683,7 +1718,7 @@ export default function FormBuilderPage() {
   const [fields, setFields] = useState<FormField[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [brandColor, setBrandColor] = useState<string>('#FFE500')
-  const [activeTab, setActiveTab] = useState<0 | 1 | 2>(0)
+  const [activeTab, setActiveTab] = useState<0 | 1 | 2 | 3>(0)
   const [formName, setFormName] = useState('My Quote Form')
   const [formDesc, setFormDesc] = useState('Get an instant price for your project.')
   const [submitLabel, setSubmitLabel] = useState('Get My Quote →')
@@ -1721,6 +1756,9 @@ export default function FormBuilderPage() {
   )
   const [aiModalOpen, setAiModalOpen] = useState(false)
   const [aiGenerating, setAiGenerating] = useState(false)
+  const [emailSubject, setEmailSubject] = useState('')
+  const [emailIntro, setEmailIntro] = useState('')
+  const [emailOutro, setEmailOutro] = useState('')
 
   function showToast(
     msg: string,
@@ -1919,6 +1957,9 @@ export default function FormBuilderPage() {
     }
     if (c.disclaimer_enabled !== undefined) setDisclaimerEnabled(c.disclaimer_enabled)
     if (c.disclaimer_text) setDisclaimerText(c.disclaimer_text)
+    setEmailSubject(c.email_template?.subject ?? '')
+    setEmailIntro(c.email_template?.intro ?? '')
+    setEmailOutro(c.email_template?.outro ?? '')
   }
 
   // ── Template apply ──
@@ -2237,6 +2278,13 @@ export default function FormBuilderPage() {
         ...(minQuote > 0 ? { min_quote: minQuote } : {}),
         disclaimer_enabled: disclaimerEnabled,
         disclaimer_text: disclaimerText,
+        ...(emailSubject || emailIntro || emailOutro ? {
+          email_template: {
+            ...(emailSubject ? { subject: emailSubject } : {}),
+            ...(emailIntro ? { intro: emailIntro } : {}),
+            ...(emailOutro ? { outro: emailOutro } : {}),
+          }
+        } : {}),
       },
       is_active: true,
       updated_at: new Date().toISOString(),
@@ -2794,12 +2842,12 @@ export default function FormBuilderPage() {
           <div className="canvas-inner">
             {/* Step tabs */}
             <div className="step-tabs">
-              {(['Step 1 · Quote', 'Step 2 · Contact', 'Step 3 · Confirm'] as const).map(
+              {(['Step 1 · Quote', 'Step 2 · Contact', 'Step 3 · Confirm', '✉ Email'] as const).map(
                 (label, i) => (
                   <div
                     key={i}
                     className={`step-tab${activeTab === i ? ' active' : ''}`}
-                    onClick={() => setActiveTab(i as 0 | 1 | 2)}
+                    onClick={() => setActiveTab(i as 0 | 1 | 2 | 3)}
                   >
                     {label}
                   </div>
@@ -2807,22 +2855,108 @@ export default function FormBuilderPage() {
               )}
             </div>
 
-            <CanvasPreview
-              fields={fields}
-              selectedId={selectedId}
-              brandColor={brandColor}
-              activeTab={activeTab}
-              formName={formName}
-              formDesc={formDesc}
-              submitLabel={submitLabel}
-              currency={currency}
-              heroImageUrl={heroImageUrl}
-              quoteDisplay={quoteDisplay}
-              disclaimerEnabled={disclaimerEnabled}
-              disclaimerText={disclaimerText}
-              onSelectField={setSelectedId}
-              onRemoveField={removeField}
-            />
+            {activeTab === 3 ? (
+              /* ── Email editor ── */
+              <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 0 }}>
+                {/* Mock email shell */}
+                <div style={{ background: '#f7f6f3', borderRadius: 14, overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.1)', fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>
+                  {/* Email header */}
+                  <div style={{ background: '#1a1a2e', padding: '18px 24px' }}>
+                    <span style={{ fontFamily: 'Georgia,serif', fontSize: 15, fontWeight: 900, color: 'white' }}>
+                      Quote<span style={{ color: '#FFE500' }}>.</span>Box
+                    </span>
+                  </div>
+                  <div style={{ background: '#FFE500', height: 3 }} />
+
+                  {/* Body */}
+                  <div style={{ background: 'white', padding: '22px 24px 18px' }}>
+                    <p style={{ margin: '0 0 6px', fontSize: 12, color: '#64748b' }}>Hi [Customer Name],</p>
+
+                    {/* Editable intro */}
+                    <div style={{ marginBottom: 14 }}>
+                      <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Intro text</div>
+                      <textarea
+                        rows={3}
+                        value={emailIntro}
+                        onChange={(e) => setEmailIntro(e.target.value)}
+                        placeholder={`Thank you for your enquiry with ${formName || 'our team'}. Here's a summary of your quote.`}
+                        style={{ width: '100%', fontSize: 12, padding: '8px 10px', borderRadius: 7, border: '1.5px solid #e2e8f0', resize: 'vertical', fontFamily: 'inherit', color: '#334155', outline: 'none', boxSizing: 'border-box', lineHeight: 1.5 }}
+                      />
+                    </div>
+
+                    {/* Fixed total block mockup */}
+                    <div style={{ background: '#1a1a2e', borderRadius: 10, padding: '14px', textAlign: 'center', marginBottom: 14 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginBottom: 4 }}>Estimated Total</div>
+                      <div style={{ fontSize: 28, fontWeight: 900, color: '#FFE500', lineHeight: 1 }}>$0.00</div>
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 5 }}>This is an estimate — final price confirmed on booking</div>
+                    </div>
+
+                    {/* Line items mock */}
+                    <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 8, marginBottom: 14 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 6 }}>Your selections</div>
+                      {[{ label: 'Service Type', value: 'Standard Package', price: '$99.00' }, { label: 'Add-ons', value: 'Rush delivery', price: '$50.00' }].map((item, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f8fafc', fontSize: 11 }}>
+                          <div>
+                            <div style={{ fontWeight: 600, color: '#334155' }}>{item.label}</div>
+                            <div style={{ color: '#64748b', marginTop: 1 }}>{item.value}</div>
+                          </div>
+                          <div style={{ fontWeight: 700, color: '#1e293b' }}>{item.price}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Editable outro */}
+                    <div style={{ marginBottom: 8 }}>
+                      <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Follow-up text</div>
+                      <textarea
+                        rows={2}
+                        value={emailOutro}
+                        onChange={(e) => setEmailOutro(e.target.value)}
+                        placeholder="We'll be in touch shortly to confirm your booking. If you have any questions in the meantime, just reply to this email."
+                        style={{ width: '100%', fontSize: 12, padding: '8px 10px', borderRadius: 7, border: '1.5px solid #e2e8f0', resize: 'vertical', fontFamily: 'inherit', color: '#334155', outline: 'none', boxSizing: 'border-box', lineHeight: 1.5 }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div style={{ background: '#f7f6f3', padding: '10px 24px', textAlign: 'center' }}>
+                    <span style={{ fontSize: 10, color: '#94a3b8' }}>Sent via Quote.Box · Automated quote summary</span>
+                  </div>
+                </div>
+
+                {/* Subject line editor — below the mock */}
+                <div style={{ marginTop: 16, background: 'var(--surface)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Email subject line</div>
+                  <input
+                    type="text"
+                    value={emailSubject}
+                    onChange={(e) => setEmailSubject(e.target.value)}
+                    placeholder={`Your quote from ${formName || 'our team'}`}
+                    style={{ width: '100%', fontSize: '0.85rem', padding: '8px 10px', borderRadius: 7, border: '1.5px solid var(--border)', fontFamily: 'inherit', color: 'var(--fg)', outline: 'none', boxSizing: 'border-box', background: 'var(--surface2)' }}
+                  />
+                  <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginTop: 5 }}>
+                    Leave blank to use default: &ldquo;Your quote from {formName || '[form name]'}&rdquo;
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <CanvasPreview
+                fields={fields}
+                selectedId={selectedId}
+                brandColor={brandColor}
+                activeTab={activeTab as 0 | 1 | 2}
+                formName={formName}
+                formDesc={formDesc}
+                submitLabel={submitLabel}
+                currency={currency}
+                heroImageUrl={heroImageUrl}
+                quoteDisplay={quoteDisplay}
+                disclaimerEnabled={disclaimerEnabled}
+                disclaimerText={disclaimerText}
+                onSelectField={setSelectedId}
+                onRemoveField={removeField}
+              />
+            )}
           </div>
         </main>
 

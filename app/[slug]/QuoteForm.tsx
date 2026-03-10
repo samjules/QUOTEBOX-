@@ -627,6 +627,48 @@ function RouteField({
 
   // Fetch directions when coords ready
   useEffect(() => {
+    // ── Single location mode: customer enters one address ──
+    if (field.locationMode === 'single') {
+      if (!endCoords) {
+        setRouteInfo(null); setRouteGeometry(null); setLegInfos(null)
+        onRouteChangeRef.current(null)
+        return
+      }
+      if (!baseCoords) {
+        // No base address set — record the address with zero distance
+        setRouteInfo({ distanceMiles: 0, durationMinutes: 0 })
+        setRouteGeometry(null)
+        setLegInfos(null)
+        onRouteChangeRef.current({
+          startAddress: '',
+          startCoords: endCoords,
+          endAddress: endQuery,
+          endCoords,
+          distanceMiles: 0,
+          durationMinutes: 0,
+        })
+        return
+      }
+      setIsLoadingRoute(true)
+      getDirections(baseCoords, endCoords).then((result) => {
+        setIsLoadingRoute(false)
+        if (!result) return
+        setRouteInfo({ distanceMiles: result.distanceMiles, durationMinutes: result.durationMinutes })
+        setRouteGeometry(result.geometry)
+        setLegInfos(null)
+        onRouteChangeRef.current({
+          startAddress: field.baseAddress ?? '',
+          startCoords: baseCoords,
+          endAddress: endQuery,
+          endCoords: endCoords!,
+          distanceMiles: result.distanceMiles,
+          durationMinutes: result.durationMinutes,
+        })
+      })
+      return
+    }
+
+    // ── Point-to-point mode ──
     if (!startCoords || !endCoords) {
       setRouteInfo(null); setRouteGeometry(null); setLegInfos(null)
       onRouteChangeRef.current(null)
@@ -782,19 +824,32 @@ function RouteField({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-      {/* ── Sub-step 0: Starting location ── */}
+      {/* ── Sub-step 0: Starting location (or single location) ── */}
       {subStep === 0 && (
         <>
-          <AddressInput
-            placeholder="e.g. 123 Main St, Chicago, IL"
-            dotColor="#22c55e"
-            query={startQuery}
-            setQuery={setStartQuery}
-            coords={startCoords}
-            setCoords={setStartCoords}
-            suggestions={startSuggestions}
-            setSuggestions={setStartSuggestions}
-          />
+          {field.locationMode === 'single' ? (
+            <AddressInput
+              placeholder="e.g. 123 Oak Ave, Chicago, IL"
+              dotColor="#ef4444"
+              query={endQuery}
+              setQuery={setEndQuery}
+              coords={endCoords}
+              setCoords={setEndCoords}
+              suggestions={endSuggestions}
+              setSuggestions={setEndSuggestions}
+            />
+          ) : (
+            <AddressInput
+              placeholder="e.g. 123 Main St, Chicago, IL"
+              dotColor="#22c55e"
+              query={startQuery}
+              setQuery={setStartQuery}
+              coords={startCoords}
+              setCoords={setStartCoords}
+              suggestions={startSuggestions}
+              setSuggestions={setStartSuggestions}
+            />
+          )}
         </>
       )}
 
@@ -831,8 +886,38 @@ function RouteField({
       {/* ── Sub-step 2: Map view ── */}
       {subStep === 2 && (
         <>
-          {/* Route summary */}
-          {legInfos && field.baseAddress ? (() => {
+          {/* ── Single location summary ── */}
+          {field.locationMode === 'single' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              <RouteStop dotColor="#ef4444" bg="#fef2f2" border="#fecaca" textColor="#991b1b"
+                label={endQuery || 'Your location'} tag="Service address" />
+              {routeInfo && field.baseAddress && field.routeChargeType !== 'none' && (
+                <div style={{
+                  display: 'flex', alignItems: 'flex-start', gap: 9, marginTop: 4,
+                  padding: '9px 12px', borderRadius: 9,
+                  background: '#fefce8', border: '1.5px solid #fde68a',
+                }}>
+                  <span style={{ fontSize: '1rem', lineHeight: 1.2, flexShrink: 0 }}>🚗</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#78350f' }}>
+                      Travel fee included
+                    </div>
+                    <div style={{ fontSize: '0.73rem', color: '#92400e', marginTop: 2, lineHeight: 1.4 }}>
+                      {routeInfo.distanceMiles.toFixed(1)} mi · {Math.round(routeInfo.durationMinutes)} min to reach your location
+                    </div>
+                  </div>
+                  {priceContribution > 0 && (
+                    <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#b45309', flexShrink: 0 }}>
+                      +{currency}{priceContribution.toFixed(2)}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Point-to-point Route summary ── */}
+          {field.locationMode !== 'single' && legInfos && field.baseAddress ? (() => {
             const travelMiles = (legInfos[0]?.distanceMiles ?? 0) + (legInfos[2]?.distanceMiles ?? 0)
             const travelMins  = (legInfos[0]?.durationMinutes ?? 0) + (legInfos[2]?.durationMinutes ?? 0)
             const jobLeg      = legInfos[1]
@@ -897,7 +982,7 @@ function RouteField({
                 )}
               </div>
             )
-          })() : (
+          })() : field.locationMode !== 'single' ? (
             /* No base — simple two-point summary */
             <>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -925,7 +1010,7 @@ function RouteField({
                 </div>
               )}
             </>
-          )}
+          ) : null}
         </>
       )}
 
@@ -990,7 +1075,7 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
     for (const field of fields) {
       if (field.type === 'route') {
         result.push({ field, routeSubStep: 0 })
-        result.push({ field, routeSubStep: 1 })
+        if (field.locationMode !== 'single') result.push({ field, routeSubStep: 1 })
         result.push({ field, routeSubStep: 2 })
       } else {
         result.push({ field })
@@ -1023,6 +1108,51 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
   const displayTotal = minQuote > 0 ? Math.max(total, minQuote) : total
   const minApplied = minQuote > 0 && total < minQuote
 
+  const lineItems = useMemo(() => {
+    const items: Array<{ label: string; value: string; price: number }> = []
+    for (const f of config.fields) {
+      if (f.type === 'radio' || f.type === 'dropdown') {
+        const opt = f.options?.find((o) => o.id === answers[f.id])
+        if (opt) items.push({ label: f.label, value: opt.label, price: opt.price })
+      } else if (f.type === 'checkbox') {
+        const selectedIds = (answers[f.id] as string[]) ?? []
+        for (const o of (f.options ?? []).filter((o) => selectedIds.includes(o.id))) {
+          items.push({ label: f.label, value: o.label, price: o.price })
+        }
+      } else if (f.type === 'number') {
+        const val = Number(answers[f.id]) || 0
+        if (val > 0) items.push({ label: f.label, value: String(val), price: val * (f.ratePerUnit ?? 0) })
+      } else if (f.type === 'textarea') {
+        const val = String(answers[f.id] ?? '').trim()
+        if (val) items.push({ label: f.label, value: val, price: 0 })
+      } else if (f.type === 'route') {
+        const rd = routeData[f.id]
+        if (rd) {
+          let routePrice = 0
+          if (f.routeChargeType === 'mileage' || f.routeChargeType === 'both')
+            routePrice += rd.distanceMiles * (f.ratePerMile ?? 0)
+          if (f.routeChargeType === 'drivetime' || f.routeChargeType === 'both')
+            routePrice += rd.durationMinutes * (f.ratePerMinute ?? 0)
+          items.push({
+            label: f.label,
+            value: `${rd.distanceMiles.toFixed(1)} mi — ${rd.startAddress} → ${rd.endAddress}`,
+            price: routePrice,
+          })
+        }
+      } else if (f.type === 'draw_area') {
+        const sqFt = drawAreaData[f.id]
+        if (sqFt != null) {
+          items.push({
+            label: f.label,
+            value: `${sqFt.toLocaleString()} sq ft`,
+            price: sqFt * (f.ratePerSqFt ?? 0),
+          })
+        }
+      }
+    }
+    return items
+  }, [config.fields, answers, routeData, drawAreaData])
+
   const handleRouteChange = useCallback((fieldId: string, result: RouteResult | null) => {
     setRouteData((prev) => ({ ...prev, [fieldId]: result }))
   }, [])
@@ -1051,7 +1181,10 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
     if (!isFieldStep || !currentField) return true
     const f = currentField
     if (f.type === 'route') {
-      if (currentRouteSubStep === 0) return !f.required || !!(routeCoords[f.id]?.start)
+      if (currentRouteSubStep === 0) {
+        if (f.locationMode === 'single') return !f.required || !!(routeCoords[f.id]?.end)
+        return !f.required || !!(routeCoords[f.id]?.start)
+      }
       if (currentRouteSubStep === 1) return !f.required || !!(routeCoords[f.id]?.end)
       return !f.required || !!routeData[f.id]
     }
@@ -1112,49 +1245,6 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
       return
     }
 
-    // Build line items for the quote email
-    const lineItems: Array<{ label: string; value: string; price: number }> = []
-    for (const f of config.fields) {
-      if (f.type === 'radio' || f.type === 'dropdown') {
-        const opt = f.options?.find((o) => o.id === answers[f.id])
-        if (opt) lineItems.push({ label: f.label, value: opt.label, price: opt.price })
-      } else if (f.type === 'checkbox') {
-        const selectedIds = (answers[f.id] as string[]) ?? []
-        for (const o of (f.options ?? []).filter((o) => selectedIds.includes(o.id))) {
-          lineItems.push({ label: f.label, value: o.label, price: o.price })
-        }
-      } else if (f.type === 'number') {
-        const val = Number(answers[f.id]) || 0
-        if (val > 0) lineItems.push({ label: f.label, value: String(val), price: val * (f.ratePerUnit ?? 0) })
-      } else if (f.type === 'textarea') {
-        const val = String(answers[f.id] ?? '').trim()
-        if (val) lineItems.push({ label: f.label, value: val, price: 0 })
-      } else if (f.type === 'route') {
-        const rd = routeData[f.id]
-        if (rd) {
-          let routePrice = 0
-          if (f.routeChargeType === 'mileage' || f.routeChargeType === 'both')
-            routePrice += rd.distanceMiles * (f.ratePerMile ?? 0)
-          if (f.routeChargeType === 'drivetime' || f.routeChargeType === 'both')
-            routePrice += rd.durationMinutes * (f.ratePerMinute ?? 0)
-          lineItems.push({
-            label: f.label,
-            value: `${rd.distanceMiles.toFixed(1)} mi — ${rd.startAddress} → ${rd.endAddress}`,
-            price: routePrice,
-          })
-        }
-      } else if (f.type === 'draw_area') {
-        const sqFt = drawAreaData[f.id]
-        if (sqFt != null) {
-          lineItems.push({
-            label: f.label,
-            value: `${sqFt.toLocaleString()} sq ft`,
-            price: sqFt * (f.ratePerSqFt ?? 0),
-          })
-        }
-      }
-    }
-
     fetch('/api/leads/send-quote-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1166,6 +1256,9 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
         total: displayTotal,
         minApplied,
         lineItems,
+        emailSubject: config.email_template?.subject || undefined,
+        emailIntro: config.email_template?.intro || undefined,
+        emailOutro: config.email_template?.outro || undefined,
       }),
     }).catch(() => { /* silently ignore email errors */ })
 
@@ -1318,7 +1411,10 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
                 )}
                 {currentField.type === 'route' && (
                   <p style={{ margin: '7px 0 0', fontSize: '0.82rem', color: '#64748b' }}>
-                    {currentRouteSubStep === 0 ? 'Enter your starting address' : currentRouteSubStep === 1 ? 'Now enter your destination' : 'Review and confirm your route'}
+                    {currentField.locationMode === 'single'
+                      ? (currentRouteSubStep === 0 ? 'Enter your service address' : 'Review your location')
+                      : (currentRouteSubStep === 0 ? 'Enter your starting address' : currentRouteSubStep === 1 ? 'Now enter your destination' : 'Review and confirm your route')
+                    }
                   </p>
                 )}
               </div>
@@ -1523,7 +1619,7 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
                   />
                   <button onClick={handleNext} disabled={!canAdvance()}
                     style={{ ...continueBtn, opacity: canAdvance() ? 1 : 0.35, cursor: canAdvance() ? 'pointer' : 'not-allowed' }}>
-                    {currentRouteSubStep < 2 ? 'Continue →' : 'Confirm Route →'}
+                    {currentRouteSubStep < 2 ? 'Continue →' : currentField.locationMode === 'single' ? 'Confirm Location →' : 'Confirm Route →'}
                   </button>
                 </>
               )}
@@ -1651,7 +1747,7 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
 
               {hasPricing && config.quote_display !== 'hidden' && (displayTotal > 0 || config.quote_display === 'after_submit') && (
                 <div style={{
-                  marginTop: 28, padding: '22px',
+                  marginTop: 28, padding: '20px 22px',
                   background: config.quote_display === 'after_submit'
                     ? `linear-gradient(135deg, ${accentBg}12, ${accentBg}08)`
                     : 'linear-gradient(135deg, #f8fafc, #f1f5f9)',
@@ -1659,18 +1755,59 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
                   border: config.quote_display === 'after_submit'
                     ? `1.5px solid ${accentBg}40`
                     : '1px solid #e2e8f0',
+                  textAlign: 'left',
                 }}>
-                  <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                     {config.quote_display === 'after_submit' ? 'Your Estimated Quote' : 'Estimated Total'}
                   </div>
-                  <div style={{ fontSize: '2.2rem', fontWeight: 800, color: '#0f172a' }}>
-                    {displayTotal > 0 ? `${currency}${displayTotal.toFixed(2)}` : 'Free'}
-                  </div>
-                  {minApplied && (
-                    <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: 5 }}>
-                      Minimum booking fee applies
+
+                  {/* Line-item breakdown */}
+                  {lineItems.length > 0 && (
+                    <div style={{ marginBottom: 14 }}>
+                      {lineItems.map((item, i) => (
+                        <div key={i} style={{
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+                          gap: 12, paddingTop: i === 0 ? 0 : 10, paddingBottom: 10,
+                          borderBottom: i < lineItems.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
+                        }}>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', lineHeight: 1.3 }}>
+                              {item.label}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: 2, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {item.value}
+                            </div>
+                          </div>
+                          {item.price > 0 && (
+                            <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0f172a', flexShrink: 0 }}>
+                              {currency}{item.price.toFixed(2)}
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
+
+                  {/* Total row */}
+                  <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    paddingTop: lineItems.length > 0 ? 12 : 0,
+                    borderTop: lineItems.length > 0 ? '2px solid rgba(0,0,0,0.08)' : 'none',
+                  }}>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Total
+                    </span>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>
+                        {displayTotal > 0 ? `${currency}${displayTotal.toFixed(2)}` : 'Free'}
+                      </div>
+                      {minApplied && (
+                        <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 4 }}>
+                          Minimum booking fee applies
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

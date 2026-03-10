@@ -43,6 +43,7 @@ export interface FormField {
   ratePerUnit?: number
   // Route field
   routeChargeType?: 'mileage' | 'drivetime' | 'both' | 'none'
+  locationMode?: 'point_to_point' | 'single'  // single = customer enters one address only
   ratePerMile?: number
   ratePerMinute?: number     // stored as per-minute; UI displays as per-hour
   baseAddress?: string       // optional fixed start location (business base)
@@ -64,6 +65,11 @@ export interface FormConfig {
   fields: FormField[]
   meta_pixel_id?: string
   min_quote?: number
+  email_template?: {
+    subject?: string
+    intro?: string
+    outro?: string
+  }
 }
 
 export interface HostedForm {

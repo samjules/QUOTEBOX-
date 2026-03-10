@@ -1,6 +1,14 @@
 import nodemailer from 'nodemailer'
 import { NextRequest, NextResponse } from 'next/server'
 
+function esc(s: string) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
 interface LineItem {
   label: string
   value: string
@@ -15,6 +23,9 @@ interface EmailPayload {
   total: number
   minApplied: boolean
   lineItems: LineItem[]
+  emailSubject?: string
+  emailIntro?: string
+  emailOutro?: string
 }
 
 function buildEmailHtml(p: EmailPayload): string {
@@ -73,9 +84,9 @@ function buildEmailHtml(p: EmailPayload): string {
           <tr>
             <td style="background:white;padding:32px 32px 28px;border-radius:0 0 14px 14px;">
 
-              <p style="margin:0 0 8px;font-size:15px;color:#64748b;">Hi ${p.customerName},</p>
+              <p style="margin:0 0 8px;font-size:15px;color:#64748b;">Hi ${esc(p.customerName)},</p>
               <p style="margin:0 0 28px;font-size:15px;color:#334155;line-height:1.6;">
-                Thank you for your enquiry with <strong>${p.formName}</strong>. Here&rsquo;s a summary of your quote.
+                ${p.emailIntro ? esc(p.emailIntro) : `Thank you for your enquiry with <strong>${esc(p.formName)}</strong>. Here&rsquo;s a summary of your quote.`}
               </p>
 
               ${showTotal ? `
@@ -101,7 +112,7 @@ function buildEmailHtml(p: EmailPayload): string {
               <div style="margin-top:4px;"></div>` : ''}
 
               <p style="margin:28px 0 0;font-size:14px;color:#64748b;line-height:1.6;">
-                We&rsquo;ll be in touch shortly to confirm your booking. If you have any questions in the meantime, just reply to this email.
+                ${p.emailOutro ? esc(p.emailOutro) : `We&rsquo;ll be in touch shortly to confirm your booking. If you have any questions in the meantime, just reply to this email.`}
               </p>
 
             </td>
@@ -157,7 +168,7 @@ export async function POST(request: NextRequest) {
     await transporter.sendMail({
       from: `"Quote.Box" <${gmailUser}>`,
       to: customerEmail,
-      subject: `Your quote from ${formName}`,
+      subject: payload.emailSubject || `Your quote from ${formName}`,
       html: buildEmailHtml(payload),
     })
   } catch (err) {
