@@ -1759,6 +1759,8 @@ export default function FormBuilderPage() {
   const [emailSubject, setEmailSubject] = useState('')
   const [emailIntro, setEmailIntro] = useState('')
   const [emailOutro, setEmailOutro] = useState('')
+  const [emailHeaderImage, setEmailHeaderImage] = useState('')
+  const [emailAccentColor, setEmailAccentColor] = useState('#1a1a2e')
 
   function showToast(
     msg: string,
@@ -1960,6 +1962,8 @@ export default function FormBuilderPage() {
     setEmailSubject(c.email_template?.subject ?? '')
     setEmailIntro(c.email_template?.intro ?? '')
     setEmailOutro(c.email_template?.outro ?? '')
+    setEmailHeaderImage(c.email_template?.header_image ?? '')
+    setEmailAccentColor(c.email_template?.accent_color ?? '#1a1a2e')
   }
 
   // ── Template apply ──
@@ -2278,13 +2282,13 @@ export default function FormBuilderPage() {
         ...(minQuote > 0 ? { min_quote: minQuote } : {}),
         disclaimer_enabled: disclaimerEnabled,
         disclaimer_text: disclaimerText,
-        ...(emailSubject || emailIntro || emailOutro ? {
-          email_template: {
-            ...(emailSubject ? { subject: emailSubject } : {}),
-            ...(emailIntro ? { intro: emailIntro } : {}),
-            ...(emailOutro ? { outro: emailOutro } : {}),
-          }
-        } : {}),
+        email_template: {
+          ...(emailSubject ? { subject: emailSubject } : {}),
+          ...(emailIntro ? { intro: emailIntro } : {}),
+          ...(emailOutro ? { outro: emailOutro } : {}),
+          ...(emailHeaderImage ? { header_image: emailHeaderImage } : {}),
+          ...(emailAccentColor && emailAccentColor !== '#1a1a2e' ? { accent_color: emailAccentColor } : {}),
+        },
       },
       is_active: true,
       updated_at: new Date().toISOString(),
@@ -2383,6 +2387,11 @@ export default function FormBuilderPage() {
   function toggleSection(key: string) {
     setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }))
   }
+
+  // ── Email preview derived values ──
+  const emailPreviewBg = emailAccentColor || '#1a1a2e'
+  const emailPreviewFg = isColorDark(emailPreviewBg) ? '#ffffff' : '#0f172a'
+  const emailPreviewTotalColor = isColorDark(emailPreviewBg) ? '#FFE500' : '#0f172a'
 
   return (
     // The protected layout provides the outer sidebar + flex container.
@@ -2857,45 +2866,72 @@ export default function FormBuilderPage() {
 
             {activeTab === 3 ? (
               /* ── Email editor ── */
-              <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 0 }}>
+              <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 0, overflowY: 'auto', maxHeight: '100%' }}>
                 {/* Mock email shell */}
                 <div style={{ background: '#f7f6f3', borderRadius: 14, overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.1)', fontFamily: "'Helvetica Neue',Helvetica,Arial,sans-serif" }}>
-                  {/* Email header */}
-                  <div style={{ background: '#1a1a2e', padding: '18px 24px' }}>
-                    <span style={{ fontFamily: 'Georgia,serif', fontSize: 15, fontWeight: 900, color: 'white' }}>
-                      Quote<span style={{ color: '#FFE500' }}>.</span>Box
-                    </span>
+
+                  {/* ── Email header (live preview) ── */}
+                  <div style={{ background: emailPreviewBg, position: 'relative', overflow: 'hidden' }}>
+                    {emailHeaderImage ? (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={emailHeaderImage} alt="" style={{ display: 'block', width: '100%', maxHeight: 110, objectFit: 'cover' }} />
+                        <div style={{ position: 'absolute', top: 6, right: 6, display: 'flex', gap: 5 }}>
+                          <button type="button" onClick={() => { loadHeroMedia(); setMediaPickerTarget('email-header') }}
+                            style={{ background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: 5, padding: '3px 8px', color: 'white', fontSize: '0.65rem', cursor: 'pointer' }}>
+                            Change
+                          </button>
+                          <button type="button" onClick={() => setEmailHeaderImage('')}
+                            style={{ background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: 5, padding: '3px 8px', color: 'white', fontSize: '0.65rem', cursor: 'pointer' }}>
+                            ✕
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <button type="button" onClick={() => { loadHeroMedia(); setMediaPickerTarget('email-header') }}
+                        style={{ display: 'block', width: '100%', padding: '10px', textAlign: 'center', background: 'rgba(255,255,255,0.08)', border: '1.5px dashed rgba(255,255,255,0.3)', borderRadius: 0, cursor: 'pointer', color: emailPreviewFg + '99', fontSize: '0.72rem', fontWeight: 600 }}>
+                        + Add header image / logo
+                      </button>
+                    )}
+
+                    {/* Logo row + color picker */}
+                    <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontFamily: 'Georgia,serif', fontSize: 15, fontWeight: 900, color: emailPreviewFg }}>
+                        Quote<span style={{ color: emailPreviewTotalColor }}>.</span>Box
+                      </span>
+                      <label style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }} title="Header color">
+                        <span style={{ width: 20, height: 20, borderRadius: '50%', background: emailPreviewBg, border: '2px solid rgba(255,255,255,0.45)', display: 'inline-block', boxShadow: '0 0 0 1px rgba(0,0,0,0.2)' }} />
+                        <span style={{ fontSize: '0.7rem', color: emailPreviewFg + 'cc', fontWeight: 600 }}>Color</span>
+                        <input type="color" value={emailPreviewBg} onChange={(e) => setEmailAccentColor(e.target.value)}
+                          style={{ position: 'absolute', opacity: 0, inset: 0, width: '100%', height: '100%', cursor: 'pointer' }} />
+                      </label>
+                    </div>
                   </div>
-                  <div style={{ background: '#FFE500', height: 3 }} />
+                  <div style={{ background: emailPreviewBg, height: 3, opacity: 0.7 }} />
 
                   {/* Body */}
-                  <div style={{ background: 'white', padding: '22px 24px 18px' }}>
+                  <div style={{ background: 'white', padding: '18px 20px 14px' }}>
                     <p style={{ margin: '0 0 6px', fontSize: 12, color: '#64748b' }}>Hi [Customer Name],</p>
 
-                    {/* Editable intro */}
-                    <div style={{ marginBottom: 14 }}>
-                      <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Intro text</div>
-                      <textarea
-                        rows={3}
-                        value={emailIntro}
-                        onChange={(e) => setEmailIntro(e.target.value)}
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Intro text</div>
+                      <textarea rows={2} value={emailIntro} onChange={(e) => setEmailIntro(e.target.value)}
                         placeholder={`Thank you for your enquiry with ${formName || 'our team'}. Here's a summary of your quote.`}
-                        style={{ width: '100%', fontSize: 12, padding: '8px 10px', borderRadius: 7, border: '1.5px solid #e2e8f0', resize: 'vertical', fontFamily: 'inherit', color: '#334155', outline: 'none', boxSizing: 'border-box', lineHeight: 1.5 }}
-                      />
+                        style={{ width: '100%', fontSize: 11, padding: '7px 9px', borderRadius: 6, border: '1.5px solid #e2e8f0', resize: 'vertical', fontFamily: 'inherit', color: '#334155', outline: 'none', boxSizing: 'border-box', lineHeight: 1.5 }} />
                     </div>
 
-                    {/* Fixed total block mockup */}
-                    <div style={{ background: '#1a1a2e', borderRadius: 10, padding: '14px', textAlign: 'center', marginBottom: 14 }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginBottom: 4 }}>Estimated Total</div>
-                      <div style={{ fontSize: 28, fontWeight: 900, color: '#FFE500', lineHeight: 1 }}>$0.00</div>
-                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 5 }}>This is an estimate — final price confirmed on booking</div>
+                    {/* Live total block */}
+                    <div style={{ background: emailPreviewBg, borderRadius: 8, padding: '12px', textAlign: 'center', marginBottom: 12 }}>
+                      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: isColorDark(emailPreviewBg) ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)', marginBottom: 3 }}>Estimated Total</div>
+                      <div style={{ fontSize: 24, fontWeight: 900, color: emailPreviewTotalColor, lineHeight: 1 }}>$0.00</div>
+                      <div style={{ fontSize: 9, color: isColorDark(emailPreviewBg) ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)', marginTop: 4 }}>Estimate — final price confirmed on booking</div>
                     </div>
 
                     {/* Line items mock */}
-                    <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 8, marginBottom: 14 }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 6 }}>Your selections</div>
+                    <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 6, marginBottom: 12 }}>
+                      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 5 }}>Your selections</div>
                       {[{ label: 'Service Type', value: 'Standard Package', price: '$99.00' }, { label: 'Add-ons', value: 'Rush delivery', price: '$50.00' }].map((item, i) => (
-                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f8fafc', fontSize: 11 }}>
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: '1px solid #f8fafc', fontSize: 10 }}>
                           <div>
                             <div style={{ fontWeight: 600, color: '#334155' }}>{item.label}</div>
                             <div style={{ color: '#64748b', marginTop: 1 }}>{item.value}</div>
@@ -2905,38 +2941,32 @@ export default function FormBuilderPage() {
                       ))}
                     </div>
 
-                    {/* Editable outro */}
-                    <div style={{ marginBottom: 8 }}>
-                      <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Follow-up text</div>
-                      <textarea
-                        rows={2}
-                        value={emailOutro}
-                        onChange={(e) => setEmailOutro(e.target.value)}
+                    <div style={{ marginBottom: 6 }}>
+                      <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Follow-up text</div>
+                      <textarea rows={2} value={emailOutro} onChange={(e) => setEmailOutro(e.target.value)}
                         placeholder="We'll be in touch shortly to confirm your booking. If you have any questions in the meantime, just reply to this email."
-                        style={{ width: '100%', fontSize: 12, padding: '8px 10px', borderRadius: 7, border: '1.5px solid #e2e8f0', resize: 'vertical', fontFamily: 'inherit', color: '#334155', outline: 'none', boxSizing: 'border-box', lineHeight: 1.5 }}
-                      />
+                        style={{ width: '100%', fontSize: 11, padding: '7px 9px', borderRadius: 6, border: '1.5px solid #e2e8f0', resize: 'vertical', fontFamily: 'inherit', color: '#334155', outline: 'none', boxSizing: 'border-box', lineHeight: 1.5 }} />
                     </div>
                   </div>
 
-                  {/* Footer */}
-                  <div style={{ background: '#f7f6f3', padding: '10px 24px', textAlign: 'center' }}>
-                    <span style={{ fontSize: 10, color: '#94a3b8' }}>Sent via Quote.Box · Automated quote summary</span>
+                  <div style={{ background: '#f7f6f3', padding: '8px 20px', textAlign: 'center' }}>
+                    <span style={{ fontSize: 9, color: '#94a3b8' }}>Sent via Quote.Box · Automated quote summary</span>
                   </div>
                 </div>
 
-                {/* Subject line editor — below the mock */}
-                <div style={{ marginTop: 16, background: 'var(--surface)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--border)' }}>
+                {/* Subject line editor */}
+                <div style={{ marginTop: 14, background: 'var(--surface)', borderRadius: 10, padding: '12px 14px', border: '1px solid var(--border)' }}>
                   <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Email subject line</div>
-                  <input
-                    type="text"
-                    value={emailSubject}
-                    onChange={(e) => setEmailSubject(e.target.value)}
+                  <input type="text" value={emailSubject} onChange={(e) => setEmailSubject(e.target.value)}
                     placeholder={`Your quote from ${formName || 'our team'}`}
-                    style={{ width: '100%', fontSize: '0.85rem', padding: '8px 10px', borderRadius: 7, border: '1.5px solid var(--border)', fontFamily: 'inherit', color: 'var(--fg)', outline: 'none', boxSizing: 'border-box', background: 'var(--surface2)' }}
-                  />
+                    style={{ width: '100%', fontSize: '0.85rem', padding: '8px 10px', borderRadius: 7, border: '1.5px solid var(--border)', fontFamily: 'inherit', color: 'var(--fg)', outline: 'none', boxSizing: 'border-box', background: 'var(--surface2)' }} />
                   <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginTop: 5 }}>
-                    Leave blank to use default: &ldquo;Your quote from {formName || '[form name]'}&rdquo;
+                    Leave blank for default: &ldquo;Your quote from {formName || '[form name]'}&rdquo;
                   </div>
+                </div>
+
+                <div style={{ marginTop: 10, padding: '8px 12px', background: '#f0fdf4', borderRadius: 8, border: '1px solid #bbf7d0', fontSize: '0.72rem', color: '#166534' }}>
+                  Click <strong>Save</strong> (top right) to apply changes to this form&apos;s email.
                 </div>
               </div>
             ) : (
@@ -3035,6 +3065,8 @@ export default function FormBuilderPage() {
                       onClick={() => {
                         if (mediaPickerTarget === 'hero') {
                           setHeroImageUrl(f.file_url)
+                        } else if (mediaPickerTarget === 'email-header') {
+                          setEmailHeaderImage(f.file_url)
                         } else if (mediaPickerTarget) {
                           setProp(mediaPickerTarget, 'imageUrl', f.file_url)
                         }

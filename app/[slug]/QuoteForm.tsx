@@ -1259,6 +1259,8 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
         emailSubject: config.email_template?.subject || undefined,
         emailIntro: config.email_template?.intro || undefined,
         emailOutro: config.email_template?.outro || undefined,
+        emailHeaderImage: config.email_template?.header_image || undefined,
+        emailAccentColor: config.email_template?.accent_color || undefined,
       }),
     }).catch(() => { /* silently ignore email errors */ })
 

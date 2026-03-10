@@ -69,6 +69,8 @@ export interface FormConfig {
     subject?: string
     intro?: string
     outro?: string
+    header_image?: string
+    accent_color?: string
   }
 }
 

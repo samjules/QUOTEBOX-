@@ -26,19 +26,33 @@ interface EmailPayload {
   emailSubject?: string
   emailIntro?: string
   emailOutro?: string
+  emailHeaderImage?: string
+  emailAccentColor?: string
+}
+
+function isHexDark(hex: string): boolean {
+  const h = hex.replace('#', '')
+  if (h.length < 6) return true
+  const r = parseInt(h.slice(0, 2), 16)
+  const g = parseInt(h.slice(2, 4), 16)
+  const b = parseInt(h.slice(4, 6), 16)
+  return (r * 299 + g * 587 + b * 114) / 1000 < 140
 }
 
 function buildEmailHtml(p: EmailPayload): string {
   const showTotal = p.total > 0
   const hasLineItems = p.lineItems.length > 0
+  const headerBg = p.emailAccentColor || '#1a1a2e'
+  const headerFg = isHexDark(headerBg) ? '#ffffff' : '#0f172a'
+  const totalNumColor = isHexDark(headerBg) ? '#FFE500' : '#0f172a'
 
   const lineItemRows = p.lineItems
     .map(
       (item) => `
       <tr>
         <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;vertical-align:top;">
-          <div style="font-size:13px;font-weight:600;color:#334155;">${item.label}</div>
-          <div style="font-size:13px;color:#64748b;margin-top:2px;">${item.value}</div>
+          <div style="font-size:13px;font-weight:600;color:#334155;">${esc(item.label)}</div>
+          <div style="font-size:13px;color:#64748b;margin-top:2px;">${esc(item.value)}</div>
         </td>
         <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;text-align:right;vertical-align:top;white-space:nowrap;">
           ${item.price > 0 ? `<span style="font-size:13px;font-weight:700;color:#1e293b;">${p.currency}${item.price.toFixed(2)}</span>` : '<span style="font-size:13px;color:#94a3b8;">—</span>'}
@@ -52,7 +66,7 @@ function buildEmailHtml(p: EmailPayload): string {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Your quote from ${p.formName}</title>
+  <title>Your quote from ${esc(p.formName)}</title>
 </head>
 <body style="margin:0;padding:0;background:#f7f6f3;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f7f6f3;padding:32px 16px;">
@@ -62,22 +76,19 @@ function buildEmailHtml(p: EmailPayload): string {
 
           <!-- Header -->
           <tr>
-            <td style="background:#1a1a2e;border-radius:14px 14px 0 0;padding:24px 32px;">
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td>
-                    <span style="font-family:Georgia,serif;font-size:18px;font-weight:900;color:white;letter-spacing:0.02em;">
-                      Quote<span style="color:#FFE500;">.</span>Box
-                    </span>
-                  </td>
-                </tr>
-              </table>
+            <td style="background:${headerBg};border-radius:14px 14px 0 0;padding:0;overflow:hidden;">
+              ${p.emailHeaderImage ? `<img src="${p.emailHeaderImage}" alt="" width="520" style="display:block;width:100%;max-height:160px;object-fit:cover;" />` : ''}
+              <div style="padding:20px 28px;">
+                <span style="font-family:Georgia,serif;font-size:18px;font-weight:900;color:${headerFg};letter-spacing:0.02em;">
+                  Quote<span style="color:${totalNumColor};">.</span>Box
+                </span>
+              </div>
             </td>
           </tr>
 
-          <!-- Yellow accent strip -->
+          <!-- Accent strip -->
           <tr>
-            <td style="background:#FFE500;height:4px;font-size:0;line-height:0;">&nbsp;</td>
+            <td style="background:${headerBg};opacity:0.7;height:3px;font-size:0;line-height:0;">&nbsp;</td>
           </tr>
 
           <!-- Body -->
@@ -91,14 +102,14 @@ function buildEmailHtml(p: EmailPayload): string {
 
               ${showTotal ? `
               <!-- Total box -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="background:#1a1a2e;border-radius:12px;margin-bottom:28px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:${headerBg};border-radius:12px;margin-bottom:28px;">
                 <tr>
                   <td style="padding:24px;text-align:center;">
-                    <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:8px;">
+                    <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${headerFg === '#ffffff' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'};margin-bottom:8px;">
                       ${p.minApplied ? 'Minimum Quote (estimate)' : 'Estimated Total'}
                     </div>
-                    <div style="font-size:42px;font-weight:900;color:#FFE500;line-height:1;">${p.currency}${p.total.toFixed(2)}</div>
-                    <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:8px;">This is an estimate — final price confirmed on booking</div>
+                    <div style="font-size:42px;font-weight:900;color:${totalNumColor};line-height:1;">${p.currency}${p.total.toFixed(2)}</div>
+                    <div style="font-size:12px;color:${headerFg === '#ffffff' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)'};margin-top:8px;">This is an estimate — final price confirmed on booking</div>
                   </td>
                 </tr>
               </table>` : ''}
