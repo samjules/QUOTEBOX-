@@ -74,6 +74,34 @@ async function getDirections(
   }
 }
 
+interface LegInfo { distanceMiles: number; durationMinutes: number }
+
+async function getWaypointRoute(
+  coords: [number, number][]
+): Promise<{ legs: LegInfo[]; totalMiles: number; totalMinutes: number; geometry: RouteGeometry } | null> {
+  const waypoints = coords.map((c) => `${c[0]},${c[1]}`).join(';')
+  const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${waypoints}?steps=false&geometries=geojson&overview=full&access_token=${MAPBOX_TOKEN}`
+  try {
+    const res = await fetch(url)
+    const data = await res.json()
+    const route = data.routes?.[0]
+    if (!route) return null
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const legs: LegInfo[] = route.legs.map((leg: any) => ({
+      distanceMiles: leg.distance / 1609.344,
+      durationMinutes: leg.duration / 60,
+    }))
+    return {
+      legs,
+      totalMiles: route.distance / 1609.344,
+      totalMinutes: route.duration / 60,
+      geometry: route.geometry,
+    }
+  } catch {
+    return null
+  }
+}
+
 // ── Pricing ────────────────────────────────────────────────────
 // Returns the conditional rate if ALL conditions in a rule match (AND logic).
 // First fully-matching rule wins.
@@ -490,6 +518,8 @@ function RouteField({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const baseMarkerRef = useRef<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const startMarkerRef = useRef<any>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const endMarkerRef = useRef<any>(null)
@@ -502,12 +532,14 @@ function RouteField({
 
   const [mapLoaded, setMapLoaded] = useState(false)
   const [mapError, setMapError] = useState(false)
-  const [startQuery, setStartQuery] = useState(field.baseAddress ?? '')
+  const [baseCoords, setBaseCoords] = useState<[number, number] | null>(null)
+  const [startQuery, setStartQuery] = useState('')
   const [startSuggestions, setStartSuggestions] = useState<GeocodeSuggestion[]>([])
   const [startCoords, setStartCoords] = useState<[number, number] | null>(null)
   const [endQuery, setEndQuery] = useState('')
   const [endSuggestions, setEndSuggestions] = useState<GeocodeSuggestion[]>([])
   const [endCoords, setEndCoords] = useState<[number, number] | null>(null)
+  const [legInfos, setLegInfos] = useState<LegInfo[] | null>(null)
   const [routeInfo, setRouteInfo] = useState<{ distanceMiles: number; durationMinutes: number } | null>(null)
   const [routeGeometry, setRouteGeometry] = useState<RouteGeometry | null>(null)
   const [isLoadingRoute, setIsLoadingRoute] = useState(false)
@@ -523,14 +555,11 @@ function RouteField({
     }
   }, [subStep, mapLoaded])
 
-  // Auto-geocode base address on mount
+  // Auto-geocode base address into baseCoords (separate from customer start)
   useEffect(() => {
-    if (!field.baseAddress) return
+    if (!field.baseAddress) { setBaseCoords(null); return }
     geocode(field.baseAddress).then((results) => {
-      if (results[0]) {
-        setStartCoords(results[0].center)
-        onStartCoordsChangeRef.current(results[0].center)
-      }
+      if (results[0]) setBaseCoords(results[0].center)
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [field.baseAddress])
@@ -553,31 +582,50 @@ function RouteField({
     return () => clearTimeout(timer)
   }, [endQuery, endCoords])
 
-  // Fetch directions when both coords set
+  // Fetch directions when coords ready
   useEffect(() => {
     if (!startCoords || !endCoords) {
-      setRouteInfo(null)
-      setRouteGeometry(null)
+      setRouteInfo(null); setRouteGeometry(null); setLegInfos(null)
       onRouteChangeRef.current(null)
       return
     }
     setIsLoadingRoute(true)
-    getDirections(startCoords, endCoords).then((result) => {
-      setIsLoadingRoute(false)
-      if (!result) return
-      setRouteInfo({ distanceMiles: result.distanceMiles, durationMinutes: result.durationMinutes })
-      setRouteGeometry(result.geometry)
-      onRouteChangeRef.current({
-        startAddress: startQuery,
-        startCoords: startCoords!,
-        endAddress: endQuery,
-        endCoords: endCoords!,
-        distanceMiles: result.distanceMiles,
-        durationMinutes: result.durationMinutes,
+    if (field.baseAddress && baseCoords) {
+      // Multi-leg route: base → start → end → base
+      getWaypointRoute([baseCoords, startCoords, endCoords, baseCoords]).then((result) => {
+        setIsLoadingRoute(false)
+        if (!result) return
+        setRouteInfo({ distanceMiles: result.totalMiles, durationMinutes: result.totalMinutes })
+        setRouteGeometry(result.geometry)
+        setLegInfos(result.legs)
+        onRouteChangeRef.current({
+          startAddress: startQuery,
+          startCoords: startCoords!,
+          endAddress: endQuery,
+          endCoords: endCoords!,
+          distanceMiles: result.totalMiles,
+          durationMinutes: result.totalMinutes,
+        })
       })
-    })
+    } else {
+      getDirections(startCoords, endCoords).then((result) => {
+        setIsLoadingRoute(false)
+        if (!result) return
+        setRouteInfo({ distanceMiles: result.distanceMiles, durationMinutes: result.durationMinutes })
+        setRouteGeometry(result.geometry)
+        setLegInfos(null)
+        onRouteChangeRef.current({
+          startAddress: startQuery,
+          startCoords: startCoords!,
+          endAddress: endQuery,
+          endCoords: endCoords!,
+          distanceMiles: result.distanceMiles,
+          durationMinutes: result.durationMinutes,
+        })
+      })
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startCoords, endCoords])
+  }, [startCoords, endCoords, baseCoords])
 
   // Init map — always mounts so the ref stays stable across sub-steps
   useEffect(() => {
@@ -621,10 +669,18 @@ function RouteField({
     import('mapbox-gl').then((mod) => {
       const mapboxgl = mod.default
 
+      baseMarkerRef.current?.remove()
       startMarkerRef.current?.remove()
       endMarkerRef.current?.remove()
+      baseMarkerRef.current = null
       startMarkerRef.current = null
       endMarkerRef.current = null
+
+      if (baseCoords) {
+        const el = document.createElement('div')
+        el.style.cssText = 'width:14px;height:14px;border-radius:50%;background:#6366f1;border:2.5px solid white;box-shadow:0 1px 5px rgba(0,0,0,0.35)'
+        baseMarkerRef.current = new mapboxgl.Marker({ element: el }).setLngLat(baseCoords).addTo(map)
+      }
 
       if (startCoords) {
         const el = document.createElement('div')
@@ -665,14 +721,17 @@ function RouteField({
         map.fitBounds(bounds, { padding: 52, maxZoom: 14 })
       } else if (startCoords && endCoords) {
         const bounds = new mapboxgl.LngLatBounds()
+        if (baseCoords) bounds.extend(baseCoords)
         bounds.extend(startCoords)
         bounds.extend(endCoords)
         map.fitBounds(bounds, { padding: 60 })
       } else if (startCoords) {
         map.flyTo({ center: startCoords, zoom: 11 })
+      } else if (baseCoords) {
+        map.flyTo({ center: baseCoords, zoom: 11 })
       }
     })
-  }, [mapLoaded, startCoords, endCoords, routeGeometry, accentColor])
+  }, [mapLoaded, baseCoords, startCoords, endCoords, routeGeometry, accentColor])
 
   const priceContribution = routeInfo
     ? (() => {
@@ -688,24 +747,53 @@ function RouteField({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-      {/* ── Sub-step 0: Starting location (only when no base address) ── */}
-      {subStep === 0 && !field.baseAddress && (
-        <AddressInput
-          placeholder="e.g. 123 Main St, Chicago, IL"
-          dotColor="#22c55e"
-          query={startQuery}
-          setQuery={setStartQuery}
-          coords={startCoords}
-          setCoords={setStartCoords}
-          suggestions={startSuggestions}
-          setSuggestions={setStartSuggestions}
-        />
+      {/* ── Sub-step 0: Starting location ── */}
+      {subStep === 0 && (
+        <>
+          {field.baseAddress && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '8px 13px', borderRadius: 10,
+              background: '#ede9fe', border: '1.5px solid #c4b5fd',
+              fontSize: '0.78rem', color: '#5b21b6',
+            }}>
+              <span style={{ fontSize: 9, color: '#6366f1', lineHeight: 1 }}>●</span>
+              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {field.baseAddress}
+              </span>
+              <span style={{ fontSize: '0.7rem', opacity: 0.65, flexShrink: 0 }}>Base</span>
+            </div>
+          )}
+          <AddressInput
+            placeholder="e.g. 123 Main St, Chicago, IL"
+            dotColor="#22c55e"
+            query={startQuery}
+            setQuery={setStartQuery}
+            coords={startCoords}
+            setCoords={setStartCoords}
+            suggestions={startSuggestions}
+            setSuggestions={setStartSuggestions}
+          />
+        </>
       )}
 
       {/* ── Sub-step 1: Destination ── */}
       {subStep === 1 && (
         <>
-          {/* Start address context pill */}
+          {field.baseAddress && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '8px 13px', borderRadius: 10,
+              background: '#ede9fe', border: '1.5px solid #c4b5fd',
+              fontSize: '0.78rem', color: '#5b21b6',
+            }}>
+              <span style={{ fontSize: 9, color: '#6366f1', lineHeight: 1 }}>●</span>
+              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {field.baseAddress}
+              </span>
+              <span style={{ fontSize: '0.7rem', opacity: 0.65, flexShrink: 0 }}>Base</span>
+            </div>
+          )}
           {startQuery && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: 8,
@@ -717,9 +805,7 @@ function RouteField({
               <span style={{ fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {startQuery}
               </span>
-              <span style={{ fontSize: '0.72rem', opacity: 0.6, flexShrink: 0 }}>
-                {field.baseAddress ? 'Base' : 'Start'}
-              </span>
+              <span style={{ fontSize: '0.72rem', opacity: 0.6, flexShrink: 0 }}>Start</span>
             </div>
           )}
           <AddressInput
@@ -739,7 +825,20 @@ function RouteField({
       {subStep === 2 && (
         <>
           {/* Address summary */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {field.baseAddress && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px',
+                background: '#ede9fe', border: '1.5px solid #c4b5fd', borderRadius: 10,
+                fontSize: '0.78rem', color: '#5b21b6',
+              }}>
+                <span style={{ fontSize: 9, color: '#6366f1', lineHeight: 1 }}>●</span>
+                <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }}>
+                  {field.baseAddress}
+                </span>
+                <span style={{ fontSize: '0.7rem', opacity: 0.65, flexShrink: 0 }}>Base</span>
+              </div>
+            )}
             <div style={{
               display: 'flex', alignItems: 'center', gap: 8, padding: '9px 13px',
               background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: 10,
@@ -747,11 +846,8 @@ function RouteField({
             }}>
               <span style={{ fontSize: 9, color: '#22c55e', lineHeight: 1 }}>●</span>
               <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }}>
-                {startQuery || 'Starting location'}
+                {startQuery || 'Start'}
               </span>
-              {field.baseAddress && (
-                <span style={{ fontSize: '0.72rem', opacity: 0.6, flexShrink: 0 }}>Base</span>
-              )}
             </div>
             <div style={{
               display: 'flex', alignItems: 'center', gap: 8, padding: '9px 13px',
@@ -760,29 +856,65 @@ function RouteField({
             }}>
               <span style={{ fontSize: 9, color: '#ef4444', lineHeight: 1 }}>●</span>
               <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }}>
-                {endQuery || 'Destination'}
+                {endQuery || 'End'}
               </span>
             </div>
           </div>
 
-          {/* Route info strip (shown once calculated) */}
+          {/* Route info — per-leg breakdown when base is set, otherwise single leg */}
           {routeInfo && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 14, padding: '9px 14px',
-              background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0', flexWrap: 'wrap',
-            }}>
-              <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>
-                📍 {routeInfo.distanceMiles.toFixed(1)} mi
-              </span>
-              <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>
-                ⏱ {Math.round(routeInfo.durationMinutes)} min
-              </span>
-              {field.routeChargeType !== 'none' && priceContribution > 0 && (
-                <span style={{ marginLeft: 'auto', fontSize: '0.88rem', color: '#059669', fontWeight: 700 }}>
-                  +{currency}{priceContribution.toFixed(2)}
+            legInfos && field.baseAddress ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {[
+                  { label: 'Base → Start', leg: legInfos[0] },
+                  { label: 'Start → End', leg: legInfos[1] },
+                  { label: 'End → Base', leg: legInfos[2] },
+                ].map(({ label, leg }) => leg && (
+                  <div key={label} style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '7px 12px', background: '#f8fafc', borderRadius: 7,
+                    border: '1px solid #e2e8f0', fontSize: '0.8rem',
+                  }}>
+                    <span style={{ color: '#64748b', fontWeight: 500 }}>{label}</span>
+                    <span style={{ color: '#334155', fontWeight: 600 }}>
+                      {leg.distanceMiles.toFixed(1)} mi · {Math.round(leg.durationMinutes)} min
+                    </span>
+                  </div>
+                ))}
+                <div style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '8px 12px', background: '#f1f5f9', borderRadius: 7,
+                  border: '1px solid #cbd5e1', fontSize: '0.82rem',
+                }}>
+                  <span style={{ color: '#475569', fontWeight: 700 }}>Total (round trip)</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ color: '#334155', fontWeight: 700 }}>
+                      {routeInfo.distanceMiles.toFixed(1)} mi · {Math.round(routeInfo.durationMinutes)} min
+                    </span>
+                    {field.routeChargeType !== 'none' && priceContribution > 0 && (
+                      <span style={{ color: '#059669', fontWeight: 700 }}>+{currency}{priceContribution.toFixed(2)}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 14, padding: '9px 14px',
+                background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0', flexWrap: 'wrap',
+              }}>
+                <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>
+                  📍 {routeInfo.distanceMiles.toFixed(1)} mi
                 </span>
-              )}
-            </div>
+                <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>
+                  ⏱ {Math.round(routeInfo.durationMinutes)} min
+                </span>
+                {field.routeChargeType !== 'none' && priceContribution > 0 && (
+                  <span style={{ marginLeft: 'auto', fontSize: '0.88rem', color: '#059669', fontWeight: 700 }}>
+                    +{currency}{priceContribution.toFixed(2)}
+                  </span>
+                )}
+              </div>
+            )
           )}
         </>
       )}
@@ -818,6 +950,16 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
   const config = form.form_config
   const supabase = createClient()
 
+  // Fire-and-forget page view tracking
+  useEffect(() => {
+    fetch('/api/track-visit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hosted_form_id: form.id, account_id: form.account_id }),
+    }).catch(() => {/* silently ignore */})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const legacyColorMap: Record<string, string> = { yellow: '#FFE500', blue: '#1A56FF' }
   const accentBg = legacyColorMap[config.brand_color] ?? config.brand_color ?? '#FFE500'
   const isDark = isColorDark(accentBg)
@@ -837,7 +979,7 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
     const result: ExpandedStep[] = []
     for (const field of fields) {
       if (field.type === 'route') {
-        if (!field.baseAddress) result.push({ field, routeSubStep: 0 })
+        result.push({ field, routeSubStep: 0 })
         result.push({ field, routeSubStep: 1 })
         result.push({ field, routeSubStep: 2 })
       } else {
