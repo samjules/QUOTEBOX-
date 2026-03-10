@@ -712,18 +712,10 @@ function RouteField({
     import('mapbox-gl').then((mod) => {
       const mapboxgl = mod.default
 
-      baseMarkerRef.current?.remove()
       startMarkerRef.current?.remove()
       endMarkerRef.current?.remove()
-      baseMarkerRef.current = null
       startMarkerRef.current = null
       endMarkerRef.current = null
-
-      if (baseCoords) {
-        const el = document.createElement('div')
-        el.style.cssText = 'width:14px;height:14px;border-radius:50%;background:#6366f1;border:2.5px solid white;box-shadow:0 1px 5px rgba(0,0,0,0.35)'
-        baseMarkerRef.current = new mapboxgl.Marker({ element: el }).setLngLat(baseCoords).addTo(map)
-      }
 
       if (startCoords) {
         const el = document.createElement('div')
@@ -793,20 +785,6 @@ function RouteField({
       {/* ── Sub-step 0: Starting location ── */}
       {subStep === 0 && (
         <>
-          {field.baseAddress && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '8px 13px', borderRadius: 10,
-              background: '#ede9fe', border: '1.5px solid #c4b5fd',
-              fontSize: '0.78rem', color: '#5b21b6',
-            }}>
-              <span style={{ fontSize: 9, color: '#6366f1', lineHeight: 1 }}>●</span>
-              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {field.baseAddress}
-              </span>
-              <span style={{ fontSize: '0.7rem', opacity: 0.65, flexShrink: 0 }}>Base</span>
-            </div>
-          )}
           <AddressInput
             placeholder="e.g. 123 Main St, Chicago, IL"
             dotColor="#22c55e"
@@ -823,20 +801,6 @@ function RouteField({
       {/* ── Sub-step 1: Destination ── */}
       {subStep === 1 && (
         <>
-          {field.baseAddress && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '8px 13px', borderRadius: 10,
-              background: '#ede9fe', border: '1.5px solid #c4b5fd',
-              fontSize: '0.78rem', color: '#5b21b6',
-            }}>
-              <span style={{ fontSize: 9, color: '#6366f1', lineHeight: 1 }}>●</span>
-              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {field.baseAddress}
-              </span>
-              <span style={{ fontSize: '0.7rem', opacity: 0.65, flexShrink: 0 }}>Base</span>
-            </div>
-          )}
           {startQuery && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: 8,
@@ -867,57 +831,73 @@ function RouteField({
       {/* ── Sub-step 2: Map view ── */}
       {subStep === 2 && (
         <>
-          {/* Route timeline — visual chain with distances on connectors */}
-          {legInfos && field.baseAddress ? (
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {/* Route summary */}
+          {legInfos && field.baseAddress ? (() => {
+            const travelMiles = (legInfos[0]?.distanceMiles ?? 0) + (legInfos[2]?.distanceMiles ?? 0)
+            const travelMins  = (legInfos[0]?.durationMinutes ?? 0) + (legInfos[2]?.durationMinutes ?? 0)
+            const jobLeg      = legInfos[1]
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                {/* Start / End pills */}
+                <RouteStop dotColor="#22c55e" bg="#f0fdf4" border="#bbf7d0" textColor="#166534"
+                  label={startQuery || 'Start'} tag="" />
+                <RouteLeg leg={jobLeg} isTravel={false} />
+                <RouteStop dotColor="#ef4444" bg="#fef2f2" border="#fecaca" textColor="#991b1b"
+                  label={endQuery || 'End'} tag="" />
 
-              {/* Stop: Base */}
-              <RouteStop dotColor="#6366f1" bg="#ede9fe" border="#c4b5fd" textColor="#5b21b6"
-                label={field.baseAddress} tag="Base" />
-
-              {/* Leg 1: Base → Start (travel) */}
-              <RouteLeg leg={legInfos[0]} isTravel />
-
-              {/* Stop: Start */}
-              <RouteStop dotColor="#22c55e" bg="#f0fdf4" border="#bbf7d0" textColor="#166534"
-                label={startQuery || 'Start'} tag="Start" />
-
-              {/* Leg 2: Start → End (job) */}
-              <RouteLeg leg={legInfos[1]} isTravel={false} />
-
-              {/* Stop: End */}
-              <RouteStop dotColor="#ef4444" bg="#fef2f2" border="#fecaca" textColor="#991b1b"
-                label={endQuery || 'End'} tag="End" />
-
-              {/* Leg 3: End → Base (return) */}
-              <RouteLeg leg={legInfos[2]} isTravel />
-
-              {/* Stop: Base (return) */}
-              <RouteStop dotColor="#6366f1" bg="#ede9fe" border="#c4b5fd" textColor="#5b21b6"
-                label={field.baseAddress} tag="Return" />
-
-              {/* Total row */}
-              {routeInfo && (
-                <div style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  marginTop: 8, padding: '8px 12px',
-                  background: '#f1f5f9', borderRadius: 8, border: '1px solid #cbd5e1',
-                }}>
-                  <span style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 700 }}>Total (round trip)</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: '0.82rem', color: '#334155', fontWeight: 700 }}>
-                      {routeInfo.distanceMiles.toFixed(1)} mi · {Math.round(routeInfo.durationMinutes)} min
-                    </span>
-                    {field.routeChargeType !== 'none' && priceContribution > 0 && (
-                      <span style={{ fontSize: '0.85rem', color: '#059669', fontWeight: 700 }}>
-                        +{currency}{priceContribution.toFixed(2)}
-                      </span>
-                    )}
+                {/* Travel fee callout */}
+                {travelMiles > 0 && (
+                  <div style={{
+                    display: 'flex', alignItems: 'flex-start', gap: 9, marginTop: 4,
+                    padding: '9px 12px', borderRadius: 9,
+                    background: '#fefce8', border: '1.5px solid #fde68a',
+                  }}>
+                    <span style={{ fontSize: '1rem', lineHeight: 1.2, flexShrink: 0 }}>🚗</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#78350f' }}>
+                        Travel fee included
+                      </div>
+                      <div style={{ fontSize: '0.73rem', color: '#92400e', marginTop: 2, lineHeight: 1.4 }}>
+                        {travelMiles.toFixed(1)} mi · {Math.round(travelMins)} min driving to and from your location
+                      </div>
+                    </div>
+                    {field.routeChargeType !== 'none' && routeInfo && (() => {
+                      let travelCost = 0
+                      if (field.routeChargeType === 'mileage' || field.routeChargeType === 'both')
+                        travelCost += travelMiles * (field.ratePerMile ?? 0)
+                      if (field.routeChargeType === 'drivetime' || field.routeChargeType === 'both')
+                        travelCost += travelMins * (field.ratePerMinute ?? 0)
+                      return travelCost > 0 ? (
+                        <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#b45309', flexShrink: 0 }}>
+                          +{currency}{travelCost.toFixed(2)}
+                        </span>
+                      ) : null
+                    })()}
                   </div>
-                </div>
-              )}
-            </div>
-          ) : (
+                )}
+
+                {/* Total */}
+                {routeInfo && (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '8px 12px', background: '#f1f5f9', borderRadius: 8, border: '1px solid #cbd5e1',
+                  }}>
+                    <span style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 700 }}>Total distance</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: '0.82rem', color: '#334155', fontWeight: 700 }}>
+                        {routeInfo.distanceMiles.toFixed(1)} mi · {Math.round(routeInfo.durationMinutes)} min
+                      </span>
+                      {field.routeChargeType !== 'none' && priceContribution > 0 && (
+                        <span style={{ fontSize: '0.85rem', color: '#059669', fontWeight: 700 }}>
+                          +{currency}{priceContribution.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })() : (
             /* No base — simple two-point summary */
             <>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
