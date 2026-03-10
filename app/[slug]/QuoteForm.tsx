@@ -496,6 +496,49 @@ function DrawAreaField({
   )
 }
 
+// ── Route timeline sub-components ──────────────────────────────
+function RouteStop({ dotColor, bg, border, textColor, label, tag }: {
+  dotColor: string; bg: string; border: string; textColor: string; label: string; tag: string
+}) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 8, padding: '8px 11px',
+      background: bg, border: `1.5px solid ${border}`, borderRadius: 10,
+      fontSize: '0.8rem', color: textColor,
+    }}>
+      <span style={{ width: 10, height: 10, borderRadius: '50%', background: dotColor, flexShrink: 0, display: 'block' }} />
+      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }}>
+        {label}
+      </span>
+      {tag && <span style={{ fontSize: '0.68rem', opacity: 0.6, flexShrink: 0 }}>{tag}</span>}
+    </div>
+  )
+}
+
+function RouteLeg({ leg, isTravel }: { leg: LegInfo | undefined; isTravel: boolean }) {
+  if (!leg) return null
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 0, paddingLeft: 15 }}>
+      {/* Vertical connector line */}
+      <div style={{ width: 2, height: 28, background: isTravel ? '#a5b4fc' : '#86efac', flexShrink: 0, marginLeft: 3, borderRadius: 1 }} />
+      {/* Distance badge */}
+      <div style={{
+        marginLeft: 10, display: 'flex', alignItems: 'center', gap: 6,
+        padding: '3px 9px', borderRadius: 99,
+        background: isTravel ? '#ede9fe' : '#f0fdf4',
+        border: `1px solid ${isTravel ? '#c4b5fd' : '#bbf7d0'}`,
+        fontSize: '0.72rem', fontWeight: 600,
+        color: isTravel ? '#6d28d9' : '#15803d',
+      }}>
+        <span>{leg.distanceMiles.toFixed(1)} mi</span>
+        <span style={{ opacity: 0.5 }}>·</span>
+        <span>{Math.round(leg.durationMinutes)} min</span>
+        {isTravel && <span style={{ opacity: 0.55, fontSize: '0.65rem', fontWeight: 500 }}>travel</span>}
+      </div>
+    </div>
+  )
+}
+
 // ── RouteField ─────────────────────────────────────────────────
 function RouteField({
   field,
@@ -824,97 +867,84 @@ function RouteField({
       {/* ── Sub-step 2: Map view ── */}
       {subStep === 2 && (
         <>
-          {/* Address summary */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-            {field.baseAddress && (
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px',
-                background: '#ede9fe', border: '1.5px solid #c4b5fd', borderRadius: 10,
-                fontSize: '0.78rem', color: '#5b21b6',
-              }}>
-                <span style={{ fontSize: 9, color: '#6366f1', lineHeight: 1 }}>●</span>
-                <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }}>
-                  {field.baseAddress}
-                </span>
-                <span style={{ fontSize: '0.7rem', opacity: 0.65, flexShrink: 0 }}>Base</span>
-              </div>
-            )}
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 8, padding: '9px 13px',
-              background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: 10,
-              fontSize: '0.83rem', color: '#166534',
-            }}>
-              <span style={{ fontSize: 9, color: '#22c55e', lineHeight: 1 }}>●</span>
-              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }}>
-                {startQuery || 'Start'}
-              </span>
-            </div>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 8, padding: '9px 13px',
-              background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: 10,
-              fontSize: '0.83rem', color: '#991b1b',
-            }}>
-              <span style={{ fontSize: 9, color: '#ef4444', lineHeight: 1 }}>●</span>
-              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }}>
-                {endQuery || 'End'}
-              </span>
-            </div>
-          </div>
+          {/* Route timeline — visual chain with distances on connectors */}
+          {legInfos && field.baseAddress ? (
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
 
-          {/* Route info — per-leg breakdown when base is set, otherwise single leg */}
-          {routeInfo && (
-            legInfos && field.baseAddress ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {[
-                  { label: 'Base → Start', leg: legInfos[0] },
-                  { label: 'Start → End', leg: legInfos[1] },
-                  { label: 'End → Base', leg: legInfos[2] },
-                ].map(({ label, leg }) => leg && (
-                  <div key={label} style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '7px 12px', background: '#f8fafc', borderRadius: 7,
-                    border: '1px solid #e2e8f0', fontSize: '0.8rem',
-                  }}>
-                    <span style={{ color: '#64748b', fontWeight: 500 }}>{label}</span>
-                    <span style={{ color: '#334155', fontWeight: 600 }}>
-                      {leg.distanceMiles.toFixed(1)} mi · {Math.round(leg.durationMinutes)} min
-                    </span>
-                  </div>
-                ))}
+              {/* Stop: Base */}
+              <RouteStop dotColor="#6366f1" bg="#ede9fe" border="#c4b5fd" textColor="#5b21b6"
+                label={field.baseAddress} tag="Base" />
+
+              {/* Leg 1: Base → Start (travel) */}
+              <RouteLeg leg={legInfos[0]} isTravel />
+
+              {/* Stop: Start */}
+              <RouteStop dotColor="#22c55e" bg="#f0fdf4" border="#bbf7d0" textColor="#166534"
+                label={startQuery || 'Start'} tag="Start" />
+
+              {/* Leg 2: Start → End (job) */}
+              <RouteLeg leg={legInfos[1]} isTravel={false} />
+
+              {/* Stop: End */}
+              <RouteStop dotColor="#ef4444" bg="#fef2f2" border="#fecaca" textColor="#991b1b"
+                label={endQuery || 'End'} tag="End" />
+
+              {/* Leg 3: End → Base (return) */}
+              <RouteLeg leg={legInfos[2]} isTravel />
+
+              {/* Stop: Base (return) */}
+              <RouteStop dotColor="#6366f1" bg="#ede9fe" border="#c4b5fd" textColor="#5b21b6"
+                label={field.baseAddress} tag="Return" />
+
+              {/* Total row */}
+              {routeInfo && (
                 <div style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '8px 12px', background: '#f1f5f9', borderRadius: 7,
-                  border: '1px solid #cbd5e1', fontSize: '0.82rem',
+                  marginTop: 8, padding: '8px 12px',
+                  background: '#f1f5f9', borderRadius: 8, border: '1px solid #cbd5e1',
                 }}>
-                  <span style={{ color: '#475569', fontWeight: 700 }}>Total (round trip)</span>
+                  <span style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 700 }}>Total (round trip)</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ color: '#334155', fontWeight: 700 }}>
+                    <span style={{ fontSize: '0.82rem', color: '#334155', fontWeight: 700 }}>
                       {routeInfo.distanceMiles.toFixed(1)} mi · {Math.round(routeInfo.durationMinutes)} min
                     </span>
                     {field.routeChargeType !== 'none' && priceContribution > 0 && (
-                      <span style={{ color: '#059669', fontWeight: 700 }}>+{currency}{priceContribution.toFixed(2)}</span>
+                      <span style={{ fontSize: '0.85rem', color: '#059669', fontWeight: 700 }}>
+                        +{currency}{priceContribution.toFixed(2)}
+                      </span>
                     )}
                   </div>
                 </div>
+              )}
+            </div>
+          ) : (
+            /* No base — simple two-point summary */
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                <RouteStop dotColor="#22c55e" bg="#f0fdf4" border="#bbf7d0" textColor="#166534"
+                  label={startQuery || 'Starting location'} tag="" />
+                <RouteStop dotColor="#ef4444" bg="#fef2f2" border="#fecaca" textColor="#991b1b"
+                  label={endQuery || 'Destination'} tag="" />
               </div>
-            ) : (
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 14, padding: '9px 14px',
-                background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0', flexWrap: 'wrap',
-              }}>
-                <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>
-                  📍 {routeInfo.distanceMiles.toFixed(1)} mi
-                </span>
-                <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>
-                  ⏱ {Math.round(routeInfo.durationMinutes)} min
-                </span>
-                {field.routeChargeType !== 'none' && priceContribution > 0 && (
-                  <span style={{ marginLeft: 'auto', fontSize: '0.88rem', color: '#059669', fontWeight: 700 }}>
-                    +{currency}{priceContribution.toFixed(2)}
+              {routeInfo && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 14, padding: '9px 14px',
+                  background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0', flexWrap: 'wrap',
+                }}>
+                  <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>
+                    📍 {routeInfo.distanceMiles.toFixed(1)} mi
                   </span>
-                )}
-              </div>
-            )
+                  <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>
+                    ⏱ {Math.round(routeInfo.durationMinutes)} min
+                  </span>
+                  {field.routeChargeType !== 'none' && priceContribution > 0 && (
+                    <span style={{ marginLeft: 'auto', fontSize: '0.88rem', color: '#059669', fontWeight: 700 }}>
+                      +{currency}{priceContribution.toFixed(2)}
+                    </span>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </>
       )}
