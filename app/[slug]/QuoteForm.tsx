@@ -9,6 +9,15 @@ import area from '@turf/area'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 
+function isColorDark(hex: string): boolean {
+  const h = hex.replace('#', '')
+  if (h.length < 6) return false
+  const r = parseInt(h.slice(0, 2), 16)
+  const g = parseInt(h.slice(2, 4), 16)
+  const b = parseInt(h.slice(4, 6), 16)
+  return (r * 299 + g * 587 + b * 114) / 1000 < 140
+}
+
 // ── Types ──────────────────────────────────────────────────────
 interface GeocodeSuggestion {
   place_name: string
@@ -493,7 +502,7 @@ function RouteField({
 
   const [mapLoaded, setMapLoaded] = useState(false)
   const [mapError, setMapError] = useState(false)
-  const [startQuery, setStartQuery] = useState('')
+  const [startQuery, setStartQuery] = useState(field.baseAddress ?? '')
   const [startSuggestions, setStartSuggestions] = useState<GeocodeSuggestion[]>([])
   const [startCoords, setStartCoords] = useState<[number, number] | null>(null)
   const [endQuery, setEndQuery] = useState('')
@@ -513,6 +522,18 @@ function RouteField({
       setTimeout(() => { mapRef.current?.resize() }, 60)
     }
   }, [subStep, mapLoaded])
+
+  // Auto-geocode base address on mount
+  useEffect(() => {
+    if (!field.baseAddress) return
+    geocode(field.baseAddress).then((results) => {
+      if (results[0]) {
+        setStartCoords(results[0].center)
+        onStartCoordsChangeRef.current(results[0].center)
+      }
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [field.baseAddress])
 
   // Debounced start geocode
   useEffect(() => {
@@ -667,8 +688,8 @@ function RouteField({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-      {/* ── Sub-step 0: Starting location ── */}
-      {subStep === 0 && (
+      {/* ── Sub-step 0: Starting location (only when no base address) ── */}
+      {subStep === 0 && !field.baseAddress && (
         <AddressInput
           placeholder="e.g. 123 Main St, Chicago, IL"
           dotColor="#22c55e"
@@ -684,7 +705,7 @@ function RouteField({
       {/* ── Sub-step 1: Destination ── */}
       {subStep === 1 && (
         <>
-          {/* Confirmed start address context pill */}
+          {/* Start address context pill */}
           {startQuery && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: 8,
@@ -696,7 +717,9 @@ function RouteField({
               <span style={{ fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {startQuery}
               </span>
-              <span style={{ fontSize: '0.72rem', opacity: 0.6, flexShrink: 0 }}>Start</span>
+              <span style={{ fontSize: '0.72rem', opacity: 0.6, flexShrink: 0 }}>
+                {field.baseAddress ? 'Base' : 'Start'}
+              </span>
             </div>
           )}
           <AddressInput
@@ -726,6 +749,9 @@ function RouteField({
               <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }}>
                 {startQuery || 'Starting location'}
               </span>
+              {field.baseAddress && (
+                <span style={{ fontSize: '0.72rem', opacity: 0.6, flexShrink: 0 }}>Base</span>
+              )}
             </div>
             <div style={{
               display: 'flex', alignItems: 'center', gap: 8, padding: '9px 13px',
@@ -792,9 +818,11 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
   const config = form.form_config
   const supabase = createClient()
 
-  const isBlue = config.brand_color === 'blue'
-  const accentBg = isBlue ? '#1a56ff' : '#ffe500'
-  const accentFg = isBlue ? '#ffffff' : '#1a1a2e'
+  const legacyColorMap: Record<string, string> = { yellow: '#FFE500', blue: '#1A56FF' }
+  const accentBg = legacyColorMap[config.brand_color] ?? config.brand_color ?? '#FFE500'
+  const isDark = isColorDark(accentBg)
+  const accentFg = isDark ? '#ffffff' : '#1a1a2e'
+  const accentTint = accentBg + '18'
   const currency = config.currency ?? '$'
 
   const fields = config.fields
@@ -809,7 +837,7 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
     const result: ExpandedStep[] = []
     for (const field of fields) {
       if (field.type === 'route') {
-        result.push({ field, routeSubStep: 0 })
+        if (!field.baseAddress) result.push({ field, routeSubStep: 0 })
         result.push({ field, routeSubStep: 1 })
         result.push({ field, routeSubStep: 2 })
       } else {
@@ -1045,9 +1073,9 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
   return (
     <div style={{
       minHeight: '100vh',
-      background: isBlue
-        ? 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 60%, #eff6ff 100%)'
-        : 'linear-gradient(135deg, #fffde7 0%, #fff8e1 60%, #fef9e7 100%)',
+      background: isDark
+        ? 'linear-gradient(135deg, #f0f4ff 0%, #e8eeff 60%, #f0f4ff 100%)'
+        : `linear-gradient(135deg, ${accentBg}22 0%, ${accentBg}18 60%, ${accentBg}22 100%)`,
       display: 'flex',
       alignItems: 'flex-start',
       justifyContent: 'center',
@@ -1066,11 +1094,11 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
         <div style={{ background: accentBg }}>
           {/* Progress bar */}
           {!isConfirmStep && (
-            <div style={{ height: 4, background: isBlue ? 'rgba(255,255,255,0.18)' : 'rgba(26,26,46,0.1)' }}>
+            <div style={{ height: 4, background: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(26,26,46,0.1)' }}>
               <div style={{
                 height: '100%',
                 width: `${progressPercent}%`,
-                background: isBlue ? 'rgba(255,255,255,0.8)' : 'rgba(26,26,46,0.45)',
+                background: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(26,26,46,0.45)',
                 borderRadius: '0 2px 2px 0',
                 transition: 'width 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
               }} />
@@ -1091,7 +1119,7 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
               <span style={{
                 fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
-                color: isBlue ? 'rgba(255,255,255,0.6)' : 'rgba(26,26,46,0.45)',
+                color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(26,26,46,0.45)',
               }}>
                 {isConfirmStep ? 'All Done! 🎉' : isContactStep ? 'Almost There' : step === 0 ? 'Get Your Quote' : `Step ${step + 1} of ${totalFieldSteps + 1}`}
               </span>
@@ -1099,7 +1127,7 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
               {hasPricing && config.quote_display === 'live' && displayTotal > 0 && !isConfirmStep && (
                 <span style={{
                   fontSize: '0.88rem', fontWeight: 800,
-                  background: isBlue ? 'rgba(255,255,255,0.18)' : 'rgba(26,26,46,0.12)',
+                  background: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(26,26,46,0.12)',
                   color: accentFg,
                   padding: '5px 13px', borderRadius: 99,
                   transition: 'all 0.2s',
@@ -1112,7 +1140,7 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
               {form.form_name}
             </div>
             {config.description && step === 0 && (
-              <div style={{ fontSize: '0.84rem', color: isBlue ? 'rgba(255,255,255,0.7)' : 'rgba(26,26,46,0.58)', marginTop: 5, lineHeight: 1.55 }}>
+              <div style={{ fontSize: '0.84rem', color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(26,26,46,0.58)', marginTop: 5, lineHeight: 1.55 }}>
                 {config.description}
               </div>
             )}
@@ -1130,7 +1158,7 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
                 <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.3 }}>
                   {currentField.label}
                   {currentField.required && (
-                    <span style={{ color: isBlue ? '#1a56ff' : '#d97706', fontSize: '1rem', marginLeft: 4 }}> *</span>
+                    <span style={{ color: accentBg, fontSize: '1rem', marginLeft: 4 }}> *</span>
                   )}
                 </h2>
                 {currentField.type === 'checkbox' && (
@@ -1156,7 +1184,7 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                           padding: '16px 18px', borderRadius: 14,
                           border: `2px solid ${sel ? accentBg : '#e2e8f0'}`,
-                          cursor: 'pointer', background: sel ? (isBlue ? '#eff6ff' : '#fffde7') : 'white',
+                          cursor: 'pointer', background: sel ? accentTint : 'white',
                           textAlign: 'left', fontFamily: 'inherit', transition: 'all 0.12s', width: '100%',
                         }}
                       >
@@ -1170,15 +1198,15 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
                           }}>
                             {sel && <div style={{ width: 7, height: 7, borderRadius: '50%', background: accentFg }} />}
                           </div>
-                          <span style={{ fontSize: '0.97rem', fontWeight: sel ? 700 : 500, color: sel ? (isBlue ? '#1e40af' : '#92400e') : '#0f172a' }}>
+                          <span style={{ fontSize: '0.97rem', fontWeight: sel ? 700 : 500, color: sel ? (isDark ? '#1e3a8a' : '#78350f') : '#0f172a' }}>
                             {o.label}
                           </span>
                         </div>
                         {currentField.showPrices !== false && o.price > 0 && (
                           <span style={{
                             fontSize: '0.82rem', fontWeight: 700, flexShrink: 0, marginLeft: 10,
-                            background: sel ? (isBlue ? '#1a56ff' : '#1a1a2e') : '#f1f5f9',
-                            color: sel ? 'white' : '#475569',
+                            background: sel ? accentBg : '#f1f5f9',
+                            color: sel ? accentFg : '#475569',
                             padding: '3px 11px', borderRadius: 8, transition: 'all 0.12s',
                           }}>
                             +{currency}{o.price}
@@ -1245,7 +1273,7 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                             padding: '16px 18px', borderRadius: 14,
                             border: `2px solid ${sel ? accentBg : '#e2e8f0'}`,
-                            cursor: 'pointer', background: sel ? (isBlue ? '#eff6ff' : '#fffde7') : 'white',
+                            cursor: 'pointer', background: sel ? accentTint : 'white',
                             textAlign: 'left', fontFamily: 'inherit', transition: 'all 0.12s', width: '100%',
                           }}
                         >
@@ -1259,14 +1287,14 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
                             }}>
                               {sel && <span style={{ color: accentFg, fontSize: 13, fontWeight: 800, lineHeight: 1 }}>✓</span>}
                             </div>
-                            <span style={{ fontSize: '0.97rem', fontWeight: sel ? 700 : 500, color: sel ? (isBlue ? '#1e40af' : '#92400e') : '#0f172a' }}>
+                            <span style={{ fontSize: '0.97rem', fontWeight: sel ? 700 : 500, color: sel ? (isDark ? '#1e3a8a' : '#78350f') : '#0f172a' }}>
                               {o.label}
                             </span>
                           </div>
                           {currentField.showPrices !== false && o.price > 0 && (
                             <span style={{
                               fontSize: '0.82rem', fontWeight: 700, flexShrink: 0, marginLeft: 10,
-                              background: sel ? (isBlue ? '#1a56ff' : '#1a1a2e') : '#f1f5f9',
+                              background: sel ? accentBg : '#f1f5f9',
                               color: sel ? 'white' : '#475569',
                               padding: '3px 11px', borderRadius: 8, transition: 'all 0.12s',
                             }}>
@@ -1457,7 +1485,7 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
                 width: 76, height: 76, borderRadius: '50%', background: accentBg,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '0 auto 22px', fontSize: 32,
-                boxShadow: `0 8px 24px ${isBlue ? 'rgba(26,86,255,0.3)' : 'rgba(255,229,0,0.4)'}`,
+                boxShadow: `0 8px 24px ${`${accentBg}4D`}`,
               }}>
                 <span style={{ color: accentFg }}>✓</span>
               </div>

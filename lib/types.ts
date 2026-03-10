@@ -45,6 +45,7 @@ export interface FormField {
   routeChargeType?: 'mileage' | 'drivetime' | 'both' | 'none'
   ratePerMile?: number
   ratePerMinute?: number     // stored as per-minute; UI displays as per-hour
+  baseAddress?: string       // optional fixed start location (business base)
   imageUrl?: string
   conditionalRules?: ConditionalRule[]
   // Draw Area field
@@ -56,7 +57,7 @@ export interface FormConfig {
   description: string
   submit_label: string
   currency: string
-  brand_color: 'yellow' | 'blue'
+  brand_color: string
   show_total: boolean
   quote_display?: 'live' | 'after_submit' | 'hidden'
   hero_image_url?: string

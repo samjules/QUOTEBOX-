@@ -1231,6 +1231,20 @@ function PropsPanel({
               />
             </div>
           )}
+
+          <div className="prop-group">
+            <div className="prop-label">Base address (optional)</div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginBottom: 5, lineHeight: 1.4 }}>
+              Your business or starting location. When set, customers only enter their destination — distance is calculated from here.
+            </div>
+            <input
+              className="prop-input"
+              type="text"
+              placeholder="e.g. 123 Main St, Chicago, IL"
+              value={field.baseAddress ?? ''}
+              onChange={(e) => onSetProp(field.id, 'baseAddress', e.target.value)}
+            />
+          </div>
         </>
       )}
 
