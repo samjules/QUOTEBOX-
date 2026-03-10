@@ -7,6 +7,21 @@ import type { FormField, FieldOption, ConditionalRule, RuleCondition } from '@/l
 import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
 
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? ''
+
+async function geocodeAddress(query: string): Promise<{ place_name: string }[]> {
+  if (!MAPBOX_TOKEN || query.length < 3) return []
+  try {
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&limit=5&types=address,place,locality,neighborhood`
+    const res = await fetch(url)
+    const data = await res.json()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (data.features ?? []).map((f: any) => ({ place_name: f.place_name as string }))
+  } catch {
+    return []
+  }
+}
+
 // ── Helpers ──────────────────────────────────────────────────
 let _ctr = 0
 function uid() {
@@ -1104,6 +1119,23 @@ function PropsPanel({
   onSetOptRouteOverride: (fid: string, oid: string, targetFid: string, key: 'mile' | 'min', rateStr: string) => void
   onOpenMediaPicker: (fieldId: string) => void
 }) {
+  const [baseAddrSuggestions, setBaseAddrSuggestions] = useState<{ place_name: string }[]>([])
+  const [baseAddrOpen, setBaseAddrOpen] = useState(false)
+
+  const isRoute = field?.type === 'route'
+
+  useEffect(() => {
+    if (!isRoute) return
+    const query = field?.baseAddress ?? ''
+    if (query.length < 3) { setBaseAddrSuggestions([]); return }
+    const t = setTimeout(async () => {
+      const results = await geocodeAddress(query)
+      setBaseAddrSuggestions(results)
+      if (results.length > 0) setBaseAddrOpen(true)
+    }, 300)
+    return () => clearTimeout(t)
+  }, [field?.baseAddress, isRoute])
+
   if (!field) {
     return (
       <aside className="props-panel">
@@ -1119,7 +1151,6 @@ function PropsPanel({
   const hasOpts = ['radio', 'dropdown', 'checkbox'].includes(field.type)
   const hasRate = field.type === 'number'
   const hasPH = ['number', 'textarea'].includes(field.type)
-  const isRoute = field.type === 'route'
   const isImage = field.type === 'image'
   const isDrawArea = field.type === 'draw_area'
 
@@ -1237,13 +1268,49 @@ function PropsPanel({
             <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginBottom: 5, lineHeight: 1.4 }}>
               Your business or starting location. When set, customers only enter their destination — distance is calculated from here.
             </div>
-            <input
-              className="prop-input"
-              type="text"
-              placeholder="e.g. 123 Main St, Chicago, IL"
-              value={field.baseAddress ?? ''}
-              onChange={(e) => onSetProp(field.id, 'baseAddress', e.target.value)}
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                className="prop-input"
+                type="text"
+                placeholder="e.g. 123 Main St, Chicago, IL"
+                value={field.baseAddress ?? ''}
+                onChange={(e) => {
+                  onSetProp(field.id, 'baseAddress', e.target.value)
+                  setBaseAddrOpen(true)
+                }}
+                onFocus={() => { if (baseAddrSuggestions.length > 0) setBaseAddrOpen(true) }}
+                onBlur={() => setTimeout(() => setBaseAddrOpen(false), 150)}
+                autoComplete="off"
+              />
+              {baseAddrOpen && baseAddrSuggestions.length > 0 && (
+                <div style={{
+                  position: 'absolute', top: 'calc(100% + 2px)', left: 0, right: 0, zIndex: 60,
+                  background: 'var(--surface)', border: '1px solid var(--border)',
+                  borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', overflow: 'hidden',
+                }}>
+                  {baseAddrSuggestions.map((s, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      style={{
+                        display: 'block', width: '100%', textAlign: 'left',
+                        padding: '7px 11px', fontSize: '0.76rem', color: 'var(--fg)',
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        borderBottom: i < baseAddrSuggestions.length - 1 ? '1px solid var(--border)' : 'none',
+                        lineHeight: 1.35,
+                      }}
+                      onMouseDown={() => {
+                        onSetProp(field.id, 'baseAddress', s.place_name)
+                        setBaseAddrSuggestions([])
+                        setBaseAddrOpen(false)
+                      }}
+                    >
+                      📍 {s.place_name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </>
       )}
