@@ -1595,8 +1595,8 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
                 </div>
               </div>
 
-              {/* Quote total preview */}
-              {hasPricing && config.quote_display !== 'hidden' && displayTotal > 0 && (
+              {/* Quote total preview — only in live mode (after_submit reveals on confirm page) */}
+              {hasPricing && config.quote_display === 'live' && displayTotal > 0 && (
                 <div style={{
                   marginTop: 22, padding: '15px 18px',
                   background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)',
@@ -1649,17 +1649,22 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
                 <strong style={{ color: '#334155' }}>{email}</strong> shortly.
               </div>
 
-              {hasPricing && config.quote_display !== 'hidden' && displayTotal > 0 && (
+              {hasPricing && config.quote_display !== 'hidden' && (displayTotal > 0 || config.quote_display === 'after_submit') && (
                 <div style={{
                   marginTop: 28, padding: '22px',
-                  background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)',
-                  borderRadius: 16, border: '1px solid #e2e8f0',
+                  background: config.quote_display === 'after_submit'
+                    ? `linear-gradient(135deg, ${accentBg}12, ${accentBg}08)`
+                    : 'linear-gradient(135deg, #f8fafc, #f1f5f9)',
+                  borderRadius: 16,
+                  border: config.quote_display === 'after_submit'
+                    ? `1.5px solid ${accentBg}40`
+                    : '1px solid #e2e8f0',
                 }}>
                   <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                     {config.quote_display === 'after_submit' ? 'Your Estimated Quote' : 'Estimated Total'}
                   </div>
                   <div style={{ fontSize: '2.2rem', fontWeight: 800, color: '#0f172a' }}>
-                    {currency}{displayTotal.toFixed(2)}
+                    {displayTotal > 0 ? `${currency}${displayTotal.toFixed(2)}` : 'Free'}
                   </div>
                   {minApplied && (
                     <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: 5 }}>
