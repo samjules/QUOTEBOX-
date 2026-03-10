@@ -29,13 +29,13 @@ export default async function PublicFormPage({
   const form = rows?.[0] ?? null
   if (!form) notFound()
 
-  const { data: billing } = await supabase
-    .from('billing')
-    .select('credit_balance')
-    .eq('account_id', form.account_id)
-    .single()
+  const [{ data: billing }, { data: account }] = await Promise.all([
+    supabase.from('billing').select('credit_balance').eq('account_id', form.account_id).single(),
+    supabase.from('accounts').select('business_name').eq('id', form.account_id).single(),
+  ])
 
   const hasCredits = (billing?.credit_balance ?? 0) >= 15
+  const businessName = account?.business_name ?? ''
 
-  return <QuoteForm form={form as HostedForm} hasCredits={hasCredits} />
+  return <QuoteForm form={form as HostedForm} hasCredits={hasCredits} businessName={businessName} />
 }

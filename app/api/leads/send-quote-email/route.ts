@@ -19,6 +19,7 @@ interface EmailPayload {
   customerName: string
   customerEmail: string
   formName: string
+  businessName?: string
   currency: string
   total: number
   minApplied: boolean
@@ -82,6 +83,7 @@ function buildEmailHtml(p: EmailPayload): string {
                 <span style="font-family:Georgia,serif;font-size:18px;font-weight:900;color:${headerFg};letter-spacing:0.02em;">
                   Quote<span style="color:${totalNumColor};">.</span>Box
                 </span>
+                ${p.businessName ? `<div style="font-size:12px;color:${headerFg === '#ffffff' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)'};margin-top:4px;">on behalf of <strong style="color:${headerFg};">${esc(p.businessName)}</strong></div>` : ''}
               </div>
             </td>
           </tr>
@@ -133,7 +135,8 @@ function buildEmailHtml(p: EmailPayload): string {
           <tr>
             <td style="padding:24px 0 8px;text-align:center;">
               <p style="margin:0;font-size:12px;color:#94a3b8;">
-                Sent via <a href="https://quote-box.com" style="color:#94a3b8;text-decoration:none;">Quote.Box</a>
+                ${p.businessName ? `Sent by <strong style="color:#94a3b8;">${esc(p.businessName)}</strong> via ` : 'Sent via '}
+                <a href="https://quote-box.com" style="color:#94a3b8;text-decoration:none;">Quote.Box</a>
                 &nbsp;&middot;&nbsp; This is an automated quote summary
               </p>
             </td>

@@ -1041,7 +1041,7 @@ function RouteField({
 }
 
 // ── QuoteForm ──────────────────────────────────────────────────
-export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasCredits: boolean }) {
+export default function QuoteForm({ form, hasCredits, businessName = '' }: { form: HostedForm; hasCredits: boolean; businessName?: string }) {
   const config = form.form_config
   const supabase = createClient()
 
@@ -1256,6 +1256,7 @@ export default function QuoteForm({ form, hasCredits }: { form: HostedForm; hasC
         total: displayTotal,
         minApplied,
         lineItems,
+        businessName: businessName || undefined,
         emailSubject: config.email_template?.subject || undefined,
         emailIntro: config.email_template?.intro || undefined,
         emailOutro: config.email_template?.outro || undefined,
