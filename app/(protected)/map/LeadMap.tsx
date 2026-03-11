@@ -87,12 +87,14 @@ export default function LeadMap({ leads }: { leads: Lead[] }) {
   if (leads.length > 0) console.log('[LeadMap] sample form_data:', JSON.stringify(leads[0].form_data))
 
   useEffect(() => {
-    console.log('[LeadMap] useEffect — container:', !!mapContainer.current, 'mapRef:', !!mapRef.current)
-    if (!mapContainer.current || mapRef.current) return
+    const el = mapContainer.current
+    console.log('[LeadMap] useEffect — container:', !!el, 'mapRef:', !!mapRef.current)
+    if (!el || mapRef.current) return
 
+    console.log('[LeadMap] container dimensions:', el.offsetWidth, 'x', el.offsetHeight, '| clientRect:', el.getBoundingClientRect())
     console.log('[LeadMap] initializing map')
     const map = new mapboxgl.Map({
-      container: mapContainer.current,
+      container: el,
       style: 'mapbox://styles/mapbox/streets-v12',
       center: [-98.5795, 39.8283],
       zoom: 4,
@@ -167,7 +169,7 @@ export default function LeadMap({ leads }: { leads: Lead[] }) {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
       {/* Map */}
-      <div ref={mapContainer} className="absolute inset-0" />
+      <div ref={mapContainer} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
 
       {/* No-location leads panel */}
       {noLocationLeads.length > 0 && (
