@@ -864,6 +864,243 @@ export default function LandingPage() {
       {/* Deal notification toasts */}
       <DealNotificationBanner />
 
+      {/* ── App Store Banner ── */}
+      <section style={{ padding: '72px 24px', background: '#f9fafb', borderTop: '1px solid #f0f0f0' }}>
+        <div style={{
+          maxWidth: 860,
+          margin: '0 auto',
+          background: '#1a1a2e',
+          borderRadius: 24,
+          padding: '48px 48px',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: 40,
+          alignItems: 'center',
+          overflow: 'hidden',
+          position: 'relative',
+        }}>
+          {/* Background glow */}
+          <div style={{
+            position: 'absolute',
+            top: -60,
+            right: -60,
+            width: 300,
+            height: 300,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255,229,0,0.08) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }} />
+
+          {/* Copy */}
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              background: 'rgba(255,229,0,0.12)',
+              border: '1px solid rgba(255,229,0,0.25)',
+              borderRadius: 99,
+              padding: '5px 14px',
+              marginBottom: 20,
+            }}>
+              {/* Apple logo SVG */}
+              <svg width="13" height="16" viewBox="0 0 814 1000" fill="#FFE500" xmlns="http://www.w3.org/2000/svg">
+                <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-42.3-150.3-110.7c-67.5-98.2-120-252.6-120-398.7 0-138.9 48.4-207.5 96.8-253.5 57.3-54.5 138.4-86.1 213.3-86.1 81.6 0 132.2 39.5 189.5 39.5 55.4 0 115.7-42.3 207.8-42.3zm-156.5-252c32.5-50 56.7-119 56.7-188C688.3 24.6 549.8 0 476.5 0c-2 0-4 0-6.1.1 -2.3 30.5-1.2 96 22.7 158.6 23.2 61.5 56.8 99.2 138.4 130.2z"/>
+              </svg>
+              <span style={{ color: '#FFE500', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                Now on iOS
+              </span>
+            </div>
+
+            <h2 style={{
+              fontFamily: "'Oswald', sans-serif",
+              fontSize: 'clamp(1.6rem, 3.5vw, 2.2rem)',
+              fontWeight: 800,
+              color: 'white',
+              lineHeight: 1.15,
+              marginBottom: 16,
+            }}>
+              Manage your leads<br />from your phone.
+            </h2>
+
+            <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.95rem', lineHeight: 1.75, marginBottom: 32, maxWidth: 380 }}>
+              The QuoteBox CRM app lets you view new leads, update statuses, and get instant push notifications the moment a customer submits — all from your iPhone.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32 }}>
+              {[
+                { icon: '🔔', text: 'Push notification the instant a new lead comes in' },
+                { icon: '📞', text: 'Tap to call or email leads directly from the app' },
+                { icon: '✅', text: 'Update lead status on the go — new, contacted, booked' },
+              ].map(({ icon, text }) => (
+                <div key={text} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: '0.9rem', flexShrink: 0 }}>{icon}</span>
+                  <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.88rem', lineHeight: 1.55 }}>{text}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* App Store badge */}
+            <a
+              href="https://apps.apple.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: 'inline-block' }}
+            >
+              {/* Official App Store badge shape, hand-coded */}
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 10,
+                background: 'white',
+                color: '#1a1a2e',
+                borderRadius: 12,
+                padding: '10px 20px',
+                textDecoration: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+                transition: 'opacity 0.15s',
+              }}>
+                <svg width="20" height="24" viewBox="0 0 814 1000" fill="#1a1a2e" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-42.3-150.3-110.7c-67.5-98.2-120-252.6-120-398.7 0-138.9 48.4-207.5 96.8-253.5 57.3-54.5 138.4-86.1 213.3-86.1 81.6 0 132.2 39.5 189.5 39.5 55.4 0 115.7-42.3 207.8-42.3zm-156.5-252c32.5-50 56.7-119 56.7-188C688.3 24.6 549.8 0 476.5 0c-2 0-4 0-6.1.1 -2.3 30.5-1.2 96 22.7 158.6 23.2 61.5 56.8 99.2 138.4 130.2z"/>
+                </svg>
+                <div>
+                  <div style={{ fontSize: '0.6rem', color: '#555', lineHeight: 1, marginBottom: 1 }}>Download on the</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.01em' }}>App Store</div>
+                </div>
+              </div>
+            </a>
+          </div>
+
+          {/* Phone mockup */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            position: 'relative',
+            zIndex: 1,
+          }}>
+            <div style={{
+              width: 200,
+              background: '#0a0a1a',
+              borderRadius: 36,
+              padding: '10px',
+              boxShadow: '0 0 0 1px rgba(255,255,255,0.1), 0 32px 80px rgba(0,0,0,0.6)',
+              position: 'relative',
+            }}>
+              {/* Notch */}
+              <div style={{
+                width: 80,
+                height: 18,
+                background: '#0a0a1a',
+                borderRadius: '0 0 14px 14px',
+                position: 'absolute',
+                top: 10,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 2,
+              }} />
+              {/* Screen */}
+              <div style={{
+                background: '#f9fafb',
+                borderRadius: 28,
+                overflow: 'hidden',
+                minHeight: 380,
+                paddingTop: 28,
+              }}>
+                {/* Status bar */}
+                <div style={{ padding: '6px 16px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.55rem', fontWeight: 700, color: '#1a1a2e' }}>9:41</span>
+                  <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                    <div style={{ width: 10, height: 6, border: '1px solid #1a1a2e', borderRadius: 1, position: 'relative' }}>
+                      <div style={{ position: 'absolute', inset: 1, background: '#1a1a2e', borderRadius: 0.5, width: '70%' }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* App header */}
+                <div style={{ padding: '12px 14px 8px', borderBottom: '1px solid #e5e7eb' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1a1a2e' }}>My Business</div>
+                </div>
+
+                {/* Stats row */}
+                <div style={{ display: 'flex', gap: 6, padding: '10px 10px 6px' }}>
+                  {[
+                    { label: 'Total', val: '24', color: '#4f46e5' },
+                    { label: 'New', val: '3', color: '#f59e0b' },
+                    { label: 'Booked', val: '11', color: '#10b981' },
+                  ].map(({ label, val, color }) => (
+                    <div key={label} style={{
+                      flex: 1,
+                      background: 'white',
+                      borderRadius: 8,
+                      padding: '6px 6px',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.07)',
+                    }}>
+                      <div style={{ fontSize: '0.52rem', color: '#9ca3af' }}>{label}</div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color }}>{val}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Lead cards */}
+                <div style={{ padding: '4px 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {[
+                    { name: 'Sarah M.', type: 'Moving', quote: '$320', status: 'New', dot: '#f59e0b' },
+                    { name: 'James K.', type: 'Cleaning', quote: '$180', status: 'Booked', dot: '#10b981' },
+                    { name: 'Lisa R.', type: 'Landscaping', quote: '$450', status: 'Contacted', dot: '#3b82f6' },
+                  ].map(({ name, type, quote, status, dot }) => (
+                    <div key={name} style={{
+                      background: 'white',
+                      borderRadius: 10,
+                      padding: '8px 10px',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.07)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}>
+                      <div style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: '50%',
+                        background: dot + '22',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.6rem',
+                        fontWeight: 700,
+                        color: dot,
+                        flexShrink: 0,
+                      }}>
+                        {name[0]}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '0.62rem', fontWeight: 600, color: '#1a1a2e', lineHeight: 1.2 }}>{name}</div>
+                        <div style={{ fontSize: '0.52rem', color: '#9ca3af' }}>{type}</div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '0.62rem', fontWeight: 700, color: '#10b981' }}>{quote}</div>
+                        <div style={{
+                          fontSize: '0.45rem',
+                          fontWeight: 600,
+                          color: dot,
+                          background: dot + '18',
+                          padding: '1px 5px',
+                          borderRadius: 99,
+                          marginTop: 2,
+                        }}>
+                          {status}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── Footer ── */}
       <footer style={{ background: '#1a1a2e', padding: '28px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1rem', fontWeight: 700, color: 'white' }}>
@@ -872,9 +1109,29 @@ export default function LandingPage() {
         <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.35)' }}>
           © {new Date().getFullYear()} Quote Box. All rights reserved.
         </span>
-        <div style={{ display: 'flex', gap: 20 }}>
+        <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
           <Link href="/login" style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>Log in</Link>
           <Link href="/signup" style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>Sign up</Link>
+          <a
+            href="https://apps.apple.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 7,
+              background: 'white', color: '#1a1a2e',
+              borderRadius: 8, padding: '6px 14px',
+              textDecoration: 'none',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+            }}
+          >
+            <svg width="14" height="17" viewBox="0 0 814 1000" fill="#1a1a2e" xmlns="http://www.w3.org/2000/svg">
+              <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-42.3-150.3-110.7c-67.5-98.2-120-252.6-120-398.7 0-138.9 48.4-207.5 96.8-253.5 57.3-54.5 138.4-86.1 213.3-86.1 81.6 0 132.2 39.5 189.5 39.5 55.4 0 115.7-42.3 207.8-42.3zm-156.5-252c32.5-50 56.7-119 56.7-188C688.3 24.6 549.8 0 476.5 0c-2 0-4 0-6.1.1 -2.3 30.5-1.2 96 22.7 158.6 23.2 61.5 56.8 99.2 138.4 130.2z"/>
+            </svg>
+            <div>
+              <div style={{ fontSize: '0.5rem', color: '#555', lineHeight: 1, marginBottom: 1 }}>Download on the</div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.01em' }}>App Store</div>
+            </div>
+          </a>
         </div>
       </footer>
 
