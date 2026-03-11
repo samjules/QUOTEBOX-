@@ -157,7 +157,7 @@ export default function LeadMap({ leads }: { leads: Lead[] }) {
   }, [])
 
   return (
-    <div className="relative w-full h-full" style={{ minHeight: '100vh' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
       {/* Map */}
       <div ref={mapContainer} className="absolute inset-0" />
 

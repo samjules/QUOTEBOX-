@@ -1,7 +1,9 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import LeadMap from './LeadMap'
+import dynamic from 'next/dynamic'
 import type { Lead } from '@/lib/types'
+
+const LeadMap = dynamic(() => import('./LeadMap'), { ssr: false })
 
 export default async function MapPage() {
   const supabase = createClient()
@@ -27,7 +29,7 @@ export default async function MapPage() {
     .order('created_at', { ascending: false })
 
   return (
-    <div className="flex-1 h-full">
+    <div style={{ height: '100vh', width: '100%' }}>
       <LeadMap leads={(leads as Lead[]) ?? []} />
     </div>
   )
