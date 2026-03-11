@@ -82,9 +82,15 @@ export default function LeadMap({ leads }: { leads: Lead[] }) {
   const locations = extractLeadLocations(leads)
   const noLocationLeads = leads.filter((l) => !hasLocation(l))
 
+  console.log('[LeadMap] render — leads:', leads.length, 'locations:', locations.length, 'noLocation:', noLocationLeads.length)
+  console.log('[LeadMap] token:', process.env.NEXT_PUBLIC_MAPBOX_TOKEN?.slice(0, 20) + '...')
+  if (leads.length > 0) console.log('[LeadMap] sample form_data:', JSON.stringify(leads[0].form_data))
+
   useEffect(() => {
+    console.log('[LeadMap] useEffect — container:', !!mapContainer.current, 'mapRef:', !!mapRef.current)
     if (!mapContainer.current || mapRef.current) return
 
+    console.log('[LeadMap] initializing map')
     const map = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/streets-v12',
@@ -92,10 +98,12 @@ export default function LeadMap({ leads }: { leads: Lead[] }) {
       zoom: 4,
     })
 
+    map.on('error', (e) => console.error('[LeadMap] map error:', e))
     map.addControl(new mapboxgl.NavigationControl(), 'top-right')
     mapRef.current = map
 
     map.on('load', () => {
+      console.log('[LeadMap] map loaded — locations:', locations.length)
       if (locations.length === 0) return
 
       const bounds = new mapboxgl.LngLatBounds()
