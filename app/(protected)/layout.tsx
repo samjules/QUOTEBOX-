@@ -30,7 +30,7 @@ export default async function ProtectedLayout({
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
-      <div className="flex-1 overflow-auto">{children}</div>
+      <div className="flex-1 overflow-auto flex flex-col">{children}</div>
     </div>
   )
 }

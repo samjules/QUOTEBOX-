@@ -51,3 +51,9 @@ export async function updateLeadStatus(leadId: string, status: string) {
   await supabase.from('leads').update({ status }).eq('id', leadId)
   revalidatePath('/leads')
 }
+
+export async function saveLeadNote(leadId: string, notes: string) {
+  const supabase = createClient()
+  await supabase.from('leads').update({ notes }).eq('id', leadId)
+  revalidatePath('/leads')
+}

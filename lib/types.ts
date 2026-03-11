@@ -96,6 +96,7 @@ export interface Lead {
   form_data: Record<string, unknown> | null
   status: 'new' | 'contacted' | 'booked' | 'lost' | 'held'
   created_at: string
+  notes?: string | null
 }
 
 export interface Billing {

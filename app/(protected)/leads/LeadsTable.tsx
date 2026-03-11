@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import type { Lead } from '@/lib/types'
-import { updateLeadStatus } from './actions'
+import { updateLeadStatus, saveLeadNote } from './actions'
 
 const STATUS_OPTIONS = ['new', 'contacted', 'booked', 'lost'] as const
 
@@ -39,10 +39,15 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
   const [localStatus, setLocalStatus] = useState<string>('')
   const [isPending, startTransition] = useTransition()
   const [savedStatus, setSavedStatus] = useState<Record<string, string>>({})
+  const [noteText, setNoteText] = useState<string>('')
+  const [isPendingNote, startNoteTransition] = useTransition()
+  const [noteSaved, setNoteSaved] = useState(false)
 
   function openLead(lead: Lead) {
     setSelected(lead)
     setLocalStatus(savedStatus[lead.id] ?? lead.status)
+    setNoteText(lead.notes ?? '')
+    setNoteSaved(false)
   }
 
   function closeLead() {
@@ -55,6 +60,15 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
       await updateLeadStatus(selected.id, localStatus)
       setSavedStatus((prev) => ({ ...prev, [selected.id]: localStatus }))
       setSelected((prev) => prev ? { ...prev, status: localStatus as Lead['status'] } : prev)
+    })
+  }
+
+  function handleNoteSave() {
+    if (!selected) return
+    startNoteTransition(async () => {
+      await saveLeadNote(selected.id, noteText)
+      setNoteSaved(true)
+      setSelected((prev) => prev ? { ...prev, notes: noteText } : prev)
     })
   }
 
@@ -259,6 +273,28 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
                   <span className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColor(localStatus)}`}>
                     {localStatus}
                   </span>
+                </div>
+              </section>
+
+              {/* Notes */}
+              <section>
+                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Notes</h3>
+                <textarea
+                  value={noteText}
+                  onChange={(e) => { setNoteText(e.target.value); setNoteSaved(false) }}
+                  rows={4}
+                  placeholder="Add a note about this lead…"
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"
+                />
+                <div className="mt-2 flex items-center gap-3">
+                  <button
+                    onClick={handleNoteSave}
+                    disabled={isPendingNote}
+                    className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isPendingNote ? 'Saving…' : 'Save Note'}
+                  </button>
+                  {noteSaved && <span className="text-xs text-green-600 font-medium">Saved</span>}
                 </div>
               </section>
             </div>
