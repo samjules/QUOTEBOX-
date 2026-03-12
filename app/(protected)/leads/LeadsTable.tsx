@@ -9,6 +9,25 @@ const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 const STATUS_OPTIONS = ['new', 'contacted', 'booked', 'lost'] as const
 
+export type FieldMap = Record<string, {
+  label: string
+  type: string
+  options?: Array<{ id: string; label: string }>
+}>
+
+interface RouteValue {
+  startAddress?: string
+  endAddress?: string
+  distanceMiles?: number
+  durationMinutes?: number
+}
+
+function isRouteValue(val: unknown): val is RouteValue {
+  if (!val || typeof val !== 'object') return false
+  const obj = val as Record<string, unknown>
+  return 'distanceMiles' in obj || 'endAddress' in obj || 'startAddress' in obj
+}
+
 function statusColor(status: string) {
   switch (status) {
     case 'new':
@@ -24,20 +43,37 @@ function statusColor(status: string) {
   }
 }
 
-function formatKey(key: string) {
-  return key
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase())
+function resolveLabel(key: string, fieldMap: FieldMap): string {
+  const field = fieldMap[key]
+  if (field?.label) return field.label
+  return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
-function formatValue(value: unknown): string {
+function resolveValue(key: string, value: unknown, fieldMap: FieldMap): string {
   if (value === null || value === undefined) return '-'
   if (typeof value === 'boolean') return value ? 'Yes' : 'No'
+
+  const field = fieldMap[key]
+
+  // Single option ID → label
+  if (typeof value === 'string' && field?.options) {
+    const opt = field.options.find((o) => o.id === value)
+    if (opt) return opt.label
+  }
+
+  // Array of option IDs (checkbox) → labels
+  if (Array.isArray(value) && field?.options) {
+    return (value as string[])
+      .map((id) => field.options?.find((o) => o.id === id)?.label ?? id)
+      .join(', ')
+  }
+
+  if (typeof value === 'number') return value.toLocaleString()
   if (typeof value === 'object') return JSON.stringify(value)
   return String(value)
 }
 
-export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId }: { leads: Lead[]; stripeConnectAccountId: string | null }) {
+export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId, fieldMap }: { leads: Lead[]; stripeConnectAccountId: string | null; fieldMap: FieldMap }) {
   const [leads, setLeads] = useState<Lead[]>(initialLeads)
   const [selected, setSelected] = useState<Lead | null>(null)
   const [localStatus, setLocalStatus] = useState<string>('')
@@ -329,13 +365,56 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
               {formDataEntries.length > 0 && (
                 <section>
                   <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Form Details</h3>
-                  <dl className="space-y-2">
-                    {formDataEntries.map(([key, value]) => (
-                      <div key={key} className="flex justify-between text-sm">
-                        <dt className="text-gray-500">{formatKey(key)}</dt>
-                        <dd className="text-gray-900 font-medium text-right max-w-[60%]">{formatValue(value)}</dd>
-                      </div>
-                    ))}
+                  <dl className="space-y-3">
+                    {formDataEntries.map(([key, value]) => {
+                      const label = resolveLabel(key, fieldMap)
+
+                      // Route field — full-width card
+                      if (isRouteValue(value)) {
+                        const route = value as RouteValue
+                        return (
+                          <div key={key}>
+                            <dt className="text-xs font-medium text-gray-500 mb-1.5">{label}</dt>
+                            <dd>
+                              <div className="rounded-lg bg-gray-50 border border-gray-200 p-3 space-y-2 text-sm">
+                                {route.startAddress && (
+                                  <div className="flex gap-3 items-start">
+                                    <span className="shrink-0 text-xs font-semibold text-gray-400 w-6 mt-0.5">From</span>
+                                    <span className="text-gray-900">{route.startAddress}</span>
+                                  </div>
+                                )}
+                                {route.endAddress && (
+                                  <div className="flex gap-3 items-start">
+                                    <span className="shrink-0 text-xs font-semibold text-gray-400 w-6 mt-0.5">To</span>
+                                    <span className="text-gray-900">{route.endAddress}</span>
+                                  </div>
+                                )}
+                                {(route.distanceMiles != null || route.durationMinutes != null) && (
+                                  <div className="flex gap-4 pt-2 border-t border-gray-200 text-xs text-gray-500">
+                                    {route.distanceMiles != null && (
+                                      <span className="font-medium text-gray-700">{route.distanceMiles.toFixed(1)} mi</span>
+                                    )}
+                                    {route.durationMinutes != null && (
+                                      <span className="font-medium text-gray-700">{Math.round(route.durationMinutes)} min drive</span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </dd>
+                          </div>
+                        )
+                      }
+
+                      // Standard key-value row
+                      return (
+                        <div key={key} className="flex justify-between text-sm">
+                          <dt className="text-gray-500">{label}</dt>
+                          <dd className="text-gray-900 font-medium text-right max-w-[60%]">
+                            {resolveValue(key, value, fieldMap)}
+                          </dd>
+                        </div>
+                      )
+                    })}
                   </dl>
                 </section>
               )}

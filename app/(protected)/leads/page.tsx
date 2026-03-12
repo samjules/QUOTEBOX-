@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Lead } from '@/lib/types'
-import LeadsTable from './LeadsTable'
+import LeadsTable, { type FieldMap } from './LeadsTable'
 
 export default async function LeadsPage() {
   const supabase = createClient()
@@ -60,6 +60,23 @@ export default async function LeadsPage() {
     .order('created_at', { ascending: false })
 
   const leads: Lead[] = allLeads ?? []
+
+  // Build field lookup map from all hosted forms — resolves field IDs → labels/options
+  const { data: forms } = await admin
+    .from('hosted_forms')
+    .select('form_config')
+    .eq('account_id', account.id)
+
+  const fieldMap: FieldMap = {}
+  for (const form of forms ?? []) {
+    for (const field of (form.form_config?.fields ?? [])) {
+      fieldMap[field.id] = {
+        label: field.label,
+        type: field.type,
+        options: field.options?.map((o: { id: string; label: string }) => ({ id: o.id, label: o.label })),
+      }
+    }
+  }
   const totalLeads = leads.length
   const newLeads = leads.filter((l) => l.status === 'new').length
   const bookedLeads = leads.filter((l) => l.status === 'booked').length
@@ -161,7 +178,7 @@ export default async function LeadsPage() {
               </div>
 
               {/* Leads table */}
-              <LeadsTable leads={leads} stripeConnectAccountId={account.stripe_connect_account_id ?? null} />
+              <LeadsTable leads={leads} stripeConnectAccountId={account.stripe_connect_account_id ?? null} fieldMap={fieldMap} />
             </>
           )}
         </div>
