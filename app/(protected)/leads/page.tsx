@@ -55,7 +55,7 @@ export default async function LeadsPage() {
 
   const { data: allLeads } = await admin
     .from('leads')
-    .select('id, account_id, hosted_form_id, name, email, phone, form_type, form_data, status, created_at')
+    .select('id, account_id, hosted_form_id, name, email, phone, form_type, form_data, status, created_at, notes')
     .eq('account_id', account.id)
     .order('created_at', { ascending: false })
 
@@ -161,7 +161,7 @@ export default async function LeadsPage() {
               </div>
 
               {/* Leads table */}
-              <LeadsTable leads={leads} />
+              <LeadsTable leads={leads} stripeConnectAccountId={account.stripe_connect_account_id ?? null} />
             </>
           )}
         </div>

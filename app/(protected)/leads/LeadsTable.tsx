@@ -4,6 +4,9 @@ import { useState, useTransition } from 'react'
 import type { Lead } from '@/lib/types'
 import { updateLeadStatus, saveLeadNote } from './actions'
 
+const SEND_INVOICE_FUNCTION_URL = process.env.NEXT_PUBLIC_SEND_INVOICE_FUNCTION_URL!
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
 const STATUS_OPTIONS = ['new', 'contacted', 'booked', 'lost'] as const
 
 function statusColor(status: string) {
@@ -34,7 +37,7 @@ function formatValue(value: unknown): string {
   return String(value)
 }
 
-export default function LeadsTable({ leads }: { leads: Lead[] }) {
+export default function LeadsTable({ leads, stripeConnectAccountId }: { leads: Lead[]; stripeConnectAccountId: string | null }) {
   const [selected, setSelected] = useState<Lead | null>(null)
   const [localStatus, setLocalStatus] = useState<string>('')
   const [isPending, startTransition] = useTransition()
@@ -43,11 +46,24 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
   const [isPendingNote, startNoteTransition] = useTransition()
   const [noteSaved, setNoteSaved] = useState(false)
 
+  // Invoice state
+  const [invoiceAmount, setInvoiceAmount] = useState<string>('')
+  const [invoiceDescription, setInvoiceDescription] = useState<string>('')
+  const [invoiceSending, setInvoiceSending] = useState(false)
+  const [invoiceSent, setInvoiceSent] = useState(false)
+  const [invoiceError, setInvoiceError] = useState<string | null>(null)
+
   function openLead(lead: Lead) {
     setSelected(lead)
     setLocalStatus(savedStatus[lead.id] ?? lead.status)
     setNoteText(lead.notes ?? '')
     setNoteSaved(false)
+    // Reset invoice state and pre-fill from quote
+    setInvoiceSent(false)
+    setInvoiceError(null)
+    const quote = getQuote(lead)
+    setInvoiceAmount(quote ? String(quote.total) : '')
+    setInvoiceDescription(lead.form_type ? `${lead.form_type} quote` : 'Service quote')
   }
 
   function closeLead() {
@@ -70,6 +86,34 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
       setNoteSaved(true)
       setSelected((prev) => prev ? { ...prev, notes: noteText } : prev)
     })
+  }
+
+  async function handleSendInvoice() {
+    if (!selected?.email || !invoiceAmount || !stripeConnectAccountId) return
+    setInvoiceSending(true)
+    setInvoiceError(null)
+    try {
+      const res = await fetch(SEND_INVOICE_FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          email: selected.email,
+          name: selected.name,
+          amount: parseFloat(invoiceAmount),
+          description: invoiceDescription || 'Service quote',
+          stripeConnectAccountId,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to send invoice')
+      setInvoiceSent(true)
+    } catch (err) {
+      setInvoiceError(err instanceof Error ? err.message : 'Failed to send invoice')
+    }
+    setInvoiceSending(false)
   }
 
   const getDisplayStatus = (lead: Lead) =>
@@ -296,6 +340,64 @@ export default function LeadsTable({ leads }: { leads: Lead[] }) {
                   </button>
                   {noteSaved && <span className="text-xs text-green-600 font-medium">Saved</span>}
                 </div>
+              </section>
+
+              {/* Send Invoice */}
+              <section>
+                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Send Invoice</h3>
+                {!stripeConnectAccountId ? (
+                  <p className="text-sm text-gray-500">
+                    <a href="/settings" className="text-indigo-600 hover:underline font-medium">Connect Stripe in Settings</a> to send invoices to your leads.
+                  </p>
+                ) : !selected?.email ? (
+                  <p className="text-sm text-gray-500">No email address on file for this lead.</p>
+                ) : invoiceSent ? (
+                  <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <p className="text-sm text-green-800 font-medium">Invoice sent to {selected.email}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Amount (USD)</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                        <input
+                          type="number"
+                          min="0.50"
+                          step="0.01"
+                          value={invoiceAmount}
+                          onChange={(e) => setInvoiceAmount(e.target.value)}
+                          placeholder="0.00"
+                          className="w-full rounded-md border border-gray-300 bg-white pl-7 pr-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Description</label>
+                      <input
+                        type="text"
+                        value={invoiceDescription}
+                        onChange={(e) => setInvoiceDescription(e.target.value)}
+                        placeholder="Service quote"
+                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      />
+                    </div>
+                    {invoiceError && (
+                      <p className="text-xs text-red-600">{invoiceError}</p>
+                    )}
+                    <button
+                      onClick={handleSendInvoice}
+                      disabled={invoiceSending || !invoiceAmount}
+                      className="w-full px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {invoiceSending ? 'Sending…' : 'Send Invoice'}
+                    </button>
+                    <p className="text-xs text-gray-400">Invoice will be sent to {selected.email} · due in 7 days</p>
+                  </div>
+                )}
               </section>
             </div>
           </div>

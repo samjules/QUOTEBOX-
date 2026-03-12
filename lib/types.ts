@@ -9,6 +9,8 @@ export interface Account {
   meta_ad_account_id?: string
   meta_user_id?: string
   meta_connected_at?: string
+  stripe_connect_account_id?: string | null
+  stripe_connect_completed_at?: string | null
 }
 
 export interface FieldOption {

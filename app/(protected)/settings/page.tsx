@@ -2,10 +2,16 @@
 
 // MIGRATION REQUIRED — run once in the Supabase SQL editor before logo saving works:
 //   ALTER TABLE accounts ADD COLUMN IF NOT EXISTS logo_url TEXT;
+//
+// STRIPE CONNECT MIGRATION — run once before Stripe Connect works:
+//   ALTER TABLE accounts ADD COLUMN IF NOT EXISTS stripe_connect_account_id TEXT;
+//   ALTER TABLE accounts ADD COLUMN IF NOT EXISTS stripe_connect_completed_at TIMESTAMPTZ;
 
 import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+
+const STRIPE_CONNECT_CLIENT_ID = process.env.NEXT_PUBLIC_STRIPE_CONNECT_CLIENT_ID
 
 const DELETE_ACCOUNT_FUNCTION_URL = process.env.NEXT_PUBLIC_DELETE_ACCOUNT_FUNCTION_URL!
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -19,6 +25,7 @@ interface AdAccount {
 export default function SettingsPage() {
   const supabase = createClient()
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const [accountId, setAccountId] = useState('')
   const [businessName, setBusinessName] = useState('')
@@ -40,6 +47,10 @@ export default function SettingsPage() {
   const [loadingAdAccounts, setLoadingAdAccounts] = useState(false)
   const [savingAdAccount, setSavingAdAccount] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
+
+  // Stripe Connect state
+  const [stripeConnectAccountId, setStripeConnectAccountId] = useState<string | null>(null)
+  const [stripeDisconnecting, setStripeDisconnecting] = useState(false)
 
   // Delete account state
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -70,10 +81,24 @@ export default function SettingsPage() {
           setMetaAccessToken(account.meta_access_token)
           setSelectedAdAccount(account.meta_ad_account_id ?? '')
         }
+        setStripeConnectAccountId(account.stripe_connect_account_id ?? null)
       }
     }
     load()
   }, [supabase])
+
+  // Handle Stripe Connect OAuth redirect params
+  useEffect(() => {
+    const stripeParam = searchParams.get('stripe')
+    if (stripeParam === 'connected') {
+      setMessage('Stripe account connected successfully!')
+      window.history.replaceState({}, '', '/settings')
+      setTimeout(() => setMessage(''), 4000)
+    } else if (stripeParam === 'error') {
+      setMessage('Error: Failed to connect Stripe account. Please try again.')
+      window.history.replaceState({}, '', '/settings')
+    }
+  }, [searchParams])
 
   async function handleUpdateBusinessName(e: React.FormEvent) {
     e.preventDefault()
@@ -145,6 +170,24 @@ export default function SettingsPage() {
       setAdAccounts([])
       setSelectedAdAccount('')
       setMessage('Meta account disconnected.')
+      setTimeout(() => setMessage(''), 2000)
+    }
+  }
+
+  async function handleDisconnectStripe() {
+    if (!accountId) return
+    setStripeDisconnecting(true)
+    setMessage('')
+    const { error } = await supabase
+      .from('accounts')
+      .update({ stripe_connect_account_id: null, stripe_connect_completed_at: null })
+      .eq('id', accountId)
+    setStripeDisconnecting(false)
+    if (error) {
+      setMessage('Error: Failed to disconnect Stripe account')
+    } else {
+      setStripeConnectAccountId(null)
+      setMessage('Stripe account disconnected.')
       setTimeout(() => setMessage(''), 2000)
     }
   }
@@ -399,6 +442,63 @@ export default function SettingsPage() {
                     {disconnecting ? 'Disconnecting…' : 'Disconnect Meta account'}
                   </button>
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* Stripe Payments */}
+          <div className="bg-white shadow rounded-xl p-6">
+            <h2 className="text-lg font-medium text-gray-900 mb-1">Stripe Payments</h2>
+            <p className="text-sm text-gray-500 mb-5">Connect your Stripe account to send invoices directly to your leads.</p>
+
+            {stripeConnectAccountId ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-green-500" />
+                    <span className="text-sm font-medium text-gray-700">Connected</span>
+                    <span className="text-xs text-gray-400 font-mono">· {stripeConnectAccountId}</span>
+                  </div>
+                  <a
+                    href="https://dashboard.stripe.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-indigo-600 hover:underline font-medium"
+                  >
+                    Open Stripe Dashboard →
+                  </a>
+                </div>
+                <div className="pt-2 border-t border-gray-100">
+                  <button
+                    onClick={handleDisconnectStripe}
+                    disabled={stripeDisconnecting}
+                    className="text-sm text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
+                  >
+                    {stripeDisconnecting ? 'Disconnecting…' : 'Disconnect Stripe account'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-gray-300" />
+                  <span className="text-sm text-gray-500">No Stripe account connected</span>
+                </div>
+                {STRIPE_CONNECT_CLIENT_ID && accountId ? (
+                  <a
+                    href={`https://connect.stripe.com/oauth/authorize?response_type=code&client_id=${STRIPE_CONNECT_CLIENT_ID}&scope=read_write&state=${accountId}&redirect_uri=${encodeURIComponent(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/stripe/callback`)}`}
+                    className="inline-flex items-center gap-2 bg-[#635BFF] hover:bg-[#5851e8] text-white text-sm font-medium px-4 py-2 rounded-lg transition"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C4.55 23.088 7.685 24 11.52 24c2.617 0 4.814-.594 6.366-1.740 1.661-1.224 2.544-3.072 2.544-5.476-.03-4.12-2.508-5.91-6.454-7.634z"/>
+                    </svg>
+                    Connect Stripe
+                  </a>
+                ) : (
+                  <p className="text-xs text-amber-600 font-medium">
+                    {!STRIPE_CONNECT_CLIENT_ID ? 'Add NEXT_PUBLIC_STRIPE_CONNECT_CLIENT_ID to enable.' : 'Loading…'}
+                  </p>
+                )}
               </div>
             )}
           </div>
