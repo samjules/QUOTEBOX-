@@ -48,6 +48,12 @@ export default function SettingsPage() {
   const [savingAdAccount, setSavingAdAccount] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
 
+  // Password change state
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [changingPassword, setChangingPassword] = useState(false)
+  const [passwordMessage, setPasswordMessage] = useState('')
+
   // Stripe Connect state
   const [stripeConnectAccountId, setStripeConnectAccountId] = useState<string | null>(null)
   const [stripeDisconnecting, setStripeDisconnecting] = useState(false)
@@ -112,6 +118,30 @@ export default function SettingsPage() {
 
     setSaving(false)
     setMessage(error ? `Error: ${error.message}` : 'Business name updated successfully!')
+  }
+
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault()
+    setPasswordMessage('')
+    if (newPassword.length < 8) {
+      setPasswordMessage('Error: Password must be at least 8 characters.')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordMessage('Error: Passwords do not match.')
+      return
+    }
+    setChangingPassword(true)
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    setChangingPassword(false)
+    if (error) {
+      setPasswordMessage(`Error: ${error.message}`)
+    } else {
+      setPasswordMessage('Password updated successfully!')
+      setNewPassword('')
+      setConfirmPassword('')
+      setTimeout(() => setPasswordMessage(''), 3000)
+    }
   }
 
   async function handleLoadAdAccounts() {
@@ -348,6 +378,53 @@ export default function SettingsPage() {
                 className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
               >
                 {saving ? 'Updating…' : 'Update Business Name'}
+              </button>
+            </form>
+          </div>
+
+          {/* Change Password */}
+          <div className="bg-white shadow rounded-xl p-6">
+            <h2 className="text-lg font-medium text-gray-900 mb-4">Change Password</h2>
+            <form onSubmit={handleChangePassword} className="space-y-4 max-w-sm">
+              <div>
+                <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                  New Password
+                </label>
+                <input
+                  id="newPassword"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  autoComplete="new-password"
+                  placeholder="Min. 8 characters"
+                  className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-2 border"
+                />
+              </div>
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                  Confirm New Password
+                </label>
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  autoComplete="new-password"
+                  placeholder="Repeat new password"
+                  className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-2 border"
+                />
+              </div>
+              {passwordMessage && (
+                <p className={`text-sm font-medium ${passwordMessage.startsWith('Error') ? 'text-red-600' : 'text-green-600'}`}>
+                  {passwordMessage}
+                </p>
+              )}
+              <button
+                type="submit"
+                disabled={changingPassword || !newPassword || !confirmPassword}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
+              >
+                {changingPassword ? 'Updating…' : 'Update Password'}
               </button>
             </form>
           </div>
