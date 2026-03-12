@@ -4,7 +4,9 @@ import { useState, useTransition } from 'react'
 import type { Lead } from '@/lib/types'
 import { updateLeadStatus, saveLeadNote, deleteLead } from './actions'
 
-const SEND_INVOICE_FUNCTION_URL = process.env.NEXT_PUBLIC_SEND_INVOICE_FUNCTION_URL!
+const SEND_INVOICE_FUNCTION_URL =
+  process.env.NEXT_PUBLIC_SEND_INVOICE_FUNCTION_URL ||
+  `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-invoice`
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 const STATUS_OPTIONS = ['new', 'contacted', 'booked', 'lost'] as const
