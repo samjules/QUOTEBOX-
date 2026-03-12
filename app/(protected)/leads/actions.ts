@@ -57,3 +57,29 @@ export async function saveLeadNote(leadId: string, notes: string) {
   await supabase.from('leads').update({ notes }).eq('id', leadId)
   revalidatePath('/leads')
 }
+
+export async function deleteLead(leadId: string) {
+  const supabase = createClient()
+
+  // Verify ownership — only delete if the lead belongs to the current user's account
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { data: account } = await supabase
+    .from('accounts')
+    .select('id')
+    .eq('owner_id', user.id)
+    .single()
+
+  if (!account) throw new Error('Unauthorized')
+
+  const { error } = await supabase
+    .from('leads')
+    .delete()
+    .eq('id', leadId)
+    .eq('account_id', account.id)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/leads')
+}

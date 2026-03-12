@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import type { Lead } from '@/lib/types'
-import { updateLeadStatus, saveLeadNote } from './actions'
+import { updateLeadStatus, saveLeadNote, deleteLead } from './actions'
 
 const SEND_INVOICE_FUNCTION_URL = process.env.NEXT_PUBLIC_SEND_INVOICE_FUNCTION_URL!
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -37,7 +37,8 @@ function formatValue(value: unknown): string {
   return String(value)
 }
 
-export default function LeadsTable({ leads, stripeConnectAccountId }: { leads: Lead[]; stripeConnectAccountId: string | null }) {
+export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId }: { leads: Lead[]; stripeConnectAccountId: string | null }) {
+  const [leads, setLeads] = useState<Lead[]>(initialLeads)
   const [selected, setSelected] = useState<Lead | null>(null)
   const [localStatus, setLocalStatus] = useState<string>('')
   const [isPending, startTransition] = useTransition()
@@ -45,6 +46,10 @@ export default function LeadsTable({ leads, stripeConnectAccountId }: { leads: L
   const [noteText, setNoteText] = useState<string>('')
   const [isPendingNote, startNoteTransition] = useTransition()
   const [noteSaved, setNoteSaved] = useState(false)
+
+  // Delete state
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [isDeleting, startDeleteTransition] = useTransition()
 
   // Invoice state
   const [invoiceAmount, setInvoiceAmount] = useState<string>('')
@@ -58,6 +63,7 @@ export default function LeadsTable({ leads, stripeConnectAccountId }: { leads: L
     setLocalStatus(savedStatus[lead.id] ?? lead.status)
     setNoteText(lead.notes ?? '')
     setNoteSaved(false)
+    setConfirmDelete(false)
     // Reset invoice state and pre-fill from quote
     setInvoiceSent(false)
     setInvoiceError(null)
@@ -114,6 +120,16 @@ export default function LeadsTable({ leads, stripeConnectAccountId }: { leads: L
       setInvoiceError(err instanceof Error ? err.message : 'Failed to send invoice')
     }
     setInvoiceSending(false)
+  }
+
+  function handleDeleteLead() {
+    if (!selected) return
+    const id = selected.id
+    startDeleteTransition(async () => {
+      await deleteLead(id)
+      setLeads((prev) => prev.filter((l) => l.id !== id))
+      setSelected(null)
+    })
   }
 
   const getDisplayStatus = (lead: Lead) =>
@@ -225,15 +241,47 @@ export default function LeadsTable({ leads, stripeConnectAccountId }: { leads: L
                 <h2 className="text-lg font-semibold text-gray-900">{selected.name || 'Unnamed Lead'}</h2>
                 <p className="text-sm text-gray-500">{selected.form_type || 'Lead'} · {new Date(selected.created_at).toLocaleDateString()}</p>
               </div>
-              <button
-                onClick={closeLead}
-                className="text-gray-400 hover:text-gray-600 p-1 rounded-md"
-                aria-label="Close"
-              >
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-2">
+                {!confirmDelete ? (
+                  <button
+                    onClick={() => setConfirmDelete(true)}
+                    className="text-red-400 hover:text-red-600 p-1 rounded-md"
+                    aria-label="Delete lead"
+                    title="Delete lead"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">Delete?</span>
+                    <button
+                      onClick={handleDeleteLead}
+                      disabled={isDeleting}
+                      className="text-xs font-semibold text-white bg-red-600 hover:bg-red-700 px-2.5 py-1 rounded-md disabled:opacity-50"
+                    >
+                      {isDeleting ? 'Deleting…' : 'Yes, delete'}
+                    </button>
+                    <button
+                      onClick={() => setConfirmDelete(false)}
+                      disabled={isDeleting}
+                      className="text-xs font-semibold text-gray-600 hover:text-gray-800 px-2.5 py-1 rounded-md border border-gray-300 disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+                <button
+                  onClick={closeLead}
+                  className="text-gray-400 hover:text-gray-600 p-1 rounded-md"
+                  aria-label="Close"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
