@@ -93,7 +93,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
   const [invoiceAmount, setInvoiceAmount] = useState<string>('')
   const [invoiceDescription, setInvoiceDescription] = useState<string>('')
   const [invoiceSending, setInvoiceSending] = useState(false)
-  const [invoiceSent, setInvoiceSent] = useState(false)
+  const [invoiceSent, setInvoiceSent] = useState<false | 'email' | 'email+sms'>(false)
   const [invoiceError, setInvoiceError] = useState<string | null>(null)
 
   function openLead(lead: Lead) {
@@ -103,7 +103,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
     setNoteSaved(false)
     setConfirmDelete(false)
     // Reset invoice state and pre-fill from quote
-    setInvoiceSent(false)
+    setInvoiceSent(false as false)
     setInvoiceError(null)
     const quote = getQuote(lead)
     setInvoiceAmount(quote ? String(quote.total) : '')
@@ -146,6 +146,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
         body: JSON.stringify({
           email: selected.email,
           name: selected.name,
+          phone: selected.phone || undefined,
           amount: parseFloat(invoiceAmount),
           description: invoiceDescription || 'Service quote',
           stripeConnectAccountId,
@@ -153,7 +154,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to send invoice')
-      setInvoiceSent(true)
+      setInvoiceSent(data.smsSent ? 'email+sms' : 'email')
     } catch (err) {
       setInvoiceError(err instanceof Error ? err.message : 'Failed to send invoice')
     }
@@ -485,7 +486,14 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                     <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    <p className="text-sm text-green-800 font-medium">Invoice sent to {selected.email}</p>
+                    <div>
+                      <p className="text-sm text-green-800 font-medium">Invoice sent!</p>
+                      <p className="text-xs text-green-700 mt-0.5">
+                        {invoiceSent === 'email+sms'
+                          ? `Email → ${selected.email} · SMS → ${selected.phone}`
+                          : `Email → ${selected.email}`}
+                      </p>
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -524,7 +532,9 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                     >
                       {invoiceSending ? 'Sending…' : 'Send Invoice'}
                     </button>
-                    <p className="text-xs text-gray-400">Invoice will be sent to {selected.email} · due in 7 days</p>
+                    <p className="text-xs text-gray-400">
+                      Email → {selected.email}{selected.phone ? ` · SMS → ${selected.phone}` : ''} · due in 7 days
+                    </p>
                   </div>
                 )}
               </section>
