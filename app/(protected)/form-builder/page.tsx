@@ -2330,11 +2330,14 @@ export default function FormBuilderPage() {
       let savedId = editingFormId
 
       if (editingFormId) {
-        const { error } = await supabase
+        const { data: updated, error } = await supabase
           .from('hosted_forms')
           .update(payload)
           .eq('id', editingFormId)
+          .select('id')
+          .single()
         if (error) throw error
+        if (!updated?.id) throw new Error('Form not found — please refresh and try again')
         setExistingForms((prev) => prev.map((f) =>
           f.id === editingFormId ? { ...f, form_name: name, form_config: { slug } } : f
         ))

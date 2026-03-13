@@ -590,6 +590,7 @@ function RouteField({
   const [legInfos, setLegInfos] = useState<LegInfo[] | null>(null)
   const [routeInfo, setRouteInfo] = useState<{ distanceMiles: number; durationMinutes: number } | null>(null)
   const [routeGeometry, setRouteGeometry] = useState<RouteGeometry | null>(null)
+  const [baseGeometry, setBaseGeometry] = useState<RouteGeometry | null>(null)
   const [isLoadingRoute, setIsLoadingRoute] = useState(false)
 
   // Notify parent of individual coord changes so it can gate canAdvance()
@@ -635,7 +636,7 @@ function RouteField({
     // ── Single location mode: customer enters one address ──
     if (field.locationMode === 'single') {
       if (!endCoords) {
-        setRouteInfo(null); setRouteGeometry(null); setLegInfos(null)
+        setRouteInfo(null); setRouteGeometry(null); setBaseGeometry(null); setLegInfos(null)
         onRouteChangeRef.current(null)
         return
       }
@@ -643,6 +644,7 @@ function RouteField({
         // No base address set — record the address with zero distance
         setRouteInfo({ distanceMiles: 0, durationMinutes: 0 })
         setRouteGeometry(null)
+        setBaseGeometry(null)
         setLegInfos(null)
         onRouteChangeRef.current({
           startAddress: '',
@@ -659,7 +661,9 @@ function RouteField({
         setIsLoadingRoute(false)
         if (!result) return
         setRouteInfo({ distanceMiles: result.distanceMiles, durationMinutes: result.durationMinutes })
-        setRouteGeometry(result.geometry)
+        // Single mode: the whole route is the base line (business → customer)
+        setBaseGeometry(result.geometry)
+        setRouteGeometry(null)
         setLegInfos(null)
         onRouteChangeRef.current({
           startAddress: field.baseAddress ?? '',
@@ -675,25 +679,28 @@ function RouteField({
 
     // ── Point-to-point mode ──
     if (!startCoords || !endCoords) {
-      setRouteInfo(null); setRouteGeometry(null); setLegInfos(null)
+      setRouteInfo(null); setRouteGeometry(null); setBaseGeometry(null); setLegInfos(null)
       onRouteChangeRef.current(null)
       return
     }
     setIsLoadingRoute(true)
     if (field.baseAddress && baseCoords) {
-      // Outbound only: base → start → end
-      // Return mirrors the outbound exactly (driver retraces same roads back)
-      getWaypointRoute([baseCoords, startCoords, endCoords]).then((result) => {
+      // Fetch base→start and start→end as separate legs for distinct coloring
+      Promise.all([
+        getDirections(baseCoords, startCoords),  // base leg (gray)
+        getDirections(startCoords, endCoords),   // customer route (accent)
+      ]).then(([baseResult, customerResult]) => {
         setIsLoadingRoute(false)
-        if (!result) return
-        const leg0 = result.legs[0] // base → start
-        const leg1 = result.legs[1] // start → end
+        if (!baseResult || !customerResult) return
+        const leg0 = { distanceMiles: baseResult.distanceMiles, durationMinutes: baseResult.durationMinutes }
+        const leg1 = { distanceMiles: customerResult.distanceMiles, durationMinutes: customerResult.durationMinutes }
         // Mirror: return trip retraces leg0 (end → start → base = same roads reversed)
         const mirroredLegs = [leg0, leg1, leg0]
         const totalMiles = leg0.distanceMiles * 2 + leg1.distanceMiles
         const totalMinutes = leg0.durationMinutes * 2 + leg1.durationMinutes
         setRouteInfo({ distanceMiles: totalMiles, durationMinutes: totalMinutes })
-        setRouteGeometry(result.geometry)
+        setBaseGeometry(baseResult.geometry)       // base leg in gray
+        setRouteGeometry(customerResult.geometry)  // customer route in accent color
         setLegInfos(mirroredLegs)
         onRouteChangeRef.current({
           startAddress: startQuery,
@@ -709,6 +716,7 @@ function RouteField({
         setIsLoadingRoute(false)
         if (!result) return
         setRouteInfo({ distanceMiles: result.distanceMiles, durationMinutes: result.durationMinutes })
+        setBaseGeometry(null)
         setRouteGeometry(result.geometry)
         setLegInfos(null)
         onRouteChangeRef.current({
@@ -783,6 +791,31 @@ function RouteField({
         endMarkerRef.current = new mapboxgl.Marker({ element: el }).setLngLat(endCoords).addTo(map)
       }
 
+      // ── Base leg (gray dashed) ──
+      if (baseGeometry) {
+        const baseGeoJson = { type: 'Feature' as const, properties: {}, geometry: baseGeometry as GeoJSON.Geometry }
+        if (map.getSource('route-base')) {
+          map.getSource('route-base').setData(baseGeoJson)
+        } else {
+          map.addSource('route-base', { type: 'geojson', data: baseGeoJson })
+          map.addLayer({
+            id: 'route-base',
+            type: 'line',
+            source: 'route-base',
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: {
+              'line-color': '#94a3b8',
+              'line-width': 3,
+              'line-opacity': 0.7,
+              'line-dasharray': [5, 3],
+            },
+          })
+        }
+      } else if (map.getSource('route-base')) {
+        map.getSource('route-base').setData({ type: 'FeatureCollection', features: [] })
+      }
+
+      // ── Customer route (accent color) ──
       if (routeGeometry) {
         const geojson = {
           type: 'Feature' as const,
@@ -805,8 +838,18 @@ function RouteField({
             },
           })
         }
+      } else if (map.getSource('route')) {
+        map.getSource('route').setData({ type: 'FeatureCollection', features: [] })
+      }
+
+      // Fit bounds to all visible route geometry
+      const allCoords: [number, number][] = [
+        ...(baseGeometry ? (baseGeometry.coordinates as [number, number][]) : []),
+        ...(routeGeometry ? (routeGeometry.coordinates as [number, number][]) : []),
+      ]
+      if (allCoords.length > 0) {
         const bounds = new mapboxgl.LngLatBounds()
-        ;(routeGeometry.coordinates as [number, number][]).forEach((c) => bounds.extend(c))
+        allCoords.forEach((c) => bounds.extend(c))
         map.fitBounds(bounds, { padding: 52, maxZoom: 14 })
       } else if (startCoords && endCoords) {
         const bounds = new mapboxgl.LngLatBounds()
@@ -820,7 +863,7 @@ function RouteField({
         map.flyTo({ center: baseCoords, zoom: 11 })
       }
     })
-  }, [mapLoaded, baseCoords, startCoords, endCoords, routeGeometry, accentColor])
+  }, [mapLoaded, baseCoords, startCoords, endCoords, routeGeometry, baseGeometry, accentColor])
 
   const priceContribution = routeInfo
     ? (() => {
