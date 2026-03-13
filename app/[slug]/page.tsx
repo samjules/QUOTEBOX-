@@ -1,7 +1,7 @@
-import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import type { HostedForm } from '@/lib/types'
 import QuoteForm from './QuoteForm'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 // Never cache — always fetch fresh form data so edits/deletes are instant
 export const dynamic = 'force-dynamic'
@@ -11,14 +11,11 @@ export default async function PublicFormPage({
 }: {
   params: { slug: string }
 }) {
-  // Use a plain anon client (no cookie session) so visitor auth state
-  // never interferes with the public RLS policy on hosted_forms.
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  // Use admin client (service role) so RLS never blocks reads and edits
+  // appear immediately without any caching or policy delay.
+  const admin = createAdminClient()
 
-  const { data: rows } = await supabase
+  const { data: rows } = await admin
     .from('hosted_forms')
     .select('*')
     .eq('form_config->>slug', params.slug)
@@ -30,8 +27,8 @@ export default async function PublicFormPage({
   if (!form) notFound()
 
   const [{ data: billing }, { data: account }] = await Promise.all([
-    supabase.from('billing').select('credit_balance').eq('account_id', form.account_id).single(),
-    supabase.from('accounts').select('business_name').eq('id', form.account_id).single(),
+    admin.from('billing').select('credit_balance').eq('account_id', form.account_id).single(),
+    admin.from('accounts').select('business_name').eq('id', form.account_id).single(),
   ])
 
   const hasCredits = (billing?.credit_balance ?? 0) >= 15
