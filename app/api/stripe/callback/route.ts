@@ -9,13 +9,12 @@ export async function GET(request: NextRequest) {
   const error = searchParams.get('error')
 
   if (error || !code || !state) {
-    return NextResponse.redirect(`${origin}/settings?stripe=error`)
+    return NextResponse.redirect(`${origin}/settings?stripe=error&reason=missing_params`)
   }
 
-  // Exchange authorization code for connected account ID
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY
   if (!stripeSecretKey) {
-    return NextResponse.redirect(`${origin}/settings?stripe=error`)
+    return NextResponse.redirect(`${origin}/settings?stripe=error&reason=no_secret_key`)
   }
 
   let stripeUserId: string
@@ -31,18 +30,19 @@ export async function GET(request: NextRequest) {
     })
     const tokenData = await tokenRes.json()
     if (!tokenData.stripe_user_id) {
-      return NextResponse.redirect(`${origin}/settings?stripe=error`)
+      const reason = encodeURIComponent(tokenData.error_description || tokenData.error || 'no_user_id')
+      return NextResponse.redirect(`${origin}/settings?stripe=error&reason=${reason}`)
     }
     stripeUserId = tokenData.stripe_user_id
-  } catch {
-    return NextResponse.redirect(`${origin}/settings?stripe=error`)
+  } catch (e) {
+    const reason = encodeURIComponent(e instanceof Error ? e.message : 'token_fetch_failed')
+    return NextResponse.redirect(`${origin}/settings?stripe=error&reason=${reason}`)
   }
 
-  // Save the connected account ID — verify the account belongs to the logged-in user
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
-    return NextResponse.redirect(`${origin}/settings?stripe=error`)
+    return NextResponse.redirect(`${origin}/settings?stripe=error&reason=not_authenticated`)
   }
 
   const { error: updateError } = await supabase
@@ -55,7 +55,8 @@ export async function GET(request: NextRequest) {
     .eq('owner_id', user.id)
 
   if (updateError) {
-    return NextResponse.redirect(`${origin}/settings?stripe=error`)
+    const reason = encodeURIComponent(updateError.message)
+    return NextResponse.redirect(`${origin}/settings?stripe=error&reason=${reason}`)
   }
 
   return NextResponse.redirect(`${origin}/settings?stripe=connected`)

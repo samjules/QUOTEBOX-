@@ -96,12 +96,13 @@ export default function SettingsPage() {
   // Handle Stripe Connect OAuth redirect params
   useEffect(() => {
     const stripeParam = searchParams.get('stripe')
+    const reason = searchParams.get('reason')
     if (stripeParam === 'connected') {
       setMessage('Stripe account connected successfully!')
       window.history.replaceState({}, '', '/settings')
       setTimeout(() => setMessage(''), 4000)
     } else if (stripeParam === 'error') {
-      setMessage('Error: Failed to connect Stripe account. Please try again.')
+      setMessage(`Error: Stripe connection failed${reason ? ` — ${reason}` : ''}. Please try again.`)
       window.history.replaceState({}, '', '/settings')
     }
   }, [searchParams])
