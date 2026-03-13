@@ -107,6 +107,10 @@ function makeField(type: FormField['type']): FormField {
       required: true,
       ratePerSqFt: 0.10,
     },
+    booking: {
+      label: 'Preferred Booking Date',
+      required: true,
+    },
   }
   return { id: uid(), type, ...defaults[type] }
 }
@@ -331,6 +335,7 @@ function TemplatePicker({
     textarea: '≡ text',
     image: '🖼 image',
     draw_area: '⬡ draw area',
+    booking: '📅 booking',
   }
 
   return (
@@ -937,6 +942,13 @@ function CanvasPreview({
                           × {currency}{f.ratePerSqFt}/sq ft
                         </span>
                       )}
+                    </div>
+                  )}
+
+                  {/* Booking date field */}
+                  {f.type === 'booking' && (
+                    <div style={{ padding: '10px 0' }}>
+                      <input type="date" disabled style={{ padding: '10px 12px', borderRadius: 8, border: '1.5px solid #e5e4e0', fontSize: '0.9rem', background: '#fafaf9', width: '100%', boxSizing: 'border-box' }} />
                     </div>
                   )}
                 </div>
@@ -2534,6 +2546,9 @@ export default function FormBuilderPage() {
                 </button>
                 <button className="ftype-btn" onClick={() => addField('draw_area')}>
                   <span className="icon">⬡</span> Draw Area
+                </button>
+                <button className="ftype-btn" onClick={() => addField('booking')}>
+                  <span className="icon">📅</span> Booking Date
                 </button>
               </div>
             )}

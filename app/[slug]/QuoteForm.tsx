@@ -131,6 +131,11 @@ function applyConditionalRate(
   return baseRate
 }
 
+function formatDate(iso: string) {
+  const [y, m, d] = iso.split('-')
+  return new Date(Number(y), Number(m) - 1, Number(d)).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+}
+
 function computeTotal(
   fields: FormField[],
   answers: Record<string, unknown>,
@@ -676,20 +681,27 @@ function RouteField({
     }
     setIsLoadingRoute(true)
     if (field.baseAddress && baseCoords) {
-      // Multi-leg route: base → start → end → base
-      getWaypointRoute([baseCoords, startCoords, endCoords, baseCoords]).then((result) => {
+      // Outbound only: base → start → end
+      // Return mirrors the outbound exactly (driver retraces same roads back)
+      getWaypointRoute([baseCoords, startCoords, endCoords]).then((result) => {
         setIsLoadingRoute(false)
         if (!result) return
-        setRouteInfo({ distanceMiles: result.totalMiles, durationMinutes: result.totalMinutes })
+        const leg0 = result.legs[0] // base → start
+        const leg1 = result.legs[1] // start → end
+        // Mirror: return trip retraces leg0 (end → start → base = same roads reversed)
+        const mirroredLegs = [leg0, leg1, leg0]
+        const totalMiles = leg0.distanceMiles * 2 + leg1.distanceMiles
+        const totalMinutes = leg0.durationMinutes * 2 + leg1.durationMinutes
+        setRouteInfo({ distanceMiles: totalMiles, durationMinutes: totalMinutes })
         setRouteGeometry(result.geometry)
-        setLegInfos(result.legs)
+        setLegInfos(mirroredLegs)
         onRouteChangeRef.current({
           startAddress: startQuery,
           startCoords: startCoords!,
           endAddress: endQuery,
           endCoords: endCoords!,
-          distanceMiles: result.totalMiles,
-          durationMinutes: result.totalMinutes,
+          distanceMiles: totalMiles,
+          durationMinutes: totalMinutes,
         })
       })
     } else {
@@ -1148,6 +1160,9 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
             price: sqFt * (f.ratePerSqFt ?? 0),
           })
         }
+      } else if (f.type === 'booking') {
+        const val = answers[f.id] as string
+        if (val) items.push({ label: f.label, value: formatDate(val), price: 0 })
       }
     }
     return items
@@ -1194,6 +1209,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
     if (f.type === 'number') return !!(answers[f.id] as number)
     if (f.type === 'textarea') return !!String(answers[f.id] ?? '').trim()
     if (f.type === 'draw_area') return drawAreaData[f.id] != null
+    if (f.type === 'booking') return !f.required || !!answers[f.id]
     return true
   }
 
@@ -1221,6 +1237,10 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
     if (displayTotal > 0) {
       formData._quote_total = displayTotal
       formData._quote_currency = currency
+    }
+    const bookingField = config.fields.find(f => f.type === 'booking')
+    if (bookingField && answers[bookingField.id]) {
+      formData._booking_date = answers[bookingField.id]
     }
 
     const submitRes = await fetch('/api/leads/submit', {
@@ -1599,6 +1619,23 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
                     value={(answers[currentField.id] as string) ?? ''}
                     onChange={(e) => setAnswers((p) => ({ ...p, [currentField.id]: e.target.value }))}
                     style={{ ...inputStyle, resize: 'vertical', minHeight: 110 }}
+                  />
+                  <button onClick={handleNext} disabled={!canAdvance()}
+                    style={{ ...continueBtn, opacity: canAdvance() ? 1 : 0.35, cursor: canAdvance() ? 'pointer' : 'not-allowed' }}>
+                    Continue →
+                  </button>
+                </>
+              )}
+
+              {/* ── Booking Date ── */}
+              {currentField.type === 'booking' && (
+                <>
+                  <input
+                    type="date"
+                    value={String(answers[currentField.id] ?? '')}
+                    min={new Date().toISOString().split('T')[0]}
+                    onChange={(e) => setAnswers(prev => ({ ...prev, [currentField.id]: e.target.value }))}
+                    style={{ width: '100%', padding: '14px 16px', borderRadius: 12, border: `2px solid ${accentBg}`, fontSize: '1rem', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
                   />
                   <button onClick={handleNext} disabled={!canAdvance()}
                     style={{ ...continueBtn, opacity: canAdvance() ? 1 : 0.35, cursor: canAdvance() ? 'pointer' : 'not-allowed' }}>

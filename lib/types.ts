@@ -36,7 +36,7 @@ export interface ConditionalRule {
 
 export interface FormField {
   id: string
-  type: 'radio' | 'dropdown' | 'checkbox' | 'number' | 'textarea' | 'route' | 'image' | 'draw_area'
+  type: 'radio' | 'dropdown' | 'checkbox' | 'number' | 'textarea' | 'route' | 'image' | 'draw_area' | 'booking'
   label: string
   required: boolean
   options?: FieldOption[]
