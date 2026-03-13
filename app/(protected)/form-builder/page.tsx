@@ -2330,25 +2330,30 @@ export default function FormBuilderPage() {
       let savedId = editingFormId
 
       if (editingFormId) {
-        const { data: updated, error } = await supabase
-          .from('hosted_forms')
-          .update(payload)
-          .eq('id', editingFormId)
-          .select('id')
-          .single()
-        if (error) throw error
-        if (!updated?.id) throw new Error('Form not found — please refresh and try again')
+        const res = await fetch('/api/form-builder/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ formId: editingFormId, payload }),
+        })
+        if (!res.ok) {
+          const d = await res.json().catch(() => ({}))
+          throw new Error(d.error || 'Failed to save form')
+        }
         setExistingForms((prev) => prev.map((f) =>
           f.id === editingFormId ? { ...f, form_name: name, form_config: { slug } } : f
         ))
       } else if (sameAccountWithSlug.length > 0) {
         // Reuse existing form at this slug instead of creating a duplicate
         const existingId = sameAccountWithSlug[0].id
-        const { error } = await supabase
-          .from('hosted_forms')
-          .update(payload)
-          .eq('id', existingId)
-        if (error) throw error
+        const res = await fetch('/api/form-builder/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ formId: existingId, payload }),
+        })
+        if (!res.ok) {
+          const d = await res.json().catch(() => ({}))
+          throw new Error(d.error || 'Failed to save form')
+        }
         savedId = existingId
         setEditingFormId(existingId)
         router.replace(`/form-builder?form_id=${existingId}`, { scroll: false } as never)
