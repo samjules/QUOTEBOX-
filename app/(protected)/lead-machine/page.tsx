@@ -1074,7 +1074,24 @@ export default function LeadMachinePage() {
         }),
       })
       const data = await res.json()
-      if (!res.ok) { setError(data.error || 'Failed to create conversion'); return }
+      if (!res.ok) {
+        // Duplicate rule — Meta tells us the existing conversion name in error_user_msg.
+        // Extract it and auto-select the matching conversion from our list.
+        if (data.meta_error?.error_subcode === 1760002) {
+          const msg: string = data.meta_error?.error_user_msg ?? ''
+          const match = msg.match(/"([^"]+)"\.?\s*$/)
+          const existingName = match?.[1] ?? ''
+          const existing = customConversions.find(
+            (cv) => cv.pixel_id === pixelId && (existingName ? cv.name === existingName : cv.name.includes(slug ?? ''))
+          )
+          if (existing) {
+            setQuestionnaire((q) => ({ ...q, customConversionId: existing.id, pixelId }))
+            return
+          }
+        }
+        setError(data.error || 'Failed to create conversion')
+        return
+      }
       const newConv: CustomConversion = { id: data.id, name: data.name, custom_event_type: data.custom_event_type, pixel_id: pixelId }
       setCustomConversions((prev) => [newConv, ...prev])
       setQuestionnaire((q) => ({ ...q, customConversionId: data.id, pixelId }))
