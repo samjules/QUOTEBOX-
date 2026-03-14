@@ -61,21 +61,19 @@ export async function POST(request: NextRequest) {
 
   const eventType = body.custom_event_type || 'LEAD'
 
-  // Build the rule — event match, optionally filtered to URL
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const andClauses: any[] = [{ event: { eq: eventType } }]
-  if (body.url_contains) {
-    andClauses.push({ url: { i_contains: body.url_contains } })
-  }
-  const rule = JSON.stringify({ and: andClauses })
+  // Rule only contains URL filter — custom_event_type already specifies the event.
+  // Combining both causes Meta to return "Invalid parameter".
+  const rule = body.url_contains
+    ? JSON.stringify({ and: [{ url: { i_contains: body.url_contains } }] })
+    : undefined
 
   const params = new URLSearchParams({
     name: body.name,
     event_source_id: body.pixel_id,
     custom_event_type: eventType,
-    rule,
     access_token: creds.token,
   })
+  if (rule) params.set('rule', rule)
 
   try {
     const res = await fetch(

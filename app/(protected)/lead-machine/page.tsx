@@ -911,16 +911,26 @@ export default function LeadMachinePage() {
     }
   }, [dateRange, loadCampaigns, pageState])
 
-  // Auto-create conversion when entering step 1
+  // Auto-create (or reuse) conversion when entering step 1
   useEffect(() => {
     if (step !== 1) return
-    if (autoConvCreatedRef.current || creatingConversion) return
+    if (autoConvCreatedRef.current || creatingConversion || conversionsLoading) return
     const selectedForm = hostedForms.find((f) => f.id === questionnaire.selectedFormId)
     if (!selectedForm?.pixelId || !selectedForm?.slug) return
     autoConvCreatedRef.current = true
+
+    // Reuse existing conversion for this form slug instead of creating a duplicate
+    const existing = customConversions.find(
+      (cv) => cv.pixel_id === selectedForm.pixelId && cv.name.includes(selectedForm.slug!)
+    )
+    if (existing) {
+      setQuestionnaire((q) => ({ ...q, customConversionId: existing.id, pixelId: existing.pixel_id }))
+      return
+    }
+
     handleCreateQuoteBoxConversion(selectedForm.pixelId, selectedForm.slug)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, hostedForms, questionnaire.selectedFormId])
+  }, [step, hostedForms, questionnaire.selectedFormId, customConversions, conversionsLoading])
 
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
