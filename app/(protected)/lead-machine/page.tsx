@@ -1047,7 +1047,8 @@ export default function LeadMachinePage() {
 
       const data = await res.json()
       if (!res.ok) {
-        if (data.meta_error?.type === 'OAuthException') {
+        // Code 190 = invalid/expired access token. Code 100 is a parameter error, not auth.
+        if (data.meta_error?.code === 190) {
           setTokenExpired(true)
           setError('Your Meta connection has expired. Please reconnect your account to continue.')
         } else {

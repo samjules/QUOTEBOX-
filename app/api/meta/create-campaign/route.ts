@@ -173,12 +173,16 @@ export async function POST(request: NextRequest) {
   }
 
   // Build promoted_object
-  // OFFSITE_CONVERSIONS: only pixel_id (+ optional custom_conversion_id) — page_id is invalid here
-  // LINK_CLICKS / REACH: page_id is acceptable, pixel optional
+  // OFFSITE_CONVERSIONS requires pixel_id + EITHER custom_conversion_id OR custom_event_type
+  // LINK_CLICKS / REACH accept page_id + optional pixel_id
   const promotedObject: Record<string, string> = {}
   if (objConfig.optimization_goal === 'OFFSITE_CONVERSIONS') {
     if (body.pixelId) promotedObject.pixel_id = body.pixelId
-    if (body.customConversionId) promotedObject.custom_conversion_id = body.customConversionId
+    if (body.customConversionId) {
+      promotedObject.custom_conversion_id = body.customConversionId
+    } else {
+      promotedObject.custom_event_type = body.objective === 'OUTCOME_SALES' ? 'PURCHASE' : 'LEAD'
+    }
   } else {
     if (body.pageId) promotedObject.page_id = body.pageId
     if (body.pixelId) promotedObject.pixel_id = body.pixelId
