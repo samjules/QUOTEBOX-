@@ -1062,7 +1062,6 @@ export default function LeadMachinePage() {
     setCreatingConversion(true)
     setError('')
     try {
-      const urlContains = slug ? `quote-box.com/${slug}` : 'quote-box.com'
       const convName = slug ? `QuoteBox — ${slug}` : 'QuoteBox — Lead Form Submission'
       const res = await fetch('/api/meta/conversions', {
         method: 'POST',
@@ -1071,7 +1070,6 @@ export default function LeadMachinePage() {
           name: convName,
           pixel_id: pixelId,
           custom_event_type: 'LEAD',
-          url_contains: urlContains,
         }),
       })
       const data = await res.json()

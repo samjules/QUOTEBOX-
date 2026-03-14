@@ -61,19 +61,14 @@ export async function POST(request: NextRequest) {
 
   const eventType = body.custom_event_type || 'LEAD'
 
-  // Rule only contains URL filter — custom_event_type already specifies the event.
-  // Combining both causes Meta to return "Invalid parameter".
-  const rule = body.url_contains
-    ? JSON.stringify({ and: [{ url: { i_contains: body.url_contains } }] })
-    : undefined
-
+  // No rule — custom_event_type alone is sufficient. URL filtering on standard
+  // events causes Meta to reject the request with "Invalid parameter".
   const params = new URLSearchParams({
     name: body.name,
     event_source_id: body.pixel_id,
     custom_event_type: eventType,
     access_token: creds.token,
   })
-  if (rule) params.set('rule', rule)
 
   try {
     const res = await fetch(
@@ -82,8 +77,9 @@ export async function POST(request: NextRequest) {
     )
     const data = await res.json()
     if (!res.ok || !data.id) {
+      console.error('[conversions] Meta error:', JSON.stringify(data.error))
       return NextResponse.json(
-        { error: data.error?.message || 'Failed to create conversion' },
+        { error: data.error?.message || 'Failed to create conversion', meta_error: data.error },
         { status: 400 }
       )
     }
