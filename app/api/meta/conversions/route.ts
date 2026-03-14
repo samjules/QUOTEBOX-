@@ -27,27 +27,20 @@ export async function GET() {
     ? creds.adAccountId
     : `act_${creds.adAccountId}`
 
-  console.log('[conversions GET] raw stored adAccountId:', creds.adAccountId)
-  console.log('[conversions GET] normalized adAccountId:', adAccountId)
-
   try {
-    const url = `https://graph.facebook.com/v18.0/${adAccountId}/customconversions?fields=id,name,custom_event_type,rule,pixel_id,creation_time&limit=100&access_token=${creds.token}`
-    console.log('[conversions GET] fetching URL (token redacted):', url.replace(creds.token, 'REDACTED'))
-
-    const res = await fetch(url, { cache: 'no-store' })
+    const res = await fetch(
+      `https://graph.facebook.com/v18.0/${adAccountId}/customconversions` +
+      `?fields=id,name,custom_event_type,rule,pixel_id,creation_time` +
+      `&limit=100` +
+      `&access_token=${creds.token}`,
+      { cache: 'no-store' }
+    )
     const data = await res.json()
-
-    console.log('[conversions GET] HTTP status:', res.status)
-    console.log('[conversions GET] raw Meta response:', JSON.stringify(data))
-
     if (!res.ok) {
-      console.error('[conversions GET] Meta error:', data.error)
       return NextResponse.json({ error: data.error?.message || 'Failed to fetch conversions', conversions: [] }, { status: 400 })
     }
-    console.log('[conversions GET] returning', (data.data || []).length, 'conversions')
     return NextResponse.json({ conversions: data.data || [] })
-  } catch (e) {
-    console.error('[conversions GET] exception:', e)
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch conversions', conversions: [] }, { status: 500 })
   }
 }

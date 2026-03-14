@@ -864,10 +864,8 @@ export default function LeadMachinePage() {
             try {
               const cvRes = await fetch('/api/meta/conversions')
               const cvData = await cvRes.json()
-              console.log('[lead-machine] conversions status:', cvRes.status)
-              console.log('[lead-machine] conversions response:', JSON.stringify(cvData))
               setCustomConversions(cvData.conversions || [])
-            } catch (e) { console.error('[lead-machine] conversions error:', e) }
+            } catch { /* non-fatal */ }
             setConversionsLoading(false)
           })(),
           (async () => {
@@ -1735,7 +1733,7 @@ export default function LeadMachinePage() {
                         {customConversions.map((cv) => (
                           <button
                             key={cv.id}
-                            onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: cv.id, pixelId: cv.pixel_id }))}
+                            onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: cv.id, pixelId: cv.pixel_id || q.pixelId }))}
                             className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 transition ${
                               questionnaire.customConversionId === cv.id ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
                             }`}
@@ -1743,7 +1741,7 @@ export default function LeadMachinePage() {
                             <p className={`font-medium text-sm ${questionnaire.customConversionId === cv.id ? 'text-indigo-700' : 'text-gray-900'}`}>
                               {cv.name}
                             </p>
-                            <p className="text-xs text-gray-400 mt-0.5">Event: {cv.custom_event_type} · Pixel: {cv.pixel_id}</p>
+                            <p className="text-xs text-gray-400 mt-0.5">Event: {cv.custom_event_type}</p>
                           </button>
                         ))}
                       </div>
