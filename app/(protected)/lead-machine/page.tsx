@@ -110,7 +110,7 @@ interface Questionnaire {
 }
 
 type PageState = 'disconnected' | 'pick-account' | 'questionnaire' | 'created'
-type Step = 1 | 2 | 3 | 4 | 5
+type Step = 1 | 2 | 3 | 4 | 5 | 6
 type ActiveTab = 'analytics' | 'campaigns' | 'create'
 
 const OBJECTIVES = [
@@ -705,7 +705,7 @@ export default function LeadMachinePage() {
   const [customConversions, setCustomConversions] = useState<CustomConversion[]>([])
   const [conversionsLoading, setConversionsLoading] = useState(false)
   const [creatingConversion, setCreatingConversion] = useState(false)
-  const [step1Tab, setStep1Tab] = useState<'setup' | 'conversions'>('setup')
+  const [conversionTestOpened, setConversionTestOpened] = useState(false)
 
   // Analytics/campaigns state
   const [campaigns, setCampaigns] = useState<CampaignWithInsights[]>([])
@@ -1117,7 +1117,7 @@ export default function LeadMachinePage() {
       customConversionId: null,
       pixelId: null,
     })
-    setStep1Tab('setup')
+    setConversionTestOpened(false)
   }
 
   // ─── Render: Loading ───────────────────────────────────────────────────────
@@ -1237,7 +1237,7 @@ export default function LeadMachinePage() {
   const avgCpl = totalLeads > 0 ? totalSpend / totalLeads : 0
   const activeCampaigns = campaigns.filter((c) => c.status === 'ACTIVE').length
 
-  const stepTitles = ['Campaign Objective', 'Target Audience', 'Business Info', 'Budget & Schedule', 'AI Preview & Split Test']
+  const stepTitles = ['Conversion Tracking', 'Campaign Objective', 'Target Audience', 'Business Info', 'Budget & Schedule', 'AI Preview & Split Test']
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -1587,12 +1587,12 @@ export default function LeadMachinePage() {
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
                   <h2 className="text-xl font-bold text-gray-900">Create Campaign</h2>
-                  <span className="text-sm text-gray-400">Step {step} of 5</span>
+                  <span className="text-sm text-gray-400">Step {step} of 6</span>
                 </div>
                 <div className="w-full bg-gray-100 rounded-full h-2">
                   <div
                     className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${(step / 5) * 100}%` }}
+                    style={{ width: `${(step / 6) * 100}%` }}
                   />
                 </div>
                 <p className="text-sm text-gray-500 mt-2">{stepTitles[step - 1]}</p>
@@ -1617,212 +1617,221 @@ export default function LeadMachinePage() {
 
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
 
-                {/* Step 1: Objective */}
+                {/* Step 1: Conversion Tracking */}
                 {step === 1 && (
-                  <div className="space-y-6">
-                    <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
-                      {(['setup', 'conversions'] as const).map((tab) => (
-                        <button
-                          key={tab}
-                          onClick={() => setStep1Tab(tab)}
-                          className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
-                            step1Tab === tab ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                          }`}
-                        >
-                          {tab === 'setup' ? 'Campaign Setup' : 'Conversions'}
-                          {tab === 'conversions' && questionnaire.customConversionId && (
-                            <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] font-bold">✓</span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
+                  <div className="space-y-4">
+                    <div>
+                      <h2 className="font-semibold text-gray-900 mb-1">Set Up Conversion Tracking</h2>
+                      <p className="text-sm text-gray-500 mb-4">Create a QuoteBox conversion so Meta knows when someone submits your form. Then test it before continuing.</p>
 
-                    {step1Tab === 'setup' && (
-                      <div className="space-y-6">
-                        <div>
-                          <h2 className="font-semibold text-gray-900 mb-4">What is your campaign goal?</h2>
-                          <div className="space-y-3">
-                            {OBJECTIVES.map((obj) => (
-                              <button
-                                key={obj.value}
-                                onClick={() => setQuestionnaire((q) => ({ ...q, objective: obj.value }))}
-                                className={`w-full text-left px-4 py-3.5 rounded-xl border-2 transition ${
-                                  questionnaire.objective === obj.value
-                                    ? 'border-indigo-600 bg-indigo-50'
-                                    : 'border-gray-200 hover:border-gray-300'
-                                }`}
-                              >
-                                <p className={`font-medium ${questionnaire.objective === obj.value ? 'text-indigo-700' : 'text-gray-900'}`}>
-                                  {obj.label}
-                                </p>
-                                <p className="text-sm text-gray-500 mt-0.5">{obj.desc}</p>
-                              </button>
-                            ))}
+                      {/* Create conversion */}
+                      <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-4">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center mt-0.5">
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
                           </div>
-                        </div>
-
-                        <div className="border-t border-gray-100 pt-5">
-                          <label className="block text-sm font-medium text-gray-700 mb-3">Where should the ad send people?</label>
-                          <div className="flex gap-3 mb-3">
-                            <button
-                              onClick={() => setQuestionnaire((q) => ({ ...q, destinationType: 'form' }))}
-                              className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition ${
-                                questionnaire.destinationType === 'form'
-                                  ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                                  : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                              }`}
-                            >
-                              QuoteBox Form
-                            </button>
-                            <button
-                              onClick={() => setQuestionnaire((q) => ({ ...q, destinationType: 'custom' }))}
-                              className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition ${
-                                questionnaire.destinationType === 'custom'
-                                  ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                                  : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                              }`}
-                            >
-                              Custom URL
-                            </button>
-                          </div>
-
-                          {questionnaire.destinationType === 'form' ? (
-                            hostedForms.length === 0 ? (
-                              <div className="text-sm text-gray-400 bg-gray-50 rounded-lg px-3 py-2.5 flex items-center gap-2">
-                                No active forms found.{' '}
-                                <Link href="/hosted-forms" className="text-indigo-600 hover:underline font-medium">Create one</Link>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-indigo-900 text-sm">Create QuoteBox Lead Conversion</p>
+                            <p className="text-xs text-indigo-700 mt-0.5 mb-3">
+                              Fires when a visitor submits your QuoteBox form (tracks the Meta Pixel <code className="bg-indigo-100 px-1 rounded">Lead</code> event on quote-box.com).
+                            </p>
+                            {hostedForms.some((f) => f.pixelId) ? (
+                              <div className="flex gap-2">
+                                <select
+                                  value={questionnaire.pixelId || ''}
+                                  onChange={(e) => setQuestionnaire((q) => ({ ...q, pixelId: e.target.value || null }))}
+                                  className="flex-1 border border-indigo-200 bg-white rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                >
+                                  <option value="">Select a pixel…</option>
+                                  {Array.from(new Set(
+                                    hostedForms
+                                      .filter((f) => f.pixelId)
+                                      .map((f) => f.pixelId!)
+                                  )).map((pid) => (
+                                    <option key={pid} value={pid}>{pid}</option>
+                                  ))}
+                                </select>
+                                <button
+                                  onClick={() => questionnaire.pixelId && handleCreateQuoteBoxConversion(questionnaire.pixelId)}
+                                  disabled={!questionnaire.pixelId || creatingConversion || !!questionnaire.customConversionId}
+                                  className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition"
+                                >
+                                  {creatingConversion ? 'Creating…' : questionnaire.customConversionId ? 'Created ✓' : 'Create'}
+                                </button>
                               </div>
                             ) : (
-                              <select
-                                value={questionnaire.selectedFormId || ''}
-                                onChange={(e) => {
-                                  const form = hostedForms.find((f) => f.id === e.target.value)
-                                  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
-                                  setQuestionnaire((q) => ({
-                                    ...q,
-                                    selectedFormId: form?.id || null,
-                                    destinationUrl: form ? `${siteUrl}/${form.slug}` : '',
-                                  }))
-                                }}
-                                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                              >
-                                <option value="">Select a form...</option>
-                                {hostedForms.map((f) => (
-                                  <option key={f.id} value={f.id}>{f.form_name}</option>
-                                ))}
-                              </select>
-                            )
-                          ) : (
-                            <input
-                              type="url"
-                              placeholder="https://yourwebsite.com/landing-page"
-                              value={questionnaire.destinationType === 'custom' ? questionnaire.destinationUrl : ''}
-                              onChange={(e) => setQuestionnaire((q) => ({ ...q, destinationUrl: e.target.value }))}
-                              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            />
-                          )}
-                          {questionnaire.destinationUrl && (
-                            <p className="text-xs text-indigo-600 mt-1.5 truncate">↗ {questionnaire.destinationUrl}</p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {step1Tab === 'conversions' && (
-                      <div className="space-y-4">
-                        <div>
-                          <h2 className="font-semibold text-gray-900 mb-1">Custom Conversions</h2>
-                          <p className="text-sm text-gray-500 mb-4">Select an existing custom conversion or create a QuoteBox one instantly.</p>
-
-                          <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-4">
-                            <div className="flex items-start gap-3">
-                              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center mt-0.5">
-                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
+                              <div className="text-xs text-indigo-700 bg-indigo-100 rounded-lg px-3 py-2">
+                                Add a Meta Pixel ID to one of your quote forms first.
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-indigo-900 text-sm">Create QuoteBox Lead Conversion</p>
-                                <p className="text-xs text-indigo-700 mt-0.5 mb-3">
-                                  Fires when a visitor submits your QuoteBox form (tracks the Meta Pixel <code className="bg-indigo-100 px-1 rounded">Lead</code> event on quote-box.com).
-                                </p>
-                                {hostedForms.some((f) => f.slug) ? (
-                                  <div className="flex gap-2">
-                                    <select
-                                      value={questionnaire.pixelId || ''}
-                                      onChange={(e) => setQuestionnaire((q) => ({ ...q, pixelId: e.target.value || null }))}
-                                      className="flex-1 border border-indigo-200 bg-white rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                    >
-                                      <option value="">Select a pixel…</option>
-                                      {Array.from(new Set(
-                                        hostedForms
-                                          .filter((f) => f.pixelId)
-                                          .map((f) => f.pixelId!)
-                                      )).map((pid) => (
-                                        <option key={pid} value={pid}>{pid}</option>
-                                      ))}
-                                    </select>
-                                    <button
-                                      onClick={() => questionnaire.pixelId && handleCreateQuoteBoxConversion(questionnaire.pixelId)}
-                                      disabled={!questionnaire.pixelId || creatingConversion}
-                                      className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition"
-                                    >
-                                      {creatingConversion ? 'Creating…' : 'Create'}
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <div className="text-xs text-indigo-700 bg-indigo-100 rounded-lg px-3 py-2">
-                                    Add a Meta Pixel ID to one of your quote forms first.
-                                  </div>
-                                )}
-                              </div>
-                            </div>
+                            )}
                           </div>
-
-                          {conversionsLoading ? (
-                            <div className="flex items-center gap-2 py-4 text-sm text-gray-400">
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500" />
-                              Loading conversions…
-                            </div>
-                          ) : customConversions.length === 0 ? (
-                            <p className="text-sm text-gray-400 bg-gray-50 rounded-lg px-3 py-2.5">No custom conversions found.</p>
-                          ) : (
-                            <div className="space-y-2">
-                              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Existing Conversions</p>
-                              <button
-                                onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: null }))}
-                                className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 text-sm transition ${
-                                  !questionnaire.customConversionId ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
-                                }`}
-                              >
-                                <span className={!questionnaire.customConversionId ? 'text-indigo-700 font-medium' : 'text-gray-500'}>
-                                  None — don&apos;t use a custom conversion
-                                </span>
-                              </button>
-                              {customConversions.map((cv) => (
-                                <button
-                                  key={cv.id}
-                                  onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: cv.id, pixelId: cv.pixel_id }))}
-                                  className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 transition ${
-                                    questionnaire.customConversionId === cv.id ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
-                                  }`}
-                                >
-                                  <p className={`font-medium text-sm ${questionnaire.customConversionId === cv.id ? 'text-indigo-700' : 'text-gray-900'}`}>
-                                    {cv.name}
-                                  </p>
-                                  <p className="text-xs text-gray-400 mt-0.5">Event: {cv.custom_event_type} · Pixel: {cv.pixel_id}</p>
-                                </button>
-                              ))}
-                            </div>
-                          )}
                         </div>
                       </div>
-                    )}
+
+                      {/* Or pick existing */}
+                      {conversionsLoading ? (
+                        <div className="flex items-center gap-2 py-3 text-sm text-gray-400">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500" />
+                          Loading conversions…
+                        </div>
+                      ) : customConversions.length > 0 && (
+                        <div className="space-y-2 mb-4">
+                          <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Or select an existing conversion</p>
+                          <button
+                            onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: null }))}
+                            className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 text-sm transition ${
+                              !questionnaire.customConversionId ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                          >
+                            <span className={!questionnaire.customConversionId ? 'text-indigo-700 font-medium' : 'text-gray-500'}>
+                              None — don&apos;t use a custom conversion
+                            </span>
+                          </button>
+                          {customConversions.map((cv) => (
+                            <button
+                              key={cv.id}
+                              onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: cv.id, pixelId: cv.pixel_id }))}
+                              className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 transition ${
+                                questionnaire.customConversionId === cv.id ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
+                              }`}
+                            >
+                              <p className={`font-medium text-sm ${questionnaire.customConversionId === cv.id ? 'text-indigo-700' : 'text-gray-900'}`}>
+                                {cv.name}
+                              </p>
+                              <p className="text-xs text-gray-400 mt-0.5">Event: {cv.custom_event_type} · Pixel: {cv.pixel_id}</p>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Test conversion */}
+                      {questionnaire.customConversionId && (
+                        <div className="border border-green-200 bg-green-50 rounded-xl p-4">
+                          <p className="font-medium text-green-900 text-sm mb-1">Test your conversion</p>
+                          <p className="text-xs text-green-700 mb-3">
+                            Open your QuoteBox form and submit a test entry. Meta will detect the pixel firing and confirm tracking is working.
+                          </p>
+                          {questionnaire.destinationUrl ? (
+                            <a
+                              href={questionnaire.destinationUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={() => setConversionTestOpened(true)}
+                              className="inline-flex items-center gap-1.5 text-xs font-medium text-green-700 hover:text-green-900 underline"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                              Open form to test →
+                            </a>
+                          ) : (
+                            <p className="text-xs text-green-700">Select a destination form in the next step, then come back to test.</p>
+                          )}
+                          {conversionTestOpened && (
+                            <p className="mt-2 text-xs text-green-600 font-medium">Form opened — submit a test entry, then continue.</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
-                {/* Step 2: Target Audience */}
+                {/* Step 2: Campaign Objective */}
                 {step === 2 && (
+                  <div className="space-y-6">
+                    <div>
+                      <h2 className="font-semibold text-gray-900 mb-4">What is your campaign goal?</h2>
+                      <div className="space-y-3">
+                        {OBJECTIVES.map((obj) => (
+                          <button
+                            key={obj.value}
+                            onClick={() => setQuestionnaire((q) => ({ ...q, objective: obj.value }))}
+                            className={`w-full text-left px-4 py-3.5 rounded-xl border-2 transition ${
+                              questionnaire.objective === obj.value
+                                ? 'border-indigo-600 bg-indigo-50'
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                          >
+                            <p className={`font-medium ${questionnaire.objective === obj.value ? 'text-indigo-700' : 'text-gray-900'}`}>
+                              {obj.label}
+                            </p>
+                            <p className="text-sm text-gray-500 mt-0.5">{obj.desc}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="border-t border-gray-100 pt-5">
+                      <label className="block text-sm font-medium text-gray-700 mb-3">Where should the ad send people?</label>
+                      <div className="flex gap-3 mb-3">
+                        <button
+                          onClick={() => setQuestionnaire((q) => ({ ...q, destinationType: 'form' }))}
+                          className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition ${
+                            questionnaire.destinationType === 'form'
+                              ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                              : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                          }`}
+                        >
+                          QuoteBox Form
+                        </button>
+                        <button
+                          onClick={() => setQuestionnaire((q) => ({ ...q, destinationType: 'custom' }))}
+                          className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition ${
+                            questionnaire.destinationType === 'custom'
+                              ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                              : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                          }`}
+                        >
+                          Custom URL
+                        </button>
+                      </div>
+
+                      {questionnaire.destinationType === 'form' ? (
+                        hostedForms.length === 0 ? (
+                          <div className="text-sm text-gray-400 bg-gray-50 rounded-lg px-3 py-2.5 flex items-center gap-2">
+                            No active forms found.{' '}
+                            <Link href="/hosted-forms" className="text-indigo-600 hover:underline font-medium">Create one</Link>
+                          </div>
+                        ) : (
+                          <select
+                            value={questionnaire.selectedFormId || ''}
+                            onChange={(e) => {
+                              const form = hostedForms.find((f) => f.id === e.target.value)
+                              const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+                              setQuestionnaire((q) => ({
+                                ...q,
+                                selectedFormId: form?.id || null,
+                                destinationUrl: form ? `${siteUrl}/${form.slug}` : '',
+                              }))
+                            }}
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          >
+                            <option value="">Select a form...</option>
+                            {hostedForms.map((f) => (
+                              <option key={f.id} value={f.id}>{f.form_name}</option>
+                            ))}
+                          </select>
+                        )
+                      ) : (
+                        <input
+                          type="url"
+                          placeholder="https://yourwebsite.com/landing-page"
+                          value={questionnaire.destinationType === 'custom' ? questionnaire.destinationUrl : ''}
+                          onChange={(e) => setQuestionnaire((q) => ({ ...q, destinationUrl: e.target.value }))}
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      )}
+                      {questionnaire.destinationUrl && (
+                        <p className="text-xs text-indigo-600 mt-1.5 truncate">↗ {questionnaire.destinationUrl}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 3: Target Audience */}
+                {step === 3 && (
                   <div>
                     <h2 className="font-semibold text-gray-900 mb-4">Who should see your ads?</h2>
                     <div className="space-y-4">
@@ -1912,8 +1921,8 @@ export default function LeadMachinePage() {
                   </div>
                 )}
 
-                {/* Step 3: Business Info */}
-                {step === 3 && (
+                {/* Step 4: Business Info */}
+                {step === 4 && (
                   <div>
                     <h2 className="font-semibold text-gray-900 mb-4">Tell us about your business</h2>
                     <div className="space-y-4">
@@ -1990,8 +1999,8 @@ export default function LeadMachinePage() {
                   </div>
                 )}
 
-                {/* Step 4: Budget & Schedule */}
-                {step === 4 && (
+                {/* Step 5: Budget & Schedule */}
+                {step === 5 && (
                   <div>
                     <h2 className="font-semibold text-gray-900 mb-4">Budget & Schedule</h2>
                     <div className="space-y-5">
@@ -2028,8 +2037,8 @@ export default function LeadMachinePage() {
                   </div>
                 )}
 
-                {/* Step 5: AI Preview + Split Test */}
-                {step === 5 && (
+                {/* Step 6: AI Preview + Split Test */}
+                {step === 6 && (
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <img src="/icons/logo-1772578089154.jpg" alt="Robert" className="w-6 h-6 rounded-full object-cover" />
@@ -2151,7 +2160,7 @@ export default function LeadMachinePage() {
                 )}
 
                 {/* Navigation */}
-                {step < 5 && (
+                {step < 6 && (
                   <div className="flex gap-3 mt-6">
                     {step > 1 && (
                       <button onClick={() => setStep((s) => (s - 1) as Step)}
@@ -2164,13 +2173,13 @@ export default function LeadMachinePage() {
                       onClick={() => { setError(''); setStep((s) => (s + 1) as Step) }}
                       className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-4 rounded-xl transition text-sm"
                     >
-                      {step === 4 ? 'Preview' : 'Next'}
+                      {step === 5 ? 'Preview' : 'Next'}
                     </button>
                   </div>
                 )}
 
-                {step === 5 && !generatedCopy && !generating && (
-                  <button onClick={() => setStep(4)}
+                {step === 6 && !generatedCopy && !generating && (
+                  <button onClick={() => setStep(5)}
                     className="w-full mt-4 text-gray-600 font-medium py-2.5 px-4 rounded-xl border border-gray-200 hover:border-gray-300 transition text-sm"
                   >
                     Back
