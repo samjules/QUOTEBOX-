@@ -1110,6 +1110,27 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Load Meta Pixel and fire PageView
+  useEffect(() => {
+    const pixelId = config.meta_pixel_id
+    if (!pixelId) return
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const w = window as any
+    if (!w.fbq) {
+      const script = document.createElement('script')
+      script.async = true
+      script.src = 'https://connect.facebook.net/en_US/fbevents.js'
+      document.head.appendChild(script)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const n: any = function(...args: unknown[]) { n.callMethod ? n.callMethod(...args) : n.queue.push(args) }
+      n.push = n; n.loaded = true; n.version = '2.0'; n.queue = []
+      w.fbq = n; w._fbq = n
+    }
+    w.fbq('init', pixelId)
+    w.fbq('track', 'PageView')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const legacyColorMap: Record<string, string> = { yellow: '#FFE500', blue: '#1A56FF' }
   const accentBg = legacyColorMap[config.brand_color] ?? config.brand_color ?? '#FFE500'
   const isDark = isColorDark(accentBg)
@@ -1341,6 +1362,13 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
         emailAccentColor: config.email_template?.accent_color || undefined,
       }),
     }).catch(() => { /* silently ignore email errors */ })
+
+    // Fire Meta Pixel Lead event on successful submission
+    if (config.meta_pixel_id && typeof window !== 'undefined') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const fbq = (window as any).fbq
+      if (typeof fbq === 'function') fbq('track', 'Lead')
+    }
 
     setStep(confirmStep)
   }
