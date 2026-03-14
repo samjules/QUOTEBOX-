@@ -1705,63 +1705,62 @@ export default function LeadMachinePage() {
                       )}
                     </div>
 
-                    {/* Existing conversions list */}
-                    {hasPixel && (
-                      <>
-                        {conversionsLoading ? (
-                          <div className="flex items-center gap-2 py-3 text-sm text-gray-400">
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500" />
-                            Loading conversions…
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Custom Conversion</label>
-                            <button
-                              onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: null }))}
-                              className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 text-sm transition ${
-                                !questionnaire.customConversionId ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              <span className={!questionnaire.customConversionId ? 'text-indigo-700 font-medium' : 'text-gray-500'}>
-                                None — skip conversion tracking
-                              </span>
-                            </button>
-                            {customConversions.filter((cv) => cv.pixel_id === questionnaire.pixelId).map((cv) => (
-                              <button
-                                key={cv.id}
-                                onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: cv.id, pixelId: cv.pixel_id }))}
-                                className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 transition ${
-                                  questionnaire.customConversionId === cv.id ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
-                                }`}
-                              >
-                                <p className={`font-medium text-sm ${questionnaire.customConversionId === cv.id ? 'text-indigo-700' : 'text-gray-900'}`}>
-                                  {cv.name}
-                                </p>
-                                <p className="text-xs text-gray-400 mt-0.5">Event: {cv.custom_event_type}</p>
-                              </button>
-                            ))}
-                          </div>
-                        )}
+                    {/* Existing conversions list — always shown */}
+                    {conversionsLoading ? (
+                      <div className="flex items-center gap-2 py-3 text-sm text-gray-400">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500" />
+                        Loading conversions…
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Custom Conversion</label>
+                        <button
+                          onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: null }))}
+                          className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 text-sm transition ${
+                            !questionnaire.customConversionId ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <span className={!questionnaire.customConversionId ? 'text-indigo-700 font-medium' : 'text-gray-500'}>
+                            None — skip conversion tracking
+                          </span>
+                        </button>
+                        {(questionnaire.pixelId
+                          ? customConversions.filter((cv) => cv.pixel_id === questionnaire.pixelId)
+                          : customConversions
+                        ).map((cv) => (
+                          <button
+                            key={cv.id}
+                            onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: cv.id, pixelId: cv.pixel_id }))}
+                            className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 transition ${
+                              questionnaire.customConversionId === cv.id ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                          >
+                            <p className={`font-medium text-sm ${questionnaire.customConversionId === cv.id ? 'text-indigo-700' : 'text-gray-900'}`}>
+                              {cv.name}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-0.5">Event: {cv.custom_event_type} · Pixel: {cv.pixel_id}</p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
-                        {/* Create new conversion */}
-                        {!conversionsLoading && (
-                          <div className="border-t border-gray-100 pt-4">
-                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Create new</p>
-                            {formUrl && (
-                              <p className="text-xs text-gray-500 mb-3 font-mono bg-gray-50 rounded-lg px-3 py-2 break-all">
-                                {selectedForm?.slug ? `quote-box.com/${selectedForm.slug}` : 'quote-box.com'}
-                              </p>
-                            )}
-                            <button
-                              onClick={() => questionnaire.pixelId && handleCreateQuoteBoxConversion(questionnaire.pixelId, selectedForm?.slug ?? undefined)}
-                              disabled={creatingConversion}
-                              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition"
-                            >
-                              {creatingConversion ? 'Creating…' : `Create conversion for ${selectedForm?.slug ?? 'this form'}`}
-                            </button>
-                          </div>
+                    {/* Create new conversion */}
+                    {!conversionsLoading && hasPixel && (
+                      <div className="border-t border-gray-100 pt-4">
+                        <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Create new</p>
+                        {formUrl && (
+                          <p className="text-xs text-gray-500 mb-3 font-mono bg-gray-50 rounded-lg px-3 py-2 break-all">
+                            {selectedForm?.slug ? `quote-box.com/${selectedForm.slug}` : 'quote-box.com'}
+                          </p>
                         )}
-                      </>
+                        <button
+                          onClick={() => questionnaire.pixelId && handleCreateQuoteBoxConversion(questionnaire.pixelId, selectedForm?.slug ?? undefined)}
+                          disabled={creatingConversion}
+                          className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition"
+                        >
+                          {creatingConversion ? 'Creating…' : `Create conversion for ${selectedForm?.slug ?? 'this form'}`}
+                        </button>
+                      </div>
                     )}
 
                     {/* Test panel */}
