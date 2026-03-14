@@ -1265,9 +1265,23 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
     setTimeout(() => setStep((s) => s + 1), 300)
   }
 
+  function isValidPhone(p: string): boolean {
+    // Strip all non-digit characters and check for 10–15 digits (E.164 range)
+    const digits = p.replace(/\D/g, '')
+    return digits.length >= 10 && digits.length <= 15
+  }
+
   async function handleSubmit() {
     if (!name.trim() || !email.trim()) {
       setFormError('Name and email are required.')
+      return
+    }
+    if (!phone.trim()) {
+      setFormError('Phone number is required.')
+      return
+    }
+    if (!isValidPhone(phone)) {
+      setFormError('Please enter a valid phone number (e.g. +1 555 000 0000).')
       return
     }
     setFormError('')
@@ -1294,7 +1308,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
         hosted_form_id: form.id,
         name: name.trim(),
         email: email.trim(),
-        phone: phone.trim() || null,
+        phone: phone.trim(),
         form_type: form.form_type,
         form_data: formData,
         status: hasCredits ? 'new' : 'held',
@@ -1768,7 +1782,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#64748b', marginBottom: 7, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    Phone <span style={{ fontWeight: 400, textTransform: 'none' }}>(optional)</span>
+                    Phone *
                   </label>
                   <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 555 000 0000" style={inputStyle} autoComplete="tel" />
                 </div>
