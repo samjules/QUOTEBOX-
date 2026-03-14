@@ -920,21 +920,17 @@ export default function LeadMachinePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pixelsLoading, metaPixels])
 
-  // Fetch conversions scoped to the selected pixel whenever it changes
+  // Fetch QuoteBox conversions on load
   useEffect(() => {
-    if (!questionnaire.pixelId) {
-      setCustomConversions([])
-      return
-    }
+    if (pageState !== 'questionnaire') return
     setConversionsLoading(true)
-    setQuestionnaire((q) => ({ ...q, customConversionId: null }))
-    fetch(`/api/meta/conversions?pixelId=${questionnaire.pixelId}`)
+    fetch('/api/meta/conversions')
       .then((r) => r.json())
       .then((d) => setCustomConversions(d.conversions || []))
       .catch(() => {})
       .finally(() => setConversionsLoading(false))
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questionnaire.pixelId])
+  }, [pageState])
 
   // Auto-select an existing conversion for this form once conversions load
   useEffect(() => {

@@ -18,37 +18,32 @@ async function getMetaCreds() {
   return { token: account.meta_access_token, adAccountId: account.meta_ad_account_id }
 }
 
-// GET — list custom conversions for a specific pixel (or ad account if no pixelId)
-export async function GET(request: NextRequest) {
+// GET — list custom conversions for this ad account, filtered to QuoteBox ones
+export async function GET() {
   const creds = await getMetaCreds()
   if (!creds) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { searchParams } = new URL(request.url)
-  const pixelId = searchParams.get('pixelId')
-
-  // If pixelId provided, fetch from the pixel endpoint — this returns only that pixel's conversions
-  // (matches what Meta Events Manager shows). Otherwise fall back to ad account level.
-  const endpoint = pixelId
-    ? `https://graph.facebook.com/v18.0/${pixelId}/customconversions`
-    : (() => {
-        const adAccountId = creds.adAccountId.startsWith('act_')
-          ? creds.adAccountId
-          : `act_${creds.adAccountId}`
-        return `https://graph.facebook.com/v18.0/${adAccountId}/customconversions`
-      })()
+  const adAccountId = creds.adAccountId.startsWith('act_')
+    ? creds.adAccountId
+    : `act_${creds.adAccountId}`
 
   try {
     const res = await fetch(
-      `${endpoint}?fields=id,name,custom_event_type,rule,creation_time&limit=100&access_token=${creds.token}`,
+      `https://graph.facebook.com/v18.0/${adAccountId}/customconversions` +
+      `?fields=id,name,custom_event_type,rule,creation_time&limit=100` +
+      `&access_token=${creds.token}`,
       { cache: 'no-store' }
     )
     const data = await res.json()
-    console.log('[conversions GET] endpoint:', endpoint)
-    console.log('[conversions GET] status:', res.status, 'count:', data.data?.length, 'error:', JSON.stringify(data.error))
     if (!res.ok) {
       return NextResponse.json({ error: data.error?.message || 'Failed to fetch conversions', conversions: [] }, { status: 400 })
     }
-    return NextResponse.json({ conversions: data.data || [] })
+    // Only return conversions whose rule references quote-box.com (created via QuoteBox)
+    const all: Array<{ id: string; name: string; custom_event_type: string; rule?: string }> = data.data || []
+    const quoteboxConversions = all.filter((cv) =>
+      typeof cv.rule === 'string' && cv.rule.includes('quote-box.com')
+    )
+    return NextResponse.json({ conversions: quoteboxConversions })
   } catch {
     return NextResponse.json({ error: 'Failed to fetch conversions', conversions: [] }, { status: 500 })
   }
