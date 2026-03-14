@@ -10,7 +10,9 @@ interface ObjectiveConfig {
 const OBJECTIVE_MAP: Record<string, ObjectiveConfig> = {
   OUTCOME_LEADS: {
     objective: 'OUTCOME_LEADS',
-    optimization_goal: 'LEAD_GENERATION',
+    // OFFSITE_CONVERSIONS = website pixel tracking (correct for QuoteBox hosted forms)
+    // LEAD_GENERATION would be for Meta's native instant forms only
+    optimization_goal: 'OFFSITE_CONVERSIONS',
     billing_event: 'IMPRESSIONS',
   },
   OUTCOME_TRAFFIC: {
@@ -25,7 +27,7 @@ const OBJECTIVE_MAP: Record<string, ObjectiveConfig> = {
   },
   OUTCOME_SALES: {
     objective: 'OUTCOME_SALES',
-    optimization_goal: 'LINK_CLICKS',
+    optimization_goal: 'OFFSITE_CONVERSIONS',
     billing_event: 'IMPRESSIONS',
   },
 }
@@ -170,16 +172,15 @@ export async function POST(request: NextRequest) {
     adSetParams.set('end_time', endTime.toISOString())
   }
 
-  // Build promoted_object — page_id required for LEADS; custom conversion adds pixel + conversion
+  // Build promoted_object — pixel always required for OFFSITE_CONVERSIONS optimization
   const promotedObject: Record<string, string> = {}
   if (body.pageId) promotedObject.page_id = body.pageId
-  if (body.customConversionId) {
-    promotedObject.custom_conversion_id = body.customConversionId
-    if (body.pixelId) promotedObject.pixel_id = body.pixelId
-  }
+  if (body.pixelId) promotedObject.pixel_id = body.pixelId
+  if (body.customConversionId) promotedObject.custom_conversion_id = body.customConversionId
   if (Object.keys(promotedObject).length > 0) {
     adSetParams.set('promoted_object', JSON.stringify(promotedObject))
   }
+  console.log('[create-campaign] promoted_object:', JSON.stringify(promotedObject))
 
   let adSetId: string
   try {
