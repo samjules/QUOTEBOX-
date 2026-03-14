@@ -1910,11 +1910,17 @@ export default function FormBuilderPage() {
 
       // Fetch Meta pixels for the dropdown
       setMetaPixelsLoading(true)
+      const isNewForm = !searchParams.get('form_id')
       fetch('/api/meta/pixels')
         .then((r) => r.json())
         .then((d) => {
           setMetaConnected(d.connected ?? false)
-          setMetaPixels(d.pixels ?? [])
+          const pixels: Array<{ id: string; name: string }> = d.pixels ?? []
+          setMetaPixels(pixels)
+          // For new forms, auto-select the first available pixel
+          if (isNewForm && pixels.length > 0) {
+            setMetaPixelId(pixels[0].id)
+          }
           setMetaPixelsLoading(false)
         })
         .catch(() => setMetaPixelsLoading(false))
