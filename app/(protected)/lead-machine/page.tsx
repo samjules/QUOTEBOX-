@@ -1085,19 +1085,25 @@ export default function LeadMachinePage() {
       })
       const data = await res.json()
       if (!res.ok) {
-        // Duplicate rule — Meta tells us the existing conversion name in error_user_msg.
-        // Extract it and auto-select the matching conversion from our list.
+        // Duplicate rule — re-fetch conversions then auto-select the existing one
         if (data.meta_error?.error_subcode === 1760002) {
           const msg: string = data.meta_error?.error_user_msg ?? ''
-          const match = msg.match(/"([^"]+)"\.?\s*$/)
-          const existingName = match?.[1] ?? ''
-          const existing = customConversions.find(
-            (cv) => cv.pixel_id === pixelId && (existingName ? cv.name === existingName : cv.name.includes(slug ?? ''))
-          )
-          if (existing) {
-            setQuestionnaire((q) => ({ ...q, customConversionId: existing.id, pixelId }))
-            return
-          }
+          const nameMatch = msg.match(/"([^"]+)"\.?\s*$/)
+          const existingName = nameMatch?.[1] ?? ''
+          // Re-fetch so we have the latest list
+          try {
+            const cvRes = await fetch('/api/meta/conversions')
+            const cvData = await cvRes.json()
+            const freshList: CustomConversion[] = cvData.conversions || []
+            setCustomConversions(freshList)
+            const existing = freshList.find(
+              (cv) => existingName ? cv.name === existingName : cv.name.includes(slug ?? '')
+            )
+            if (existing) {
+              setQuestionnaire((q) => ({ ...q, customConversionId: existing.id, pixelId: existing.pixel_id || pixelId }))
+              return
+            }
+          } catch { /* fall through to error */ }
         }
         setError(data.error || 'Failed to create conversion')
         return
@@ -1724,10 +1730,7 @@ export default function LeadMachinePage() {
                             None — skip conversion tracking
                           </span>
                         </button>
-                        {(questionnaire.pixelId
-                          ? customConversions.filter((cv) => cv.pixel_id === questionnaire.pixelId)
-                          : customConversions
-                        ).map((cv) => (
+                        {customConversions.map((cv) => (
                           <button
                             key={cv.id}
                             onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: cv.id, pixelId: cv.pixel_id }))}
