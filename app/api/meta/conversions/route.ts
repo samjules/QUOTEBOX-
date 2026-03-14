@@ -23,10 +23,15 @@ export async function GET() {
   const creds = await getMetaCreds()
   if (!creds) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const adAccountId = creds.adAccountId.startsWith('act_')
+    ? creds.adAccountId
+    : `act_${creds.adAccountId}`
+
   try {
     const res = await fetch(
-      `https://graph.facebook.com/v18.0/act_${creds.adAccountId}/customconversions` +
+      `https://graph.facebook.com/v18.0/${adAccountId}/customconversions` +
       `?fields=id,name,custom_event_type,rule,pixel_id,creation_time` +
+      `&limit=100` +
       `&access_token=${creds.token}`,
       { cache: 'no-store' }
     )
@@ -76,9 +81,13 @@ export async function POST(request: NextRequest) {
     access_token: creds.token,
   })
 
+  const adAccountId = creds.adAccountId.startsWith('act_')
+    ? creds.adAccountId
+    : `act_${creds.adAccountId}`
+
   try {
     const res = await fetch(
-      `https://graph.facebook.com/v18.0/act_${creds.adAccountId}/customconversions`,
+      `https://graph.facebook.com/v18.0/${adAccountId}/customconversions`,
       { method: 'POST', body: params }
     )
     const data = await res.json()
