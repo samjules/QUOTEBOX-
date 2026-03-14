@@ -706,6 +706,8 @@ export default function LeadMachinePage() {
   const [conversionsLoading, setConversionsLoading] = useState(false)
   const [creatingConversion, setCreatingConversion] = useState(false)
   const [conversionTestOpened, setConversionTestOpened] = useState(false)
+  const [metaPixels, setMetaPixels] = useState<Array<{id: string; name: string}>>([])
+  const [pixelsLoading, setPixelsLoading] = useState(false)
 
   // Analytics/campaigns state
   const [campaigns, setCampaigns] = useState<CampaignWithInsights[]>([])
@@ -866,6 +868,15 @@ export default function LeadMachinePage() {
             } catch { /* non-fatal */ }
             setConversionsLoading(false)
           })(),
+          (async () => {
+            setPixelsLoading(true)
+            try {
+              const pxRes = await fetch('/api/meta/pixels')
+              const pxData = await pxRes.json()
+              setMetaPixels(pxData.pixels || [])
+            } catch { /* non-fatal */ }
+            setPixelsLoading(false)
+          })(),
         ])
       }
 
@@ -910,19 +921,26 @@ export default function LeadMachinePage() {
     }
   }, [dateRange, loadCampaigns, pageState])
 
-  // Auto-select an existing conversion for this form when conversions finish loading
+  // Auto-select pixel if only one is available
   useEffect(() => {
-    if (conversionsLoading || questionnaire.customConversionId) return
+    if (pixelsLoading || questionnaire.pixelId || metaPixels.length !== 1) return
+    setQuestionnaire((q) => ({ ...q, pixelId: metaPixels[0].id }))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pixelsLoading, metaPixels])
+
+  // Auto-select an existing conversion for this form when conversions + pixel are ready
+  useEffect(() => {
+    if (conversionsLoading || questionnaire.customConversionId || !questionnaire.pixelId) return
     const selectedForm = hostedForms.find((f) => f.id === questionnaire.selectedFormId)
-    if (!selectedForm?.pixelId || !selectedForm?.slug) return
+    if (!selectedForm?.slug) return
     const existing = customConversions.find(
-      (cv) => cv.pixel_id === selectedForm.pixelId && cv.name.includes(selectedForm.slug!)
+      (cv) => cv.pixel_id === questionnaire.pixelId && cv.name.includes(selectedForm.slug!)
     )
     if (existing) {
-      setQuestionnaire((q) => ({ ...q, customConversionId: existing.id, pixelId: existing.pixel_id }))
+      setQuestionnaire((q) => ({ ...q, customConversionId: existing.id }))
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversionsLoading, customConversions])
+  }, [conversionsLoading, customConversions, questionnaire.pixelId])
 
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
@@ -1147,7 +1165,7 @@ export default function LeadMachinePage() {
       selectedFormId: hostedForms[0]?.id || null,
       pageId: pages.length === 1 ? pages[0].id : '',
       customConversionId: null,
-      pixelId: null,
+      pixelId: metaPixels.length === 1 ? metaPixels[0].id : null,
     })
     setConversionTestOpened(false)
   }
@@ -1653,73 +1671,97 @@ export default function LeadMachinePage() {
                 {step === 1 && (() => {
                   const selectedForm = hostedForms.find((f) => f.id === questionnaire.selectedFormId)
                   const formUrl = questionnaire.destinationUrl || (selectedForm?.slug ? `https://quote-box.com/${selectedForm.slug}` : '')
-                  const hasPixel = !!selectedForm?.pixelId
+                  const hasPixel = !!questionnaire.pixelId
                   const activeConversion = customConversions.find((c) => c.id === questionnaire.customConversionId)
                   return (
                   <div className="space-y-4">
                     <h2 className="font-semibold text-gray-900 mb-1">Conversion Tracking</h2>
-                    <p className="text-sm text-gray-500">Select an existing conversion or create a new one for this form.</p>
+                    <p className="text-sm text-gray-500">Select your Meta Pixel, then pick or create a conversion for this form.</p>
 
-                    {/* No pixel warning */}
-                    {!hasPixel && (
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-                        <p className="text-sm font-medium text-yellow-800 mb-1">No Meta Pixel found</p>
-                        <p className="text-xs text-yellow-700">Add a Meta Pixel ID to your QuoteBox form in the Form Builder first.</p>
-                      </div>
-                    )}
+                    {/* Pixel selector */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Meta Pixel</label>
+                      {pixelsLoading ? (
+                        <div className="flex items-center gap-2 py-2 text-sm text-gray-400">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500" />
+                          Loading pixels…
+                        </div>
+                      ) : metaPixels.length === 0 ? (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                          <p className="text-sm font-medium text-yellow-800 mb-1">No Meta Pixels found</p>
+                          <p className="text-xs text-yellow-700">Create a pixel in Meta Events Manager, then reconnect your account.</p>
+                        </div>
+                      ) : (
+                        <select
+                          value={questionnaire.pixelId ?? ''}
+                          onChange={(e) => setQuestionnaire((q) => ({ ...q, pixelId: e.target.value || null, customConversionId: null }))}
+                          className="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                        >
+                          <option value="">— Select a pixel —</option>
+                          {metaPixels.map((px) => (
+                            <option key={px.id} value={px.id}>{px.name} ({px.id})</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
 
                     {/* Existing conversions list */}
-                    {conversionsLoading ? (
-                      <div className="flex items-center gap-2 py-3 text-sm text-gray-400">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500" />
-                        Loading conversions…
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <button
-                          onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: null }))}
-                          className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 text-sm transition ${
-                            !questionnaire.customConversionId ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                        >
-                          <span className={!questionnaire.customConversionId ? 'text-indigo-700 font-medium' : 'text-gray-500'}>
-                            None — skip conversion tracking
-                          </span>
-                        </button>
-                        {customConversions.map((cv) => (
-                          <button
-                            key={cv.id}
-                            onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: cv.id, pixelId: cv.pixel_id }))}
-                            className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 transition ${
-                              questionnaire.customConversionId === cv.id ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                          >
-                            <p className={`font-medium text-sm ${questionnaire.customConversionId === cv.id ? 'text-indigo-700' : 'text-gray-900'}`}>
-                              {cv.name}
-                            </p>
-                            <p className="text-xs text-gray-400 mt-0.5">Event: {cv.custom_event_type} · Pixel: {cv.pixel_id}</p>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Create new conversion — only shown if pixel exists */}
-                    {hasPixel && !conversionsLoading && (
-                      <div className="border-t border-gray-100 pt-4">
-                        <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Create new</p>
-                        {formUrl && (
-                          <p className="text-xs text-gray-500 mb-3 font-mono bg-gray-50 rounded-lg px-3 py-2 break-all">
-                            {selectedForm?.slug ? `quote-box.com/${selectedForm.slug}` : 'quote-box.com'}
-                          </p>
+                    {hasPixel && (
+                      <>
+                        {conversionsLoading ? (
+                          <div className="flex items-center gap-2 py-3 text-sm text-gray-400">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500" />
+                            Loading conversions…
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Custom Conversion</label>
+                            <button
+                              onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: null }))}
+                              className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 text-sm transition ${
+                                !questionnaire.customConversionId ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
+                              }`}
+                            >
+                              <span className={!questionnaire.customConversionId ? 'text-indigo-700 font-medium' : 'text-gray-500'}>
+                                None — skip conversion tracking
+                              </span>
+                            </button>
+                            {customConversions.filter((cv) => cv.pixel_id === questionnaire.pixelId).map((cv) => (
+                              <button
+                                key={cv.id}
+                                onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: cv.id, pixelId: cv.pixel_id }))}
+                                className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 transition ${
+                                  questionnaire.customConversionId === cv.id ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                              >
+                                <p className={`font-medium text-sm ${questionnaire.customConversionId === cv.id ? 'text-indigo-700' : 'text-gray-900'}`}>
+                                  {cv.name}
+                                </p>
+                                <p className="text-xs text-gray-400 mt-0.5">Event: {cv.custom_event_type}</p>
+                              </button>
+                            ))}
+                          </div>
                         )}
-                        <button
-                          onClick={() => selectedForm?.pixelId && handleCreateQuoteBoxConversion(selectedForm.pixelId, selectedForm.slug ?? undefined)}
-                          disabled={creatingConversion}
-                          className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition"
-                        >
-                          {creatingConversion ? 'Creating…' : `Create conversion for ${selectedForm?.slug ?? 'this form'}`}
-                        </button>
-                      </div>
+
+                        {/* Create new conversion */}
+                        {!conversionsLoading && (
+                          <div className="border-t border-gray-100 pt-4">
+                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Create new</p>
+                            {formUrl && (
+                              <p className="text-xs text-gray-500 mb-3 font-mono bg-gray-50 rounded-lg px-3 py-2 break-all">
+                                {selectedForm?.slug ? `quote-box.com/${selectedForm.slug}` : 'quote-box.com'}
+                              </p>
+                            )}
+                            <button
+                              onClick={() => questionnaire.pixelId && handleCreateQuoteBoxConversion(questionnaire.pixelId, selectedForm?.slug ?? undefined)}
+                              disabled={creatingConversion}
+                              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition"
+                            >
+                              {creatingConversion ? 'Creating…' : `Create conversion for ${selectedForm?.slug ?? 'this form'}`}
+                            </button>
+                          </div>
+                        )}
+                      </>
                     )}
 
                     {/* Test panel */}
