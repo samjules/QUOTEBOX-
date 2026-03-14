@@ -1110,6 +1110,15 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Test mode banner state
+  const [isTestMode, setIsTestMode] = useState(false)
+  const [pixelReady, setPixelReady] = useState(false)
+  const [leadEventFired, setLeadEventFired] = useState(false)
+
+  useEffect(() => {
+    setIsTestMode(new URLSearchParams(window.location.search).get('pixel_test') === '1')
+  }, [])
+
   // Load Meta Pixel and fire PageView
   useEffect(() => {
     const pixelId = config.meta_pixel_id
@@ -1128,6 +1137,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
     }
     w.fbq('init', pixelId)
     w.fbq('track', 'PageView')
+    setPixelReady(true)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -1367,7 +1377,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
     if (config.meta_pixel_id && typeof window !== 'undefined') {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const fbq = (window as any).fbq
-      if (typeof fbq === 'function') fbq('track', 'Lead')
+      if (typeof fbq === 'function') { fbq('track', 'Lead'); setLeadEventFired(true) }
     }
 
     setStep(confirmStep)
@@ -1432,8 +1442,45 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
       display: 'flex',
       alignItems: 'flex-start',
       justifyContent: 'center',
-      padding: '28px 16px 60px',
+      padding: isTestMode ? '72px 16px 60px' : '28px 16px 60px',
     }}>
+      {/* ── Pixel test banner ── */}
+      {isTestMode && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
+          background: leadEventFired ? '#14532d' : pixelReady ? '#1e3a5f' : '#1c1917',
+          color: 'white',
+          padding: '10px 16px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16,
+          fontSize: 13, fontFamily: 'system-ui, sans-serif',
+          transition: 'background 0.4s',
+        }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              width: 18, height: 18, borderRadius: '50%',
+              background: pixelReady ? '#22c55e' : '#6b7280', fontSize: 10, fontWeight: 700, flexShrink: 0,
+            }}>
+              {pixelReady ? '✓' : '…'}
+            </span>
+            Pixel {config.meta_pixel_id} — {pixelReady ? 'loaded · PageView fired' : 'loading…'}
+          </span>
+          <span style={{ opacity: 0.4 }}>|</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              width: 18, height: 18, borderRadius: '50%',
+              background: leadEventFired ? '#22c55e' : '#6b7280', fontSize: 10, fontWeight: 700, flexShrink: 0,
+            }}>
+              {leadEventFired ? '✓' : '·'}
+            </span>
+            Lead event — {leadEventFired ? 'fired ✓' : 'waiting for submit'}
+          </span>
+          <span style={{ opacity: 0.4 }}>|</span>
+          <span style={{ opacity: 0.55, fontSize: 11 }}>Test mode — not visible to visitors</span>
+        </div>
+      )}
+
       <div style={{
         width: '100%',
         maxWidth: 520,

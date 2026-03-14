@@ -1725,7 +1725,7 @@ export default function LeadMachinePage() {
                             Submit a test entry through your form. Meta will confirm the pixel fired correctly.
                           </p>
                           <a
-                            href={formUrl}
+                            href={`${formUrl}${formUrl.includes('?') ? '&' : '?'}pixel_test=1`}
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={() => setConversionTestOpened(true)}
