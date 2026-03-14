@@ -18,21 +18,28 @@ async function getMetaCreds() {
   return { token: account.meta_access_token, adAccountId: account.meta_ad_account_id }
 }
 
-// GET — list custom conversions for this ad account
-export async function GET() {
+// GET — list custom conversions for a specific pixel (or ad account if no pixelId)
+export async function GET(request: NextRequest) {
   const creds = await getMetaCreds()
   if (!creds) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const adAccountId = creds.adAccountId.startsWith('act_')
-    ? creds.adAccountId
-    : `act_${creds.adAccountId}`
+  const { searchParams } = new URL(request.url)
+  const pixelId = searchParams.get('pixelId')
+
+  // If pixelId provided, fetch from the pixel endpoint — this returns only that pixel's conversions
+  // (matches what Meta Events Manager shows). Otherwise fall back to ad account level.
+  const endpoint = pixelId
+    ? `https://graph.facebook.com/v18.0/${pixelId}/customconversions`
+    : (() => {
+        const adAccountId = creds.adAccountId.startsWith('act_')
+          ? creds.adAccountId
+          : `act_${creds.adAccountId}`
+        return `https://graph.facebook.com/v18.0/${adAccountId}/customconversions`
+      })()
 
   try {
     const res = await fetch(
-      `https://graph.facebook.com/v18.0/${adAccountId}/customconversions` +
-      `?fields=id,name,custom_event_type,rule,pixel_id,creation_time` +
-      `&limit=100` +
-      `&access_token=${creds.token}`,
+      `${endpoint}?fields=id,name,custom_event_type,rule,creation_time&limit=100&access_token=${creds.token}`,
       { cache: 'no-store' }
     )
     const data = await res.json()

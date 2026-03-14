@@ -859,15 +859,7 @@ export default function LeadMachinePage() {
                 setQuestionnaire((q) => ({ ...q, pageId: pageList[0].id }))
               }
             }),
-          (async () => {
-            setConversionsLoading(true)
-            try {
-              const cvRes = await fetch('/api/meta/conversions')
-              const cvData = await cvRes.json()
-              setCustomConversions(cvData.conversions || [])
-            } catch { /* non-fatal */ }
-            setConversionsLoading(false)
-          })(),
+          // conversions fetched separately once pixel is known (see useEffect below)
           (async () => {
             setPixelsLoading(true)
             try {
@@ -928,19 +920,33 @@ export default function LeadMachinePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pixelsLoading, metaPixels])
 
-  // Auto-select an existing conversion for this form when conversions + pixel are ready
+  // Fetch conversions scoped to the selected pixel whenever it changes
   useEffect(() => {
-    if (conversionsLoading || questionnaire.customConversionId || !questionnaire.pixelId) return
+    if (!questionnaire.pixelId) {
+      setCustomConversions([])
+      return
+    }
+    setConversionsLoading(true)
+    setQuestionnaire((q) => ({ ...q, customConversionId: null }))
+    fetch(`/api/meta/conversions?pixelId=${questionnaire.pixelId}`)
+      .then((r) => r.json())
+      .then((d) => setCustomConversions(d.conversions || []))
+      .catch(() => {})
+      .finally(() => setConversionsLoading(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questionnaire.pixelId])
+
+  // Auto-select an existing conversion for this form once conversions load
+  useEffect(() => {
+    if (conversionsLoading || questionnaire.customConversionId) return
     const selectedForm = hostedForms.find((f) => f.id === questionnaire.selectedFormId)
     if (!selectedForm?.slug) return
-    const existing = customConversions.find(
-      (cv) => cv.pixel_id === questionnaire.pixelId && cv.name.includes(selectedForm.slug!)
-    )
+    const existing = customConversions.find((cv) => cv.name.includes(selectedForm.slug!))
     if (existing) {
       setQuestionnaire((q) => ({ ...q, customConversionId: existing.id }))
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversionsLoading, customConversions, questionnaire.pixelId])
+  }, [conversionsLoading, customConversions])
 
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
