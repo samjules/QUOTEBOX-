@@ -43,6 +43,8 @@ export async function GET(request: NextRequest) {
       { cache: 'no-store' }
     )
     const data = await res.json()
+    console.log('[conversions GET] endpoint:', endpoint)
+    console.log('[conversions GET] status:', res.status, 'count:', data.data?.length, 'error:', JSON.stringify(data.error))
     if (!res.ok) {
       return NextResponse.json({ error: data.error?.message || 'Failed to fetch conversions', conversions: [] }, { status: 400 })
     }
