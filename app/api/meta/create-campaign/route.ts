@@ -172,15 +172,20 @@ export async function POST(request: NextRequest) {
     adSetParams.set('end_time', endTime.toISOString())
   }
 
-  // Build promoted_object — pixel always required for OFFSITE_CONVERSIONS optimization
+  // Build promoted_object
+  // OFFSITE_CONVERSIONS: only pixel_id (+ optional custom_conversion_id) — page_id is invalid here
+  // LINK_CLICKS / REACH: page_id is acceptable, pixel optional
   const promotedObject: Record<string, string> = {}
-  if (body.pageId) promotedObject.page_id = body.pageId
-  if (body.pixelId) promotedObject.pixel_id = body.pixelId
-  if (body.customConversionId) promotedObject.custom_conversion_id = body.customConversionId
+  if (objConfig.optimization_goal === 'OFFSITE_CONVERSIONS') {
+    if (body.pixelId) promotedObject.pixel_id = body.pixelId
+    if (body.customConversionId) promotedObject.custom_conversion_id = body.customConversionId
+  } else {
+    if (body.pageId) promotedObject.page_id = body.pageId
+    if (body.pixelId) promotedObject.pixel_id = body.pixelId
+  }
   if (Object.keys(promotedObject).length > 0) {
     adSetParams.set('promoted_object', JSON.stringify(promotedObject))
   }
-  console.log('[create-campaign] promoted_object:', JSON.stringify(promotedObject))
 
   let adSetId: string
   try {
