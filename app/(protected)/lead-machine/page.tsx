@@ -2129,6 +2129,45 @@ export default function LeadMachinePage() {
                           </div>
                         </div>
 
+                        {/* Conversion tracking summary */}
+                        <div className="border border-gray-200 rounded-xl overflow-hidden">
+                          <div className="px-3 py-2 bg-gray-50 border-b border-gray-100">
+                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Conversion Tracking</p>
+                          </div>
+                          <div className="px-3 py-3 space-y-2 text-xs">
+                            {questionnaire.pixelId ? (
+                              <div className="flex items-center gap-2">
+                                <span className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                                  <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>
+                                </span>
+                                <span className="text-gray-700">Pixel <span className="font-mono text-gray-900">{questionnaire.pixelId}</span> attached</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <span className="w-4 h-4 rounded-full bg-yellow-400 flex items-center justify-center flex-shrink-0 text-white font-bold text-[9px]">!</span>
+                                <span className="text-yellow-700">No pixel — go back to Step 1 to set up conversion tracking</span>
+                              </div>
+                            )}
+                            {questionnaire.customConversionId ? (
+                              <div className="flex items-center gap-2">
+                                <span className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                                  <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>
+                                </span>
+                                <span className="text-gray-700">
+                                  Custom conversion: <span className="font-medium text-gray-900">
+                                    {customConversions.find(c => c.id === questionnaire.customConversionId)?.name ?? questionnaire.customConversionId}
+                                  </span>
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <span className="w-4 h-4 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0 text-white font-bold text-[9px]">–</span>
+                                <span className="text-gray-400">No custom conversion selected</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
                         {/* Facebook page selector */}
                         {pages.length > 1 && (
                           <div>
