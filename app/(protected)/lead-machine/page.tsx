@@ -723,7 +723,6 @@ export default function LeadMachinePage() {
   const [chatInput, setChatInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
-  const autoConvCreatedRef = useRef(false)
 
   const [questionnaire, setQuestionnaire] = useState<Questionnaire>({
     objective: 'OUTCOME_LEADS',
@@ -911,26 +910,19 @@ export default function LeadMachinePage() {
     }
   }, [dateRange, loadCampaigns, pageState])
 
-  // Auto-create (or reuse) conversion when entering step 1
+  // Auto-select an existing conversion for this form when conversions finish loading
   useEffect(() => {
-    if (step !== 1) return
-    if (autoConvCreatedRef.current || creatingConversion || conversionsLoading) return
+    if (conversionsLoading || questionnaire.customConversionId) return
     const selectedForm = hostedForms.find((f) => f.id === questionnaire.selectedFormId)
     if (!selectedForm?.pixelId || !selectedForm?.slug) return
-    autoConvCreatedRef.current = true
-
-    // Reuse existing conversion for this form slug instead of creating a duplicate
     const existing = customConversions.find(
       (cv) => cv.pixel_id === selectedForm.pixelId && cv.name.includes(selectedForm.slug!)
     )
     if (existing) {
       setQuestionnaire((q) => ({ ...q, customConversionId: existing.id, pixelId: existing.pixel_id }))
-      return
     }
-
-    handleCreateQuoteBoxConversion(selectedForm.pixelId, selectedForm.slug)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, hostedForms, questionnaire.selectedFormId, customConversions, conversionsLoading])
+  }, [conversionsLoading, customConversions])
 
   // ─── Handlers ─────────────────────────────────────────────────────────────
 
@@ -1158,7 +1150,6 @@ export default function LeadMachinePage() {
       pixelId: null,
     })
     setConversionTestOpened(false)
-    autoConvCreatedRef.current = false
   }
 
   // ─── Render: Loading ───────────────────────────────────────────────────────
@@ -1663,111 +1654,96 @@ export default function LeadMachinePage() {
                   const selectedForm = hostedForms.find((f) => f.id === questionnaire.selectedFormId)
                   const formUrl = questionnaire.destinationUrl || (selectedForm?.slug ? `https://quote-box.com/${selectedForm.slug}` : '')
                   const hasPixel = !!selectedForm?.pixelId
+                  const activeConversion = customConversions.find((c) => c.id === questionnaire.customConversionId)
                   return (
                   <div className="space-y-4">
-                    <div>
-                      <h2 className="font-semibold text-gray-900 mb-1">Conversion Tracking</h2>
-                      <p className="text-sm text-gray-500 mb-4">We&apos;ll create a Meta custom conversion that fires when someone submits your QuoteBox form. Verify the URL, then test it.</p>
+                    <h2 className="font-semibold text-gray-900 mb-1">Conversion Tracking</h2>
+                    <p className="text-sm text-gray-500">Select an existing conversion or create a new one for this form.</p>
 
-                      {/* URL verification */}
-                      {formUrl && (
-                        <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mb-4">
-                          <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Tracking URL</p>
-                          <p className="font-mono text-sm text-indigo-700 break-all">{formUrl}</p>
-                          <p className="text-xs text-gray-400 mt-1">Conversions will fire on page visits matching this URL.</p>
-                        </div>
-                      )}
+                    {/* No pixel warning */}
+                    {!hasPixel && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                        <p className="text-sm font-medium text-yellow-800 mb-1">No Meta Pixel found</p>
+                        <p className="text-xs text-yellow-700">Add a Meta Pixel ID to your QuoteBox form in the Form Builder first.</p>
+                      </div>
+                    )}
 
-                      {/* Auto-creation status */}
-                      {!hasPixel ? (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4">
-                          <p className="text-sm font-medium text-yellow-800 mb-1">No Meta Pixel found</p>
-                          <p className="text-xs text-yellow-700">Add a Meta Pixel ID to your QuoteBox form in the Form Builder, then come back here.</p>
-                        </div>
-                      ) : creatingConversion ? (
-                        <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-4">
-                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600 flex-shrink-0" />
-                          <div>
-                            <p className="text-sm font-medium text-indigo-900">Creating conversion…</p>
-                            <p className="text-xs text-indigo-600 mt-0.5">Pixel: {selectedForm?.pixelId}</p>
-                          </div>
-                        </div>
-                      ) : questionnaire.customConversionId ? (
-                        <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
-                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
-                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-green-900">Conversion created</p>
-                            <p className="text-xs text-green-700 mt-0.5 truncate">
-                              {customConversions.find((c) => c.id === questionnaire.customConversionId)?.name ?? questionnaire.customConversionId}
-                            </p>
-                          </div>
-                        </div>
-                      ) : null}
-
-                      {/* Existing conversions override */}
-                      {!creatingConversion && customConversions.length > 0 && (
-                        <details className="mb-4">
-                          <summary className="cursor-pointer text-xs font-medium text-gray-400 hover:text-gray-600 uppercase tracking-wider select-none list-none">
-                            Use a different conversion ▾
-                          </summary>
-                          <div className="mt-2 space-y-2">
-                            <button
-                              onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: null }))}
-                              className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 text-sm transition ${
-                                !questionnaire.customConversionId ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              <span className={!questionnaire.customConversionId ? 'text-indigo-700 font-medium' : 'text-gray-500'}>
-                                None — don&apos;t use a custom conversion
-                              </span>
-                            </button>
-                            {customConversions.map((cv) => (
-                              <button
-                                key={cv.id}
-                                onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: cv.id, pixelId: cv.pixel_id }))}
-                                className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 transition ${
-                                  questionnaire.customConversionId === cv.id ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
-                                }`}
-                              >
-                                <p className={`font-medium text-sm ${questionnaire.customConversionId === cv.id ? 'text-indigo-700' : 'text-gray-900'}`}>
-                                  {cv.name}
-                                </p>
-                                <p className="text-xs text-gray-400 mt-0.5">Event: {cv.custom_event_type} · Pixel: {cv.pixel_id}</p>
-                              </button>
-                            ))}
-                          </div>
-                        </details>
-                      )}
-
-                      {/* Test panel */}
-                      {questionnaire.customConversionId && formUrl && (
-                        <div className="border border-blue-200 bg-blue-50 rounded-xl p-4">
-                          <p className="font-medium text-blue-900 text-sm mb-1">Test your conversion</p>
-                          <p className="text-xs text-blue-700 mb-3">
-                            Submit a test entry through your form. Meta will confirm the pixel fired correctly.
-                          </p>
-                          <a
-                            href={`${formUrl}${formUrl.includes('?') ? '&' : '?'}pixel_test=1`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={() => setConversionTestOpened(true)}
-                            className="inline-flex items-center gap-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg transition"
+                    {/* Existing conversions list */}
+                    {conversionsLoading ? (
+                      <div className="flex items-center gap-2 py-3 text-sm text-gray-400">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500" />
+                        Loading conversions…
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <button
+                          onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: null }))}
+                          className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 text-sm transition ${
+                            !questionnaire.customConversionId ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <span className={!questionnaire.customConversionId ? 'text-indigo-700 font-medium' : 'text-gray-500'}>
+                            None — skip conversion tracking
+                          </span>
+                        </button>
+                        {customConversions.map((cv) => (
+                          <button
+                            key={cv.id}
+                            onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: cv.id, pixelId: cv.pixel_id }))}
+                            className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 transition ${
+                              questionnaire.customConversionId === cv.id ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
+                            }`}
                           >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                            Open form to test
-                          </a>
-                          {conversionTestOpened && (
-                            <p className="mt-2 text-xs text-blue-600 font-medium">Form opened — submit a test entry, then continue.</p>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                            <p className={`font-medium text-sm ${questionnaire.customConversionId === cv.id ? 'text-indigo-700' : 'text-gray-900'}`}>
+                              {cv.name}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-0.5">Event: {cv.custom_event_type} · Pixel: {cv.pixel_id}</p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Create new conversion — only shown if pixel exists */}
+                    {hasPixel && !conversionsLoading && (
+                      <div className="border-t border-gray-100 pt-4">
+                        <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Create new</p>
+                        {formUrl && (
+                          <p className="text-xs text-gray-500 mb-3 font-mono bg-gray-50 rounded-lg px-3 py-2 break-all">
+                            {selectedForm?.slug ? `quote-box.com/${selectedForm.slug}` : 'quote-box.com'}
+                          </p>
+                        )}
+                        <button
+                          onClick={() => selectedForm?.pixelId && handleCreateQuoteBoxConversion(selectedForm.pixelId, selectedForm.slug ?? undefined)}
+                          disabled={creatingConversion}
+                          className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition"
+                        >
+                          {creatingConversion ? 'Creating…' : `Create conversion for ${selectedForm?.slug ?? 'this form'}`}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Test panel */}
+                    {activeConversion && formUrl && (
+                      <div className="border border-blue-200 bg-blue-50 rounded-xl p-4">
+                        <p className="font-medium text-blue-900 text-sm mb-1">Test: {activeConversion.name}</p>
+                        <p className="text-xs text-blue-700 mb-3">Submit a test entry to confirm the pixel fires correctly.</p>
+                        <a
+                          href={`${formUrl}${formUrl.includes('?') ? '&' : '?'}pixel_test=1`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => setConversionTestOpened(true)}
+                          className="inline-flex items-center gap-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg transition"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                          Open form to test
+                        </a>
+                        {conversionTestOpened && (
+                          <p className="mt-2 text-xs text-blue-600 font-medium">Form opened — submit a test entry, then continue.</p>
+                        )}
+                      </div>
+                    )}
                   </div>
                   )
                 })()}
