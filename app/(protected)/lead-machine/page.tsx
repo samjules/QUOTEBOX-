@@ -1070,6 +1070,7 @@ export default function LeadMachinePage() {
           name: convName,
           pixel_id: pixelId,
           custom_event_type: 'LEAD',
+          url_contains: slug ? `quote-box.com/${slug}` : 'quote-box.com',
         }),
       })
       const data = await res.json()

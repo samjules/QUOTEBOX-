@@ -61,12 +61,16 @@ export async function POST(request: NextRequest) {
 
   const eventType = body.custom_event_type || 'LEAD'
 
-  // No rule — custom_event_type alone is sufficient. URL filtering on standard
-  // events causes Meta to reject the request with "Invalid parameter".
+  // rule is required by Meta. Use URL-only filter — do NOT include an event clause
+  // here since custom_event_type already specifies the event (that combo = "Invalid parameter").
+  const urlFilter = body.url_contains || 'quote-box.com'
+  const rule = JSON.stringify({ and: [{ url: { i_contains: urlFilter } }] })
+
   const params = new URLSearchParams({
     name: body.name,
     event_source_id: body.pixel_id,
     custom_event_type: eventType,
+    rule,
     access_token: creds.token,
   })
 
