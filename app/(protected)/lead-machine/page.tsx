@@ -864,8 +864,10 @@ export default function LeadMachinePage() {
             try {
               const cvRes = await fetch('/api/meta/conversions')
               const cvData = await cvRes.json()
+              console.log('[lead-machine] conversions status:', cvRes.status)
+              console.log('[lead-machine] conversions response:', JSON.stringify(cvData))
               setCustomConversions(cvData.conversions || [])
-            } catch { /* non-fatal */ }
+            } catch (e) { console.error('[lead-machine] conversions error:', e) }
             setConversionsLoading(false)
           })(),
           (async () => {
