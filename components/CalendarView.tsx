@@ -50,9 +50,13 @@ export default function CalendarView({ leads }: Props) {
     return `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`
   }
 
-  // Has any booked lead in this month?
   const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}-`
   const hasLeadsThisMonth = Object.keys(leadsByDate).some(d => d.startsWith(monthPrefix))
+
+  function pillStyle(status: Lead['status']) {
+    if (status === 'booked') return { bg: 'bg-indigo-600 hover:bg-indigo-700', detail: 'bg-indigo-50 border-indigo-200', accent: 'text-indigo-700' }
+    return { bg: 'bg-yellow-400 hover:bg-yellow-500', detail: 'bg-yellow-50 border-yellow-200', accent: 'text-yellow-700' }
+  }
 
   return (
     <div>
@@ -128,13 +132,16 @@ export default function CalendarView({ leads }: Props) {
 
                     {/* Event pills */}
                     <div className="space-y-1">
-                      {dayLeads.map(lead => (
+                      {dayLeads.map(lead => {
+                        const ps = pillStyle(lead.status)
+                        const isBooked = lead.status === 'booked'
+                        return (
                         <div key={lead.id}>
                           <button
                             onClick={() =>
                               setSelectedLeadId(prev => (prev === lead.id ? null : lead.id))
                             }
-                            className="w-full text-left px-2 py-1 rounded text-xs font-medium bg-indigo-600 text-white truncate hover:bg-indigo-700 transition"
+                            className={`w-full text-left px-2 py-1 rounded text-xs font-medium truncate transition ${ps.bg} ${isBooked ? 'text-white' : 'text-gray-900'}`}
                           >
                             {lead.name ?? 'Unnamed'}
                             {(lead.form_data as Record<string, unknown>)?._amount
@@ -144,24 +151,26 @@ export default function CalendarView({ leads }: Props) {
 
                           {/* Inline detail panel */}
                           {selectedLeadId === lead.id && (
-                            <div className="mt-1 p-2 bg-indigo-50 border border-indigo-200 rounded text-xs text-gray-700 space-y-0.5">
+                            <div className={`mt-1 p-2 border rounded text-xs text-gray-700 space-y-0.5 ${ps.detail}`}>
                               <p className="font-semibold text-gray-900">{lead.name ?? '—'}</p>
                               {lead.phone && <p>{lead.phone}</p>}
                               {lead.email && <p className="truncate">{lead.email}</p>}
-                              <p className="text-indigo-700 font-medium">{dateStr}</p>
+                              <p className={`font-medium ${ps.accent}`}>{dateStr}</p>
                               {(lead.form_data as Record<string, unknown>)?._amount != null && (
                                 <p>${String((lead.form_data as Record<string, unknown>)._amount)}</p>
                               )}
+                              <p className="capitalize text-gray-500">{lead.status}</p>
                               <Link
                                 href="/leads"
-                                className="inline-block mt-1 text-indigo-600 hover:underline font-medium"
+                                className={`inline-block mt-1 hover:underline font-medium ${ps.accent}`}
                               >
                                 View in Leads →
                               </Link>
                             </div>
                           )}
                         </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </>
                 )}
@@ -174,7 +183,7 @@ export default function CalendarView({ leads }: Props) {
       {/* Empty state */}
       {!hasLeadsThisMonth && (
         <p className="mt-8 text-center text-gray-400 text-sm">
-          No booked appointments this month.
+          No appointments scheduled this month.
         </p>
       )}
     </div>

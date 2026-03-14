@@ -26,7 +26,6 @@ export default async function CalendarPage() {
     .from('leads')
     .select('id, account_id, hosted_form_id, name, email, phone, form_type, form_data, status, created_at')
     .eq('account_id', account.id)
-    .eq('status', 'booked')
     .not('form_data->>_booking_date', 'is', null)
     .order('created_at', { ascending: true })
 
