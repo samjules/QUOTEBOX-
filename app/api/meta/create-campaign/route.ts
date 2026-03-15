@@ -91,6 +91,20 @@ export async function POST(request: NextRequest) {
 
   const objConfig = OBJECTIVE_MAP[body.objective] || OBJECTIVE_MAP.OUTCOME_TRAFFIC
 
+  // Validate required fields before touching Meta (avoids orphaned campaigns with no ads)
+  if (!body.pageId) {
+    return NextResponse.json(
+      { error: 'A Facebook Page is required to create ads. Select a page in the ad creative step.' },
+      { status: 400 }
+    )
+  }
+  if (!body.destinationUrl) {
+    return NextResponse.json(
+      { error: 'A destination URL is required.' },
+      { status: 400 }
+    )
+  }
+
   // Create Campaign
   const campaignParams = new URLSearchParams({
     name: body.campaignName,
@@ -216,90 +230,98 @@ export async function POST(request: NextRequest) {
 
   // Create Ad Creative(s) and Ad(s)
   const adIds: string[] = []
-  let creativeError: unknown = null
-  let adError: unknown = null
-
   const adsManagerUrl = `https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=${adAccountId}`
 
-  if (body.pageId && body.destinationUrl) {
-    // Build variant list — split test uses all headlines/bodyTexts, otherwise single headline/bodyText
-    const variants: Array<{ headline: string; bodyText: string; label: string }> = []
-
-    if (body.splitTest && body.headlines && body.bodyTexts && body.headlines.length > 0) {
-      body.headlines.forEach((h, i) => {
-        variants.push({
-          headline: h,
-          bodyText: body.bodyTexts?.[i] || body.bodyTexts?.[0] || '',
-          label: String.fromCharCode(65 + i), // A, B, C
-        })
+  // Build variant list — split test uses all headlines/bodyTexts, otherwise single
+  const variants: Array<{ headline: string; bodyText: string; label: string }> = []
+  if (body.splitTest && body.headlines && body.bodyTexts && body.headlines.length > 0) {
+    body.headlines.forEach((h, i) => {
+      variants.push({
+        headline: h,
+        bodyText: body.bodyTexts?.[i] || body.bodyTexts?.[0] || '',
+        label: String.fromCharCode(65 + i),
       })
-    } else if (body.headline && body.bodyText) {
-      variants.push({ headline: body.headline, bodyText: body.bodyText, label: '' })
+    })
+  } else if (body.headline && body.bodyText) {
+    variants.push({ headline: body.headline, bodyText: body.bodyText, label: '' })
+  }
+
+  if (variants.length === 0) {
+    return NextResponse.json(
+      { error: 'No ad copy generated. Please generate ad copy before launching.' },
+      { status: 400 }
+    )
+  }
+
+  for (const variant of variants) {
+    const objectStorySpec = {
+      page_id: body.pageId,
+      link_data: {
+        link: body.destinationUrl,
+        message: variant.bodyText,
+        name: variant.headline,
+        call_to_action: { type: body.cta || 'LEARN_MORE' },
+      },
     }
 
-    for (const variant of variants) {
-      const objectStorySpec = {
-        page_id: body.pageId,
-        link_data: {
-          link: body.destinationUrl,
-          message: variant.bodyText,
-          name: variant.headline,
-          call_to_action: { type: body.cta || 'LEARN_MORE' },
-        },
-      }
+    const creativeName = variant.label
+      ? `${body.campaignName} - Creative ${variant.label}`
+      : `${body.campaignName} - Creative`
 
-      const creativeName = variant.label
-        ? `${body.campaignName} - Creative ${variant.label}`
-        : `${body.campaignName} - Creative`
+    const creativeParams = new URLSearchParams({
+      name: creativeName,
+      object_story_spec: JSON.stringify(objectStorySpec),
+      access_token: token,
+    })
 
-      const creativeParams = new URLSearchParams({
-        name: creativeName,
-        object_story_spec: JSON.stringify(objectStorySpec),
-        access_token: token,
-      })
+    const creativeRes = await fetch(
+      `https://graph.facebook.com/v18.0/act_${adAccountId}/adcreatives`,
+      { method: 'POST', body: creativeParams }
+    )
+    const creativeData = await creativeRes.json()
 
-      const creativeRes = await fetch(
-        `https://graph.facebook.com/v18.0/act_${adAccountId}/adcreatives`,
-        { method: 'POST', body: creativeParams }
+    if (!creativeRes.ok || !creativeData.id) {
+      console.error('[create-campaign] Creative error:', JSON.stringify(creativeData.error))
+      return NextResponse.json(
+        { error: creativeData.error?.message || 'Ad creative creation failed', meta_error: creativeData.error, campaignId, adSetId },
+        { status: 400 }
       )
-      const creativeData = await creativeRes.json()
-
-      if (creativeRes.ok && creativeData.id) {
-        const adName = variant.label
-          ? `${body.campaignName} - Ad ${variant.label}`
-          : `${body.campaignName} - Ad`
-
-        const adParams = new URLSearchParams({
-          name: adName,
-          adset_id: adSetId,
-          creative: JSON.stringify({ creative_id: creativeData.id }),
-          status: 'PAUSED',
-          access_token: token,
-        })
-
-        const adRes = await fetch(
-          `https://graph.facebook.com/v18.0/act_${adAccountId}/ads`,
-          { method: 'POST', body: adParams }
-        )
-        const adData = await adRes.json()
-        if (adRes.ok && adData.id) {
-          adIds.push(adData.id)
-        } else {
-          adError = adData.error
-        }
-      } else {
-        creativeError = creativeData.error
-      }
     }
+
+    const adName = variant.label
+      ? `${body.campaignName} - Ad ${variant.label}`
+      : `${body.campaignName} - Ad`
+
+    const adParams = new URLSearchParams({
+      name: adName,
+      adset_id: adSetId,
+      creative: JSON.stringify({ creative_id: creativeData.id }),
+      status: 'PAUSED',
+      access_token: token,
+    })
+
+    const adRes = await fetch(
+      `https://graph.facebook.com/v18.0/act_${adAccountId}/ads`,
+      { method: 'POST', body: adParams }
+    )
+    const adData = await adRes.json()
+
+    if (!adRes.ok || !adData.id) {
+      console.error('[create-campaign] Ad error:', JSON.stringify(adData.error))
+      return NextResponse.json(
+        { error: adData.error?.message || 'Ad creation failed', meta_error: adData.error, campaignId, adSetId },
+        { status: 400 }
+      )
+    }
+
+    adIds.push(adData.id)
   }
 
   return NextResponse.json({
     campaignId,
     adSetId,
     adIds,
-    adId: adIds[0] || null, // backwards compat
-    creativeError,
-    adError,
+    adId: adIds[0] || null,
     campaignName: body.campaignName,
     adSetName: body.adSetName,
     adsManagerUrl,

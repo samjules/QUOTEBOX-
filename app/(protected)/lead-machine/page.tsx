@@ -1070,6 +1070,18 @@ export default function LeadMachinePage() {
     setCreating(false)
   }
 
+  async function handleDeleteConversion(id: string) {
+    try {
+      const res = await fetch(`/api/meta/conversions?id=${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setCustomConversions((prev) => prev.filter((cv) => cv.id !== id))
+        if (questionnaire.customConversionId === id) {
+          setQuestionnaire((q) => ({ ...q, customConversionId: null }))
+        }
+      }
+    } catch { /* ignore */ }
+  }
+
   async function handleCreateQuoteBoxConversion(pixelId: string, slug?: string) {
     if (!pixelId) return
     setCreatingConversion(true)
@@ -1734,18 +1746,26 @@ export default function LeadMachinePage() {
                           </span>
                         </button>
                         {customConversions.map((cv) => (
-                          <button
-                            key={cv.id}
-                            onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: cv.id, pixelId: cv.pixel_id || q.pixelId }))}
-                            className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 transition ${
-                              questionnaire.customConversionId === cv.id ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                          >
-                            <p className={`font-medium text-sm ${questionnaire.customConversionId === cv.id ? 'text-indigo-700' : 'text-gray-900'}`}>
-                              {cv.name}
-                            </p>
-                            <p className="text-xs text-gray-400 mt-0.5">Event: {cv.custom_event_type}</p>
-                          </button>
+                          <div key={cv.id} className="flex items-stretch gap-1.5">
+                            <button
+                              onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: cv.id, pixelId: cv.pixel_id || q.pixelId }))}
+                              className={`flex-1 text-left px-3.5 py-2.5 rounded-xl border-2 transition ${
+                                questionnaire.customConversionId === cv.id ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
+                              }`}
+                            >
+                              <p className={`font-medium text-sm ${questionnaire.customConversionId === cv.id ? 'text-indigo-700' : 'text-gray-900'}`}>
+                                {cv.name}
+                              </p>
+                              <p className="text-xs text-gray-400 mt-0.5">Event: {cv.custom_event_type}</p>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteConversion(cv.id)}
+                              className="px-2.5 rounded-xl border-2 border-gray-200 hover:border-red-200 hover:bg-red-50 text-gray-400 hover:text-red-500 transition text-sm"
+                              title="Delete conversion"
+                            >
+                              🗑
+                            </button>
+                          </div>
                         ))}
                       </div>
                     )}

@@ -49,6 +49,29 @@ export async function GET() {
   }
 }
 
+// DELETE — remove a custom conversion by id (?id=...)
+export async function DELETE(request: NextRequest) {
+  const creds = await getMetaCreds()
+  if (!creds) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const id = new URL(request.url).searchParams.get('id')
+  if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 })
+
+  try {
+    const res = await fetch(
+      `https://graph.facebook.com/v18.0/${id}?access_token=${creds.token}`,
+      { method: 'DELETE' }
+    )
+    const data = await res.json()
+    if (!res.ok) {
+      return NextResponse.json({ error: data.error?.message || 'Failed to delete conversion' }, { status: 400 })
+    }
+    return NextResponse.json({ success: true })
+  } catch {
+    return NextResponse.json({ error: 'Failed to delete conversion' }, { status: 500 })
+  }
+}
+
 // POST — create a new custom conversion
 export async function POST(request: NextRequest) {
   const creds = await getMetaCreds()
