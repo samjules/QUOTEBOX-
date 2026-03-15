@@ -172,15 +172,16 @@ export async function POST(request: NextRequest) {
     adSetParams.set('end_time', endTime.toISOString())
   }
 
-  // Build promoted_object
-  // OFFSITE_CONVERSIONS requires pixel_id + EITHER custom_conversion_id OR custom_event_type
-  // LINK_CLICKS / REACH accept page_id + optional pixel_id
+  // Build promoted_object per Meta API rules:
+  // - custom_conversion_id alone (pixel already baked in — do NOT also send pixel_id)
+  // - pixel_id + custom_event_type (when no custom conversion)
+  // - page_id for non-conversion objectives
   const promotedObject: Record<string, string> = {}
   if (objConfig.optimization_goal === 'OFFSITE_CONVERSIONS') {
-    if (body.pixelId) promotedObject.pixel_id = body.pixelId
     if (body.customConversionId) {
       promotedObject.custom_conversion_id = body.customConversionId
-    } else {
+    } else if (body.pixelId) {
+      promotedObject.pixel_id = body.pixelId
       promotedObject.custom_event_type = body.objective === 'OUTCOME_SALES' ? 'PURCHASE' : 'LEAD'
     }
   } else {
@@ -190,11 +191,6 @@ export async function POST(request: NextRequest) {
   if (Object.keys(promotedObject).length > 0) {
     adSetParams.set('promoted_object', JSON.stringify(promotedObject))
   }
-
-  console.log('[create-campaign] objective:', body.objective, 'optimization_goal:', objConfig.optimization_goal)
-  console.log('[create-campaign] body.pixelId:', body.pixelId, 'body.customConversionId:', body.customConversionId, 'body.pageId:', body.pageId)
-  console.log('[create-campaign] promoted_object:', JSON.stringify(promotedObject))
-  console.log('[create-campaign] adSetParams targeting:', adSetParams.get('targeting'))
 
   let adSetId: string
   try {
@@ -206,7 +202,6 @@ export async function POST(request: NextRequest) {
       }
     )
     const adSetData = await adSetRes.json()
-    console.log('[create-campaign] adset response status:', adSetRes.status, JSON.stringify(adSetData.error || adSetData.id))
 
     if (!adSetRes.ok || !adSetData.id) {
       return NextResponse.json(
