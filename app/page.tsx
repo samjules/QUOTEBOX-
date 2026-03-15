@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import DealNotificationBanner from '@/components/DealNotificationBanner'
+import PublicFooter from '@/components/PublicFooter'
 
 const faqs = [
   {
@@ -54,6 +55,9 @@ export default function LandingPage() {
           Quote<span style={{ color: '#FFE500', WebkitTextStroke: '1px #1a1a2e' }}>.</span>Box
         </span>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <Link href="/contractor-leads" style={{ fontSize: '0.88rem', fontWeight: 500, color: '#555', textDecoration: 'none' }}>
+            Contractor Leads
+          </Link>
           <Link href="/agency" style={{ fontSize: '0.88rem', fontWeight: 500, color: '#555', textDecoration: 'none' }}>
             Done for you
           </Link>
@@ -1101,39 +1105,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Footer ── */}
-      <footer style={{ background: '#1a1a2e', padding: '28px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1rem', fontWeight: 700, color: 'white' }}>
-          Quote<span style={{ color: '#FFE500' }}>.</span>Box
-        </span>
-        <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.35)' }}>
-          © {new Date().getFullYear()} Quote Box. All rights reserved.
-        </span>
-        <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
-          <Link href="/login" style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>Log in</Link>
-          <Link href="/signup" style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>Sign up</Link>
-          <a
-            href="https://apps.apple.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 7,
-              background: 'white', color: '#1a1a2e',
-              borderRadius: 8, padding: '6px 14px',
-              textDecoration: 'none',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
-            }}
-          >
-            <svg width="14" height="17" viewBox="0 0 814 1000" fill="#1a1a2e" xmlns="http://www.w3.org/2000/svg">
-              <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-42.3-150.3-110.7c-67.5-98.2-120-252.6-120-398.7 0-138.9 48.4-207.5 96.8-253.5 57.3-54.5 138.4-86.1 213.3-86.1 81.6 0 132.2 39.5 189.5 39.5 55.4 0 115.7-42.3 207.8-42.3zm-156.5-252c32.5-50 56.7-119 56.7-188C688.3 24.6 549.8 0 476.5 0c-2 0-4 0-6.1.1 -2.3 30.5-1.2 96 22.7 158.6 23.2 61.5 56.8 99.2 138.4 130.2z"/>
-            </svg>
-            <div>
-              <div style={{ fontSize: '0.5rem', color: '#555', lineHeight: 1, marginBottom: 1 }}>Download on the</div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.01em' }}>App Store</div>
-            </div>
-          </a>
-        </div>
-      </footer>
+      <PublicFooter />
 
     </div>
   )
