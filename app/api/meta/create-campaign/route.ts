@@ -191,6 +191,11 @@ export async function POST(request: NextRequest) {
     adSetParams.set('promoted_object', JSON.stringify(promotedObject))
   }
 
+  console.log('[create-campaign] objective:', body.objective, 'optimization_goal:', objConfig.optimization_goal)
+  console.log('[create-campaign] body.pixelId:', body.pixelId, 'body.customConversionId:', body.customConversionId, 'body.pageId:', body.pageId)
+  console.log('[create-campaign] promoted_object:', JSON.stringify(promotedObject))
+  console.log('[create-campaign] adSetParams targeting:', adSetParams.get('targeting'))
+
   let adSetId: string
   try {
     const adSetRes = await fetch(
@@ -201,6 +206,7 @@ export async function POST(request: NextRequest) {
       }
     )
     const adSetData = await adSetRes.json()
+    console.log('[create-campaign] adset response status:', adSetRes.status, JSON.stringify(adSetData.error || adSetData.id))
 
     if (!adSetRes.ok || !adSetData.id) {
       return NextResponse.json(
