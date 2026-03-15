@@ -30,6 +30,7 @@ export default function HostedFormsPage() {
   const [loading, setLoading] = useState(true)
   const [accountId, setAccountId] = useState<string | null>(null)
   const [deleteFormId, setDeleteFormId] = useState<string | null>(null)
+  const [embedFormUrl, setEmbedFormUrl] = useState<string | null>(null)
   const [toast, setToast] = useState<{ msg: string; isError: boolean } | null>(null)
 
   function showToast(msg: string, isError = false) {
@@ -387,6 +388,15 @@ export default function HostedFormsPage() {
                     >
                       🔗
                     </button>
+                    {slug && (
+                      <button
+                        onClick={() => setEmbedFormUrl(absoluteUrl)}
+                        style={{ border: '1.5px solid #e2e8f0', background: 'white', color: '#64748b', padding: '9px 11px', borderRadius: 10, fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'monospace' }}
+                        title="Embed form"
+                      >
+                        {'</>'}
+                      </button>
+                    )}
                     <button
                       onClick={() => toggleActive(form.id, form.is_active)}
                       style={{ border: '1.5px solid #e2e8f0', background: 'white', color: '#64748b', padding: '9px 11px', borderRadius: 10, fontSize: '0.85rem', cursor: 'pointer' }}
@@ -408,6 +418,46 @@ export default function HostedFormsPage() {
           </div>
         )}
       </div>
+
+      {/* Embed modal */}
+      {embedFormUrl && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 max-w-lg w-full mx-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-semibold text-gray-900">Embed Form</h3>
+              <button
+                onClick={() => setEmbedFormUrl(null)}
+                style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#94a3b8' }}
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              Paste this snippet anywhere in your website&apos;s HTML to embed the form inline.
+            </p>
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '14px 16px', fontFamily: 'monospace', fontSize: '0.78rem', color: '#334155', wordBreak: 'break-all', lineHeight: 1.6 }}>
+              {`<iframe\n  src="${embedFormUrl}"\n  width="100%"\n  height="650"\n  style="border:none;border-radius:12px;"\n  loading="lazy"\n  title="Quote Form"\n></iframe>`}
+            </div>
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`<iframe\n  src="${embedFormUrl}"\n  width="100%"\n  height="650"\n  style="border:none;border-radius:12px;"\n  loading="lazy"\n  title="Quote Form"\n></iframe>`)
+                  showToast('Embed code copied!')
+                }}
+                style={{ flex: 1, background: '#4f46e5', color: 'white', border: 'none', padding: '10px 16px', borderRadius: 10, fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer' }}
+              >
+                Copy Embed Code
+              </button>
+              <button
+                onClick={() => setEmbedFormUrl(null)}
+                className="flex-1 border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete confirm modal */}
       {deleteFormId && (
