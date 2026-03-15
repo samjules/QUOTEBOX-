@@ -3,6 +3,7 @@
 import 'mapbox-gl/dist/mapbox-gl.css'
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { FormField, HostedForm } from '@/lib/types'
 import area from '@turf/area'
@@ -1098,6 +1099,7 @@ function RouteField({
 // ── QuoteForm ──────────────────────────────────────────────────
 export default function QuoteForm({ form, hasCredits, businessName = '' }: { form: HostedForm; hasCredits: boolean; businessName?: string }) {
   const config = form.form_config
+  const router = useRouter()
   const supabase = createClient()
 
   // Fire-and-forget page view tracking
@@ -1373,20 +1375,11 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
       }),
     }).catch(() => { /* silently ignore email errors */ })
 
-    // Fire Meta Pixel events on successful submission
-    if (config.meta_pixel_id && typeof window !== 'undefined') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const fbq = (window as any).fbq
-      if (typeof fbq === 'function') {
-        // Push ?submitted=true so URL-based custom conversion only fires on this final page
-        window.history.pushState({}, '', window.location.pathname + '?submitted=true')
-        fbq('track', 'PageView')   // triggers URL-based custom conversion rule
-        fbq('track', 'Lead')       // standard event for reporting
-        setLeadEventFired(true)
-      }
-    }
-
-    setStep(confirmStep)
+    // Navigate to dedicated thank-you page — pixel fires there and triggers the custom conversion
+    const qs = new URLSearchParams({ email })
+    if (name) qs.set('name', name)
+    if (displayTotal > 0) qs.set('total', displayTotal.toFixed(2))
+    router.push(`/${config.slug}/thank-you?${qs.toString()}`)
   }
 
   const hasPricing = config.fields.some(
