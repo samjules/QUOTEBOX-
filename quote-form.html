@@ -535,6 +535,7 @@ async function submitLead(btn){
     }
 
     const rows=await res.json();
+    
     console.log('Lead saved:', rows[0]);
 
     // 2. Email disabled temporarily

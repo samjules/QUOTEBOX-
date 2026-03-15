@@ -1736,7 +1736,6 @@ export default function FormBuilderPage() {
   const [submitLabel, setSubmitLabel] = useState('Get My Quote →')
   const [formSlug, setFormSlug] = useState('my-quote-form')
   const [currency, setCurrency] = useState('$')
-  const [metaPixelId, setMetaPixelId] = useState('')
   const [minQuote, setMinQuote] = useState(0)
   const [heroImageUrl, setHeroImageUrl] = useState('')
   const [quoteDisplay, setQuoteDisplay] = useState<'live' | 'after_submit' | 'hidden'>('live')
@@ -1745,9 +1744,6 @@ export default function FormBuilderPage() {
   const [existingForms, setExistingForms] = useState<Array<{ id: string; form_name: string; form_config: { slug?: string } }>>([])
   const [existingFormsLoading, setExistingFormsLoading] = useState(false)
   const [planBadge, setPlanBadge] = useState('Loading…')
-  const [metaPixels, setMetaPixels] = useState<Array<{ id: string; name: string }>>([])
-  const [metaConnected, setMetaConnected] = useState(false)
-  const [metaPixelsLoading, setMetaPixelsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [toast, setToast] = useState<{
     msg: string
@@ -1908,22 +1904,6 @@ export default function FormBuilderPage() {
         setFormSlug(defaultSlug)
       }
 
-      // Fetch Meta pixels for the dropdown
-      setMetaPixelsLoading(true)
-      const isNewForm = !searchParams.get('form_id')
-      fetch('/api/meta/pixels')
-        .then((r) => r.json())
-        .then((d) => {
-          setMetaConnected(d.connected ?? false)
-          const pixels: Array<{ id: string; name: string }> = d.pixels ?? []
-          setMetaPixels(pixels)
-          // For new forms, auto-select the first available pixel
-          if (isNewForm && pixels.length > 0) {
-            setMetaPixelId(pixels[0].id)
-          }
-          setMetaPixelsLoading(false)
-        })
-        .catch(() => setMetaPixelsLoading(false))
 
       const { data: billing } = await supabase
         .from('billing')
@@ -1967,7 +1947,6 @@ export default function FormBuilderPage() {
     setFields(c.fields ?? [])
     const legacyColors: Record<string, string> = { yellow: '#FFE500', blue: '#1A56FF' }
     setBrandColor(legacyColors[c.brand_color] ?? c.brand_color ?? '#FFE500')
-    setMetaPixelId(c.meta_pixel_id ?? '')
     setMinQuote(c.min_quote ?? 0)
     setHeroImageUrl(c.hero_image_url ?? '')
     if (c.quote_display) {
@@ -2296,7 +2275,6 @@ export default function FormBuilderPage() {
         quote_display: quoteDisplay,
         ...(heroImageUrl.trim() ? { hero_image_url: heroImageUrl.trim() } : {}),
         fields,
-        ...(metaPixelId.trim() ? { meta_pixel_id: metaPixelId.trim() } : {}),
         ...(minQuote > 0 ? { min_quote: minQuote } : {}),
         disclaimer_enabled: disclaimerEnabled,
         disclaimer_text: disclaimerText,
@@ -2836,38 +2814,6 @@ export default function FormBuilderPage() {
                   <div className="slug-prev">
                     quote-box.com/{formSlug || 'my-quote-form'}
                   </div>
-                  <label style={{ marginTop: 10 }}>Meta Pixel ID</label>
-                  {metaPixelsLoading ? (
-                    <div style={{ fontSize: '0.78rem', color: 'var(--muted)', padding: '6px 0' }}>
-                      Loading pixels…
-                    </div>
-                  ) : metaConnected && metaPixels.length > 0 ? (
-                    <select
-                      value={metaPixelId}
-                      onChange={(e) => setMetaPixelId(e.target.value)}
-                    >
-                      <option value="">— Select a pixel —</option>
-                      {metaPixels.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} ({p.id})
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <>
-                      <input
-                        type="text"
-                        value={metaPixelId}
-                        onChange={(e) => setMetaPixelId(e.target.value)}
-                        placeholder="e.g. 1234567890123456"
-                      />
-                      <div className="slug-prev" style={{ marginTop: 2 }}>
-                        {!metaConnected
-                          ? 'Connect Meta in Settings to pick from your pixels'
-                          : 'No pixels found on this Meta account'}
-                      </div>
-                    </>
-                  )}
                 </div>
               </div>
             )}
