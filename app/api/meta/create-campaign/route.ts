@@ -81,6 +81,7 @@ export async function POST(request: NextRequest) {
     splitTest?: boolean
     headlines?: string[]
     bodyTexts?: string[]
+    imageUrl?: string
   }
 
   try {
@@ -261,6 +262,7 @@ export async function POST(request: NextRequest) {
         message: variant.bodyText,
         name: variant.headline,
         call_to_action: { type: body.cta || 'LEARN_MORE' },
+        ...(body.imageUrl ? { picture: body.imageUrl } : {}),
       },
     }
 

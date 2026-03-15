@@ -107,6 +107,7 @@ interface Questionnaire {
   pageId: string
   customConversionId: string | null
   pixelId: string | null
+  adImageUrl: string
 }
 
 type PageState = 'disconnected' | 'pick-account' | 'questionnaire' | 'created'
@@ -750,6 +751,7 @@ export default function LeadMachinePage() {
     pageId: '',
     customConversionId: null,
     pixelId: null,
+    adImageUrl: '',
   })
 
   // ─── Load campaigns ────────────────────────────────────────────────────────
@@ -1042,6 +1044,7 @@ export default function LeadMachinePage() {
           splitTest: true,
           headlines: generatedCopy.headlines,
           bodyTexts: generatedCopy.bodyTexts,
+          imageUrl: questionnaire.adImageUrl || undefined,
         }),
       })
 
@@ -1187,6 +1190,7 @@ export default function LeadMachinePage() {
       pageId: pages.length === 1 ? pages[0].id : '',
       customConversionId: null,
       pixelId: metaPixels.length === 1 ? metaPixels[0].id : null,
+      adImageUrl: '',
     })
     setConversionTestOpened(false)
   }
@@ -2152,6 +2156,19 @@ export default function LeadMachinePage() {
                           <p className="mt-2 text-sm text-gray-600 leading-relaxed bg-gray-50 rounded-lg p-3">{generatedCopy.summary}</p>
                         </details>
 
+                        {/* Ad Image URL */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Ad Image URL <span className="normal-case text-gray-400 font-normal">(required — must be publicly accessible)</span></label>
+                          <input
+                            type="url"
+                            value={questionnaire.adImageUrl}
+                            onChange={(e) => setQuestionnaire((q) => ({ ...q, adImageUrl: e.target.value }))}
+                            placeholder="https://your-site.com/ad-image.jpg"
+                            className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          />
+                          <p className="text-xs text-gray-400 mt-1">Min 600×315px. Must be reachable by Meta — no redirects, no robots.txt blocks.</p>
+                        </div>
+
                         {/* Split Test Variants A/B/C */}
                         <div>
                           <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">Split Test Variants</p>
@@ -2261,7 +2278,7 @@ export default function LeadMachinePage() {
                           </button>
                           <button
                             onClick={handleCreateCampaign}
-                            disabled={creating || !questionnaire.pageId || !questionnaire.destinationUrl}
+                            disabled={creating || !questionnaire.pageId || !questionnaire.destinationUrl || !questionnaire.adImageUrl}
                             className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl transition text-sm"
                           >
                             {creating ? 'Creating...' : 'Launch Split Test'}
@@ -2269,6 +2286,9 @@ export default function LeadMachinePage() {
                         </div>
                         {!questionnaire.pageId && (
                           <p className="text-xs text-gray-400 text-center -mt-2">Select a Facebook Page above to continue</p>
+                        )}
+                        {questionnaire.pageId && !questionnaire.adImageUrl && (
+                          <p className="text-xs text-yellow-600 text-center -mt-2">Add an Ad Image URL above to continue</p>
                         )}
                       </div>
                     )}

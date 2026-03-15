@@ -30,7 +30,7 @@ export async function GET() {
   try {
     const res = await fetch(
       `https://graph.facebook.com/v18.0/${adAccountId}/customconversions` +
-      `?fields=id,name,custom_event_type,rule,creation_time&limit=100` +
+      `?fields=id,name,custom_event_type,rule,creation_time,is_archived,is_unavailable&limit=100` +
       `&access_token=${creds.token}`,
       { cache: 'no-store' }
     )
@@ -39,9 +39,13 @@ export async function GET() {
       return NextResponse.json({ error: data.error?.message || 'Failed to fetch conversions', conversions: [] }, { status: 400 })
     }
     // Only return conversions whose rule references quote-box.com (created via QuoteBox)
-    const all: Array<{ id: string; name: string; custom_event_type: string; rule?: string }> = data.data || []
+    // and exclude archived/unavailable ones — Meta keeps them in the list even after deletion via UI
+    const all: Array<{ id: string; name: string; custom_event_type: string; rule?: string; is_archived?: boolean; is_unavailable?: boolean }> = data.data || []
     const quoteboxConversions = all.filter((cv) =>
-      typeof cv.rule === 'string' && cv.rule.includes('quote-box.com')
+      typeof cv.rule === 'string' &&
+      cv.rule.includes('quote-box.com') &&
+      !cv.is_archived &&
+      !cv.is_unavailable
     )
     return NextResponse.json({ conversions: quoteboxConversions })
   } catch {
