@@ -1083,7 +1083,7 @@ export default function LeadMachinePage() {
           name: convName,
           pixel_id: pixelId,
           custom_event_type: 'LEAD',
-          url_contains: slug ? `quote-box.com/${slug}` : 'quote-box.com',
+          url_contains: slug ? `quote-box.com/${slug}?submitted=true` : 'quote-box.com',
         }),
       })
       const data = await res.json()
@@ -1756,7 +1756,7 @@ export default function LeadMachinePage() {
                         <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Create new</p>
                         {formUrl && (
                           <p className="text-xs text-gray-500 mb-3 font-mono bg-gray-50 rounded-lg px-3 py-2 break-all">
-                            {selectedForm?.slug ? `quote-box.com/${selectedForm.slug}` : 'quote-box.com'}
+                            {selectedForm?.slug ? `quote-box.com/${selectedForm.slug}?submitted=true` : 'quote-box.com'}
                           </p>
                         )}
                         <button

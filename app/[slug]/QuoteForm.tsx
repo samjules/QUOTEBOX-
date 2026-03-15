@@ -1373,11 +1373,17 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
       }),
     }).catch(() => { /* silently ignore email errors */ })
 
-    // Fire Meta Pixel Lead event on successful submission
+    // Fire Meta Pixel events on successful submission
     if (config.meta_pixel_id && typeof window !== 'undefined') {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const fbq = (window as any).fbq
-      if (typeof fbq === 'function') { fbq('track', 'Lead'); setLeadEventFired(true) }
+      if (typeof fbq === 'function') {
+        // Push ?submitted=true so URL-based custom conversion only fires on this final page
+        window.history.pushState({}, '', window.location.pathname + '?submitted=true')
+        fbq('track', 'PageView')   // triggers URL-based custom conversion rule
+        fbq('track', 'Lead')       // standard event for reporting
+        setLeadEventFired(true)
+      }
     }
 
     setStep(confirmStep)
