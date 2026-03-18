@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
+import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import Sidebar from '@/components/Sidebar'
+import ImpersonationBanner from '@/components/ImpersonationBanner'
 
 export default async function ProtectedLayout({
   children,
@@ -29,6 +31,9 @@ export default async function ProtectedLayout({
 
   return (
     <div className="flex h-screen overflow-hidden">
+      <Suspense>
+        <ImpersonationBanner />
+      </Suspense>
       <Sidebar />
       <div className="flex-1 overflow-auto flex flex-col">{children}</div>
     </div>

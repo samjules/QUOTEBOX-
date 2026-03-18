@@ -27,11 +27,12 @@ export default async function PublicFormPage({
   if (!form) notFound()
 
   const [{ data: billing }, { data: account }] = await Promise.all([
-    admin.from('billing').select('credit_balance').eq('account_id', form.account_id).single(),
+    admin.from('billing').select('credit_balance, plan').eq('account_id', form.account_id).single(),
     admin.from('accounts').select('business_name').eq('id', form.account_id).single(),
   ])
 
-  const hasCredits = (billing?.credit_balance ?? 0) >= 15
+  // Pay-per-lead plan has no credit gate — leads always come in as 'new'
+  const hasCredits = billing?.plan === 'pay_per_lead' || (billing?.credit_balance ?? 0) >= 15
   const businessName = account?.business_name ?? ''
 
   return <QuoteForm form={form as HostedForm} hasCredits={hasCredits} businessName={businessName} />

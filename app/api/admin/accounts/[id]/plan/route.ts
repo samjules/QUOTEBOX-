@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { NextRequest, NextResponse } from 'next/server'
 
-const VALID_PLANS = ['starter', 'growth', 'fully_managed', null]
+const VALID_PLANS = ['starter', 'growth', 'fully_managed', 'pay_per_lead', null]
 
 function isAdmin(email: string) {
   const adminEmails = (process.env.ADMIN_EMAILS ?? '').split(',').map((e) => e.trim().toLowerCase())

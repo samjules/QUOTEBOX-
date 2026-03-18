@@ -7,12 +7,14 @@ const PLAN_LABELS: Record<string, string> = {
   starter: 'Starter',
   growth: 'Growth',
   fully_managed: 'Fully Managed',
+  pay_per_lead: 'Pay Per Lead',
 }
 
 const PLAN_COLORS: Record<string, { bg: string; text: string }> = {
   starter: { bg: '#f3f4f6', text: '#374151' },
   growth: { bg: '#ede9fe', text: '#6d28d9' },
   fully_managed: { bg: '#1a1a2e', text: '#FFE500' },
+  pay_per_lead: { bg: '#dcfce7', text: '#15803d' },
   none: { bg: '#fef9c3', text: '#92400e' },
 }
 
@@ -46,6 +48,7 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
   const [creditSaving, setCreditSaving] = useState(false)
   const [planEdit, setPlanEdit] = useState<string>('')
   const [planSaving, setPlanSaving] = useState(false)
+  const [impersonating, setImpersonating] = useState(false)
   const [localAccounts, setLocalAccounts] = useState<AdminAccount[]>(accounts)
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
 
@@ -114,8 +117,26 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
     showToast('Plan updated')
   }
 
+
+  async function handleImpersonate() {
+    if (!selected) return
+    setImpersonating(true)
+    try {
+      const res = await fetch('/api/admin/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: selected.owner_id }),
+      })
+      const data = await res.json()
+      if (!res.ok) { showToast(data.error ?? 'Failed to generate link', false); return }
+      window.open(data.url, '_blank')
+    } finally {
+      setImpersonating(false)
+    }
+  }
+
   const planCounts = useMemo(() => {
-    const c: Record<string, number> = { all: localAccounts.length, starter: 0, growth: 0, fully_managed: 0, none: 0 }
+    const c: Record<string, number> = { all: localAccounts.length, starter: 0, growth: 0, fully_managed: 0, pay_per_lead: 0, none: 0 }
     for (const a of localAccounts) c[a.plan ?? 'none'] = (c[a.plan ?? 'none'] ?? 0) + 1
     return c
   }, [localAccounts])
@@ -160,7 +181,7 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
 
           {/* Plan filter chips */}
           <div style={{ display: 'flex', gap: 4, padding: '8px 12px', borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap' }}>
-            {([['all', 'All'], ['starter', 'Starter'], ['growth', 'Growth'], ['fully_managed', 'FM'], ['none', 'No plan']] as const).map(([val, label]) => (
+            {([['all', 'All'], ['starter', 'Starter'], ['growth', 'Growth'], ['fully_managed', 'FM'], ['pay_per_lead', 'PPL'], ['none', 'No plan']] as const).map(([val, label]) => (
               <button
                 key={val}
                 onClick={() => setPlanFilter(val)}
@@ -243,6 +264,18 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
                       Joined {new Date(selected.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </div>
                     <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 2, fontFamily: 'monospace' }}>{selected.id}</div>
+                  <button
+                    onClick={handleImpersonate}
+                    disabled={impersonating}
+                    style={{
+                      marginTop: 8, padding: '7px 16px', fontSize: '0.82rem', fontWeight: 600,
+                      borderRadius: 8, border: 'none', cursor: 'pointer',
+                      background: '#2563eb', color: 'white',
+                      opacity: impersonating ? 0.6 : 1,
+                    }}
+                  >
+                    {impersonating ? 'Generating…' : '↗ Enter as User'}
+                  </button>
                   </div>
                 </div>
               </div>
@@ -283,6 +316,7 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
                         <option value="starter">Starter — $20/mo</option>
                         <option value="growth">Growth — $30/mo</option>
                         <option value="fully_managed">Fully Managed — $15/lead</option>
+                        <option value="pay_per_lead">Pay Per Lead — no monthly limit</option>
                       </select>
                       <button
                         onClick={handleSavePlan}
