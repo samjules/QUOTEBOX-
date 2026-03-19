@@ -15,7 +15,7 @@ export async function GET() {
     .from('vsl_campaigns')
     .select('id, account_id, title, status, current_step, raw_video_url, processed_video_url, created_at')
     .order('created_at', { ascending: false })
-    .limit(10)
+    .limit(20)
 
   return NextResponse.json({
     env: {
