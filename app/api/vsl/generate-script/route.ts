@@ -3,18 +3,17 @@
  *
  * Generates a VSL script using Claude and creates a vsl_campaigns record.
  * Called from the iOS app with a Bearer token.
+ *
+ * Uses raw fetch instead of the Anthropic SDK because the SDK v0.39.0
+ * throws "Connection error" on Vercel serverless functions.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireVslAuth } from '@/lib/vsl/auth'
-import Anthropic from '@anthropic-ai/sdk'
 
-// Force Node.js runtime (Anthropic SDK doesn't work on Edge)
 export const runtime = 'nodejs'
 export const maxDuration = 60
-
-const claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 const SYSTEM_PROMPT = `You are an expert video sales letter (VSL) copywriter.
 Write persuasive, conversational scripts that:
@@ -24,6 +23,35 @@ Write persuasive, conversational scripts that:
 - Close with a compelling call-to-action
 - Use short, punchy sentences ideal for on-camera delivery
 - Sound natural when read aloud, not like marketing copy`
+
+async function callClaude(system: string, userMessage: string) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': process.env.ANTHROPIC_API_KEY || '',
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 2048,
+      system,
+      messages: [{ role: 'user', content: userMessage }],
+    }),
+  })
+
+  if (!res.ok) {
+    const errBody = await res.text()
+    throw new Error(`Claude API ${res.status}: ${errBody}`)
+  }
+
+  const data = await res.json()
+  const block = data.content?.[0]
+  if (!block || block.type !== 'text') {
+    throw new Error('Unexpected Claude response format')
+  }
+  return block.text as string
+}
 
 export async function POST(request: NextRequest) {
   const { account, response } = await requireVslAuth(request)
@@ -46,15 +74,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Generate script with Claude
-    const message = await claude.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 2048,
-      system: SYSTEM_PROMPT,
-      messages: [
-        {
-          role: 'user',
-          content: `Write a video sales letter script for:
+    const text = await callClaude(
+      SYSTEM_PROMPT,
+      `Write a video sales letter script for:
 
 Business: ${business_name}
 Offer: ${offer}
@@ -68,16 +90,9 @@ Respond ONLY with valid JSON, no markdown:
   "title": "...",
   "script": "...(the full script text)..."
 }`,
-        },
-      ],
-    })
+    )
 
-    const block = message.content[0]
-    if (block.type !== 'text') {
-      throw new Error('Unexpected Claude response type')
-    }
-
-    const raw = block.text.replace(/```(?:json)?\n?/g, '').trim()
+    const raw = text.replace(/```(?:json)?\n?/g, '').trim()
     const parsed = JSON.parse(raw) as { title: string; script: string }
 
     if (!parsed.title || !parsed.script) {
@@ -115,8 +130,8 @@ Respond ONLY with valid JSON, no markdown:
       },
     })
   } catch (err) {
-    const msg = err instanceof Error ? `${err.name}: ${err.message}` : String(err)
-    console.error('[/api/vsl/generate-script] error:', msg, err)
-    return NextResponse.json({ error: msg, detail: String(err) }, { status: 500 })
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[/api/vsl/generate-script] error:', msg)
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
