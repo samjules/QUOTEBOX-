@@ -7,35 +7,14 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-
-async function getAccountFromToken(token: string) {
-  const admin = createAdminClient()
-  const { data: { user }, error } = await admin.auth.getUser(token)
-  if (error || !user) return null
-
-  const { data: account } = await admin
-    .from('accounts')
-    .select('id')
-    .eq('owner_id', user.id)
-    .single()
-
-  return account
-}
+import { requireVslAuth } from '@/lib/vsl/auth'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { campaignId: string } },
 ) {
-  const authHeader = request.headers.get('authorization')
-  const token = authHeader?.replace('Bearer ', '')
-  if (!token) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const account = await getAccountFromToken(token)
-  if (!account) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const { account, response } = await requireVslAuth(request)
+  if (response) return response
 
   const admin = createAdminClient()
   const { data: campaign, error } = await admin

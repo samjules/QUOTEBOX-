@@ -7,23 +7,10 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { requireVslAuth } from '@/lib/vsl/auth'
 import Anthropic from '@anthropic-ai/sdk'
 
 const claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-
-async function getAccountFromToken(token: string) {
-  const admin = createAdminClient()
-  const { data: { user }, error } = await admin.auth.getUser(token)
-  if (error || !user) return null
-
-  const { data: account } = await admin
-    .from('accounts')
-    .select('id')
-    .eq('owner_id', user.id)
-    .single()
-
-  return account
-}
 
 const SYSTEM_PROMPT = `You are an expert video sales letter (VSL) copywriter.
 Write persuasive, conversational scripts that:
@@ -35,17 +22,8 @@ Write persuasive, conversational scripts that:
 - Sound natural when read aloud, not like marketing copy`
 
 export async function POST(request: NextRequest) {
-  // Auth — extract Bearer token (iOS app)
-  const authHeader = request.headers.get('authorization')
-  const token = authHeader?.replace('Bearer ', '')
-  if (!token) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const account = await getAccountFromToken(token)
-  if (!account) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const { account, response } = await requireVslAuth(request)
+  if (response) return response
 
   // Parse body
   let body: { business_name?: string; offer?: string; target_audience?: string }
@@ -133,8 +111,8 @@ Respond ONLY with valid JSON, no markdown:
       },
     })
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Script generation failed'
+    const msg = err instanceof Error ? err.message : 'Script generation failed'
     console.error('[/api/vsl/generate-script] error:', err)
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
