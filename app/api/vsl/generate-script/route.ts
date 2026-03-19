@@ -115,8 +115,8 @@ Respond ONLY with valid JSON, no markdown:
       },
     })
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Script generation failed'
-    console.error('[/api/vsl/generate-script] error:', err)
-    return NextResponse.json({ error: msg }, { status: 500 })
+    const msg = err instanceof Error ? `${err.name}: ${err.message}` : String(err)
+    console.error('[/api/vsl/generate-script] error:', msg, err)
+    return NextResponse.json({ error: msg, detail: String(err) }, { status: 500 })
   }
 }
