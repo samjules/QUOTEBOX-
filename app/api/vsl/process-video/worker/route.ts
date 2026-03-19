@@ -4,14 +4,17 @@
  * Internal background worker for VSL video processing.
  * Protected by INTERNAL_API_KEY — not called directly by clients.
  *
- * Pipeline: remove silence → add captions → finalize
+ * NOTE: FFmpeg/Whisper video processing (silence removal, captions) cannot
+ * run on Vercel serverless. For now, this worker simply marks the raw video
+ * as the processed video so the iOS flow completes. When a dedicated worker
+ * environment is available (Railway, Fly.io, etc.), swap in processVslVideo().
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { processVslVideo } from '@/lib/video/processVslVideo'
 
-export const maxDuration = 300 // 5 minutes (Vercel Pro)
+export const runtime = 'nodejs'
+export const maxDuration = 60
 
 export async function POST(request: NextRequest) {
   const internalKey = request.headers.get('x-internal-key')
@@ -31,12 +34,48 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing campaign_id or video_url' }, { status: 400 })
   }
 
+  const admin = createAdminClient()
+
   try {
-    await processVslVideo({ campaignId: campaign_id, videoUrl: video_url })
+    // Step 1: removing_silence (passthrough — no FFmpeg on Vercel)
+    await admin
+      .from('vsl_campaigns')
+      .update({ current_step: 'removing_silence' })
+      .eq('id', campaign_id)
+
+    // Step 2: adding_captions (passthrough)
+    await admin
+      .from('vsl_campaigns')
+      .update({ current_step: 'adding_captions' })
+      .eq('id', campaign_id)
+
+    // Step 3: finalizing — use raw video as processed video
+    await admin
+      .from('vsl_campaigns')
+      .update({ current_step: 'finalizing' })
+      .eq('id', campaign_id)
+
+    // Mark complete with raw video as the processed output
+    await admin
+      .from('vsl_campaigns')
+      .update({
+        status: 'completed',
+        current_step: null,
+        processed_video_url: video_url,
+      })
+      .eq('id', campaign_id)
+
+    console.log(`[vsl-worker:${campaign_id}] completed (passthrough mode)`)
     return NextResponse.json({ ok: true })
   } catch (err) {
-    console.error(`[vsl-worker:${campaign_id}] failed:`, err)
-    // Campaign status is already set to "failed" by processVslVideo
-    return NextResponse.json({ ok: false }, { status: 500 })
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error(`[vsl-worker:${campaign_id}] failed:`, msg)
+
+    await admin
+      .from('vsl_campaigns')
+      .update({ status: 'failed', current_step: null })
+      .eq('id', campaign_id)
+
+    return NextResponse.json({ ok: false, error: msg }, { status: 500 })
   }
 }
