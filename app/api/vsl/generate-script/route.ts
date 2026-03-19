@@ -10,6 +10,10 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { requireVslAuth } from '@/lib/vsl/auth'
 import Anthropic from '@anthropic-ai/sdk'
 
+// Force Node.js runtime (Anthropic SDK doesn't work on Edge)
+export const runtime = 'nodejs'
+export const maxDuration = 60
+
 const claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 const SYSTEM_PROMPT = `You are an expert video sales letter (VSL) copywriter.

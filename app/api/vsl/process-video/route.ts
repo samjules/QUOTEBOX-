@@ -9,6 +9,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireVslAuth } from '@/lib/vsl/auth'
 
+export const runtime = 'nodejs'
+
 export async function POST(request: NextRequest) {
   const { account, response } = await requireVslAuth(request)
   if (response) return response
