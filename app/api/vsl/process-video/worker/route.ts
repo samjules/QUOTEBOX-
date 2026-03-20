@@ -9,7 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { processVslVideo } from '@/lib/video/processVslVideo'
+import { processVslVideo, type CaptionStyle } from '@/lib/video/processVslVideo'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -20,14 +20,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  let body: { campaign_id?: string; video_url?: string }
+  let body: { campaign_id?: string; video_url?: string; caption_style?: CaptionStyle }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  const { campaign_id, video_url } = body
+  const { campaign_id, video_url, caption_style } = body
   if (!campaign_id || !video_url) {
     return NextResponse.json({ error: 'Missing campaign_id or video_url' }, { status: 400 })
   }
@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
     await processVslVideo({
       campaignId: campaign_id,
       videoUrl: video_url,
+      captionStyle: caption_style,
     })
 
     console.log(`[vsl-worker:${campaign_id}] completed`)

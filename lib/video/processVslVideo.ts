@@ -50,11 +50,19 @@ interface Segment {
   end: number
 }
 
+export interface CaptionStyle {
+  font?: 'bold' | 'serif' | 'handwritten' | 'mono'
+  color?: 'white' | 'yellow' | 'green' | 'cyan'
+  size?: 'small' | 'medium' | 'large'
+  position?: 'bottom' | 'center' | 'top'
+}
+
 export interface ProcessVslOptions {
   campaignId: string
   videoUrl: string
   maxSilenceGap?: number
   wordsPerCaption?: number
+  captionStyle?: CaptionStyle
 }
 
 type VslStep = 'removing_silence' | 'adding_captions' | 'finalizing'
@@ -132,16 +140,62 @@ function trimAndConcat(
   })
 }
 
+const FONT_MAP: Record<string, string> = {
+  bold: 'Impact',
+  serif: 'Georgia',
+  handwritten: 'Comic Neue',
+  mono: 'Courier',
+}
+
+// ASS colors are in &H00BBGGRR format (reversed from RGB hex)
+const COLOR_MAP: Record<string, string> = {
+  white: '&H00FFFFFF',
+  yellow: '&H0000FFFF',
+  green: '&H0000FF00',
+  cyan: '&H00FFFF00',
+}
+
+const SIZE_MAP: Record<string, number> = {
+  small: 32,
+  medium: 48,
+  large: 64,
+}
+
+// MarginV for ASS subtitles — higher value = further from bottom
+const POSITION_MAP: Record<string, { alignment: number; marginV: number }> = {
+  bottom: { alignment: 2, marginV: 30 },
+  center: { alignment: 5, marginV: 0 },
+  top: { alignment: 8, marginV: 30 },
+}
+
 function burnCaptions(
   inputPath: string,
   srtPath: string,
   outputPath: string,
+  style?: CaptionStyle,
 ): Promise<void> {
+  const font = FONT_MAP[style?.font ?? 'bold'] ?? 'Impact'
+  const color = COLOR_MAP[style?.color ?? 'white'] ?? '&H00FFFFFF'
+  const fontSize = SIZE_MAP[style?.size ?? 'medium'] ?? 48
+  const pos = POSITION_MAP[style?.position ?? 'bottom'] ?? POSITION_MAP.bottom
+  const bold = style?.font === 'bold' || !style?.font ? 1 : 0
+
   const escapedSrt = srtPath.replace(/\\/g, '/').replace(/:/g, '\\:')
+  const forceStyle = [
+    `FontName=${font}`,
+    `FontSize=${fontSize}`,
+    `PrimaryColour=${color}`,
+    `Bold=${bold}`,
+    `Outline=2`,
+    `OutlineColour=&H00000000`,
+    `Alignment=${pos.alignment}`,
+    `MarginV=${pos.marginV}`,
+  ].join(',')
+
   return new Promise((resolve, reject) => {
     ffmpeg(inputPath)
       .outputOptions([
-        `-vf subtitles='${escapedSrt}':force_style='FontName=Arial,FontSize=14,PrimaryColour=&H00FFFFFF,Bold=1,Outline=2,OutlineColour=&H00000000,MarginV=25'`,
+        `-vf subtitles='${escapedSrt}':force_style='${forceStyle}'`,
       ])
       .videoCodec('libx264')
       .audioCodec('aac')
@@ -267,6 +321,7 @@ export async function processVslVideo(opts: ProcessVslOptions): Promise<void> {
     videoUrl,
     maxSilenceGap = 1.0,
     wordsPerCaption = 4,
+    captionStyle,
   } = opts
 
   const admin = createAdminClient()
@@ -324,7 +379,7 @@ export async function processVslVideo(opts: ProcessVslOptions): Promise<void> {
     writeFileSync(srtPath, srtContent, 'utf8')
     log(`  wrote ${srtContent.split('\n\n').length} caption blocks`)
 
-    await burnCaptions(trimmedPath, srtPath, outputPath)
+    await burnCaptions(trimmedPath, srtPath, outputPath, captionStyle)
     log('  captions burned into video')
 
     // Step 3: Finalizing

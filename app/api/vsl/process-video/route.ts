@@ -15,14 +15,14 @@ export async function POST(request: NextRequest) {
   const { account, response } = await requireVslAuth(request)
   if (response) return response
 
-  let body: { campaign_id?: string; video_url?: string }
+  let body: { campaign_id?: string; video_url?: string; caption_style?: Record<string, string> }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  const { campaign_id, video_url } = body
+  const { campaign_id, video_url, caption_style } = body
   if (!campaign_id || !video_url) {
     return NextResponse.json(
       { error: 'Missing required fields: campaign_id, video_url' },
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       'Content-Type': 'application/json',
       'x-internal-key': process.env.INTERNAL_API_KEY ?? '',
     },
-    body: JSON.stringify({ campaign_id, video_url }),
+    body: JSON.stringify({ campaign_id, video_url, caption_style }),
   }).catch((err) => {
     console.error(`[vsl:${campaign_id}] worker trigger failed:`, err)
   })
