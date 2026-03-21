@@ -123,14 +123,14 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
   }
 
 
-  async function handleImpersonate() {
+  async function handleImpersonate(redirectPath?: string) {
     if (!selected) return
     setImpersonating(true)
     try {
       const res = await fetch('/api/admin/impersonate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: selected.owner_id }),
+        body: JSON.stringify({ userId: selected.owner_id, redirectPath }),
       })
       const data = await res.json()
       if (!res.ok) { showToast(data.error ?? 'Failed to generate link', false); return }
@@ -371,7 +371,7 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
                     <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 2, fontFamily: 'monospace' }}>{selected.id}</div>
                   <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
                   <button
-                    onClick={handleImpersonate}
+                    onClick={() => handleImpersonate()}
                     disabled={impersonating}
                     style={{
                       padding: '7px 16px', fontSize: '0.82rem', fontWeight: 600,
@@ -382,6 +382,34 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
                   >
                     {impersonating ? 'Generating…' : '↗ Enter as User'}
                   </button>
+                  {selected.plan === 'pay_per_lead' && (
+                    <>
+                      <button
+                        onClick={() => handleImpersonate('/form-builder')}
+                        disabled={impersonating}
+                        style={{
+                          padding: '7px 16px', fontSize: '0.82rem', fontWeight: 600,
+                          borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer',
+                          background: 'white', color: '#475569',
+                          opacity: impersonating ? 0.6 : 1,
+                        }}
+                      >
+                        Build Form
+                      </button>
+                      <button
+                        onClick={() => handleImpersonate('/lead-machine')}
+                        disabled={impersonating}
+                        style={{
+                          padding: '7px 16px', fontSize: '0.82rem', fontWeight: 600,
+                          borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer',
+                          background: 'white', color: '#475569',
+                          opacity: impersonating ? 0.6 : 1,
+                        }}
+                      >
+                        Lead Machine
+                      </button>
+                    </>
+                  )}
                   {selected.plan === 'pay_per_lead' && selected.onboarding_status === 'none' && (
                     <button
                       onClick={handleStartOnboarding}

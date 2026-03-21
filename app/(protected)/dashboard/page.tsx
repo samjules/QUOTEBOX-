@@ -125,8 +125,8 @@ export default async function DashboardPage() {
           {/* Lead usage banner */}
           <LeadUsageBanner plan={plan} monthlyLeads={monthlyLeads} />
 
-          {/* Onboarding checklist */}
-          {!onboardingComplete && (
+          {/* Onboarding checklist — hidden for PPL (they have their own onboarding) */}
+          {!onboardingComplete && plan !== 'pay_per_lead' && (
             <OnboardingChecklist
               metaConnected={metaConnected}
               hasBillingPlan={hasBillingPlan}
@@ -505,9 +505,10 @@ function LeadUsageBanner({
     )
   }
 
-  // Fully managed — $15/lead, no monthly cap
-  if (plan === 'fully_managed') {
+  // Fully managed / Pay per lead — $15/lead, no monthly cap
+  if (plan === 'fully_managed' || plan === 'pay_per_lead') {
     const accrued = monthlyLeads * 15
+    const label = plan === 'pay_per_lead' ? 'Pay Per Lead' : 'Fully Managed'
     return (
       <div className="rounded-lg p-5 flex items-center justify-between bg-gray-900 text-white">
         <div className="flex items-center gap-3">
@@ -515,7 +516,7 @@ function LeadUsageBanner({
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div>
-            <p className="font-semibold text-sm">Fully Managed — {monthlyLeads} lead{monthlyLeads !== 1 ? 's' : ''} this month</p>
+            <p className="font-semibold text-sm">{label} — {monthlyLeads} lead{monthlyLeads !== 1 ? 's' : ''} this month</p>
             <p className="text-sm text-gray-400">${accrued.toFixed(2)} accrued at $15.00/lead</p>
           </div>
         </div>

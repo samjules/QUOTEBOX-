@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { HostedForm } from '@/lib/types'
 
-const PLAN_LIMITS: Record<string, number> = { starter: 1, growth: 3, fully_managed: Infinity }
+const PLAN_LIMITS: Record<string, number> = { starter: 1, growth: 3, fully_managed: Infinity, pay_per_lead: Infinity }
 const PLAN_LABELS: Record<string, string> = {
   starter: 'Starter plan',
   growth: 'Growth plan',

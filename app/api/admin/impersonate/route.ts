@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { userId } = await request.json() as { userId: string }
+  const { userId, redirectPath } = await request.json() as { userId: string; redirectPath?: string }
   if (!userId) {
     return NextResponse.json({ error: 'userId required' }, { status: 400 })
   }
@@ -26,11 +26,12 @@ export async function POST(request: NextRequest) {
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+  const targetPath = redirectPath ?? '/dashboard'
   const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
     type: 'magiclink',
     email: targetUserData.user.email,
     options: {
-      redirectTo: `${siteUrl}/dashboard?impersonating=1`,
+      redirectTo: `${siteUrl}${targetPath}?impersonating=1`,
     },
   })
 

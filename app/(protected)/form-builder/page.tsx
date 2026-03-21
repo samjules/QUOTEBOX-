@@ -2245,7 +2245,7 @@ export default function FormBuilderPage() {
       .eq('account_id', accountId)
       .single()
     const plan = billing?.plan ?? 'base'
-    const limits: Record<string, number> = { base: 1, pro: 10, agency: Infinity }
+    const limits: Record<string, number> = { base: 1, starter: 1, pro: 10, growth: 3, agency: Infinity, fully_managed: Infinity, pay_per_lead: Infinity }
 
     if (!editingFormId) {
       const { count } = await supabase

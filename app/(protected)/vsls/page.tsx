@@ -6,7 +6,7 @@ import type { VSL } from '@/lib/types'
 
 const BUCKET = 'vsls'
 const MAX_FILE_SIZE_MB = 500
-const VSL_LIMITS: Record<string, number> = { starter: 1, growth: Infinity, fully_managed: Infinity }
+const VSL_LIMITS: Record<string, number> = { starter: 1, growth: Infinity, fully_managed: Infinity, pay_per_lead: Infinity }
 
 function formatBytes(bytes: number) {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
