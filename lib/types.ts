@@ -134,3 +134,78 @@ export interface VSL {
   file_size: number
   created_at: string
 }
+
+// ── Pay-Per-Lead Onboarding ──
+
+export interface ServiceItem {
+  id: string
+  name: string
+  price: number
+  priceType: 'flat' | 'starting_at'
+}
+
+export interface AddOnItem {
+  id: string
+  name: string
+  price: number
+}
+
+export interface OnboardingStep1Data {
+  businessName: string
+  tradeType: string
+  serviceAreaType: 'radius' | 'zip_codes'
+  serviceAreaRadius?: number
+  serviceAreaAddress?: string
+  serviceAreaZipCodes?: string[]
+  businessDescription: string
+}
+
+export interface OnboardingStep2Data {
+  hasPackages: boolean
+  services: ServiceItem[]
+  displayPreference: 'radio' | 'dropdown'
+  addOns: AddOnItem[]
+}
+
+export interface OnboardingStep3Data {
+  perSqft: boolean
+  sqftRate?: number
+  sqftMethod?: 'enter_number' | 'draw_on_map'
+  travelCharges: boolean
+  travelType?: 'mileage' | 'drivetime' | 'both'
+  ratePerMile?: number
+  ratePerMinute?: number
+  baseLocation?: string
+  byQuantity: boolean
+  quantityLabel?: string
+  ratePerUnit?: number
+  minimumJobPrice?: number
+}
+
+export interface OnboardingStep4Data {
+  maxLeadsPerDay?: number
+  maxLeadsPerWeek?: number
+  monthlyBudgetCap?: number
+  preferredLeadTypes: string[]
+  businessHours: Record<string, { enabled: boolean; start: string; end: string }>
+  additionalNotes?: string
+}
+
+export type OnboardingStepData = {
+  1?: OnboardingStep1Data
+  2?: OnboardingStep2Data
+  3?: OnboardingStep3Data
+  4?: OnboardingStep4Data
+}
+
+export interface OnboardingSession {
+  id: string
+  account_id: string
+  token: string
+  status: 'pending' | 'in_progress' | 'completed' | 'form_built'
+  step_data: OnboardingStepData
+  current_step: number
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}

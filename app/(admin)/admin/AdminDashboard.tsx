@@ -51,6 +51,10 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
   const [impersonating, setImpersonating] = useState(false)
   const [localAccounts, setLocalAccounts] = useState<AdminAccount[]>(accounts)
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
+  const [onboardingLoading, setOnboardingLoading] = useState(false)
+  const [onboardingData, setOnboardingData] = useState<Record<string, unknown> | null>(null)
+  const [onboardingOpen, setOnboardingOpen] = useState(false)
+  const [markingBuilt, setMarkingBuilt] = useState(false)
 
   const selected = localAccounts.find((a) => a.id === selectedId) ?? null
 
@@ -134,6 +138,73 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
       setImpersonating(false)
     }
   }
+
+  async function handleStartOnboarding() {
+    if (!selectedId) return
+    setOnboardingLoading(true)
+    try {
+      const res = await fetch('/api/admin/onboarding/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accountId: selectedId }),
+      })
+      const data = await res.json()
+      if (!res.ok) { showToast(data.error ?? 'Failed', false); return }
+      await navigator.clipboard.writeText(data.url)
+      setLocalAccounts((prev) =>
+        prev.map((a) => a.id === selectedId ? { ...a, onboarding_status: 'pending' as const, onboarding_token: data.token } : a)
+      )
+      showToast(data.existing ? 'Link copied (existing session)' : 'Onboarding link copied to clipboard!')
+    } finally {
+      setOnboardingLoading(false)
+    }
+  }
+
+  async function handleCopyOnboardingLink() {
+    if (!selected?.onboarding_token) return
+    const url = `${window.location.origin}/onboarding/ppl/${selected.onboarding_token}`
+    await navigator.clipboard.writeText(url)
+    showToast('Link copied!')
+  }
+
+  async function handleViewOnboardingData() {
+    if (!selectedId) return
+    setOnboardingOpen(!onboardingOpen)
+    if (onboardingData) return // already loaded
+    try {
+      const res = await fetch(`/api/admin/onboarding/${selectedId}`)
+      if (res.ok) {
+        const data = await res.json()
+        setOnboardingData(data.step_data ?? {})
+      }
+    } catch { /* ignore */ }
+  }
+
+  async function handleMarkFormBuilt() {
+    if (!selectedId) return
+    setMarkingBuilt(true)
+    try {
+      const res = await fetch(`/api/admin/onboarding/${selectedId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'form_built' }),
+      })
+      if (res.ok) {
+        setLocalAccounts((prev) =>
+          prev.map((a) => a.id === selectedId ? { ...a, onboarding_status: 'form_built' as const } : a)
+        )
+        showToast('Marked as form built')
+      }
+    } finally {
+      setMarkingBuilt(false)
+    }
+  }
+
+  // Reset onboarding panel when account changes
+  useEffect(() => {
+    setOnboardingData(null)
+    setOnboardingOpen(false)
+  }, [selectedId])
 
   const planCounts = useMemo(() => {
     const c: Record<string, number> = { all: localAccounts.length, starter: 0, growth: 0, fully_managed: 0, pay_per_lead: 0, none: 0 }
@@ -226,6 +297,17 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
                     </span>
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: 6 }}>{acc.owner_email}</div>
+                  {acc.onboarding_status !== 'none' && (
+                    <div style={{ marginBottom: 4 }}>
+                      <span style={{
+                        fontSize: '0.68rem', fontWeight: 700, padding: '2px 8px', borderRadius: 99,
+                        background: acc.onboarding_status === 'pending' ? '#fff7ed' : acc.onboarding_status === 'in_progress' ? '#eff6ff' : acc.onboarding_status === 'completed' ? '#f0fdf4' : '#f1f5f9',
+                        color: acc.onboarding_status === 'pending' ? '#ea580c' : acc.onboarding_status === 'in_progress' ? '#2563eb' : acc.onboarding_status === 'completed' ? '#16a34a' : '#64748b',
+                      }}>
+                        {acc.onboarding_status === 'pending' ? 'Onboarding Sent' : acc.onboarding_status === 'in_progress' ? 'Filling Out' : acc.onboarding_status === 'completed' ? 'Ready to Build' : 'Form Built'}
+                      </span>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', gap: 12, fontSize: '0.72rem', color: '#94a3b8' }}>
                     <span>${acc.credit_balance.toFixed(2)} credits</span>
                     <span>{acc.leads_total} leads</span>
@@ -264,11 +346,12 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
                       Joined {new Date(selected.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </div>
                     <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 2, fontFamily: 'monospace' }}>{selected.id}</div>
+                  <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
                   <button
                     onClick={handleImpersonate}
                     disabled={impersonating}
                     style={{
-                      marginTop: 8, padding: '7px 16px', fontSize: '0.82rem', fontWeight: 600,
+                      padding: '7px 16px', fontSize: '0.82rem', fontWeight: 600,
                       borderRadius: 8, border: 'none', cursor: 'pointer',
                       background: '#2563eb', color: 'white',
                       opacity: impersonating ? 0.6 : 1,
@@ -276,6 +359,33 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
                   >
                     {impersonating ? 'Generating…' : '↗ Enter as User'}
                   </button>
+                  {selected.plan === 'pay_per_lead' && selected.onboarding_status === 'none' && (
+                    <button
+                      onClick={handleStartOnboarding}
+                      disabled={onboardingLoading}
+                      style={{
+                        padding: '7px 16px', fontSize: '0.82rem', fontWeight: 600,
+                        borderRadius: 8, border: 'none', cursor: 'pointer',
+                        background: '#16a34a', color: 'white',
+                        opacity: onboardingLoading ? 0.6 : 1,
+                      }}
+                    >
+                      {onboardingLoading ? 'Creating…' : 'Start Onboarding'}
+                    </button>
+                  )}
+                  {selected.onboarding_status !== 'none' && (
+                    <button
+                      onClick={handleCopyOnboardingLink}
+                      style={{
+                        padding: '7px 16px', fontSize: '0.82rem', fontWeight: 600,
+                        borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer',
+                        background: 'white', color: '#475569',
+                      }}
+                    >
+                      Copy Link
+                    </button>
+                  )}
+                  </div>
                   </div>
                 </div>
               </div>
@@ -464,6 +574,85 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
                       ))}
                     </tbody>
                   </table>
+                </div>
+              )}
+
+              {/* PPL Onboarding Data */}
+              {selected.onboarding_status !== 'none' && (
+                <div style={{ background: 'white', borderRadius: 12, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+                  <div
+                    style={{ padding: '16px 24px', borderBottom: onboardingOpen ? '1px solid #f1f5f9' : 'none', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                    onClick={handleViewOnboardingData}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <h3 style={{ fontSize: '0.88rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
+                        PPL Onboarding
+                      </h3>
+                      <span style={{
+                        fontSize: '0.68rem', fontWeight: 700, padding: '2px 8px', borderRadius: 99,
+                        background: selected.onboarding_status === 'pending' ? '#fff7ed' : selected.onboarding_status === 'in_progress' ? '#eff6ff' : selected.onboarding_status === 'completed' ? '#f0fdf4' : '#f1f5f9',
+                        color: selected.onboarding_status === 'pending' ? '#ea580c' : selected.onboarding_status === 'in_progress' ? '#2563eb' : selected.onboarding_status === 'completed' ? '#16a34a' : '#64748b',
+                      }}>
+                        {selected.onboarding_status === 'pending' ? 'Sent' : selected.onboarding_status === 'in_progress' ? 'In Progress' : selected.onboarding_status === 'completed' ? 'Ready to Build' : 'Built'}
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '0.82rem', color: '#94a3b8' }}>{onboardingOpen ? '▼' : '▶'}</span>
+                  </div>
+
+                  {onboardingOpen && (
+                    <div style={{ padding: '16px 24px' }}>
+                      {!onboardingData ? (
+                        <div style={{ fontSize: '0.85rem', color: '#94a3b8', padding: 8 }}>Loading…</div>
+                      ) : Object.keys(onboardingData).length === 0 ? (
+                        <div style={{ fontSize: '0.85rem', color: '#94a3b8', padding: 8 }}>No data submitted yet</div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                          {/* Mapping guide */}
+                          <div style={{ fontSize: '0.72rem', color: '#94a3b8', background: '#f8fafc', padding: '10px 14px', borderRadius: 8, lineHeight: 1.6 }}>
+                            <strong style={{ color: '#64748b' }}>Field mapping guide:</strong> Services → radio/dropdown · Add-ons → checkbox · Sqft (number) → number field · Sqft (map) → draw_area · Travel → route · Quantity → number · Min quote → form-level min_quote
+                          </div>
+
+                          {/* Render each step */}
+                          {Object.entries(onboardingData).map(([stepNum, stepData]) => {
+                            const sd = stepData as Record<string, unknown>
+                            return (
+                              <div key={stepNum} style={{ border: '1px solid #e2e8f0', borderRadius: 10, overflow: 'hidden' }}>
+                                <div style={{ background: '#f8fafc', padding: '8px 14px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                  Step {stepNum}
+                                </div>
+                                <div style={{ padding: '12px 14px' }}>
+                                  {Object.entries(sd).map(([key, val]) => (
+                                    <div key={key} style={{ fontSize: '0.82rem', padding: '4px 0', display: 'flex', gap: 8 }}>
+                                      <span style={{ fontWeight: 600, color: '#475569', minWidth: 140, flexShrink: 0 }}>{key}:</span>
+                                      <span style={{ color: '#1e293b', wordBreak: 'break-word' }}>
+                                        {typeof val === 'object' ? JSON.stringify(val, null, 0) : String(val)}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )
+                          })}
+
+                          {/* Action buttons */}
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <button onClick={handleCopyOnboardingLink} style={{ padding: '7px 16px', fontSize: '0.82rem', fontWeight: 600, borderRadius: 8, border: '1px solid #e2e8f0', background: 'white', cursor: 'pointer', color: '#475569' }}>
+                              Copy Link
+                            </button>
+                            {selected.onboarding_status === 'completed' && (
+                              <button
+                                onClick={handleMarkFormBuilt}
+                                disabled={markingBuilt}
+                                style={{ padding: '7px 16px', fontSize: '0.82rem', fontWeight: 600, borderRadius: 8, border: 'none', background: '#1a1a2e', color: '#ffe500', cursor: 'pointer', opacity: markingBuilt ? 0.6 : 1 }}
+                              >
+                                {markingBuilt ? 'Marking…' : 'Mark Form Built'}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
