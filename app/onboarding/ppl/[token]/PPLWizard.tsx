@@ -1,14 +1,16 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import type { PPLBusiness, PPLService, PPLTravel, PPLAvailability } from '@/lib/types'
 import StepBusiness from './StepBusiness'
 import StepServices from './StepServices'
 import StepTravel from './StepTravel'
 import StepAvailability from './StepAvailability'
+import StepMeta from './StepMeta'
 import StepReview from './StepReview'
 
-const STEP_LABELS = ['Business', 'Services', 'Travel', 'Availability', 'Review']
+const STEP_LABELS = ['Business', 'Services', 'Travel', 'Availability', 'Meta', 'Review']
 const LS_KEY_PREFIX = 'ppl_onboarding_'
 
 interface FormState {
@@ -17,6 +19,8 @@ interface FormState {
   travel: PPLTravel
   minimumJobPrice: number | null
   availability: PPLAvailability
+  metaConnected: boolean
+  metaSkipped: boolean
 }
 
 const DEFAULT_HOURS: PPLAvailability['hours'] = {
@@ -36,6 +40,8 @@ function defaultState(): FormState {
     travel: { chargesForTravel: false, travelFrom: null, travelFromResolved: null, travelMethod: null, travelRate: null },
     minimumJobPrice: null,
     availability: { hours: DEFAULT_HOURS, maxLeadsPerDay: null, maxLeadsPerWeek: null, customerNote: null },
+    metaConnected: false,
+    metaSkipped: false,
   }
 }
 
@@ -67,20 +73,33 @@ export default function PPLWizard({ token, initialStep, initialData, businessNam
     const s2 = initialData['2'] as { services: PPLService[] } | undefined
     const s3 = initialData['3'] as { travel: PPLTravel; minimumJobPrice: number | null } | undefined
     const s4 = initialData['4'] as PPLAvailability | undefined
+    const s5 = initialData['5'] as { metaConnected: boolean; metaSkipped?: boolean } | undefined
 
     if (s1) def.business = { ...def.business, ...s1 }
     if (s2?.services) def.services = s2.services
     if (s3) { def.travel = s3.travel; def.minimumJobPrice = s3.minimumJobPrice }
     if (s4) def.availability = s4
+    if (s5) { def.metaConnected = s5.metaConnected; def.metaSkipped = s5.metaSkipped ?? false }
 
     return def
   }
 
-  const [step, setStep] = useState(isCompleted ? 6 : (initialStep <= 1 ? 0 : Math.min(initialStep, 5)))
-  const [form, setForm] = useState<FormState>(hydrateState)
+  const searchParams = useSearchParams()
+  const metaReturnConnected = searchParams.get('meta') === 'connected'
+
+  const [step, setStep] = useState(() => {
+    if (isCompleted) return 7
+    if (metaReturnConnected) return 5 // return to Meta step after OAuth
+    return initialStep <= 1 ? 0 : Math.min(initialStep, 6)
+  })
+  const [form, setForm] = useState<FormState>(() => {
+    const s = hydrateState()
+    if (metaReturnConnected) s.metaConnected = true
+    return s
+  })
   const [saving, setSaving] = useState(false)
   const [submitted, setSubmitted] = useState(isCompleted)
-  const [highestStep, setHighestStep] = useState(isCompleted ? 5 : Math.max(initialStep - 1, 0))
+  const [highestStep, setHighestStep] = useState(isCompleted ? 6 : Math.max(initialStep - 1, 0))
 
   // Save to localStorage whenever form changes
   useEffect(() => {
@@ -143,8 +162,20 @@ export default function PPLWizard({ token, initialStep, initialData, businessNam
     if (ok) { setHighestStep((h) => Math.max(h, 4)); goToStep(5) }
   }, [saveToServer, goToStep])
 
+  const handleMetaNext = useCallback(async () => {
+    const data = { metaConnected: form.metaConnected, metaSkipped: form.metaSkipped }
+    const ok = await saveToServer(5, data)
+    if (ok) { setHighestStep((h) => Math.max(h, 5)); goToStep(6) }
+  }, [form.metaConnected, form.metaSkipped, saveToServer, goToStep])
+
+  const handleMetaSkip = useCallback(async () => {
+    setForm((f) => ({ ...f, metaConnected: false, metaSkipped: true }))
+    const ok = await saveToServer(5, { metaConnected: false, metaSkipped: true })
+    if (ok) { setHighestStep((h) => Math.max(h, 5)); goToStep(6) }
+  }, [saveToServer, goToStep])
+
   const handleSubmit = useCallback(async () => {
-    await saveToServer(5, {}, true)
+    await saveToServer(6, {}, true)
   }, [saveToServer])
 
   // Post-submit confirmation
@@ -248,7 +279,7 @@ export default function PPLWizard({ token, initialStep, initialData, businessNam
         </div>
         {/* Progress bar */}
         <div style={{ height: 3, background: 'rgba(26,26,46,0.12)', borderRadius: 2, marginTop: 12, overflow: 'hidden' }}>
-          <div style={{ height: '100%', background: '#1a1a2e', borderRadius: 2, width: `${(step / 5) * 100}%`, transition: 'width 0.35s ease' }} />
+          <div style={{ height: '100%', background: '#1a1a2e', borderRadius: 2, width: `${(step / 6) * 100}%`, transition: 'width 0.35s ease' }} />
         </div>
       </div>
 
@@ -257,7 +288,8 @@ export default function PPLWizard({ token, initialStep, initialData, businessNam
         {step === 2 && <StepServices data={form.services} onNext={handleServicesNext} onBack={() => goToStep(1)} saving={saving} />}
         {step === 3 && <StepTravel travel={form.travel} minimumJobPrice={form.minimumJobPrice} onNext={handleTravelNext} onBack={() => goToStep(2)} saving={saving} />}
         {step === 4 && <StepAvailability data={form.availability} onNext={handleAvailabilityNext} onBack={() => goToStep(3)} saving={saving} />}
-        {step === 5 && <StepReview form={form} onSubmit={handleSubmit} onEdit={goToStep} saving={saving} />}
+        {step === 5 && <StepMeta token={token} metaConnected={form.metaConnected} onNext={handleMetaNext} onSkip={handleMetaSkip} onBack={() => goToStep(4)} saving={saving} />}
+        {step === 6 && <StepReview form={form} onSubmit={handleSubmit} onEdit={goToStep} saving={saving} />}
       </div>
     </Shell>
   )

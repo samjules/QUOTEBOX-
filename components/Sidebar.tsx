@@ -5,7 +5,14 @@ import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-const navItems = [
+interface NavItem {
+  href: string
+  label: string
+  icon: React.ReactNode
+  pplHidden?: boolean
+}
+
+const navItems: NavItem[] = [
   {
     href: '/dashboard',
     label: 'Dashboard',
@@ -46,6 +53,7 @@ const navItems = [
   {
     href: '/hosted-forms',
     label: 'Hosted Forms',
+    pplHidden: true,
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -55,6 +63,7 @@ const navItems = [
   {
     href: '/form-builder',
     label: 'Form Builder',
+    pplHidden: true,
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -83,6 +92,7 @@ const navItems = [
   {
     href: '/lead-machine',
     label: 'Lead Machine',
+    pplHidden: true,
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
@@ -123,20 +133,29 @@ export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
+  const [billingPlan, setBillingPlan] = useState<string | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
-    async function loadLogo() {
+    async function loadData() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       const { data: account } = await supabase
         .from('accounts')
-        .select('logo_url')
+        .select('id, logo_url')
         .eq('owner_id', user.id)
         .single()
       setLogoUrl(account?.logo_url ?? null)
+      if (account) {
+        const { data: billing } = await supabase
+          .from('billing')
+          .select('plan')
+          .eq('account_id', account.id)
+          .single()
+        setBillingPlan(billing?.plan ?? null)
+      }
     }
-    loadLogo()
+    loadData()
   }, [pathname]) // re-fetch on every navigation
 
   // Also listen for immediate update when logo is changed on Settings page
@@ -163,7 +182,13 @@ export default function Sidebar() {
           <span className="text-white text-xl font-bold tracking-wide" style={{ fontFamily: "'Oswald', sans-serif" }}>QuoteBox</span>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1">
-          {navItems.map(({ href, label, icon }) => {
+          {navItems.filter((item) => {
+            if (!item.pplHidden) return true
+            if (billingPlan !== 'pay_per_lead') return true
+            // Admin impersonating can still see hidden tabs
+            try { if (sessionStorage.getItem('admin_impersonating') === '1') return true } catch { /* SSR guard */ }
+            return false
+          }).map(({ href, label, icon }) => {
             const isActive =
               pathname === href || pathname.startsWith(href + '/')
             return (

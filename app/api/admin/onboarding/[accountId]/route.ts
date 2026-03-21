@@ -52,3 +52,20 @@ export async function PATCH(request: NextRequest, { params }: { params: { accoun
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }
+
+export async function DELETE(_request: NextRequest, { params }: { params: { accountId: string } }) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || !isAdmin(user.email ?? '')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const admin = createAdminClient()
+  const { error } = await admin
+    .from('onboarding_sessions')
+    .delete()
+    .eq('account_id', params.accountId)
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ ok: true })
+}

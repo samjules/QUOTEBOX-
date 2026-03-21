@@ -55,6 +55,7 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
   const [onboardingData, setOnboardingData] = useState<Record<string, unknown> | null>(null)
   const [onboardingOpen, setOnboardingOpen] = useState(false)
   const [markingBuilt, setMarkingBuilt] = useState(false)
+  const [resettingOnboarding, setResettingOnboarding] = useState(false)
 
   const selected = localAccounts.find((a) => a.id === selectedId) ?? null
 
@@ -197,6 +198,28 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
       }
     } finally {
       setMarkingBuilt(false)
+    }
+  }
+
+  async function handleResetOnboarding() {
+    if (!selectedId) return
+    if (!confirm('Reset onboarding for this account? This will delete the current session and they will need to start over.')) return
+    setResettingOnboarding(true)
+    try {
+      const res = await fetch(`/api/admin/onboarding/${selectedId}`, { method: 'DELETE' })
+      if (res.ok) {
+        setLocalAccounts((prev) =>
+          prev.map((a) => a.id === selectedId ? { ...a, onboarding_status: 'none' as const, onboarding_token: null } : a)
+        )
+        setOnboardingData(null)
+        setOnboardingOpen(false)
+        showToast('Onboarding reset')
+      } else {
+        const data = await res.json()
+        showToast(data.error ?? 'Failed to reset', false)
+      }
+    } finally {
+      setResettingOnboarding(false)
     }
   }
 
@@ -374,16 +397,30 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
                     </button>
                   )}
                   {selected.onboarding_status !== 'none' && (
-                    <button
-                      onClick={handleCopyOnboardingLink}
-                      style={{
-                        padding: '7px 16px', fontSize: '0.82rem', fontWeight: 600,
-                        borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer',
-                        background: 'white', color: '#475569',
-                      }}
-                    >
-                      Copy Link
-                    </button>
+                    <>
+                      <button
+                        onClick={handleCopyOnboardingLink}
+                        style={{
+                          padding: '7px 16px', fontSize: '0.82rem', fontWeight: 600,
+                          borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer',
+                          background: 'white', color: '#475569',
+                        }}
+                      >
+                        Copy Link
+                      </button>
+                      <button
+                        onClick={handleResetOnboarding}
+                        disabled={resettingOnboarding}
+                        style={{
+                          padding: '7px 16px', fontSize: '0.82rem', fontWeight: 600,
+                          borderRadius: 8, border: 'none', cursor: 'pointer',
+                          background: '#dc2626', color: 'white',
+                          opacity: resettingOnboarding ? 0.6 : 1,
+                        }}
+                      >
+                        {resettingOnboarding ? 'Resetting…' : 'Reset Onboarding'}
+                      </button>
+                    </>
                   )}
                   </div>
                   </div>
@@ -596,7 +633,14 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
                         {selected.onboarding_status === 'pending' ? 'Sent' : selected.onboarding_status === 'in_progress' ? 'In Progress' : selected.onboarding_status === 'completed' ? 'Ready to Build' : 'Built'}
                       </span>
                     </div>
-                    <span style={{ fontSize: '0.82rem', color: '#94a3b8' }}>{onboardingOpen ? '▼' : '▶'}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {onboardingData && (onboardingData as Record<string, unknown>)['5'] && ((onboardingData as Record<string, unknown>)['5'] as Record<string, unknown>)?.metaSkipped === true ? (
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: '#fef3c7', color: '#92400e' }}>
+                          Needs Meta Help
+                        </span>
+                      ) : null}
+                      <span style={{ fontSize: '0.82rem', color: '#94a3b8' }}>{onboardingOpen ? '▼' : '▶'}</span>
+                    </div>
                   </div>
 
                   {onboardingOpen && (

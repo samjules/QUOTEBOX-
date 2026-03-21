@@ -44,6 +44,54 @@ serve(async (req) => {
       // ── Subscription created via checkout ─────────────────────────────────
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session
+
+        // Handle one-time credit purchases
+        if (session.mode === 'payment') {
+          const { accountId, credits } = session.metadata ?? {}
+          if (!accountId) {
+            console.warn('checkout.session.completed (payment): missing accountId in metadata')
+            break
+          }
+
+          const creditAmount = (session.amount_total ?? 0) / 100
+
+          // Fetch current balance
+          const { data: currentBilling } = await supabase
+            .from('billing')
+            .select('credit_balance')
+            .eq('account_id', accountId)
+            .single()
+
+          const currentBalance = currentBilling?.credit_balance ?? 0
+          const newBalance = currentBalance + creditAmount
+
+          const { error: creditError } = await supabase
+            .from('billing')
+            .upsert(
+              {
+                account_id: accountId,
+                credit_balance: newBalance,
+                stripe_customer_id: session.customer as string,
+              },
+              { onConflict: 'account_id' }
+            )
+
+          if (creditError) throw creditError
+
+          // Log the transaction
+          await supabase.from('billing_transactions').insert({
+            account_id: accountId,
+            type: 'credit_purchase',
+            amount: creditAmount,
+            balance_after: newBalance,
+            description: `Purchased ${credits ?? Math.round(creditAmount / 15)} lead credits`,
+          })
+
+          console.log(`Credit purchase: +$${creditAmount} for account ${accountId} (new balance: $${newBalance})`)
+          break
+        }
+
+        // Handle subscription checkout
         if (session.mode !== 'subscription') break
 
         const { accountId, plan } = session.metadata ?? {}

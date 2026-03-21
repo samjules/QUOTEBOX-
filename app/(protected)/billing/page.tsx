@@ -53,7 +53,7 @@ export default function BillingPage() {
 
   const [accountId, setAccountId] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
-  const [plan, setPlan] = useState<'starter' | 'growth' | 'fully_managed' | null>(null)
+  const [plan, setPlan] = useState<'starter' | 'growth' | 'fully_managed' | 'pay_per_lead' | null>(null)
   const [currentBalance, setCurrentBalance] = useState(0)
   const [totalSpent, setTotalSpent] = useState(0)
   const [totalLeads, setTotalLeads] = useState(0)
@@ -185,9 +185,9 @@ export default function BillingPage() {
     }
   }, [searchParams, accountId, loadBillingData])
 
-  // Real-time lead subscription for credit deduction (fully managed only)
+  // Real-time lead subscription for credit deduction display
   useEffect(() => {
-    if (!accountId || plan !== 'fully_managed') return
+    if (!accountId || (plan !== 'fully_managed' && plan !== 'pay_per_lead')) return
 
     const channel = supabase
       .channel('leads-billing-channel')
@@ -199,25 +199,8 @@ export default function BillingPage() {
           table: 'leads',
           filter: `account_id=eq.${accountId}`,
         },
-        async (payload) => {
-          if (currentBalance < COST_PER_LEAD) {
-            alert('Insufficient credits!')
-            return
-          }
-          const newBalance = currentBalance - COST_PER_LEAD
-          await supabase
-            .from('billing')
-            .update({ credit_balance: newBalance })
-            .eq('account_id', accountId)
-          await supabase.from('billing_transactions').insert([
-            {
-              account_id: accountId,
-              type: 'lead_charge',
-              amount: -COST_PER_LEAD,
-              balance_after: newBalance,
-              description: `Lead from ${payload.new.name || 'Unknown'}`,
-            },
-          ])
+        async () => {
+          // Credit deduction is handled server-side — just refresh the display
           loadBillingData(accountId)
         }
       )
@@ -226,7 +209,7 @@ export default function BillingPage() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [accountId, currentBalance, supabase, loadBillingData])
+  }, [accountId, plan, supabase, loadBillingData])
 
   async function purchaseCredits(amountCents: number, credits: number) {
     setPurchasing(true)
@@ -323,20 +306,22 @@ export default function BillingPage() {
       {/* Current Plan Card */}
       {plan && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 mt-8">
-          <div className={`rounded-xl p-6 flex items-center justify-between ${plan === 'fully_managed' ? 'bg-gray-900 text-white' : 'bg-indigo-50 border border-indigo-200'}`}>
+          <div className={`rounded-xl p-6 flex items-center justify-between ${plan === 'fully_managed' || plan === 'pay_per_lead' ? 'bg-gray-900 text-white' : 'bg-indigo-50 border border-indigo-200'}`}>
             <div>
-              <p className={`text-xs font-semibold uppercase tracking-widest mb-1 ${plan === 'fully_managed' ? 'text-gray-400' : 'text-indigo-400'}`}>
+              <p className={`text-xs font-semibold uppercase tracking-widest mb-1 ${plan === 'fully_managed' || plan === 'pay_per_lead' ? 'text-gray-400' : 'text-indigo-400'}`}>
                 Current Plan
               </p>
-              <p className={`text-xl font-bold ${plan === 'fully_managed' ? 'text-white' : 'text-indigo-900'}`}>
+              <p className={`text-xl font-bold ${plan === 'fully_managed' || plan === 'pay_per_lead' ? 'text-white' : 'text-indigo-900'}`}>
                 {plan === 'starter' && 'Starter — $20/month'}
                 {plan === 'growth' && 'Growth — $30/month'}
                 {plan === 'fully_managed' && 'Fully Managed — $15/lead'}
+                {plan === 'pay_per_lead' && 'Pay Per Lead — $15/lead'}
               </p>
-              <p className={`text-sm mt-1 ${plan === 'fully_managed' ? 'text-gray-400' : 'text-indigo-600'}`}>
+              <p className={`text-sm mt-1 ${plan === 'fully_managed' || plan === 'pay_per_lead' ? 'text-gray-400' : 'text-indigo-600'}`}>
                 {plan === 'starter' && '1 quote form · 10 leads/month · 1 VSL'}
                 {plan === 'growth' && '3 quote forms · 50 leads/month · Priority support'}
                 {plan === 'fully_managed' && 'Guaranteed qualified leads · Dedicated account manager'}
+                {plan === 'pay_per_lead' && 'Pay only for qualified leads · No monthly fee'}
               </p>
               {trialEndsAt && new Date(trialEndsAt) > new Date() && (
                 <span className="inline-block mt-2 px-2.5 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-300">
@@ -344,7 +329,7 @@ export default function BillingPage() {
                 </span>
               )}
             </div>
-            {plan !== 'fully_managed' && stripeCustomerId && (
+            {plan !== 'fully_managed' && plan !== 'pay_per_lead' && stripeCustomerId && (
               <button
                 onClick={openPortal}
                 disabled={openingPortal}
@@ -353,9 +338,9 @@ export default function BillingPage() {
                 {openingPortal ? 'Opening…' : 'Manage Subscription'}
               </button>
             )}
-            {plan === 'fully_managed' && (
+            {(plan === 'fully_managed' || plan === 'pay_per_lead') && (
               <a
-                href="mailto:sales@quote-box.com?subject=Fully%20Managed%20Account%20Changes"
+                href="mailto:sales@quote-box.com?subject=Account%20Changes"
                 className="ml-6 flex-shrink-0 px-5 py-2.5 rounded-lg text-sm font-semibold bg-white text-gray-900 hover:bg-gray-100 transition"
               >
                 Contact Us
@@ -365,8 +350,8 @@ export default function BillingPage() {
         </div>
       )}
 
-      {/* Subscription Plans */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 mt-8">
+      {/* Subscription Plans — hidden for PPL users */}
+      {plan !== 'pay_per_lead' && <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 mt-8">
         <h2 className="text-lg font-semibold text-gray-900 mb-1">Subscription Plans</h2>
         <p className="text-sm text-gray-500 mb-6">Choose the plan that fits your business</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -499,7 +484,7 @@ export default function BillingPage() {
             </button>
           </div>
         )}
-      </div>
+      </div>}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 mt-8">
         {loading ? (
@@ -511,8 +496,8 @@ export default function BillingPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Credit Balance Card — fully managed only */}
-            {plan === 'fully_managed' && (
+            {/* Credit Balance Card — credit-based plans */}
+            {(plan === 'fully_managed' || plan === 'pay_per_lead') && (
               <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg p-8 text-white">
                 <div className="flex items-center justify-between">
                   <div>
@@ -758,8 +743,8 @@ export default function BillingPage() {
         </div>
       )}
 
-      {/* Add Credits Modal — fully managed only */}
-      {plan === 'fully_managed' && showModal && (
+      {/* Add Credits Modal — credit-based plans */}
+      {(plan === 'fully_managed' || plan === 'pay_per_lead') && showModal && (
         <div className="fixed z-10 inset-0 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center">
             <div

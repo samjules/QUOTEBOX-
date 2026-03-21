@@ -106,7 +106,7 @@ export interface Billing {
   account_id: string
   credit_balance: number
   total_spent: number
-  plan: 'starter' | 'growth' | 'fully_managed' | null
+  plan: 'starter' | 'growth' | 'fully_managed' | 'pay_per_lead' | null
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
   trial_ends_at: string | null
@@ -198,6 +198,7 @@ export type OnboardingStepData = {
   2?: { services: PPLService[] }
   3?: { travel: PPLTravel; minimumJobPrice: number | null }
   4?: PPLAvailability
+  5?: { metaConnected: boolean; metaSkipped?: boolean }
 }
 
 export interface OnboardingSession {

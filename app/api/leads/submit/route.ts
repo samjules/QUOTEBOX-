@@ -57,5 +57,43 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to submit lead' }, { status: 500 })
   }
 
+  // Server-side credit deduction for credit-based plans
+  const COST_PER_LEAD = 15
+  try {
+    const { data: billing } = await supabaseAdmin
+      .from('billing')
+      .select('credit_balance, plan')
+      .eq('account_id', body.account_id)
+      .single()
+
+    if (billing && (billing.plan === 'fully_managed' || billing.plan === 'pay_per_lead')) {
+      if (billing.credit_balance >= COST_PER_LEAD) {
+        // Guarded update to prevent race conditions
+        const { data: updated } = await supabaseAdmin
+          .from('billing')
+          .update({ credit_balance: billing.credit_balance - COST_PER_LEAD })
+          .eq('account_id', body.account_id)
+          .gte('credit_balance', COST_PER_LEAD)
+          .select('credit_balance')
+          .single()
+
+        if (updated) {
+          await supabaseAdmin.from('billing_transactions').insert({
+            account_id: body.account_id,
+            type: 'lead_charge',
+            amount: -COST_PER_LEAD,
+            balance_after: updated.credit_balance,
+            description: `Lead from ${body.name || 'Unknown'}`,
+          })
+        }
+      } else {
+        console.warn(`Low credit balance for account ${body.account_id}: $${billing.credit_balance}`)
+      }
+    }
+  } catch (err) {
+    // Non-fatal: lead is already saved, log billing error
+    console.error('Credit deduction error:', err)
+  }
+
   return NextResponse.json({ success: true })
 }

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
@@ -19,14 +20,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${siteUrl}/lead-machine?error=missing_params`)
   }
 
-  // Decode state — supports both new JSON format and legacy plain base64 userId
-  let userId: string
+  // Decode state — supports JSON format, legacy plain base64 userId, and ppl-onboarding
+  let userId: string = ''
   let from: string = ''
+  let accountId: string = ''
+  let onboardingToken: string = ''
 
   try {
     const decoded = JSON.parse(Buffer.from(state, 'base64').toString('utf-8'))
-    userId = decoded.userId
+    userId = decoded.userId ?? ''
     from = decoded.from ?? ''
+    accountId = decoded.accountId ?? ''
+    onboardingToken = decoded.token ?? ''
   } catch {
     // Legacy format: state was plain base64-encoded userId string
     try {
@@ -36,7 +41,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  if (!userId) {
+  if (!userId && !accountId) {
     return NextResponse.redirect(`${siteUrl}/lead-machine?error=invalid_state`)
   }
 
@@ -108,17 +113,6 @@ export async function GET(request: NextRequest) {
     // Non-fatal: continue without ad accounts
   }
 
-  // Get the account row for this user
-  const { data: account } = await supabase
-    .from('accounts')
-    .select('id')
-    .eq('owner_id', userId)
-    .single()
-
-  if (!account) {
-    return NextResponse.redirect(`${siteUrl}/lead-machine?error=account_not_found`)
-  }
-
   // Build update payload
   const updatePayload: Record<string, string> = {
     meta_access_token: longLivedToken,
@@ -129,6 +123,47 @@ export async function GET(request: NextRequest) {
   // Auto-select ad account if only one
   if (adAccounts.length === 1) {
     updatePayload.meta_ad_account_id = adAccounts[0].account_id
+  }
+
+  // PPL onboarding path — use accountId directly, update via admin client
+  if (from === 'ppl-onboarding' && accountId) {
+    const admin = createAdminClient()
+
+    await admin
+      .from('accounts')
+      .update(updatePayload)
+      .eq('id', accountId)
+
+    // Update onboarding step_data with meta connected status
+    const { data: session } = await admin
+      .from('onboarding_sessions')
+      .select('step_data')
+      .eq('account_id', accountId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    const existingStepData = (session?.step_data ?? {}) as Record<string, unknown>
+    await admin
+      .from('onboarding_sessions')
+      .update({
+        step_data: { ...existingStepData, 5: { metaConnected: true } },
+        updated_at: new Date().toISOString(),
+      })
+      .eq('account_id', accountId)
+
+    return NextResponse.redirect(`${siteUrl}/onboarding/ppl/${onboardingToken}?meta=connected`)
+  }
+
+  // Standard path — look up account by owner_id
+  const { data: account } = await supabase
+    .from('accounts')
+    .select('id')
+    .eq('owner_id', userId)
+    .single()
+
+  if (!account) {
+    return NextResponse.redirect(`${siteUrl}/lead-machine?error=account_not_found`)
   }
 
   await supabase
