@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import type { OnboardingStep1Data } from '@/lib/types'
 
-const TRADES = ['Plumbing', 'HVAC', 'Roofing', 'Lawn Care', 'Moving', 'Cleaning', 'Electrical', 'Painting', 'Pest Control', 'Other']
+// 3x4 grid — added "General Contractor" to avoid orphaned "Other" (UX #15)
+const TRADES = ['Plumbing', 'HVAC', 'Roofing', 'Lawn Care', 'Moving', 'Cleaning', 'Electrical', 'Painting', 'Pest Control', 'General Contractor', 'Fencing', 'Other']
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '12px 14px', borderRadius: 10, border: '1.5px solid #e5e4e0',
@@ -59,6 +60,8 @@ export default function StepBusinessBasics({ data, businessName, onNext, saving 
     onNext(form)
   }
 
+  const charCount = form.businessDescription.length
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       {/* Business Name */}
@@ -67,17 +70,17 @@ export default function StepBusinessBasics({ data, businessName, onNext, saving 
         <input type="text" value={form.businessName} onChange={(e) => update({ businessName: e.target.value })} style={inputStyle} />
       </div>
 
-      {/* Trade Type */}
+      {/* Trade Type — 4-column grid (UX #15) */}
       <div>
         <label style={labelStyle}>Trade Type *</label>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
           {TRADES.map((trade) => (
             <button
               key={trade}
               type="button"
               onClick={() => update({ tradeType: trade })}
               style={{
-                padding: '10px 12px', borderRadius: 8, fontSize: '0.85rem', fontWeight: 500, cursor: 'pointer',
+                padding: '10px 8px', borderRadius: 8, fontSize: '0.82rem', fontWeight: 500, cursor: 'pointer',
                 border: form.tradeType === trade ? '2px solid #1a1a2e' : '1.5px solid #e5e4e0',
                 background: form.tradeType === trade ? '#1a1a2e' : 'white',
                 color: form.tradeType === trade ? '#ffe500' : '#334155',
@@ -159,16 +162,30 @@ export default function StepBusinessBasics({ data, businessName, onNext, saving 
         )}
       </div>
 
-      {/* Business Description */}
+      {/* Business Description with placeholder + char counter (UX #10) */}
       <div>
         <label style={labelStyle}>Business Description *</label>
-        <textarea
-          value={form.businessDescription}
-          onChange={(e) => update({ businessDescription: e.target.value })}
-          placeholder="Describe what your business does, the types of jobs you take on, and your typical customers."
-          rows={4}
-          style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.55, minHeight: 90 }}
-        />
+        <div style={{ position: 'relative' }}>
+          <textarea
+            value={form.businessDescription}
+            onChange={(e) => update({ businessDescription: e.target.value })}
+            placeholder="e.g. We specialize in residential moves within 50 miles of Tampa — full service including packing, loading, and delivery."
+            rows={4}
+            style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.55, minHeight: 90, paddingBottom: 28 }}
+          />
+          <div style={{
+            position: 'absolute', bottom: 8, right: 14,
+            fontSize: '0.72rem', fontWeight: 500,
+            color: charCount > 0 && charCount < 50 ? '#ea580c' : '#94a3b8',
+          }}>
+            {charCount}/300
+          </div>
+        </div>
+        {charCount > 0 && charCount < 50 && (
+          <div style={{ fontSize: '0.75rem', color: '#ea580c', marginTop: 4 }}>
+            A bit more detail helps us build a better form — aim for at least 50 characters.
+          </div>
+        )}
       </div>
 
       {error && <div style={{ fontSize: '0.84rem', color: '#ef4444', fontWeight: 500 }}>{error}</div>}

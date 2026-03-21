@@ -65,6 +65,12 @@ export default function StepLeadPreferences({ data, services, onNext, onBack, sa
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+      {/* Lead definition (UX #8) */}
+      <div style={{ fontSize: '0.85rem', color: '#64748b', lineHeight: 1.55, background: '#f8fafc', borderRadius: 10, padding: '12px 14px' }}>
+        A <strong style={{ color: '#334155' }}>lead</strong> is a customer who fills out your quote form. Set caps below to avoid being overwhelmed on busy days.
+      </div>
+
       {/* Lead limits */}
       <div style={{ display: 'flex', gap: 12 }}>
         <div style={{ flex: 1 }}>
@@ -148,13 +154,13 @@ export default function StepLeadPreferences({ data, services, onNext, onBack, sa
         </div>
       </div>
 
-      {/* Additional notes */}
+      {/* Additional notes — renamed (UX #17) */}
       <div>
-        <label style={labelStyle}>Additional Notes <span style={{ fontWeight: 400, color: '#94a3b8' }}>(optional)</span></label>
+        <label style={labelStyle}>Anything we should know? <span style={{ fontWeight: 400, color: '#94a3b8' }}>(optional)</span></label>
         <textarea
           value={form.additionalNotes ?? ''}
           onChange={(e) => update({ additionalNotes: e.target.value })}
-          placeholder="Anything else we should know when building your form?"
+          placeholder="e.g. We don't service high-rises, require a 20% deposit on jobs over $500, or don't move gas appliances."
           rows={3}
           style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.55, minHeight: 70 }}
         />

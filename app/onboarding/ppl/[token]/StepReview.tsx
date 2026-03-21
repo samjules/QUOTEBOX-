@@ -2,6 +2,8 @@
 
 import type { OnboardingStepData } from '@/lib/types'
 
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
 const primaryBtn: React.CSSProperties = {
   width: '100%', padding: '14px', borderRadius: 10, border: 'none', background: '#1a1a2e',
   color: '#ffe500', fontSize: '1rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
@@ -15,6 +17,14 @@ const cardTitle: React.CSSProperties = {
 }
 const itemStyle: React.CSSProperties = { fontSize: '0.85rem', color: '#1e293b', marginBottom: 6, lineHeight: 1.5 }
 const labelInline: React.CSSProperties = { fontWeight: 600, color: '#475569', marginRight: 6 }
+
+// Format 24h time to 12h AM/PM
+function fmt(time: string) {
+  const [h, m] = time.split(':').map(Number)
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  const hour = h % 12 || 12
+  return `${hour}:${m.toString().padStart(2, '0')} ${ampm}`
+}
 
 interface Props {
   data: OnboardingStepData
@@ -74,8 +84,7 @@ export default function StepReview({ data, onSubmit, onEdit, saving }: Props) {
         </div>
         {s2 ? (
           <>
-            <div style={itemStyle}><span style={labelInline}>Packages:</span>{s2.hasPackages ? 'Yes' : 'No'}</div>
-            <div style={itemStyle}><span style={labelInline}>Display:</span>{s2.displayPreference === 'radio' ? 'Radio buttons' : 'Dropdown'}</div>
+            <div style={itemStyle}><span style={labelInline}>Bundles:</span>{s2.hasPackages ? 'Yes' : 'No'}</div>
             <div style={{ marginTop: 8 }}>
               {s2.services.map((s) => (
                 <div key={s.id} style={{ fontSize: '0.82rem', color: '#1e293b', padding: '4px 0', display: 'flex', justifyContent: 'space-between' }}>
@@ -86,7 +95,7 @@ export default function StepReview({ data, onSubmit, onEdit, saving }: Props) {
             </div>
             {s2.addOns.length > 0 && (
               <div style={{ marginTop: 8, borderTop: '1px solid #e2e8f0', paddingTop: 8 }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', marginBottom: 4 }}>ADD-ONS</div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', marginBottom: 4 }}>EXTRAS</div>
                 {s2.addOns.map((a) => (
                   <div key={a.id} style={{ fontSize: '0.82rem', color: '#1e293b', padding: '2px 0', display: 'flex', justifyContent: 'space-between' }}>
                     <span>{a.name}</span>
@@ -163,12 +172,30 @@ export default function StepReview({ data, onSubmit, onEdit, saving }: Props) {
             {s4.preferredLeadTypes.length > 0 && (
               <div style={itemStyle}><span style={labelInline}>Lead types:</span>{s4.preferredLeadTypes.join(', ')}</div>
             )}
-            <div style={itemStyle}>
-              <span style={labelInline}>Hours:</span>
-              {Object.entries(s4.businessHours).filter(([, v]) => v.enabled).map(([d, v]) => `${d.slice(0, 3)} ${v.start}-${v.end}`).join(', ') || 'Not set'}
+
+            {/* Business hours — mini table (UX #4) */}
+            <div style={{ marginTop: 8 }}>
+              <span style={{ ...labelInline, display: 'block', marginBottom: 6 }}>Hours:</span>
+              <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr', rowGap: 2 }}>
+                {DAYS.map((day) => {
+                  const h = s4.businessHours[day]
+                  const isOpen = h?.enabled
+                  return (
+                    <div key={day} style={{ display: 'contents' }}>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 500, color: isOpen ? '#334155' : '#c4c4c4', padding: '3px 0' }}>
+                        {day.slice(0, 3)}
+                      </span>
+                      <span style={{ fontSize: '0.82rem', color: isOpen ? '#1e293b' : '#c4c4c4', padding: '3px 0' }}>
+                        {isOpen ? `${fmt(h.start)} – ${fmt(h.end)}` : 'Closed'}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
+
             {s4.additionalNotes && (
-              <div style={itemStyle}><span style={labelInline}>Notes:</span>{s4.additionalNotes}</div>
+              <div style={{ ...itemStyle, marginTop: 8 }}><span style={labelInline}>Notes:</span>{s4.additionalNotes}</div>
             )}
           </>
         ) : (
