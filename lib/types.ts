@@ -135,67 +135,69 @@ export interface VSL {
   created_at: string
 }
 
-// ── Pay-Per-Lead Onboarding ──
+// ── Pay-Per-Lead Onboarding (v2) ──
 
-export interface ServiceItem {
+export interface PPLServiceArea {
+  type: 'radius' | 'zipcodes'
+  location: string
+  locationResolved: string
+  radiusMiles: number | null
+  zipCodes: string[]
+}
+
+export interface PPLBusiness {
+  name: string
+  trade: string
+  tradeOther: string | null
+  serviceArea: PPLServiceArea
+}
+
+export interface PPLService {
   id: string
   name: string
-  price: number
-  priceType: 'flat' | 'starting_at'
+  pricingMethod: 'hourly' | 'sqft' | 'flat' | 'perunit' | null
+  pricingRate: number | null
+  pricingUnit: string | null
+  description: string | null
+  photoUploadEnabled: boolean
+  photoUploadPrompt: string | null
 }
 
-export interface AddOnItem {
-  id: string
-  name: string
-  price: number
+export interface PPLTravel {
+  chargesForTravel: boolean
+  travelFrom: string | null
+  travelFromResolved: string | null
+  travelMethod: 'drivetime' | 'mileage' | null
+  travelRate: number | null
 }
 
-export interface OnboardingStep1Data {
-  businessName: string
-  tradeType: string
-  serviceAreaType: 'radius' | 'zip_codes'
-  serviceAreaRadius?: number
-  serviceAreaAddress?: string
-  serviceAreaZipCodes?: string[]
-  businessDescription: string
+export interface PPLDayHours {
+  open: boolean
+  from: string
+  to: string
 }
 
-export interface OnboardingStep2Data {
-  hasPackages: boolean
-  services: ServiceItem[]
-  displayPreference: 'radio' | 'dropdown'
-  addOns: AddOnItem[]
+export interface PPLAvailability {
+  hours: Record<string, PPLDayHours>
+  maxLeadsPerDay: number | null
+  maxLeadsPerWeek: number | null
+  customerNote: string | null
 }
 
-export interface OnboardingStep3Data {
-  perSqft: boolean
-  sqftRate?: number
-  sqftMethod?: 'enter_number' | 'draw_on_map'
-  travelCharges: boolean
-  travelType?: 'mileage' | 'drivetime' | 'both'
-  ratePerMile?: number
-  ratePerMinute?: number
-  baseLocation?: string
-  byQuantity: boolean
-  quantityLabel?: string
-  ratePerUnit?: number
-  minimumJobPrice?: number
+export interface PPLOnboardingData {
+  business: PPLBusiness
+  services: PPLService[]
+  travel: PPLTravel
+  minimumJobPrice: number | null
+  availability: PPLAvailability
 }
 
-export interface OnboardingStep4Data {
-  maxLeadsPerDay?: number
-  maxLeadsPerWeek?: number
-  monthlyBudgetCap?: number
-  preferredLeadTypes: string[]
-  businessHours: Record<string, { enabled: boolean; start: string; end: string }>
-  additionalNotes?: string
-}
-
+// Step-keyed version for API persistence
 export type OnboardingStepData = {
-  1?: OnboardingStep1Data
-  2?: OnboardingStep2Data
-  3?: OnboardingStep3Data
-  4?: OnboardingStep4Data
+  1?: PPLBusiness
+  2?: { services: PPLService[] }
+  3?: { travel: PPLTravel; minimumJobPrice: number | null }
+  4?: PPLAvailability
 }
 
 export interface OnboardingSession {

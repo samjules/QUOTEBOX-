@@ -1,36 +1,25 @@
 'use client'
 
-import type { OnboardingStepData } from '@/lib/types'
+import type { PPLBusiness, PPLService, PPLTravel, PPLAvailability } from '@/lib/types'
 
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+const DAYS: Array<[string, string]> = [['mon', 'Monday'], ['tue', 'Tuesday'], ['wed', 'Wednesday'], ['thu', 'Thursday'], ['fri', 'Friday'], ['sat', 'Saturday'], ['sun', 'Sunday']]
 
-const primaryBtn: React.CSSProperties = {
+const btn: React.CSSProperties = {
   width: '100%', padding: '14px', borderRadius: 10, border: 'none', background: '#1a1a2e',
   color: '#ffe500', fontSize: '1rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
 }
-const cardStyle: React.CSSProperties = {
-  background: '#f8fafc', borderRadius: 12, padding: '16px 20px', marginBottom: 12,
+const card: React.CSSProperties = { border: '1.5px solid #e5e4e0', borderRadius: 14, overflow: 'hidden', marginBottom: 12 }
+const cardHead: React.CSSProperties = {
+  background: '#f8fafc', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+  fontSize: '0.78rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.04em', textTransform: 'uppercase',
 }
-const cardTitle: React.CSSProperties = {
-  fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10,
-  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-}
-const itemStyle: React.CSSProperties = { fontSize: '0.85rem', color: '#1e293b', marginBottom: 6, lineHeight: 1.5 }
-const labelInline: React.CSSProperties = { fontWeight: 600, color: '#475569', marginRight: 6 }
+const row: React.CSSProperties = { fontSize: '0.85rem', color: '#1e293b', padding: '5px 0', lineHeight: 1.5 }
+const lbl: React.CSSProperties = { fontWeight: 600, color: '#475569', marginRight: 6 }
 
-// Format 24h time to 12h AM/PM
 function fmt(time: string) {
   const [h, m] = time.split(':').map(Number)
   const ampm = h >= 12 ? 'PM' : 'AM'
-  const hour = h % 12 || 12
-  return `${hour}:${m.toString().padStart(2, '0')} ${ampm}`
-}
-
-interface Props {
-  data: OnboardingStepData
-  onSubmit: () => void
-  onEdit: (step: number) => void
-  saving: boolean
+  return `${h % 12 || 12}:${m.toString().padStart(2, '0')} ${ampm}`
 }
 
 function EditBtn({ onClick }: { onClick: () => void }) {
@@ -41,171 +30,143 @@ function EditBtn({ onClick }: { onClick: () => void }) {
   )
 }
 
-export default function StepReview({ data, onSubmit, onEdit, saving }: Props) {
-  const s1 = data[1]
-  const s2 = data[2]
-  const s3 = data[3]
-  const s4 = data[4]
+const PRICING_BADGES: Record<string, { label: string; bg: string; color: string }> = {
+  hourly: { label: 'Hourly', bg: '#eff6ff', color: '#2563eb' },
+  sqft: { label: 'Per sq ft', bg: '#f0fdf4', color: '#16a34a' },
+  flat: { label: 'Flat rate', bg: '#fef9c3', color: '#92400e' },
+  perunit: { label: 'Per unit', bg: '#fdf4ff', color: '#9333ea' },
+}
+
+function PricingBadge({ method, rate, unit }: { method: string; rate: number | null; unit: string | null }) {
+  const b = PRICING_BADGES[method] ?? { label: method, bg: '#f1f5f9', color: '#475569' }
+  let rateStr = ''
+  if (rate != null) {
+    if (method === 'hourly') rateStr = ` · $${rate}/hr`
+    else if (method === 'sqft') rateStr = ` · $${rate}/sqft`
+    else if (method === 'flat') rateStr = ` · $${rate}`
+    else if (method === 'perunit') rateStr = ` · $${rate}/${unit || 'unit'}`
+  }
+  return (
+    <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 6, fontSize: '0.75rem', fontWeight: 700, background: b.bg, color: b.color }}>
+      {b.label}{rateStr}
+    </span>
+  )
+}
+
+interface Props {
+  form: {
+    business: PPLBusiness
+    services: PPLService[]
+    travel: PPLTravel
+    minimumJobPrice: number | null
+    availability: PPLAvailability
+  }
+  onSubmit: () => void
+  onEdit: (step: number) => void
+  saving: boolean
+}
+
+export default function StepReview({ form, onSubmit, onEdit, saving }: Props) {
+  const { business, services, travel, minimumJobPrice, availability } = form
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0 0 12px', lineHeight: 1.55 }}>
-        Review your answers below. Click Edit on any section to make changes.
+      <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#1a1a2e', margin: '0 0 4px' }}>Here&apos;s what we&apos;ll build</h2>
+      <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '0 0 16px', lineHeight: 1.55 }}>
+        Check everything looks right. Tap Edit on any section to make changes.
       </p>
 
-      {/* Step 1: Business Basics */}
-      <div style={cardStyle}>
-        <div style={cardTitle}>
-          <span>Business Basics</span>
-          <EditBtn onClick={() => onEdit(1)} />
+      {/* Business */}
+      <div style={card}>
+        <div style={cardHead}><span>Business</span><EditBtn onClick={() => onEdit(1)} /></div>
+        <div style={{ padding: '12px 16px' }}>
+          <div style={row}><span style={lbl}>Name:</span>{business.name}</div>
+          <div style={row}><span style={lbl}>Trade:</span>{business.trade}{business.tradeOther ? ` — ${business.tradeOther}` : ''}</div>
+          <div style={row}>
+            <span style={lbl}>Area:</span>
+            {business.serviceArea.type === 'radius'
+              ? `${business.serviceArea.radiusMiles ?? 25} mi from ${business.serviceArea.location || '—'}`
+              : `${business.serviceArea.zipCodes.length} zip codes: ${business.serviceArea.zipCodes.join(', ')}`
+            }
+          </div>
         </div>
-        {s1 ? (
-          <>
-            <div style={itemStyle}><span style={labelInline}>Name:</span>{s1.businessName}</div>
-            <div style={itemStyle}><span style={labelInline}>Trade:</span>{s1.tradeType}</div>
-            <div style={itemStyle}>
-              <span style={labelInline}>Area:</span>
-              {s1.serviceAreaType === 'radius'
-                ? `${s1.serviceAreaRadius ?? 25} mi from ${s1.serviceAreaAddress || '(no address)'}`
-                : `Zip codes: ${s1.serviceAreaZipCodes?.join(', ') || 'none'}`}
-            </div>
-            <div style={itemStyle}><span style={labelInline}>Description:</span>{s1.businessDescription}</div>
-          </>
-        ) : (
-          <div style={{ fontSize: '0.82rem', color: '#94a3b8' }}>Not completed</div>
-        )}
       </div>
 
-      {/* Step 2: Services & Pricing */}
-      <div style={cardStyle}>
-        <div style={cardTitle}>
-          <span>Services & Pricing</span>
-          <EditBtn onClick={() => onEdit(2)} />
+      {/* Services — each as its own card */}
+      {services.map((s) => (
+        <div key={s.id} style={card}>
+          <div style={cardHead}><span>{s.name || 'Untitled service'}</span><EditBtn onClick={() => onEdit(2)} /></div>
+          <div style={{ padding: '12px 16px' }}>
+            <div style={{ ...row, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={lbl}>Pricing:</span>
+              {s.pricingMethod ? <PricingBadge method={s.pricingMethod} rate={s.pricingRate} unit={s.pricingUnit} /> : <span style={{ color: '#94a3b8' }}>Not set</span>}
+            </div>
+            <div style={row}>
+              <span style={lbl}>Photos:</span>
+              {s.photoUploadEnabled ? <span style={{ color: '#16a34a' }}>Requested</span> : <span style={{ color: '#94a3b8' }}>Not required</span>}
+            </div>
+            {s.description && (
+              <div style={{ ...row, color: '#94a3b8', fontStyle: 'italic' }}>{s.description}</div>
+            )}
+          </div>
         </div>
-        {s2 ? (
-          <>
-            <div style={itemStyle}><span style={labelInline}>Bundles:</span>{s2.hasPackages ? 'Yes' : 'No'}</div>
-            <div style={{ marginTop: 8 }}>
-              {s2.services.map((s) => (
-                <div key={s.id} style={{ fontSize: '0.82rem', color: '#1e293b', padding: '4px 0', display: 'flex', justifyContent: 'space-between' }}>
-                  <span>{s.name}</span>
-                  <span style={{ color: '#64748b' }}>${s.price.toFixed(2)} {s.priceType === 'starting_at' ? '(starting at)' : '(flat)'}</span>
+      ))}
+
+      {/* Travel & minimums */}
+      <div style={card}>
+        <div style={cardHead}><span>Travel & Minimums</span><EditBtn onClick={() => onEdit(3)} /></div>
+        <div style={{ padding: '12px 16px' }}>
+          <div style={row}>
+            <span style={lbl}>Travel:</span>
+            {travel.chargesForTravel
+              ? `${travel.travelMethod === 'drivetime' ? 'By drive time' : 'By mileage'} · $${travel.travelRate ?? '—'}/${travel.travelMethod === 'drivetime' ? 'hr' : 'mi'}${travel.travelFrom ? ` from ${travel.travelFrom}` : ''}`
+              : 'Not charging for travel'
+            }
+          </div>
+          <div style={row}>
+            <span style={lbl}>Minimum:</span>
+            {minimumJobPrice ? `$${minimumJobPrice}` : 'No minimum'}
+          </div>
+        </div>
+      </div>
+
+      {/* Availability */}
+      <div style={card}>
+        <div style={cardHead}><span>Availability</span><EditBtn onClick={() => onEdit(4)} /></div>
+        <div style={{ padding: '12px 16px' }}>
+          {/* Hours table */}
+          <div style={{ display: 'grid', gridTemplateColumns: '55px 1fr', rowGap: 2, marginBottom: 10 }}>
+            {DAYS.map(([key, name]) => {
+              const h = availability.hours[key]
+              return (
+                <div key={key} style={{ display: 'contents' }}>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 500, color: h?.open ? '#334155' : '#c4c4c4', padding: '3px 0' }}>{name.slice(0, 3)}</span>
+                  <span style={{ fontSize: '0.82rem', color: h?.open ? '#1e293b' : '#c4c4c4', padding: '3px 0' }}>
+                    {h?.open ? `${fmt(h.from)} – ${fmt(h.to)}` : 'Closed'}
+                  </span>
                 </div>
-              ))}
-            </div>
-            {s2.addOns.length > 0 && (
-              <div style={{ marginTop: 8, borderTop: '1px solid #e2e8f0', paddingTop: 8 }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', marginBottom: 4 }}>EXTRAS</div>
-                {s2.addOns.map((a) => (
-                  <div key={a.id} style={{ fontSize: '0.82rem', color: '#1e293b', padding: '2px 0', display: 'flex', justifyContent: 'space-between' }}>
-                    <span>{a.name}</span>
-                    <span style={{ color: '#64748b' }}>+${a.price.toFixed(2)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        ) : (
-          <div style={{ fontSize: '0.82rem', color: '#94a3b8' }}>Not completed</div>
-        )}
-      </div>
-
-      {/* Step 3: Pricing Logic */}
-      <div style={cardStyle}>
-        <div style={cardTitle}>
-          <span>Pricing Logic</span>
-          <EditBtn onClick={() => onEdit(3)} />
+              )
+            })}
+          </div>
+          <div style={row}>
+            <span style={lbl}>Lead cap:</span>
+            {availability.maxLeadsPerDay || availability.maxLeadsPerWeek
+              ? `${availability.maxLeadsPerDay ? `${availability.maxLeadsPerDay}/day` : ''}${availability.maxLeadsPerDay && availability.maxLeadsPerWeek ? ' · ' : ''}${availability.maxLeadsPerWeek ? `${availability.maxLeadsPerWeek}/week` : ''}`
+              : 'No cap set'
+            }
+          </div>
+          {availability.customerNote && (
+            <div style={{ ...row, color: '#94a3b8', fontStyle: 'italic', marginTop: 4 }}>{availability.customerNote}</div>
+          )}
         </div>
-        {s3 ? (
-          <>
-            {s3.perSqft && (
-              <div style={itemStyle}>
-                <span style={labelInline}>Per sqft:</span>${s3.sqftRate?.toFixed(2) ?? '—'}/sqft
-                ({s3.sqftMethod === 'draw_on_map' ? 'draw on map' : 'customer enters number'})
-              </div>
-            )}
-            {s3.travelCharges && (
-              <div style={itemStyle}>
-                <span style={labelInline}>Travel:</span>
-                {s3.travelType === 'mileage' && `$${s3.ratePerMile?.toFixed(2) ?? '—'}/mi`}
-                {s3.travelType === 'drivetime' && `$${((s3.ratePerMinute ?? 0) * 60).toFixed(2)}/hr`}
-                {s3.travelType === 'both' && `$${s3.ratePerMile?.toFixed(2) ?? '—'}/mi + $${((s3.ratePerMinute ?? 0) * 60).toFixed(2)}/hr`}
-                {s3.baseLocation ? ` from ${s3.baseLocation}` : ''}
-              </div>
-            )}
-            {s3.byQuantity && (
-              <div style={itemStyle}>
-                <span style={labelInline}>Per {s3.quantityLabel || 'unit'}:</span>${s3.ratePerUnit?.toFixed(2) ?? '—'}
-              </div>
-            )}
-            {s3.minimumJobPrice != null && (
-              <div style={itemStyle}><span style={labelInline}>Minimum:</span>${s3.minimumJobPrice.toFixed(2)}</div>
-            )}
-            {!s3.perSqft && !s3.travelCharges && !s3.byQuantity && !s3.minimumJobPrice && (
-              <div style={{ fontSize: '0.82rem', color: '#94a3b8' }}>No additional pricing logic</div>
-            )}
-          </>
-        ) : (
-          <div style={{ fontSize: '0.82rem', color: '#94a3b8' }}>Not completed</div>
-        )}
       </div>
 
-      {/* Step 4: Lead Preferences */}
-      <div style={cardStyle}>
-        <div style={cardTitle}>
-          <span>Lead Preferences</span>
-          <EditBtn onClick={() => onEdit(4)} />
-        </div>
-        {s4 ? (
-          <>
-            {(s4.maxLeadsPerDay || s4.maxLeadsPerWeek) && (
-              <div style={itemStyle}>
-                <span style={labelInline}>Limits:</span>
-                {s4.maxLeadsPerDay ? `${s4.maxLeadsPerDay}/day` : ''}
-                {s4.maxLeadsPerDay && s4.maxLeadsPerWeek ? ', ' : ''}
-                {s4.maxLeadsPerWeek ? `${s4.maxLeadsPerWeek}/week` : ''}
-              </div>
-            )}
-            {s4.monthlyBudgetCap != null && (
-              <div style={itemStyle}><span style={labelInline}>Budget cap:</span>${s4.monthlyBudgetCap}/mo</div>
-            )}
-            {s4.preferredLeadTypes.length > 0 && (
-              <div style={itemStyle}><span style={labelInline}>Lead types:</span>{s4.preferredLeadTypes.join(', ')}</div>
-            )}
-
-            {/* Business hours — mini table (UX #4) */}
-            <div style={{ marginTop: 8 }}>
-              <span style={{ ...labelInline, display: 'block', marginBottom: 6 }}>Hours:</span>
-              <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr', rowGap: 2 }}>
-                {DAYS.map((day) => {
-                  const h = s4.businessHours[day]
-                  const isOpen = h?.enabled
-                  return (
-                    <div key={day} style={{ display: 'contents' }}>
-                      <span style={{ fontSize: '0.82rem', fontWeight: 500, color: isOpen ? '#334155' : '#c4c4c4', padding: '3px 0' }}>
-                        {day.slice(0, 3)}
-                      </span>
-                      <span style={{ fontSize: '0.82rem', color: isOpen ? '#1e293b' : '#c4c4c4', padding: '3px 0' }}>
-                        {isOpen ? `${fmt(h.start)} – ${fmt(h.end)}` : 'Closed'}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            {s4.additionalNotes && (
-              <div style={{ ...itemStyle, marginTop: 8 }}><span style={labelInline}>Notes:</span>{s4.additionalNotes}</div>
-            )}
-          </>
-        ) : (
-          <div style={{ fontSize: '0.82rem', color: '#94a3b8' }}>Not completed</div>
-        )}
-      </div>
-
-      <button style={{ ...primaryBtn, opacity: saving ? 0.6 : 1, marginTop: 8 }} disabled={saving} onClick={onSubmit}>
-        {saving ? 'Submitting…' : 'Submit Onboarding'}
+      <button onClick={onSubmit} disabled={saving} style={{ ...btn, marginTop: 8, opacity: saving ? 0.5 : 1 }}>
+        {saving ? 'Submitting…' : 'Build my quote form →'}
       </button>
+      <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#94a3b8', marginTop: 4 }}>
+        We&apos;ll send you a link to preview your form within a few minutes.
+      </div>
     </div>
   )
 }
