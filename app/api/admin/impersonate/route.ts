@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 })
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin
   const targetPath = redirectPath ?? '/dashboard'
   const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
     type: 'magiclink',

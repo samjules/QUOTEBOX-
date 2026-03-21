@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   const state = searchParams.get('state')
   const error = searchParams.get('error')
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin
 
   if (error) {
     return NextResponse.redirect(`${siteUrl}/lead-machine?error=oauth_denied`)
