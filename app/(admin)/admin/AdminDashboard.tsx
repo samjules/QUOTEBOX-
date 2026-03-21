@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import type { AdminAccount } from './page'
 
 const PLAN_LABELS: Record<string, string> = {
@@ -123,7 +124,7 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
   }
 
 
-  async function handleImpersonate(redirectPath?: string) {
+  async function handleImpersonate(redirectPath?: string, sameTab = false) {
     if (!selected) return
     setImpersonating(true)
     try {
@@ -134,7 +135,20 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
       })
       const data = await res.json()
       if (!res.ok) { showToast(data.error ?? 'Failed to generate link', false); return }
-      window.open(data.url, '_blank')
+      if (sameTab) {
+        // Save admin session before navigating away
+        const supabase = createClient()
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          localStorage.setItem('admin_session', JSON.stringify({
+            access_token: session.access_token,
+            refresh_token: session.refresh_token,
+          }))
+        }
+        window.location.href = data.url
+      } else {
+        window.open(data.url, '_blank')
+      }
     } finally {
       setImpersonating(false)
     }
@@ -382,34 +396,6 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
                   >
                     {impersonating ? 'Generating…' : '↗ Enter as User'}
                   </button>
-                  {selected.plan === 'pay_per_lead' && (
-                    <>
-                      <button
-                        onClick={() => handleImpersonate('/form-builder')}
-                        disabled={impersonating}
-                        style={{
-                          padding: '7px 16px', fontSize: '0.82rem', fontWeight: 600,
-                          borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer',
-                          background: 'white', color: '#475569',
-                          opacity: impersonating ? 0.6 : 1,
-                        }}
-                      >
-                        Build Form
-                      </button>
-                      <button
-                        onClick={() => handleImpersonate('/lead-machine')}
-                        disabled={impersonating}
-                        style={{
-                          padding: '7px 16px', fontSize: '0.82rem', fontWeight: 600,
-                          borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer',
-                          background: 'white', color: '#475569',
-                          opacity: impersonating ? 0.6 : 1,
-                        }}
-                      >
-                        Lead Machine
-                      </button>
-                    </>
-                  )}
                   {selected.plan === 'pay_per_lead' && selected.onboarding_status === 'none' && (
                     <button
                       onClick={handleStartOnboarding}
@@ -454,6 +440,42 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
                   </div>
                 </div>
               </div>
+
+              {/* PPL Tool Tabs */}
+              {selected.plan === 'pay_per_lead' && (
+                <div style={{
+                  background: '#1a1a2e', borderRadius: 10, display: 'flex', gap: 0, overflow: 'hidden',
+                }}>
+                  {([
+                    { label: 'Form Builder', path: '/form-builder' },
+                    { label: 'Hosted Forms', path: '/hosted-forms' },
+                    { label: 'Lead Machine', path: '/lead-machine' },
+                  ] as const).map((tab) => (
+                    <button
+                      key={tab.path}
+                      onClick={() => handleImpersonate(tab.path, true)}
+                      disabled={impersonating}
+                      style={{
+                        flex: 1,
+                        padding: '12px 20px',
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                        border: 'none',
+                        borderBottom: '3px solid transparent',
+                        cursor: 'pointer',
+                        background: 'transparent',
+                        color: 'rgba(255,255,255,0.7)',
+                        opacity: impersonating ? 0.5 : 1,
+                        transition: 'color 0.15s, border-color 0.15s',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = '#FFE500'; e.currentTarget.style.borderBottomColor = '#FFE500' }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; e.currentTarget.style.borderBottomColor = 'transparent' }}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {/* Stats row */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
