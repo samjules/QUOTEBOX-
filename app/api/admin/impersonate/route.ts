@@ -35,9 +35,14 @@ export async function POST(request: NextRequest) {
     },
   })
 
-  if (linkError || !linkData?.properties?.action_link) {
+  if (linkError || !linkData?.properties?.hashed_token) {
     return NextResponse.json({ error: linkError?.message ?? 'Failed to generate link' }, { status: 500 })
   }
 
-  return NextResponse.json({ url: linkData.properties.action_link })
+  // Build the verification URL through our own /api/auth/confirm route
+  // This avoids Supabase's Site URL setting (which may point to localhost) controlling the redirect
+  const tokenHash = linkData.properties.hashed_token
+  const confirmUrl = `${siteUrl}/api/auth/confirm?token_hash=${tokenHash}&type=magiclink&next=${encodeURIComponent(`${targetPath}?impersonating=1`)}`
+
+  return NextResponse.json({ url: confirmUrl })
 }
