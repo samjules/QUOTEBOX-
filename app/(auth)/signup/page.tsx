@@ -13,9 +13,9 @@ type ServiceChoice = 'self' | 'managed' | null
 
 // ── Progress bar labels ───────────────────────────────────────────────────────
 const STEP_LABELS: Record<Step, string> = {
-  1: 'Account',
-  2: 'Leads',
-  3: 'Service',
+  1: 'Leads',
+  2: 'Service',
+  3: 'Account',
   4: 'Meta',
   5: 'Plan',
 }
@@ -203,8 +203,27 @@ function SignupWizard() {
     }, 220)
   }
 
-  // ── Step 1 handler ────────────────────────────────────────────────────────
-  async function handleStep1() {
+  // ── Step 1: Select leads per week ─────────────────────────────────────────
+  function handleLeadsSelect(count: 5 | 10 | 15 | 20) {
+    setLeadsPerWeek(count)
+    setTimeout(() => animateTo(2), 300)
+  }
+
+  // ── Step 2: Self vs Managed ───────────────────────────────────────────────
+  function handleServiceSelect(choice: ServiceChoice) {
+    setServiceChoice(choice)
+    if (choice === 'managed') {
+      setPlan('managed')
+    } else {
+      // For self-serve, recommend based on lead volume
+      const weeklyLeads = leadsPerWeek ?? 5
+      setPlan(weeklyLeads >= 15 ? 'growth' : 'starter')
+    }
+    setTimeout(() => animateTo(3), 350)
+  }
+
+  // ── Step 3: Account creation ────────────────────────────────────────────
+  async function handleCreateAccount() {
     setStep1Error('')
 
     if (!businessName.trim()) {
@@ -259,30 +278,11 @@ function SignupWizard() {
       .insert([{ account_id: newAccount.id, credit_balance: 0, total_spent: 0 }])
 
     setStep1Loading(false)
-    animateTo(2)
+    animateTo(4)
   }
 
-  function handleStep1KeyDown(e: KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') handleStep1()
-  }
-
-  // ── Step 2: Select leads per week ─────────────────────────────────────────
-  function handleLeadsSelect(count: 5 | 10 | 15 | 20) {
-    setLeadsPerWeek(count)
-    setTimeout(() => animateTo(3), 300)
-  }
-
-  // ── Step 3: Self vs Managed ───────────────────────────────────────────────
-  function handleServiceSelect(choice: ServiceChoice) {
-    setServiceChoice(choice)
-    if (choice === 'managed') {
-      setPlan('managed')
-    } else {
-      // For self-serve, recommend based on lead volume
-      const weeklyLeads = leadsPerWeek ?? 5
-      setPlan(weeklyLeads >= 15 ? 'growth' : 'starter')
-    }
-    setTimeout(() => animateTo(4), 350)
+  function handleAccountKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') handleCreateAccount()
   }
 
   // Computed managed estimate
@@ -309,88 +309,8 @@ function SignupWizard() {
               transform: visible ? 'translateY(0)' : 'translateY(12px)',
             }}
           >
-            {/* ── STEP 1: Account Setup ────────────────────────────────── */}
+            {/* ── STEP 1: How many leads per week? ─────────────────────── */}
             {step === 1 && (
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-1">Create your account</h2>
-                <p className="text-sm text-gray-500 mb-6">
-                  Already have an account?{' '}
-                  <Link href="/login" className="text-indigo-600 hover:underline font-medium">
-                    Sign in
-                  </Link>
-                </p>
-
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="business-name" className="block text-sm font-medium text-gray-700 mb-1">
-                      Business Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="business-name"
-                      type="text"
-                      required
-                      value={businessName}
-                      onChange={(e) => setBusinessName(e.target.value)}
-                      onKeyDown={handleStep1KeyDown}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                      placeholder="Acme Roofing Co."
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                      Email address <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="email"
-                      type="email"
-                      autoComplete="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      onKeyDown={handleStep1KeyDown}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                      placeholder="you@example.com"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                      Password <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="password"
-                      type="password"
-                      autoComplete="new-password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      onKeyDown={handleStep1KeyDown}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                      placeholder="Minimum 6 characters"
-                    />
-                    <p className="mt-1 text-xs text-gray-400">Must be at least 6 characters</p>
-                  </div>
-
-                  {step1Error && (
-                    <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3">
-                      <p className="text-sm text-red-700">{step1Error}</p>
-                    </div>
-                  )}
-
-                  <button
-                    onClick={handleStep1}
-                    disabled={step1Loading}
-                    className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
-                  >
-                    {step1Loading ? 'Creating account…' : 'Continue →'}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* ── STEP 2: How many leads per week? ─────────────────────── */}
-            {step === 2 && (
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-1">
                   How many leads do you want per week?
@@ -417,11 +337,18 @@ function SignupWizard() {
                     </button>
                   ))}
                 </div>
+
+                <p className="mt-6 text-center text-sm text-gray-500">
+                  Already have an account?{' '}
+                  <Link href="/login" className="text-indigo-600 hover:underline font-medium">
+                    Sign in
+                  </Link>
+                </p>
               </div>
             )}
 
-            {/* ── STEP 3: DIY or Fully Managed ────────────────────────── */}
-            {step === 3 && (
+            {/* ── STEP 2: DIY or Fully Managed ────────────────────────── */}
+            {step === 2 && (
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-1">
                   How do you want to get leads?
@@ -496,10 +423,87 @@ function SignupWizard() {
                 {/* Back button */}
                 <div className="mt-4">
                   <button
-                    onClick={() => animateTo(2)}
+                    onClick={() => animateTo(1)}
                     className="text-sm text-gray-400 hover:text-gray-600 hover:underline"
                   >
                     ← Change lead volume
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── STEP 3: Account Setup ────────────────────────────────── */}
+            {step === 3 && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-1">Create your account</h2>
+                <p className="text-sm text-gray-500 mb-6">
+                  Just one more step to get started.
+                </p>
+
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="business-name" className="block text-sm font-medium text-gray-700 mb-1">
+                      Business Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="business-name"
+                      type="text"
+                      required
+                      value={businessName}
+                      onChange={(e) => setBusinessName(e.target.value)}
+                      onKeyDown={handleAccountKeyDown}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                      placeholder="Acme Roofing Co."
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                      Email address <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onKeyDown={handleAccountKeyDown}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                      placeholder="you@example.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                      Password <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="password"
+                      type="password"
+                      autoComplete="new-password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      onKeyDown={handleAccountKeyDown}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                      placeholder="Minimum 6 characters"
+                    />
+                    <p className="mt-1 text-xs text-gray-400">Must be at least 6 characters</p>
+                  </div>
+
+                  {step1Error && (
+                    <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3">
+                      <p className="text-sm text-red-700">{step1Error}</p>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleCreateAccount}
+                    disabled={step1Loading}
+                    className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                  >
+                    {step1Loading ? 'Creating account…' : 'Create account & continue →'}
                   </button>
                 </div>
               </div>
