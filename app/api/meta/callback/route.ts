@@ -173,7 +173,7 @@ export async function GET(request: NextRequest) {
 
   // Return to signup wizard if that's where the OAuth flow originated
   if (from === 'signup') {
-    return NextResponse.redirect(`${siteUrl}/signup?step=2&meta=connected`)
+    return NextResponse.redirect(`${siteUrl}/signup?step=4&meta=connected`)
   }
 
   return NextResponse.redirect(`${siteUrl}/lead-machine?connected=true`)
