@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import AdminDashboard from './AdminDashboard'
 
+export const dynamic = 'force-dynamic'
+
 export interface AdminAccount {
   id: string
   business_name: string

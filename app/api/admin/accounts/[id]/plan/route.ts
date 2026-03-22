@@ -24,8 +24,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const admin = createAdminClient()
   const { error } = await admin
     .from('billing')
-    .update({ plan, updated_at: new Date().toISOString() })
-    .eq('account_id', params.id)
+    .upsert(
+      { account_id: params.id, plan, updated_at: new Date().toISOString() },
+      { onConflict: 'account_id' }
+    )
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ plan })
