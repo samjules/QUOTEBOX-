@@ -93,6 +93,33 @@ function LeftPanel() {
             </li>
           ))}
         </ul>
+
+        {/* App store badges */}
+        <div className="flex items-center gap-3 mt-10">
+          <a href="#" className="block hover:opacity-80 transition-opacity">
+            <svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="120" height="40" rx="5" fill="black"/>
+              <g fill="white">
+                <path d="M24.769 20.3a4.949 4.949 0 012.356-4.151 5.066 5.066 0 00-3.99-2.158c-1.68-.176-3.308 1.005-4.164 1.005-.872 0-2.19-.988-3.608-.958a5.315 5.315 0 00-4.473 2.728c-1.934 3.348-.491 8.269 1.361 10.976.927 1.325 2.01 2.805 3.428 2.753 1.387-.058 1.905-.884 3.58-.884 1.658 0 2.144.884 3.59.852 1.489-.025 2.426-1.332 3.32-2.67a10.962 10.962 0 001.52-3.092 4.782 4.782 0 01-2.92-4.401z"/>
+                <path d="M22.037 12.21a4.873 4.873 0 001.115-3.49 4.957 4.957 0 00-3.208 1.66 4.636 4.636 0 00-1.144 3.36 4.1 4.1 0 003.237-1.53z"/>
+                <text x="38" y="15" fontSize="8" fontFamily="Arial, sans-serif" fontWeight="400" letterSpacing=".5">Download on the</text>
+                <text x="38" y="27" fontSize="14" fontFamily="Arial, sans-serif" fontWeight="600">App Store</text>
+              </g>
+            </svg>
+          </a>
+          <a href="#" className="block hover:opacity-80 transition-opacity">
+            <svg width="135" height="40" viewBox="0 0 135 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="135" height="40" rx="5" fill="black"/>
+              <g fill="white">
+                <path d="M47.418 10.242a2.7 2.7 0 01-.753 1.9 2.633 2.633 0 01-2.02.826 2.868 2.868 0 01-.455-.04 2.66 2.66 0 01.722-1.876A2.82 2.82 0 0146.95 10.2a2.4 2.4 0 01.468.042zm4.632 7.758h-1.4l-.766-2.406h-2.665l-.73 2.406h-1.362l2.64-8.2h1.626zm-2.468-3.4l-.693-2.14c-.073-.22-.21-.742-.412-1.565h-.025c-.082.344-.21.866-.39 1.565l-.68 2.14z"/>
+                <text x="47" y="15" fontSize="7.5" fontFamily="Arial, sans-serif" fontWeight="400" letterSpacing=".5">GET IT ON</text>
+                <text x="47" y="27" fontSize="13" fontFamily="Arial, sans-serif" fontWeight="600">Google Play</text>
+                <path d="M22.917 19.834l-4.637-4.766v9.532zm-5.457-5.522l6.362-3.594c.583-.33.583-.87 0-1.2l-6.362-3.594v8.388zm0 11.376l6.362 3.594c.583.33.583-.87 0-1.2l-6.362-3.594zm.82-5.854l1.593 1.637-1.593 1.637z" fill="#fff"/>
+                <path d="M14.732 8.445c-.302.32-.482.798-.482 1.39v20.33c0 .593.18 1.07.482 1.39l.073.07 11.39-11.39v-.269L14.805 8.575z" fill="#4285F4" fillOpacity=".3"/>
+              </g>
+            </svg>
+          </a>
+        </div>
       </div>
     </div>
   )
