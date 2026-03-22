@@ -6,16 +6,28 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 // ── Step IDs ─────────────────────────────────────────────────────────────────
-type Step = 1 | 2 | 3 | 4
+type Step = 1 | 2 | 3 | 4 | 5
 type Plan = 'starter' | 'growth' | 'managed'
+type LeadsPerWeek = 5 | 10 | 15 | 20 | null
+type ServiceChoice = 'self' | 'managed' | null
 
 // ── Progress bar labels ───────────────────────────────────────────────────────
 const STEP_LABELS: Record<Step, string> = {
   1: 'Account',
-  2: 'Meta',
-  3: 'Your Style',
-  4: 'Plan',
+  2: 'Leads',
+  3: 'Service',
+  4: 'Meta',
+  5: 'Plan',
 }
+
+const LEADS_OPTIONS: { value: 5 | 10 | 15 | 20; label: string }[] = [
+  { value: 5, label: '5 leads/week' },
+  { value: 10, label: '10 leads/week' },
+  { value: 15, label: '15 leads/week' },
+  { value: 20, label: '20+ leads/week' },
+]
+
+const COST_PER_LEAD = 30
 
 // ── Plan definitions ──────────────────────────────────────────────────────────
 const PLANS: Record<
@@ -88,7 +100,7 @@ function LeftPanel() {
 
 // ── Progress bar ──────────────────────────────────────────────────────────────
 function ProgressBar({ current }: { current: Step }) {
-  const steps: Step[] = [1, 2, 3, 4]
+  const steps: Step[] = [1, 2, 3, 4, 5]
   return (
     <div className="flex items-center gap-0 mb-8">
       {steps.map((s, i) => (
@@ -141,24 +153,24 @@ function SignupWizard() {
   const [step, setStep] = useState<Step>(1)
   const [visible, setVisible] = useState(true)
 
-  // Step 1
+  // Step 1: Account
   const [businessName, setBusinessName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [step1Error, setStep1Error] = useState('')
   const [step1Loading, setStep1Loading] = useState(false)
 
-  // Step 2
+  // Step 2: Leads per week
+  const [leadsPerWeek, setLeadsPerWeek] = useState<LeadsPerWeek>(null)
+
+  // Step 3: Self vs Managed
+  const [serviceChoice, setServiceChoice] = useState<ServiceChoice>(null)
+
+  // Step 4: Meta
   const [metaConnected, setMetaConnected] = useState(false)
   const [metaFlash, setMetaFlash] = useState(false)
 
-  // Step 3
-  type QuizChoice = 'self' | 'managed' | null
-  type LeadsChoice = 'up10' | 'up50' | null
-  const [quizChoice, setQuizChoice] = useState<QuizChoice>(null)
-  const [leadsChoice, setLeadsChoice] = useState<LeadsChoice>(null)
-
-  // Step 4
+  // Step 5: Plan
   const [plan, setPlan] = useState<Plan>('starter')
 
   // ── Read query params on mount ────────────────────────────────────────────
@@ -170,13 +182,11 @@ function SignupWizard() {
       setMetaConnected(true)
       setMetaFlash(true)
 
-      // If we're being returned to step 2 after OAuth, navigate there first then advance
-      if (stepParam === '2') {
-        setStep(2)
-        // Auto-advance to step 3 after a brief flash
+      if (stepParam === '4') {
+        setStep(4)
         const timer = setTimeout(() => {
           setMetaFlash(false)
-          animateTo(3)
+          animateTo(5)
         }, 1400)
         return () => clearTimeout(timer)
       }
@@ -256,23 +266,28 @@ function SignupWizard() {
     if (e.key === 'Enter') handleStep1()
   }
 
-  // ── Step 3 quiz logic ─────────────────────────────────────────────────────
-  function handleQuizChoice(choice: QuizChoice) {
-    setQuizChoice(choice)
-    setLeadsChoice(null)
-    if (choice === 'managed') {
-      setPlan('managed')
-      setTimeout(() => animateTo(4), 350)
-    }
-    // 'self' waits for leadsChoice
+  // ── Step 2: Select leads per week ─────────────────────────────────────────
+  function handleLeadsSelect(count: 5 | 10 | 15 | 20) {
+    setLeadsPerWeek(count)
+    setTimeout(() => animateTo(3), 300)
   }
 
-  function handleLeadsChoice(choice: LeadsChoice) {
-    setLeadsChoice(choice)
-    const recommended: Plan = choice === 'up50' ? 'growth' : 'starter'
-    setPlan(recommended)
+  // ── Step 3: Self vs Managed ───────────────────────────────────────────────
+  function handleServiceSelect(choice: ServiceChoice) {
+    setServiceChoice(choice)
+    if (choice === 'managed') {
+      setPlan('managed')
+    } else {
+      // For self-serve, recommend based on lead volume
+      const weeklyLeads = leadsPerWeek ?? 5
+      setPlan(weeklyLeads >= 15 ? 'growth' : 'starter')
+    }
     setTimeout(() => animateTo(4), 350)
   }
+
+  // Computed managed estimate
+  const managedWeeklyEstimate = (leadsPerWeek ?? 5) * COST_PER_LEAD
+  const managedMonthlyEstimate = managedWeeklyEstimate * 4
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -374,8 +389,124 @@ function SignupWizard() {
               </div>
             )}
 
-            {/* ── STEP 2: Connect Meta ─────────────────────────────────── */}
+            {/* ── STEP 2: How many leads per week? ─────────────────────── */}
             {step === 2 && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                  How many leads do you want per week?
+                </h2>
+                <p className="text-sm text-gray-500 mb-6">
+                  This helps us recommend the right plan and estimate your costs.
+                </p>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {LEADS_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => handleLeadsSelect(opt.value)}
+                      className={`relative p-5 rounded-xl border-2 transition-all duration-200 hover:border-indigo-500 hover:bg-indigo-50 text-center ${
+                        leadsPerWeek === opt.value
+                          ? 'border-indigo-500 bg-indigo-50'
+                          : 'border-gray-200 bg-white'
+                      }`}
+                    >
+                      <div className="text-2xl font-extrabold text-indigo-600 mb-1">
+                        {opt.value === 20 ? '20+' : opt.value}
+                      </div>
+                      <div className="text-xs text-gray-500 font-medium">leads / week</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── STEP 3: DIY or Fully Managed ────────────────────────── */}
+            {step === 3 && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                  How do you want to get leads?
+                </h2>
+                <p className="text-sm text-gray-500 mb-6">
+                  Run your own ads or let us handle everything for guaranteed results.
+                </p>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {/* Card A: Self-serve */}
+                  <button
+                    onClick={() => handleServiceSelect('self')}
+                    className={`text-left p-5 rounded-xl border-2 transition-all duration-200 hover:border-indigo-500 hover:bg-indigo-50 ${
+                      serviceChoice === 'self'
+                        ? 'border-indigo-500 bg-indigo-50'
+                        : 'border-gray-200 bg-white'
+                    }`}
+                  >
+                    <div className="text-3xl mb-3">💻</div>
+                    <h3 className="text-base font-semibold text-gray-900 mb-1">
+                      I&apos;ll do it myself
+                    </h3>
+                    <p className="text-xs text-gray-500 leading-relaxed">
+                      I&apos;ll run my own ads and manage my leads
+                    </p>
+                  </button>
+
+                  {/* Card B: Managed */}
+                  <button
+                    onClick={() => handleServiceSelect('managed')}
+                    className={`text-left p-5 rounded-xl border-2 transition-all duration-200 hover:border-indigo-500 hover:bg-indigo-50 relative overflow-hidden ${
+                      serviceChoice === 'managed'
+                        ? 'border-indigo-500 bg-indigo-50'
+                        : 'border-gray-200 bg-white'
+                    }`}
+                  >
+                    <span className="absolute top-2 right-2 text-xs font-semibold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">
+                      Popular
+                    </span>
+                    <div className="text-3xl mb-3">✨</div>
+                    <h3 className="text-base font-semibold text-gray-900 mb-1">
+                      Guaranteed results
+                    </h3>
+                    <p className="text-xs text-gray-500 leading-relaxed">
+                      We handle everything — you just close the deals
+                    </p>
+                  </button>
+                </div>
+
+                {/* Managed estimate */}
+                {serviceChoice === 'managed' && leadsPerWeek && (
+                  <div className="mt-6 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 p-5">
+                    <p className="text-sm font-medium text-gray-700 mb-3">Your estimated investment</p>
+                    <div className="flex items-baseline gap-2 mb-1">
+                      <span className="text-3xl font-extrabold text-indigo-600">
+                        ${managedWeeklyEstimate}
+                      </span>
+                      <span className="text-sm text-gray-500">/ week</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mb-3">
+                      {leadsPerWeek === 20 ? '20+' : leadsPerWeek} leads x ${COST_PER_LEAD}/lead = ~${managedMonthlyEstimate.toLocaleString()}/mo
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-indigo-600 font-medium">
+                      <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l3 3 7-7" />
+                      </svg>
+                      Only pay for leads delivered
+                    </div>
+                  </div>
+                )}
+
+                {/* Back button */}
+                <div className="mt-4">
+                  <button
+                    onClick={() => animateTo(2)}
+                    className="text-sm text-gray-400 hover:text-gray-600 hover:underline"
+                  >
+                    ← Change lead volume
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── STEP 4: Connect Meta ─────────────────────────────────── */}
+            {step === 4 && (
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-1">
                   Connect your Facebook Business account
@@ -407,7 +538,7 @@ function SignupWizard() {
 
                     <div className="text-center">
                       <button
-                        onClick={() => animateTo(3)}
+                        onClick={() => animateTo(5)}
                         className="text-sm text-indigo-600 hover:underline"
                       >
                         Skip for now →
@@ -418,89 +549,8 @@ function SignupWizard() {
               </div>
             )}
 
-            {/* ── STEP 3: Tech Quiz ────────────────────────────────────── */}
-            {step === 3 && (
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-1">
-                  How do you want to handle advertising?
-                </h2>
-                <p className="text-sm text-gray-500 mb-6">
-                  We&apos;ll recommend the right plan for you.
-                </p>
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {/* Card A: Self-serve */}
-                  <button
-                    onClick={() => handleQuizChoice('self')}
-                    className={`text-left p-5 rounded-xl border-2 transition-all duration-200 hover:border-indigo-500 hover:bg-indigo-50 ${
-                      quizChoice === 'self'
-                        ? 'border-indigo-500 bg-indigo-50'
-                        : 'border-gray-200 bg-white'
-                    }`}
-                  >
-                    <div className="text-3xl mb-3">💻</div>
-                    <h3 className="text-base font-semibold text-gray-900 mb-1">
-                      I&apos;ll run ads myself
-                    </h3>
-                    <p className="text-xs text-gray-500 leading-relaxed">
-                      I&apos;m comfortable with Meta Ads Manager
-                    </p>
-                  </button>
-
-                  {/* Card B: Managed */}
-                  <button
-                    onClick={() => handleQuizChoice('managed')}
-                    className={`text-left p-5 rounded-xl border-2 transition-all duration-200 hover:border-indigo-500 hover:bg-indigo-50 ${
-                      quizChoice === 'managed'
-                        ? 'border-indigo-500 bg-indigo-50'
-                        : 'border-gray-200 bg-white'
-                    }`}
-                  >
-                    <div className="text-3xl mb-3">✨</div>
-                    <h3 className="text-base font-semibold text-gray-900 mb-1">
-                      Handle it for me
-                    </h3>
-                    <p className="text-xs text-gray-500 leading-relaxed">
-                      I want a fully managed service
-                    </p>
-                  </button>
-                </div>
-
-                {/* Follow-up for self-serve */}
-                {quizChoice === 'self' && (
-                  <div className="mt-6">
-                    <p className="text-sm font-medium text-gray-700 mb-3">
-                      How many leads/month do you need?
-                    </p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        onClick={() => handleLeadsChoice('up10')}
-                        className={`py-3 px-4 rounded-lg border-2 text-sm font-medium transition-all duration-200 hover:border-indigo-500 hover:bg-indigo-50 ${
-                          leadsChoice === 'up10'
-                            ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                            : 'border-gray-200 text-gray-700'
-                        }`}
-                      >
-                        Up to 10/month
-                      </button>
-                      <button
-                        onClick={() => handleLeadsChoice('up50')}
-                        className={`py-3 px-4 rounded-lg border-2 text-sm font-medium transition-all duration-200 hover:border-indigo-500 hover:bg-indigo-50 ${
-                          leadsChoice === 'up50'
-                            ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                            : 'border-gray-200 text-gray-700'
-                        }`}
-                      >
-                        Up to 50/month
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ── STEP 4: Plan ─────────────────────────────────────────── */}
-            {step === 4 && (
+            {/* ── STEP 5: Plan ─────────────────────────────────────────── */}
+            {step === 5 && (
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-1">Your recommended plan</h2>
                 <p className="text-sm text-gray-500 mb-6">
@@ -509,6 +559,18 @@ function SignupWizard() {
 
                 {(() => {
                   const p = PLANS[plan]
+                  // For managed, override price with their personalized estimate
+                  const displayPrice = plan === 'managed' && leadsPerWeek
+                    ? `~$${managedMonthlyEstimate.toLocaleString()}/mo`
+                    : p.price
+                  const displayFeatures = plan === 'managed' && leadsPerWeek
+                    ? [
+                        `${leadsPerWeek === 20 ? '20+' : leadsPerWeek} guaranteed leads/week`,
+                        'Dedicated account manager',
+                        'Full ad management',
+                      ]
+                    : p.features
+
                   return (
                     <div
                       className={`rounded-2xl p-6 border-2 ${
@@ -529,11 +591,11 @@ function SignupWizard() {
                       </div>
 
                       <p className={`text-3xl font-extrabold mb-4 ${p.dark ? 'text-white' : 'text-indigo-600'}`}>
-                        {p.price}
+                        {displayPrice}
                       </p>
 
                       <ul className="space-y-2 mb-6">
-                        {p.features.map((f) => (
+                        {displayFeatures.map((f) => (
                           <li key={f} className="flex items-center gap-2 text-sm">
                             <svg
                               className={`w-4 h-4 flex-shrink-0 ${p.dark ? 'text-indigo-400' : 'text-indigo-500'}`}
