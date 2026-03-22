@@ -214,12 +214,12 @@ function SignupWizard() {
     setServiceChoice(choice)
     if (choice === 'managed') {
       setPlan('managed')
+      // Don't auto-advance — let user see the estimate and click Continue
     } else {
-      // For self-serve, recommend based on lead volume
       const weeklyLeads = leadsPerWeek ?? 5
       setPlan(weeklyLeads >= 15 ? 'growth' : 'starter')
+      setTimeout(() => animateTo(3), 350)
     }
-    setTimeout(() => animateTo(3), 350)
   }
 
   // ── Step 3: Account creation ────────────────────────────────────────────
@@ -411,12 +411,18 @@ function SignupWizard() {
                     <p className="text-xs text-gray-500 mb-3">
                       {leadsPerWeek === 20 ? '20+' : leadsPerWeek} leads x ${COST_PER_LEAD}/lead = ~${managedMonthlyEstimate.toLocaleString()}/mo
                     </p>
-                    <div className="flex items-center gap-2 text-xs text-indigo-600 font-medium">
+                    <div className="flex items-center gap-2 text-xs text-indigo-600 font-medium mb-4">
                       <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l3 3 7-7" />
                       </svg>
                       Only pay for leads delivered
                     </div>
+                    <button
+                      onClick={() => animateTo(3)}
+                      className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-md transition-colors"
+                    >
+                      Looks good, let&apos;s go →
+                    </button>
                   </div>
                 )}
 
