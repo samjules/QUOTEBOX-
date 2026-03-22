@@ -81,6 +81,40 @@ export default async function DashboardPage() {
     supabase.from('meta_campaigns').select('id').eq('account_id', account.id).limit(1),
   ])
 
+  // QuoteBox Games ranking (only if enrolled)
+  let gamesRank: number | null = null
+  let gamesBookedThisMonth = 0
+  if (account.games_enrolled) {
+    gamesBookedThisMonth = leads.filter(
+      (l) => l.status === 'booked' && new Date(l.created_at) >= startOfMonth
+    ).length
+
+    // Get all enrolled accounts
+    const { data: enrolledAccounts } = await admin
+      .from('accounts')
+      .select('id')
+      .eq('games_enrolled', true)
+    const enrolledIds = (enrolledAccounts ?? []).map((a: { id: string }) => a.id)
+
+    // Get all booked leads this month for enrolled accounts
+    const { data: allBookedLeads } = await admin
+      .from('leads')
+      .select('account_id')
+      .eq('status', 'booked')
+      .gte('created_at', startOfMonth.toISOString())
+      .in('account_id', enrolledIds)
+
+    // Count per account
+    const counts: Record<string, number> = {}
+    for (const l of allBookedLeads ?? []) {
+      counts[l.account_id] = (counts[l.account_id] ?? 0) + 1
+    }
+    const ahead = enrolledIds.filter(
+      (id: string) => id !== account.id && (counts[id] ?? 0) > gamesBookedThisMonth
+    ).length
+    gamesRank = ahead + 1
+  }
+
   const metaConnected = !!account.meta_access_token
   const hasBillingPlan = !!billing?.plan
   const hasCreatives = (vsls?.length ?? 0) > 0
@@ -216,6 +250,36 @@ export default async function DashboardPage() {
               value={`${conversionRate}%`}
             />
           </div>
+
+          {/* QuoteBox Games Card */}
+          {account.games_enrolled && gamesRank !== null && (
+            <div className="bg-gradient-to-br from-indigo-600 to-purple-700 shadow rounded-xl overflow-hidden">
+              <div className="p-6 text-white">
+                <div className="flex items-center gap-3 mb-4">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 002.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 012.916.52 6.003 6.003 0 01-5.395 4.972m0 0a6.726 6.726 0 01-2.749 1.35m0 0a6.772 6.772 0 01-3.044 0" />
+                  </svg>
+                  <h3 className="text-lg font-bold">QuoteBox Games</h3>
+                </div>
+                <div className="flex items-baseline gap-4 mb-2">
+                  <div>
+                    <p className="text-3xl font-extrabold">#{gamesRank}</p>
+                    <p className="text-sm text-indigo-200">Your rank</p>
+                  </div>
+                  <div>
+                    <p className="text-3xl font-extrabold">{gamesBookedThisMonth}</p>
+                    <p className="text-sm text-indigo-200">Booked this month</p>
+                  </div>
+                </div>
+                <Link
+                  href="/games"
+                  className="inline-block mt-3 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-semibold transition-colors"
+                >
+                  View Leaderboard →
+                </Link>
+              </div>
+            </div>
+          )}
 
           {/* Quick Actions */}
           <div className="bg-white shadow rounded-xl p-6">

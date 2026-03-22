@@ -190,6 +190,9 @@ function SignupWizard() {
   // Step 2: Leads per week
   const [leadsPerWeek, setLeadsPerWeek] = useState<LeadsPerWeek>(null)
 
+  // Games enrollment
+  const [gamesEnrolled, setGamesEnrolled] = useState(false)
+
   // Step 3: Self vs Managed
   const [serviceChoice, setServiceChoice] = useState<ServiceChoice>(null)
 
@@ -303,6 +306,14 @@ function SignupWizard() {
     await supabase
       .from('billing')
       .insert([{ account_id: newAccount.id, credit_balance: 0, total_spent: 0 }])
+
+    // Enroll in QuoteBox Games if opted in
+    if (gamesEnrolled) {
+      await supabase
+        .from('accounts')
+        .update({ games_enrolled: true })
+        .eq('id', newAccount.id)
+    }
 
     setStep1Loading(false)
     animateTo(4)
@@ -452,6 +463,22 @@ function SignupWizard() {
                     </button>
                   </div>
                 )}
+
+                {/* QuoteBox Games toggle */}
+                <div className="mt-5">
+                  <label className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 hover:border-indigo-300 transition-colors cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={gamesEnrolled}
+                      onChange={(e) => setGamesEnrolled(e.target.checked)}
+                      className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">Enroll me in the QuoteBox Games</p>
+                      <p className="text-xs text-gray-500">Compete against other businesses and win awards</p>
+                    </div>
+                  </label>
+                </div>
 
                 {/* Back button */}
                 <div className="mt-4">
