@@ -115,6 +115,7 @@ export default async function DashboardPage() {
     gamesRank = ahead + 1
   }
 
+  const blessed = billing?.blessed === true
   const metaConnected = !!account.meta_access_token
   const hasBillingPlan = !!billing?.plan
   const hasCreatives = (vsls?.length ?? 0) > 0
@@ -156,8 +157,8 @@ export default async function DashboardPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
         <div className="py-4 space-y-6">
-          {/* Lead usage banner */}
-          <LeadUsageBanner plan={plan} monthlyLeads={monthlyLeads} />
+          {/* Lead usage banner — hidden for blessed accounts */}
+          {!blessed && <LeadUsageBanner plan={plan} monthlyLeads={monthlyLeads} />}
 
           {/* Onboarding checklist — hidden for PPL (they have their own onboarding) */}
           {!onboardingComplete && plan !== 'pay_per_lead' && (

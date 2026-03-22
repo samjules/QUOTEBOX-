@@ -13,6 +13,7 @@ export interface AdminAccount {
   total_spent: number
   stripe_customer_id: string | null
   trial_ends_at: string | null
+  blessed: boolean
   leads_total: number
   leads_this_month: number
   forms_count: number
@@ -83,6 +84,7 @@ export default async function AdminPage() {
       total_spent: b?.total_spent ?? 0,
       stripe_customer_id: b?.stripe_customer_id ?? null,
       trial_ends_at: b?.trial_ends_at ?? null,
+      blessed: b?.blessed ?? false,
       leads_total: l.total,
       leads_this_month: l.thisMonth,
       forms_count: formsPerAccount.get(acc.id) ?? 0,

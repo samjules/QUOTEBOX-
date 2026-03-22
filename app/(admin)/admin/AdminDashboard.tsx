@@ -57,6 +57,7 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
   const [onboardingOpen, setOnboardingOpen] = useState(false)
   const [markingBuilt, setMarkingBuilt] = useState(false)
   const [resettingOnboarding, setResettingOnboarding] = useState(false)
+  const [blessSaving, setBlessSaving] = useState(false)
 
   const selected = localAccounts.find((a) => a.id === selectedId) ?? null
 
@@ -123,6 +124,24 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
     showToast('Plan updated')
   }
 
+
+  async function handleToggleBlessed() {
+    if (!selectedId || !selected) return
+    setBlessSaving(true)
+    const newVal = !selected.blessed
+    const res = await fetch(`/api/admin/accounts/${selectedId}/bless`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ blessed: newVal }),
+    })
+    const data = await res.json()
+    setBlessSaving(false)
+    if (!res.ok) { showToast(data.error ?? 'Failed', false); return }
+    setLocalAccounts((prev) =>
+      prev.map((a) => a.id === selectedId ? { ...a, blessed: data.blessed } : a)
+    )
+    showToast(newVal ? 'Account blessed' : 'Blessing removed')
+  }
 
   async function handleImpersonate(redirectPath?: string, sameTab = false) {
     if (!selected) return
@@ -574,6 +593,32 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
                       ))}
                     </div>
                   </div>
+                </div>
+
+                {/* Bless toggle */}
+                <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#475569', display: 'block' }}>Bless This Account</label>
+                    <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Bypass all billing gates and credit deductions</span>
+                  </div>
+                  <button
+                    onClick={handleToggleBlessed}
+                    disabled={blessSaving}
+                    style={{
+                      width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer', position: 'relative',
+                      background: selected.blessed ? '#16a34a' : '#d1d5db',
+                      opacity: blessSaving ? 0.5 : 1,
+                      transition: 'background 0.2s',
+                    }}
+                  >
+                    <span style={{
+                      display: 'block', width: 18, height: 18, borderRadius: 9, background: 'white',
+                      position: 'absolute', top: 3,
+                      left: selected.blessed ? 23 : 3,
+                      transition: 'left 0.2s',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                    }} />
+                  </button>
                 </div>
               </div>
 

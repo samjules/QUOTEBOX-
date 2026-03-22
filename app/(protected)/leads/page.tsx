@@ -35,14 +35,15 @@ export default async function LeadsPage() {
   const admin = createAdminClient()
   const { data: billingData } = await admin
     .from('billing')
-    .select('plan, trial_ends_at')
+    .select('plan, trial_ends_at, blessed')
     .eq('account_id', account.id)
     .single()
 
   const plan = billingData?.plan ?? null
   const trialEndsAt = billingData?.trial_ends_at ?? null
   const isOnTrial = trialEndsAt ? new Date(trialEndsAt) > new Date() : false
-  const hasAccess = plan !== null
+  const blessed = billingData?.blessed === true
+  const hasAccess = blessed || plan !== null
 
   // Auto-promote held leads to 'new' when account has an active plan
   if (hasAccess) {

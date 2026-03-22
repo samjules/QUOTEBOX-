@@ -62,11 +62,13 @@ export async function POST(request: NextRequest) {
   try {
     const { data: billing } = await supabaseAdmin
       .from('billing')
-      .select('credit_balance, plan')
+      .select('credit_balance, plan, blessed')
       .eq('account_id', body.account_id)
       .single()
 
-    if (billing && (billing.plan === 'fully_managed' || billing.plan === 'pay_per_lead')) {
+    if (billing && billing.blessed) {
+      // Blessed accounts skip credit deduction entirely
+    } else if (billing && (billing.plan === 'fully_managed' || billing.plan === 'pay_per_lead')) {
       if (billing.credit_balance >= COST_PER_LEAD) {
         // Guarded update to prevent race conditions
         const { data: updated } = await supabaseAdmin
