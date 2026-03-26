@@ -1105,6 +1105,245 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Google Play Banner ── */}
+      <section style={{ padding: '72px 24px', background: 'white', borderTop: '1px solid #f0f0f0' }}>
+        <div style={{
+          maxWidth: 860,
+          margin: '0 auto',
+          background: '#1a1a2e',
+          borderRadius: 24,
+          padding: '48px 48px',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: 40,
+          alignItems: 'center',
+          overflow: 'hidden',
+          position: 'relative',
+        }}>
+          {/* Background glow */}
+          <div style={{
+            position: 'absolute',
+            top: -60,
+            left: -60,
+            width: 300,
+            height: 300,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(61,220,132,0.08) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }} />
+
+          {/* Phone mockup */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            position: 'relative',
+            zIndex: 1,
+          }}>
+            <div style={{
+              width: 200,
+              background: '#0a0a1a',
+              borderRadius: 36,
+              padding: '10px',
+              boxShadow: '0 0 0 1px rgba(255,255,255,0.1), 0 32px 80px rgba(0,0,0,0.6)',
+              position: 'relative',
+            }}>
+              {/* Punch-hole camera */}
+              <div style={{
+                width: 10,
+                height: 10,
+                background: '#0a0a1a',
+                borderRadius: '50%',
+                position: 'absolute',
+                top: 18,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 2,
+              }} />
+              {/* Screen */}
+              <div style={{
+                background: '#f9fafb',
+                borderRadius: 28,
+                overflow: 'hidden',
+                minHeight: 380,
+                paddingTop: 24,
+              }}>
+                {/* Status bar */}
+                <div style={{ padding: '6px 16px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.55rem', fontWeight: 700, color: '#1a1a2e' }}>12:30</span>
+                  <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                    <div style={{ width: 10, height: 6, border: '1px solid #1a1a2e', borderRadius: 1, position: 'relative' }}>
+                      <div style={{ position: 'absolute', inset: 1, background: '#10b981', borderRadius: 0.5, width: '85%' }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* App header */}
+                <div style={{ padding: '12px 14px 8px', borderBottom: '1px solid #e5e7eb' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1a1a2e' }}>My Business</div>
+                </div>
+
+                {/* Stats row */}
+                <div style={{ display: 'flex', gap: 6, padding: '10px 10px 6px' }}>
+                  {[
+                    { label: 'Total', val: '38', color: '#4f46e5' },
+                    { label: 'New', val: '5', color: '#f59e0b' },
+                    { label: 'Booked', val: '19', color: '#10b981' },
+                  ].map(({ label, val, color }) => (
+                    <div key={label} style={{
+                      flex: 1,
+                      background: 'white',
+                      borderRadius: 8,
+                      padding: '6px 6px',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.07)',
+                    }}>
+                      <div style={{ fontSize: '0.52rem', color: '#9ca3af' }}>{label}</div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color }}>{val}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Lead cards */}
+                <div style={{ padding: '4px 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {[
+                    { name: 'Mike T.', type: 'Roofing', quote: '$2,400', status: 'New', dot: '#f59e0b' },
+                    { name: 'Amy W.', type: 'Plumbing', quote: '$280', status: 'Booked', dot: '#10b981' },
+                    { name: 'Carlos D.', type: 'HVAC', quote: '$550', status: 'Contacted', dot: '#3b82f6' },
+                  ].map(({ name, type, quote, status, dot }) => (
+                    <div key={name} style={{
+                      background: 'white',
+                      borderRadius: 10,
+                      padding: '8px 10px',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.07)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}>
+                      <div style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: '50%',
+                        background: dot + '22',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.6rem',
+                        fontWeight: 700,
+                        color: dot,
+                        flexShrink: 0,
+                      }}>
+                        {name[0]}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '0.62rem', fontWeight: 600, color: '#1a1a2e', lineHeight: 1.2 }}>{name}</div>
+                        <div style={{ fontSize: '0.52rem', color: '#9ca3af' }}>{type}</div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '0.62rem', fontWeight: 700, color: '#10b981' }}>{quote}</div>
+                        <div style={{
+                          fontSize: '0.45rem',
+                          fontWeight: 600,
+                          color: dot,
+                          background: dot + '18',
+                          padding: '1px 5px',
+                          borderRadius: 99,
+                          marginTop: 2,
+                        }}>
+                          {status}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Copy */}
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              background: 'rgba(61,220,132,0.12)',
+              border: '1px solid rgba(61,220,132,0.25)',
+              borderRadius: 99,
+              padding: '5px 14px',
+              marginBottom: 20,
+            }}>
+              {/* Google Play triangle icon */}
+              <svg width="14" height="16" viewBox="0 0 24 24" fill="#3DDC84" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a1 1 0 0 1 .609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 0 1 0 1.73l-2.808 1.626L15.206 12l2.492-2.491zM5.864 2.658L16.8 8.99l-2.3 2.3-8.636-8.632z"/>
+              </svg>
+              <span style={{ color: '#3DDC84', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                Now on Android
+              </span>
+            </div>
+
+            <h2 style={{
+              fontFamily: "'Oswald', sans-serif",
+              fontSize: 'clamp(1.6rem, 3.5vw, 2.2rem)',
+              fontWeight: 800,
+              color: 'white',
+              lineHeight: 1.15,
+              marginBottom: 16,
+            }}>
+              QuoteBox CRM<br />for Android.
+            </h2>
+
+            <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.95rem', lineHeight: 1.75, marginBottom: 32, maxWidth: 380 }}>
+              Get the same powerful lead management on your Android device. View leads, update statuses, and receive instant push notifications — wherever you are.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32 }}>
+              {[
+                { icon: '🔔', text: 'Instant push notifications for every new lead' },
+                { icon: '📞', text: 'One-tap call or email directly from the app' },
+                { icon: '✅', text: 'Update lead status on the go — new, contacted, booked' },
+              ].map(({ icon, text }) => (
+                <div key={text} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: '0.9rem', flexShrink: 0 }}>{icon}</span>
+                  <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.88rem', lineHeight: 1.55 }}>{text}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Google Play badge */}
+            <a
+              href="https://play.google.com/store"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: 'inline-block' }}
+            >
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 10,
+                background: 'white',
+                color: '#1a1a2e',
+                borderRadius: 12,
+                padding: '10px 20px',
+                textDecoration: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+                transition: 'opacity 0.15s',
+              }}>
+                <svg width="20" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a1 1 0 0 1 .609-.92z" fill="#4285F4"/>
+                  <path d="M14.499 12.707l2.302 2.302-10.937 6.333 8.635-8.635z" fill="#EA4335"/>
+                  <path d="M17.698 9.509l2.807 1.626a1 1 0 0 1 0 1.73l-2.808 1.626L15.206 12l2.492-2.491z" fill="#FBBC04"/>
+                  <path d="M5.864 2.658L16.8 8.99l-2.3 2.3-8.636-8.632z" fill="#34A853"/>
+                </svg>
+                <div>
+                  <div style={{ fontSize: '0.6rem', color: '#555', lineHeight: 1, marginBottom: 1 }}>GET IT ON</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.01em' }}>Google Play</div>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </section>
+
       <PublicFooter />
 
     </div>
