@@ -41,7 +41,7 @@ function isImageFile(fileName: string) {
 }
 
 function formatMediaDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return new Date(iso).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
 }
 
 function isColorDark(hex: string): boolean {

@@ -235,7 +235,7 @@ export default function HostedFormsPage() {
               const fieldCount = fields.length
               const created = new Date(form.created_at).toLocaleDateString(
                 'en-US',
-                { month: 'short', day: 'numeric', year: 'numeric' }
+                { month: '2-digit', day: '2-digit', year: 'numeric' }
               )
               const liveUrl = `/${slug}`
               const absoluteUrl = typeof window !== 'undefined'

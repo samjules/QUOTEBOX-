@@ -11,6 +11,12 @@ export interface Account {
   meta_connected_at?: string
   stripe_connect_account_id?: string | null
   stripe_connect_completed_at?: string | null
+  docusign_access_token?: string | null
+  docusign_refresh_token?: string | null
+  docusign_account_id?: string | null
+  docusign_user_id?: string | null
+  docusign_base_path?: string | null
+  docusign_connected_at?: string | null
 }
 
 export interface FieldOption {
@@ -99,6 +105,9 @@ export interface Lead {
   status: 'new' | 'contacted' | 'booked' | 'lost' | 'held'
   created_at: string
   notes?: string | null
+  agreement_envelope_id?: string | null
+  agreement_status?: string | null
+  agreement_sent_at?: string | null
 }
 
 export interface Billing {

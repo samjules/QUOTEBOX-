@@ -137,7 +137,7 @@ export async function updateLeadStatus(leadId: string, status: string) {
           const nodemailer = await import('nodemailer')
           const transporter = nodemailer.default.createTransport({ service: 'gmail', auth: { user: gmailUser, pass: gmailPass } })
           const formattedDate = bookingDate
-            ? new Date(bookingDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+            ? new Date(bookingDate + 'T12:00:00').toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
             : null
           const currency = (formData?._quote_currency as string) || '$'
           const businessName = account?.business_name ?? 'Your service provider'

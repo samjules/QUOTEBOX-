@@ -58,6 +58,10 @@ export default function SettingsPage() {
   const [stripeConnectAccountId, setStripeConnectAccountId] = useState<string | null>(null)
   const [stripeDisconnecting, setStripeDisconnecting] = useState(false)
 
+  // DocuSign state
+  const [docusignConnected, setDocusignConnected] = useState(false)
+  const [docusignDisconnecting, setDocusignDisconnecting] = useState(false)
+
   // Delete account state
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
@@ -88,6 +92,7 @@ export default function SettingsPage() {
           setSelectedAdAccount(account.meta_ad_account_id ?? '')
         }
         setStripeConnectAccountId(account.stripe_connect_account_id ?? null)
+        setDocusignConnected(!!account.docusign_access_token)
       }
     }
     load()
@@ -103,6 +108,18 @@ export default function SettingsPage() {
       setTimeout(() => setMessage(''), 4000)
     } else if (stripeParam === 'error') {
       setMessage(`Error: Stripe connection failed${reason ? ` — ${reason}` : ''}. Please try again.`)
+      window.history.replaceState({}, '', '/settings')
+    }
+
+    const docusignParam = searchParams.get('docusign')
+    const docusignReason = searchParams.get('reason')
+    if (docusignParam === 'connected') {
+      setDocusignConnected(true)
+      setMessage('DocuSign account connected successfully!')
+      window.history.replaceState({}, '', '/settings')
+      setTimeout(() => setMessage(''), 4000)
+    } else if (docusignParam === 'error') {
+      setMessage(`Error: DocuSign connection failed${docusignReason ? ` — ${docusignReason}` : ''}. Please try again.`)
       window.history.replaceState({}, '', '/settings')
     }
   }, [searchParams])
@@ -219,6 +236,31 @@ export default function SettingsPage() {
     } else {
       setStripeConnectAccountId(null)
       setMessage('Stripe account disconnected.')
+      setTimeout(() => setMessage(''), 2000)
+    }
+  }
+
+  async function handleDisconnectDocusign() {
+    if (!accountId) return
+    setDocusignDisconnecting(true)
+    setMessage('')
+    const { error } = await supabase
+      .from('accounts')
+      .update({
+        docusign_access_token: null,
+        docusign_refresh_token: null,
+        docusign_account_id: null,
+        docusign_user_id: null,
+        docusign_base_path: null,
+        docusign_connected_at: null,
+      })
+      .eq('id', accountId)
+    setDocusignDisconnecting(false)
+    if (error) {
+      setMessage('Error: Failed to disconnect DocuSign account')
+    } else {
+      setDocusignConnected(false)
+      setMessage('DocuSign account disconnected.')
       setTimeout(() => setMessage(''), 2000)
     }
   }
@@ -577,6 +619,56 @@ export default function SettingsPage() {
                     {!STRIPE_CONNECT_CLIENT_ID ? 'Add NEXT_PUBLIC_STRIPE_CONNECT_CLIENT_ID to enable.' : 'Loading…'}
                   </p>
                 )}
+              </div>
+            )}
+          </div>
+
+          {/* DocuSign Integration */}
+          <div className="bg-white shadow rounded-xl p-6">
+            <h2 className="text-lg font-medium text-gray-900 mb-1">DocuSign Agreements</h2>
+            <p className="text-sm text-gray-500 mb-5">Connect your DocuSign account to send agreements for e-signature directly from the Leads page.</p>
+
+            {docusignConnected ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-green-500" />
+                    <span className="text-sm font-medium text-gray-700">Connected</span>
+                  </div>
+                  <a
+                    href="https://app.docusign.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-indigo-600 hover:underline font-medium"
+                  >
+                    Open DocuSign Dashboard →
+                  </a>
+                </div>
+                <div className="pt-2 border-t border-gray-100">
+                  <button
+                    onClick={handleDisconnectDocusign}
+                    disabled={docusignDisconnecting}
+                    className="text-sm text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
+                  >
+                    {docusignDisconnecting ? 'Disconnecting…' : 'Disconnect DocuSign account'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-gray-300" />
+                  <span className="text-sm text-gray-500">No DocuSign account connected</span>
+                </div>
+                <a
+                  href="/api/docusign/connect"
+                  className="inline-flex items-center gap-2 bg-[#1a1a2e] hover:bg-[#2d2d44] text-white text-sm font-medium px-4 py-2 rounded-lg transition"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  </svg>
+                  Connect DocuSign
+                </a>
               </div>
             )}
           </div>

@@ -109,7 +109,7 @@ export default async function AnalyticsPage() {
           <div className="flex items-end gap-[3px] h-24">
             {dailyData.map(({ date, count }) => {
               const pct = Math.round((count / maxCount) * 100)
-              const label = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+              const label = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
               return (
                 <div
                   key={date}
@@ -126,7 +126,7 @@ export default async function AnalyticsPage() {
             })}
           </div>
           <div className="flex justify-between mt-2 text-xs text-gray-400">
-            <span>{dailyData[0]?.date ? new Date(dailyData[0].date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}</span>
+            <span>{dailyData[0]?.date ? new Date(dailyData[0].date + 'T12:00:00').toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) : ''}</span>
             <span>Today</span>
           </div>
         </div>

@@ -179,7 +179,7 @@ export default async function LeadsPage() {
               </div>
 
               {/* Leads table */}
-              <LeadsTable leads={leads} stripeConnectAccountId={account.stripe_connect_account_id ?? null} fieldMap={fieldMap} />
+              <LeadsTable leads={leads} stripeConnectAccountId={account.stripe_connect_account_id ?? null} docusignConnected={!!account.docusign_access_token} fieldMap={fieldMap} />
             </>
           )}
         </div>

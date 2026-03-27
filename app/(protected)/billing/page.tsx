@@ -619,7 +619,7 @@ export default function BillingPage() {
                         return (
                           <tr key={tx.id}>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {new Date(tx.created_at).toLocaleDateString()}{' '}
+                              {new Date(tx.created_at).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}{' '}
                               {new Date(tx.created_at).toLocaleTimeString()}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm">

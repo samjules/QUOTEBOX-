@@ -1555,7 +1555,7 @@ export default function LeadMachinePage() {
                       </div>
                       <p className="text-xs text-gray-400 mb-3">
                         {c.objective.replace('OUTCOME_', '')} · Budget: ${(parseInt(c.daily_budget || '0') / 100).toFixed(0)}/day ·
-                        Created {new Date(c.created_time).toLocaleDateString()}
+                        Created {new Date(c.created_time).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
                       </p>
                       <div className="flex gap-4 text-sm">
                         <div>
