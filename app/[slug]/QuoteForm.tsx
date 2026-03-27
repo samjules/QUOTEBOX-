@@ -962,7 +962,7 @@ function RouteField({
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
               <RouteStop dotColor="#ef4444" bg="#fef2f2" border="#fecaca" textColor="#991b1b"
                 label={endQuery || 'Your location'} tag="Service address" />
-              {routeInfo && field.baseAddress && field.routeChargeType !== 'none' && (
+              {routeInfo && field.baseAddress && field.routeChargeType !== 'none' && !hidePrices && (
                 <div style={{
                   display: 'flex', alignItems: 'flex-start', gap: 9, marginTop: 4,
                   padding: '9px 12px', borderRadius: 9,
@@ -977,7 +977,7 @@ function RouteField({
                       {routeInfo.distanceMiles.toFixed(1)} mi · {Math.round(routeInfo.durationMinutes)} min to reach your location
                     </div>
                   </div>
-                  {!hidePrices && priceContribution > 0 && (
+                  {priceContribution > 0 && (
                     <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#b45309', flexShrink: 0 }}>
                       +{currency}{priceContribution.toFixed(2)}
                     </span>
@@ -1001,7 +1001,7 @@ function RouteField({
                 <RouteStop dotColor="#ef4444" bg="#fef2f2" border="#fecaca" textColor="#991b1b"
                   label={endQuery || 'End'} tag="" />
 
-                {/* Travel fee callout */}
+                {/* Travel fee callout — only visible when prices are shown */}
                 {!hidePrices && travelMiles > 0 && (
                   <div style={{
                     display: 'flex', alignItems: 'flex-start', gap: 9, marginTop: 4,
@@ -1027,7 +1027,7 @@ function RouteField({
                         const billable = Math.max(0, travelMins - (field.freeMinutes ?? 0))
                         travelCost += billable * (field.ratePerMinute ?? 0)
                       }
-                      return !hidePrices && travelCost > 0 ? (
+                      return travelCost > 0 ? (
                         <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#b45309', flexShrink: 0 }}>
                           +{currency}{travelCost.toFixed(2)}
                         </span>
@@ -1036,16 +1036,21 @@ function RouteField({
                   </div>
                 )}
 
-                {/* Total */}
+                {/* Distance — show only job leg when prices hidden, full total when live */}
                 {routeInfo && (
                   <div style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     padding: '8px 12px', background: '#f1f5f9', borderRadius: 8, border: '1px solid #cbd5e1',
                   }}>
-                    <span style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 700 }}>Total distance</span>
+                    <span style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 700 }}>
+                      {hidePrices ? 'Distance' : 'Total distance'}
+                    </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <span style={{ fontSize: '0.82rem', color: '#334155', fontWeight: 700 }}>
-                        {routeInfo.distanceMiles.toFixed(1)} mi · {Math.round(routeInfo.durationMinutes)} min
+                        {hidePrices && jobLeg
+                          ? `${jobLeg.distanceMiles.toFixed(1)} mi · ${Math.round(jobLeg.durationMinutes)} min`
+                          : `${routeInfo.distanceMiles.toFixed(1)} mi · ${Math.round(routeInfo.durationMinutes)} min`
+                        }
                       </span>
                       {!hidePrices && field.routeChargeType !== 'none' && priceContribution > 0 && (
                         <span style={{ fontSize: '0.85rem', color: '#059669', fontWeight: 700 }}>
@@ -1416,10 +1421,6 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
   // Also respect legacy show_total=false for forms saved before quote_display existed
   const effectiveDisplay = config.quote_display ?? (config.show_total === false ? 'hidden' : 'live')
   const hidePrices = effectiveDisplay === 'after_submit' || effectiveDisplay === 'hidden'
-  // DEBUG — remove after verifying
-  if (typeof window !== 'undefined') {
-    console.log('[QuoteForm] quote_display:', config.quote_display, '| show_total:', config.show_total, '| effectiveDisplay:', effectiveDisplay, '| hidePrices:', hidePrices)
-  }
 
   // ── Shared styles ──
   const inputStyle: React.CSSProperties = {
