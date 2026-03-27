@@ -1413,7 +1413,9 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
       (f.type === 'draw_area' && (f.ratePerSqFt ?? 0) > 0)
   )
   // Hide all inline prices when quote_display is 'after_submit' or 'hidden'
-  const hidePrices = config.quote_display === 'after_submit' || config.quote_display === 'hidden'
+  // Also respect legacy show_total=false for forms saved before quote_display existed
+  const effectiveDisplay = config.quote_display ?? (config.show_total === false ? 'hidden' : 'live')
+  const hidePrices = effectiveDisplay === 'after_submit' || effectiveDisplay === 'hidden'
 
   // ── Shared styles ──
   const inputStyle: React.CSSProperties = {
@@ -1899,7 +1901,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
                 }}>
                   <div>
                     <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      {config.quote_display === 'live' ? 'Your Estimate' : 'Quote Total'}
+                      {effectiveDisplay === 'live' ? 'Your Estimate' : 'Quote Total'}
                     </div>
                     {minApplied && <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 2 }}>Min. fee applies</div>}
                   </div>
@@ -1943,20 +1945,20 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
                 <strong style={{ color: '#334155' }}>{email}</strong> shortly.
               </div>
 
-              {hasPricing && config.quote_display !== 'hidden' && (displayTotal > 0 || config.quote_display === 'after_submit') && (
+              {hasPricing && effectiveDisplay !== 'hidden' && (displayTotal > 0 || effectiveDisplay === 'after_submit') && (
                 <div style={{
                   marginTop: 28, padding: '20px 22px',
-                  background: config.quote_display === 'after_submit'
+                  background: effectiveDisplay === 'after_submit'
                     ? `linear-gradient(135deg, ${accentBg}12, ${accentBg}08)`
                     : 'linear-gradient(135deg, #f8fafc, #f1f5f9)',
                   borderRadius: 16,
-                  border: config.quote_display === 'after_submit'
+                  border: effectiveDisplay === 'after_submit'
                     ? `1.5px solid ${accentBg}40`
                     : '1px solid #e2e8f0',
                   textAlign: 'left',
                 }}>
                   <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    {config.quote_display === 'after_submit' ? 'Your Estimated Quote' : 'Estimated Total'}
+                    {effectiveDisplay === 'after_submit' ? 'Your Estimated Quote' : 'Estimated Total'}
                   </div>
 
                   {/* Line-item breakdown */}
