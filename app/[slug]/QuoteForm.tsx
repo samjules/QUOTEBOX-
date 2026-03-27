@@ -671,12 +671,18 @@ function RouteField({
         return
       }
       setIsLoadingRoute(true)
-      getDirections(baseCoords, endCoords).then((result) => {
+      // Fetch both directions for round trip: base→customer and customer→base
+      Promise.all([
+        getDirections(baseCoords, endCoords),   // to customer
+        getDirections(endCoords, baseCoords),   // return to base
+      ]).then(([toResult, returnResult]) => {
         setIsLoadingRoute(false)
-        if (!result) return
-        setRouteInfo({ distanceMiles: result.distanceMiles, durationMinutes: result.durationMinutes })
-        // Single mode: the whole route is the base line (business → customer)
-        setBaseGeometry(result.geometry)
+        if (!toResult || !returnResult) return
+        const totalMiles = toResult.distanceMiles + returnResult.distanceMiles
+        const totalMinutes = toResult.durationMinutes + returnResult.durationMinutes
+        setRouteInfo({ distanceMiles: totalMiles, durationMinutes: totalMinutes })
+        // Single mode: show the base→customer line on map
+        setBaseGeometry(toResult.geometry)
         setRouteGeometry(null)
         setLegInfos(null)
         onRouteChangeRef.current({
@@ -684,8 +690,8 @@ function RouteField({
           startCoords: baseCoords,
           endAddress: endQuery,
           endCoords: endCoords!,
-          distanceMiles: result.distanceMiles,
-          durationMinutes: result.durationMinutes,
+          distanceMiles: totalMiles,
+          durationMinutes: totalMinutes,
         })
       })
       return
@@ -699,23 +705,23 @@ function RouteField({
     }
     setIsLoadingRoute(true)
     if (field.baseAddress && baseCoords) {
-      // Fetch base→start and start→end as separate legs for distinct coloring
+      // Fetch all 3 legs: base→start, start→end, end→base
       Promise.all([
-        getDirections(baseCoords, startCoords),  // base leg (gray)
-        getDirections(startCoords, endCoords),   // customer route (accent)
-      ]).then(([baseResult, customerResult]) => {
+        getDirections(baseCoords, startCoords),  // leg 0: base → start
+        getDirections(startCoords, endCoords),   // leg 1: start → end (job)
+        getDirections(endCoords, baseCoords),    // leg 2: end → base (return)
+      ]).then(([toStartResult, customerResult, returnResult]) => {
         setIsLoadingRoute(false)
-        if (!baseResult || !customerResult) return
-        const leg0 = { distanceMiles: baseResult.distanceMiles, durationMinutes: baseResult.durationMinutes }
+        if (!toStartResult || !customerResult || !returnResult) return
+        const leg0 = { distanceMiles: toStartResult.distanceMiles, durationMinutes: toStartResult.durationMinutes }
         const leg1 = { distanceMiles: customerResult.distanceMiles, durationMinutes: customerResult.durationMinutes }
-        // Mirror: return trip retraces leg0 (end → start → base = same roads reversed)
-        const mirroredLegs = [leg0, leg1, leg0]
-        const totalMiles = leg0.distanceMiles * 2 + leg1.distanceMiles
-        const totalMinutes = leg0.durationMinutes * 2 + leg1.durationMinutes
+        const leg2 = { distanceMiles: returnResult.distanceMiles, durationMinutes: returnResult.durationMinutes }
+        const totalMiles = leg0.distanceMiles + leg1.distanceMiles + leg2.distanceMiles
+        const totalMinutes = leg0.durationMinutes + leg1.durationMinutes + leg2.durationMinutes
         setRouteInfo({ distanceMiles: totalMiles, durationMinutes: totalMinutes })
-        setBaseGeometry(baseResult.geometry)       // base leg in gray
-        setRouteGeometry(customerResult.geometry)  // customer route in accent color
-        setLegInfos(mirroredLegs)
+        setBaseGeometry(toStartResult.geometry)       // base leg in gray
+        setRouteGeometry(customerResult.geometry)     // customer route in accent color
+        setLegInfos([leg0, leg1, leg2])
         onRouteChangeRef.current({
           startAddress: startQuery,
           startCoords: startCoords!,
