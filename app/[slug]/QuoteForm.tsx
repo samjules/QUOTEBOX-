@@ -1002,7 +1002,7 @@ function RouteField({
                   label={endQuery || 'End'} tag="" />
 
                 {/* Travel fee callout */}
-                {travelMiles > 0 && (
+                {!hidePrices && travelMiles > 0 && (
                   <div style={{
                     display: 'flex', alignItems: 'flex-start', gap: 9, marginTop: 4,
                     padding: '9px 12px', borderRadius: 9,
@@ -1412,8 +1412,8 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
       (f.type === 'route' && f.routeChargeType !== 'none') ||
       (f.type === 'draw_area' && (f.ratePerSqFt ?? 0) > 0)
   )
-  // Hide all inline prices unless quote_display is 'live'
-  const hidePrices = config.quote_display !== 'live'
+  // Hide all inline prices when quote_display is 'after_submit' or 'hidden'
+  const hidePrices = config.quote_display === 'after_submit' || config.quote_display === 'hidden'
 
   // ── Shared styles ──
   const inputStyle: React.CSSProperties = {
@@ -1548,7 +1548,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
                 {isConfirmStep ? 'All Done! 🎉' : isContactStep ? 'Almost There' : step === 0 ? 'Get Your Quote' : `Step ${step + 1} of ${totalFieldSteps + 1}`}
               </span>
               {/* Live running total pill */}
-              {hasPricing && config.quote_display === 'live' && displayTotal > 0 && !isConfirmStep && (
+              {hasPricing && !hidePrices && displayTotal > 0 && !isConfirmStep && (
                 <span style={{
                   fontSize: '0.88rem', fontWeight: 800,
                   background: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(26,26,46,0.12)',
@@ -1890,7 +1890,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
               </div>
 
               {/* Quote total preview — only in live mode (after_submit reveals on confirm page) */}
-              {hasPricing && config.quote_display === 'live' && displayTotal > 0 && (
+              {hasPricing && !hidePrices && displayTotal > 0 && (
                 <div style={{
                   marginTop: 22, padding: '15px 18px',
                   background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)',
