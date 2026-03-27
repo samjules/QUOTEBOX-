@@ -32,6 +32,8 @@ interface RouteResult {
   endCoords: [number, number]
   distanceMiles: number
   durationMinutes: number
+  jobLegMiles?: number      // customer-to-customer distance only (excludes base travel)
+  jobLegMinutes?: number
 }
 
 interface RouteGeometry {
@@ -721,6 +723,8 @@ function RouteField({
           endCoords: endCoords!,
           distanceMiles: totalMiles,
           durationMinutes: totalMinutes,
+          jobLegMiles: leg1.distanceMiles,
+          jobLegMinutes: leg1.durationMinutes,
         })
       })
     } else {
@@ -962,35 +966,12 @@ function RouteField({
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
               <RouteStop dotColor="#ef4444" bg="#fef2f2" border="#fecaca" textColor="#991b1b"
                 label={endQuery || 'Your location'} tag="Service address" />
-              {routeInfo && field.baseAddress && field.routeChargeType !== 'none' && !hidePrices && (
-                <div style={{
-                  display: 'flex', alignItems: 'flex-start', gap: 9, marginTop: 4,
-                  padding: '9px 12px', borderRadius: 9,
-                  background: '#fefce8', border: '1.5px solid #fde68a',
-                }}>
-                  <span style={{ fontSize: '1rem', lineHeight: 1.2, flexShrink: 0 }}>🚗</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#78350f' }}>
-                      Travel fee included
-                    </div>
-                    <div style={{ fontSize: '0.73rem', color: '#92400e', marginTop: 2, lineHeight: 1.4 }}>
-                      {routeInfo.distanceMiles.toFixed(1)} mi · {Math.round(routeInfo.durationMinutes)} min to reach your location
-                    </div>
-                  </div>
-                  {priceContribution > 0 && (
-                    <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#b45309', flexShrink: 0 }}>
-                      +{currency}{priceContribution.toFixed(2)}
-                    </span>
-                  )}
-                </div>
-              )}
+{/* Travel fee banner hidden — charges still apply but we don't show base mileage to customers */}
             </div>
           )}
 
           {/* ── Point-to-point Route summary ── */}
           {field.locationMode !== 'single' && legInfos && field.baseAddress ? (() => {
-            const travelMiles = (legInfos[0]?.distanceMiles ?? 0) + (legInfos[2]?.distanceMiles ?? 0)
-            const travelMins  = (legInfos[0]?.durationMinutes ?? 0) + (legInfos[2]?.durationMinutes ?? 0)
             const jobLeg      = legInfos[1]
             return (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -1001,53 +982,20 @@ function RouteField({
                 <RouteStop dotColor="#ef4444" bg="#fef2f2" border="#fecaca" textColor="#991b1b"
                   label={endQuery || 'End'} tag="" />
 
-                {/* Travel fee callout — only visible when prices are shown */}
-                {!hidePrices && travelMiles > 0 && (
-                  <div style={{
-                    display: 'flex', alignItems: 'flex-start', gap: 9, marginTop: 4,
-                    padding: '9px 12px', borderRadius: 9,
-                    background: '#fefce8', border: '1.5px solid #fde68a',
-                  }}>
-                    <span style={{ fontSize: '1rem', lineHeight: 1.2, flexShrink: 0 }}>🚗</span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#78350f' }}>
-                        Travel fee included
-                      </div>
-                      <div style={{ fontSize: '0.73rem', color: '#92400e', marginTop: 2, lineHeight: 1.4 }}>
-                        {travelMiles.toFixed(1)} mi · {Math.round(travelMins)} min driving to and from your location
-                      </div>
-                    </div>
-                    {field.routeChargeType !== 'none' && routeInfo && (() => {
-                      let travelCost = 0
-                      if (field.routeChargeType === 'mileage' || field.routeChargeType === 'both') {
-                        const billable = Math.max(0, travelMiles - (field.freeMiles ?? 0))
-                        travelCost += billable * (field.ratePerMile ?? 0)
-                      }
-                      if (field.routeChargeType === 'drivetime' || field.routeChargeType === 'both') {
-                        const billable = Math.max(0, travelMins - (field.freeMinutes ?? 0))
-                        travelCost += billable * (field.ratePerMinute ?? 0)
-                      }
-                      return travelCost > 0 ? (
-                        <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#b45309', flexShrink: 0 }}>
-                          +{currency}{travelCost.toFixed(2)}
-                        </span>
-                      ) : null
-                    })()}
-                  </div>
-                )}
+{/* Travel fee banner hidden — charges still apply but we don't show base mileage to customers */}
 
-                {/* Distance — show only job leg when prices hidden, full total when live */}
+                {/* Distance — always show only customer-to-customer job leg */}
                 {routeInfo && (
                   <div style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     padding: '8px 12px', background: '#f1f5f9', borderRadius: 8, border: '1px solid #cbd5e1',
                   }}>
                     <span style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 700 }}>
-                      {hidePrices ? 'Distance' : 'Total distance'}
+                      Distance
                     </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <span style={{ fontSize: '0.82rem', color: '#334155', fontWeight: 700 }}>
-                        {hidePrices && jobLeg
+                        {jobLeg
                           ? `${jobLeg.distanceMiles.toFixed(1)} mi · ${Math.round(jobLeg.durationMinutes)} min`
                           : `${routeInfo.distanceMiles.toFixed(1)} mi · ${Math.round(routeInfo.durationMinutes)} min`
                         }
@@ -1249,9 +1197,10 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
             const billable = Math.max(0, rd.durationMinutes - (f.freeMinutes ?? 0))
             routePrice += billable * (f.ratePerMinute ?? 0)
           }
+          const displayMiles = rd.jobLegMiles ?? rd.distanceMiles
           items.push({
             label: f.label,
-            value: `${rd.distanceMiles.toFixed(1)} mi — ${rd.startAddress} → ${rd.endAddress}`,
+            value: `${displayMiles.toFixed(1)} mi — ${rd.startAddress} → ${rd.endAddress}`,
             price: routePrice,
           })
         }
