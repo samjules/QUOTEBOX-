@@ -50,6 +50,8 @@ export interface FormField {
   locationMode?: 'point_to_point' | 'single'  // single = customer enters one address only
   ratePerMile?: number
   ratePerMinute?: number     // stored as per-minute; UI displays as per-hour
+  freeMiles?: number         // don't charge mileage until this many miles
+  freeMinutes?: number       // don't charge drive time until this many minutes (stored as minutes; UI shows hours)
   baseAddress?: string       // optional fixed start location (business base)
   imageUrl?: string
   conditionalRules?: ConditionalRule[]

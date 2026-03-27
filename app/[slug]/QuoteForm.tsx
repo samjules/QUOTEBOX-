@@ -187,13 +187,20 @@ function computeTotal(
         const effectiveMinRate = routeOvr?.min !== undefined
           ? routeOvr.min
           : applyConditionalRate(f.conditionalRules, f.ratePerMinute ?? 0, fields, answers)
-        if (f.routeChargeType === 'mileage' || f.routeChargeType === 'both')
-          total += rd.distanceMiles * effectiveMileRate
-        if (f.routeChargeType === 'drivetime' || f.routeChargeType === 'both')
-          total += rd.durationMinutes * effectiveMinRate
+        if (f.routeChargeType === 'mileage' || f.routeChargeType === 'both') {
+          const billableMiles = Math.max(0, rd.distanceMiles - (f.freeMiles ?? 0))
+          total += billableMiles * effectiveMileRate
+        }
+        if (f.routeChargeType === 'drivetime' || f.routeChargeType === 'both') {
+          const billableMinutes = Math.max(0, rd.durationMinutes - (f.freeMinutes ?? 0))
+          total += billableMinutes * effectiveMinRate
+        }
       }
     } else if (f.type === 'draw_area') {
-      total += (drawAreaData[f.id] ?? 0) * (f.ratePerSqFt ?? 0)
+      const effectiveRate = activeRateOverrides[f.id] !== undefined
+        ? activeRateOverrides[f.id]
+        : (f.ratePerSqFt ?? 0)
+      total += (drawAreaData[f.id] ?? 0) * effectiveRate
     }
   }
   return total
@@ -869,10 +876,14 @@ function RouteField({
   const priceContribution = routeInfo
     ? (() => {
         let p = 0
-        if (field.routeChargeType === 'mileage' || field.routeChargeType === 'both')
-          p += routeInfo.distanceMiles * (field.ratePerMile ?? 0)
-        if (field.routeChargeType === 'drivetime' || field.routeChargeType === 'both')
-          p += routeInfo.durationMinutes * (field.ratePerMinute ?? 0)
+        if (field.routeChargeType === 'mileage' || field.routeChargeType === 'both') {
+          const billableMiles = Math.max(0, routeInfo.distanceMiles - (field.freeMiles ?? 0))
+          p += billableMiles * (field.ratePerMile ?? 0)
+        }
+        if (field.routeChargeType === 'drivetime' || field.routeChargeType === 'both') {
+          const billableMinutes = Math.max(0, routeInfo.durationMinutes - (field.freeMinutes ?? 0))
+          p += billableMinutes * (field.ratePerMinute ?? 0)
+        }
         return p
       })()
     : 0
@@ -1004,10 +1015,14 @@ function RouteField({
                     </div>
                     {field.routeChargeType !== 'none' && routeInfo && (() => {
                       let travelCost = 0
-                      if (field.routeChargeType === 'mileage' || field.routeChargeType === 'both')
-                        travelCost += travelMiles * (field.ratePerMile ?? 0)
-                      if (field.routeChargeType === 'drivetime' || field.routeChargeType === 'both')
-                        travelCost += travelMins * (field.ratePerMinute ?? 0)
+                      if (field.routeChargeType === 'mileage' || field.routeChargeType === 'both') {
+                        const billable = Math.max(0, travelMiles - (field.freeMiles ?? 0))
+                        travelCost += billable * (field.ratePerMile ?? 0)
+                      }
+                      if (field.routeChargeType === 'drivetime' || field.routeChargeType === 'both') {
+                        const billable = Math.max(0, travelMins - (field.freeMinutes ?? 0))
+                        travelCost += billable * (field.ratePerMinute ?? 0)
+                      }
                       return travelCost > 0 ? (
                         <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#b45309', flexShrink: 0 }}>
                           +{currency}{travelCost.toFixed(2)}
@@ -1217,10 +1232,14 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
         const rd = routeData[f.id]
         if (rd) {
           let routePrice = 0
-          if (f.routeChargeType === 'mileage' || f.routeChargeType === 'both')
-            routePrice += rd.distanceMiles * (f.ratePerMile ?? 0)
-          if (f.routeChargeType === 'drivetime' || f.routeChargeType === 'both')
-            routePrice += rd.durationMinutes * (f.ratePerMinute ?? 0)
+          if (f.routeChargeType === 'mileage' || f.routeChargeType === 'both') {
+            const billable = Math.max(0, rd.distanceMiles - (f.freeMiles ?? 0))
+            routePrice += billable * (f.ratePerMile ?? 0)
+          }
+          if (f.routeChargeType === 'drivetime' || f.routeChargeType === 'both') {
+            const billable = Math.max(0, rd.durationMinutes - (f.freeMinutes ?? 0))
+            routePrice += billable * (f.ratePerMinute ?? 0)
+          }
           items.push({
             label: f.label,
             value: `${rd.distanceMiles.toFixed(1)} mi — ${rd.startAddress} → ${rd.endAddress}`,

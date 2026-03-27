@@ -689,8 +689,8 @@ function recalc(){
       const rr=routeResults[f.id];
       if(rr&&f.routeChargeType!=='none'){
         let p=0;
-        if(f.routeChargeType==='mileage'||f.routeChargeType==='both') p+=rr.distanceMiles*(f.ratePerMile||0);
-        if(f.routeChargeType==='drivetime'||f.routeChargeType==='both') p+=rr.durationMinutes*(f.ratePerMinute||0);
+        if(f.routeChargeType==='mileage'||f.routeChargeType==='both') p+=Math.max(0,rr.distanceMiles-(f.freeMiles||0))*(f.ratePerMile||0);
+        if(f.routeChargeType==='drivetime'||f.routeChargeType==='both') p+=Math.max(0,rr.durationMinutes-(f.freeMinutes||0))*(f.ratePerMinute||0);
         total+=p;
         if(p>0) items.push('Route: '+cur+p.toFixed(2));
       }
@@ -985,8 +985,8 @@ async function onBothCoordsSet(fid,field){
   routeResults[fid]={startAddress:st.startQuery,startCoords:st.startCoords,endAddress:st.endQuery,endCoords:st.endCoords,distanceMiles:result.distanceMiles,durationMinutes:result.durationMinutes};
   const cur=cfg.currency||'$';
   let p=0;
-  if(field.routeChargeType==='mileage'||field.routeChargeType==='both') p+=result.distanceMiles*(field.ratePerMile||0);
-  if(field.routeChargeType==='drivetime'||field.routeChargeType==='both') p+=result.durationMinutes*(field.ratePerMinute||0);
+  if(field.routeChargeType==='mileage'||field.routeChargeType==='both') p+=Math.max(0,result.distanceMiles-(field.freeMiles||0))*(field.ratePerMile||0);
+  if(field.routeChargeType==='drivetime'||field.routeChargeType==='both') p+=Math.max(0,result.durationMinutes-(field.freeMinutes||0))*(field.ratePerMinute||0);
   const ri=document.getElementById('rinfo_'+fid);
   if(ri){
     ri.innerHTML='<span class="route-info-stat">📍 '+result.distanceMiles.toFixed(1)+' mi</span>'

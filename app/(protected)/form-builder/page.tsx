@@ -888,12 +888,12 @@ function CanvasPreview({
                         <div style={{ marginTop: 7, fontSize: '0.7rem', color: 'var(--muted)', display: 'flex', gap: 7, flexWrap: 'wrap' }}>
                           {(f.routeChargeType === 'mileage' || f.routeChargeType === 'both') && (
                             <span style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 7px' }}>
-                              {currency}{f.ratePerMile ?? 0}/mi
+                              {currency}{f.ratePerMile ?? 0}/mi{f.freeMiles ? ` (after ${f.freeMiles} mi)` : ''}
                             </span>
                           )}
                           {(f.routeChargeType === 'drivetime' || f.routeChargeType === 'both') && (
                             <span style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 7px' }}>
-                              {currency}{parseFloat(((f.ratePerMinute ?? 0) * 60).toFixed(2))}/hr
+                              {currency}{parseFloat(((f.ratePerMinute ?? 0) * 60).toFixed(2))}/hr{f.freeMinutes ? ` (after ${parseFloat((f.freeMinutes / 60).toFixed(2))}h)` : ''}
                             </span>
                           )}
                         </div>
@@ -1310,6 +1310,46 @@ function PropsPanel({
             </div>
           )}
 
+          {(field.routeChargeType === 'mileage' || field.routeChargeType === 'both') && (
+            <div className="prop-group">
+              <div className="prop-label">Free miles (no charge until)</div>
+              <input
+                className="prop-input"
+                type="number"
+                min={0}
+                step={1}
+                placeholder="0"
+                value={field.freeMiles || ''}
+                onChange={(e) =>
+                  onSetProp(field.id, 'freeMiles', parseFloat(e.target.value) || 0)
+                }
+              />
+              <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: 4, lineHeight: 1.4 }}>
+                Mileage charges only apply after this distance. Leave empty for no free miles.
+              </div>
+            </div>
+          )}
+
+          {(field.routeChargeType === 'drivetime' || field.routeChargeType === 'both') && (
+            <div className="prop-group">
+              <div className="prop-label">Free drive time (no charge until)</div>
+              <input
+                className="prop-input"
+                type="number"
+                min={0}
+                step={0.25}
+                placeholder="0"
+                value={field.freeMinutes ? parseFloat((field.freeMinutes / 60).toFixed(4)) : ''}
+                onChange={(e) =>
+                  onSetProp(field.id, 'freeMinutes', (parseFloat(e.target.value) || 0) * 60)
+                }
+              />
+              <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: 4, lineHeight: 1.4 }}>
+                Hours of drive time before charges kick in. Leave empty for no free time.
+              </div>
+            </div>
+          )}
+
           <div className="prop-group">
             <div className="prop-label">Base address (optional)</div>
             <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginBottom: 5, lineHeight: 1.4 }}>
@@ -1504,7 +1544,7 @@ function PropsPanel({
         const rateFields = allFields.filter(
           (f) =>
             f.id !== field.id &&
-            (f.type === 'number' || (f.type === 'route' && f.routeChargeType !== 'none'))
+            (f.type === 'number' || f.type === 'draw_area' || (f.type === 'route' && f.routeChargeType !== 'none'))
         )
         if (rateFields.length === 0) return null
         return (
@@ -1580,6 +1620,21 @@ function PropsPanel({
                             <span style={{ fontSize: '0.68rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>/hr</span>
                           </div>
                         )}
+                      </div>
+                    )}
+                    {rf.type === 'draw_area' && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <input
+                          className="prop-input"
+                          type="number"
+                          min={0}
+                          step={0.001}
+                          placeholder={String(rf.ratePerSqFt ?? 0)}
+                          value={opt.rateOverrides?.[rf.id] ?? ''}
+                          onChange={(e) => onSetOptRateOverride(field.id, opt.id, rf.id, e.target.value)}
+                          style={{ flex: 1, fontSize: '0.73rem', padding: '3px 5px' }}
+                        />
+                        <span style={{ fontSize: '0.68rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>/sq ft</span>
                       </div>
                     )}
                   </div>
