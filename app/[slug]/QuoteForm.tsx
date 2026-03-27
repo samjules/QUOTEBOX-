@@ -1383,6 +1383,10 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
       return
     }
 
+    // Strip prices from email when quote is hidden or after_submit
+    const emailLineItems = hidePrices
+      ? lineItems.map((item) => ({ ...item, price: 0 }))
+      : lineItems
     fetch('/api/leads/send-quote-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1391,9 +1395,9 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
         customerEmail: email.trim(),
         formName: form.form_name,
         currency,
-        total: displayTotal,
-        minApplied,
-        lineItems,
+        total: hidePrices ? 0 : displayTotal,
+        minApplied: hidePrices ? false : minApplied,
+        lineItems: emailLineItems,
         businessName: businessName || undefined,
         emailSubject: config.email_template?.subject || undefined,
         emailIntro: config.email_template?.intro || undefined,

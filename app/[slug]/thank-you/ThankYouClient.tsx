@@ -48,7 +48,8 @@ export default function ThankYouClient({ form }: { form: HostedForm }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const showTotal = config.quote_display !== 'hidden' && total > 0
+  const effectiveDisplay = config.quote_display ?? (config.show_total === false ? 'hidden' : 'live')
+  const showTotal = effectiveDisplay !== 'hidden' && total > 0
 
   return (
     <div style={{
