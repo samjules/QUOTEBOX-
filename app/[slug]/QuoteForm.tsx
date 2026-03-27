@@ -306,11 +306,13 @@ function DrawAreaField({
   currency,
   accentColor,
   onAreaChange,
+  hidePrices,
 }: {
   field: FormField
   currency: string
   accentColor: string
   onAreaChange: (sqFt: number | null) => void
+  hidePrices?: boolean
 }) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -498,7 +500,7 @@ function DrawAreaField({
           <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>
             ⬡ {sqFt.toLocaleString()} sq ft
           </span>
-          {(field.ratePerSqFt ?? 0) > 0 && (
+          {!hidePrices && (field.ratePerSqFt ?? 0) > 0 && (
             <span style={{ fontSize: '0.88rem', color: '#059669', fontWeight: 700 }}>
               +{currency}{price.toFixed(2)}
             </span>
@@ -561,6 +563,7 @@ function RouteField({
   subStep,
   onStartCoordsChange,
   onEndCoordsChange,
+  hidePrices,
 }: {
   field: FormField
   currency: string
@@ -569,6 +572,7 @@ function RouteField({
   subStep: number
   onStartCoordsChange: (coords: [number, number] | null) => void
   onEndCoordsChange: (coords: [number, number] | null) => void
+  hidePrices?: boolean
 }) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -973,7 +977,7 @@ function RouteField({
                       {routeInfo.distanceMiles.toFixed(1)} mi · {Math.round(routeInfo.durationMinutes)} min to reach your location
                     </div>
                   </div>
-                  {priceContribution > 0 && (
+                  {!hidePrices && priceContribution > 0 && (
                     <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#b45309', flexShrink: 0 }}>
                       +{currency}{priceContribution.toFixed(2)}
                     </span>
@@ -1023,7 +1027,7 @@ function RouteField({
                         const billable = Math.max(0, travelMins - (field.freeMinutes ?? 0))
                         travelCost += billable * (field.ratePerMinute ?? 0)
                       }
-                      return travelCost > 0 ? (
+                      return !hidePrices && travelCost > 0 ? (
                         <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#b45309', flexShrink: 0 }}>
                           +{currency}{travelCost.toFixed(2)}
                         </span>
@@ -1043,7 +1047,7 @@ function RouteField({
                       <span style={{ fontSize: '0.82rem', color: '#334155', fontWeight: 700 }}>
                         {routeInfo.distanceMiles.toFixed(1)} mi · {Math.round(routeInfo.durationMinutes)} min
                       </span>
-                      {field.routeChargeType !== 'none' && priceContribution > 0 && (
+                      {!hidePrices && field.routeChargeType !== 'none' && priceContribution > 0 && (
                         <span style={{ fontSize: '0.85rem', color: '#059669', fontWeight: 700 }}>
                           +{currency}{priceContribution.toFixed(2)}
                         </span>
@@ -1073,7 +1077,7 @@ function RouteField({
                   <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>
                     ⏱ {Math.round(routeInfo.durationMinutes)} min
                   </span>
-                  {field.routeChargeType !== 'none' && priceContribution > 0 && (
+                  {!hidePrices && field.routeChargeType !== 'none' && priceContribution > 0 && (
                     <span style={{ marginLeft: 'auto', fontSize: '0.88rem', color: '#059669', fontWeight: 700 }}>
                       +{currency}{priceContribution.toFixed(2)}
                     </span>
@@ -1408,6 +1412,8 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
       (f.type === 'route' && f.routeChargeType !== 'none') ||
       (f.type === 'draw_area' && (f.ratePerSqFt ?? 0) > 0)
   )
+  // Hide all inline prices unless quote_display is 'live'
+  const hidePrices = config.quote_display !== 'live'
 
   // ── Shared styles ──
   const inputStyle: React.CSSProperties = {
@@ -1623,7 +1629,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
                             {o.label}
                           </span>
                         </div>
-                        {currentField.showPrices !== false && o.price > 0 && (
+                        {!hidePrices && currentField.showPrices !== false && o.price > 0 && (
                           <span style={{
                             fontSize: '0.82rem', fontWeight: 700, flexShrink: 0, marginLeft: 10,
                             background: sel ? accentBg : '#f1f5f9',
@@ -1663,7 +1669,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
                     <option value="">Choose an option…</option>
                     {(currentField.options ?? []).map((o) => (
                       <option key={o.id} value={o.id}>
-                        {o.label}{currentField.showPrices !== false && o.price > 0 ? (o.hours ? ` (${currency}${o.price}/hr × ${o.hours}h)` : ` (+${currency}${o.price})`) : ''}
+                        {o.label}{!hidePrices && currentField.showPrices !== false && o.price > 0 ? (o.hours ? ` (${currency}${o.price}/hr × ${o.hours}h)` : ` (+${currency}${o.price})`) : ''}
                       </option>
                     ))}
                   </select>
@@ -1712,7 +1718,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
                               {o.label}
                             </span>
                           </div>
-                          {currentField.showPrices !== false && o.price > 0 && (
+                          {!hidePrices && currentField.showPrices !== false && o.price > 0 && (
                             <span style={{
                               fontSize: '0.82rem', fontWeight: 700, flexShrink: 0, marginLeft: 10,
                               background: sel ? accentBg : '#f1f5f9',
@@ -1743,7 +1749,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
                     onChange={(e) => setAnswers((p) => ({ ...p, [currentField.id]: parseFloat(e.target.value) || 0 }))}
                     style={inputStyle}
                   />
-                  {(currentField.ratePerUnit ?? 0) > 0 && (
+                  {!hidePrices && (currentField.ratePerUnit ?? 0) > 0 && (
                     <div style={{ fontSize: '0.82rem', color: '#64748b', marginTop: 9, display: 'flex', justifyContent: 'space-between' }}>
                       <span>× {currency}{currentField.ratePerUnit} per unit</span>
                       {answers[currentField.id] ? (
@@ -1806,6 +1812,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
                     subStep={currentRouteSubStep}
                     onStartCoordsChange={(coords) => handleStartCoordsChange(currentField.id, coords)}
                     onEndCoordsChange={(coords) => handleEndCoordsChange(currentField.id, coords)}
+                    hidePrices={hidePrices}
                   />
                   <button onClick={handleNext} disabled={!canAdvance()}
                     style={{ ...continueBtn, opacity: canAdvance() ? 1 : 0.35, cursor: canAdvance() ? 'pointer' : 'not-allowed' }}>
@@ -1822,6 +1829,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
                     currency={currency}
                     accentColor={accentBg}
                     onAreaChange={(sqFt) => handleDrawAreaChange(currentField.id, sqFt)}
+                    hidePrices={hidePrices}
                   />
                   <button onClick={handleNext} disabled={!canAdvance()}
                     style={{ ...continueBtn, opacity: canAdvance() ? 1 : 0.35, cursor: canAdvance() ? 'pointer' : 'not-allowed' }}>
