@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getAccountForUser } from '@/lib/account'
 import type { Lead } from '@/lib/types'
 import LeadsTable, { type FieldMap } from './LeadsTable'
 
@@ -18,10 +19,20 @@ export default async function LeadsPage() {
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: account } = await supabase
+  const ctx = await getAccountForUser(supabase, user.id)
+  if (!ctx) {
+    return (
+      <div className="p-8 text-red-600">
+        No account found. Please contact support.
+      </div>
+    )
+  }
+
+  const admin = createAdminClient()
+  const { data: account } = await admin
     .from('accounts')
     .select('*')
-    .eq('owner_id', user.id)
+    .eq('id', ctx.accountId)
     .single()
 
   if (!account) {
@@ -32,7 +43,6 @@ export default async function LeadsPage() {
     )
   }
 
-  const admin = createAdminClient()
   const { data: billingData } = await admin
     .from('billing')
     .select('plan, trial_ends_at, blessed')
@@ -179,7 +189,7 @@ export default async function LeadsPage() {
               </div>
 
               {/* Leads table */}
-              <LeadsTable leads={leads} stripeConnectAccountId={account.stripe_connect_account_id ?? null} docusignConnected={!!account.docusign_access_token} fieldMap={fieldMap} />
+              <LeadsTable leads={leads} stripeConnectAccountId={account.stripe_connect_account_id ?? null} agreementTemplateUrl={account.agreement_template_url ?? null} fieldMap={fieldMap} />
             </>
           )}
         </div>

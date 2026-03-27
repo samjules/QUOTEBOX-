@@ -11,12 +11,7 @@ export interface Account {
   meta_connected_at?: string
   stripe_connect_account_id?: string | null
   stripe_connect_completed_at?: string | null
-  docusign_access_token?: string | null
-  docusign_refresh_token?: string | null
-  docusign_account_id?: string | null
-  docusign_user_id?: string | null
-  docusign_base_path?: string | null
-  docusign_connected_at?: string | null
+  agreement_template_url?: string | null
 }
 
 export interface FieldOption {
@@ -105,9 +100,6 @@ export interface Lead {
   status: 'new' | 'contacted' | 'booked' | 'lost' | 'held'
   created_at: string
   notes?: string | null
-  agreement_envelope_id?: string | null
-  agreement_status?: string | null
-  agreement_sent_at?: string | null
 }
 
 export interface Billing {
@@ -220,4 +212,50 @@ export interface OnboardingSession {
   created_by: string | null
   created_at: string
   updated_at: string
+}
+
+// ── Employee / Team ──
+
+export interface AccountMember {
+  id: string
+  account_id: string
+  user_id: string | null
+  email: string
+  name: string | null
+  role: 'owner' | 'employee'
+  invite_token: string | null
+  invited_at: string
+  accepted_at: string | null
+  created_at: string
+}
+
+// ── Time Clock ──
+
+export interface TimeEntry {
+  id: string
+  account_id: string
+  user_id: string
+  lead_id: string | null
+  clock_in: string
+  clock_out: string | null
+  notes: string | null
+  created_at: string
+}
+
+// ── Agreements (built-in e-signature) ──
+
+export interface Agreement {
+  id: string
+  account_id: string
+  lead_id: string
+  title: string
+  document_url: string | null
+  token: string
+  status: 'sent' | 'viewed' | 'signed'
+  signer_name: string | null
+  signer_email: string | null
+  signature_data: string | null
+  signed_at: string | null
+  signer_ip: string | null
+  created_at: string
 }

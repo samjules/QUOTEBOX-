@@ -75,7 +75,7 @@ function resolveValue(key: string, value: unknown, fieldMap: FieldMap): string {
   return String(value)
 }
 
-export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId, docusignConnected, fieldMap }: { leads: Lead[]; stripeConnectAccountId: string | null; docusignConnected: boolean; fieldMap: FieldMap }) {
+export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId, agreementTemplateUrl, fieldMap }: { leads: Lead[]; stripeConnectAccountId: string | null; agreementTemplateUrl: string | null; fieldMap: FieldMap }) {
   const [leads, setLeads] = useState<Lead[]>(initialLeads)
   const [selected, setSelected] = useState<Lead | null>(null)
   const [localStatus, setLocalStatus] = useState<string>('')
@@ -98,10 +98,8 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
 
   // Agreement state
   const [agreementSending, setAgreementSending] = useState(false)
-  const [agreementSent, setAgreementSent] = useState(false)
+  const [agreementStatus, setAgreementStatus] = useState<string | null>(null)
   const [agreementError, setAgreementError] = useState<string | null>(null)
-  const [agreementMoveDate, setAgreementMoveDate] = useState<string>('')
-  const [agreementServiceDesc, setAgreementServiceDesc] = useState<string>('')
 
   function openLead(lead: Lead) {
     setSelected(lead)
@@ -115,11 +113,13 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
     const quote = getQuote(lead)
     setInvoiceAmount(quote ? String(quote.total) : '')
     setInvoiceDescription(lead.form_type ? `${lead.form_type} quote` : 'Service quote')
-    // Reset agreement state
-    setAgreementSent(!!lead.agreement_envelope_id)
+    // Reset agreement state and fetch status
+    setAgreementStatus(null)
     setAgreementError(null)
-    setAgreementMoveDate('')
-    setAgreementServiceDesc(lead.form_type ? `${lead.form_type} services` : 'Moving services')
+    fetch(`/api/agreements/status?leadId=${lead.id}`)
+      .then((r) => r.json())
+      .then((d) => { if (d.agreement) setAgreementStatus(d.agreement.status) })
+      .catch(() => {})
   }
 
   function closeLead() {
@@ -174,34 +174,18 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
   }
 
   async function handleSendAgreement() {
-    if (!selected?.email || !selected?.name) return
+    if (!selected?.email) return
     setAgreementSending(true)
     setAgreementError(null)
     try {
-      const formData = selected.form_data as Record<string, unknown> | null
-      // Try to extract route addresses from form data
-      const routeEntry = formData ? Object.values(formData).find((v) => isRouteValue(v)) as RouteValue | undefined : undefined
-      const quote = getQuote(selected)
-
-      const res = await fetch('/api/docusign/send-agreement', {
+      const res = await fetch('/api/agreements/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          leadId: selected.id,
-          customerName: selected.name,
-          customerEmail: selected.email,
-          customerPhone: selected.phone || null,
-          pickupAddress: routeEntry?.startAddress || null,
-          deliveryAddress: routeEntry?.endAddress || null,
-          moveDate: agreementMoveDate || null,
-          quoteAmount: quote?.total || null,
-          currency: quote?.currency || '$',
-          serviceDescription: agreementServiceDesc || null,
-        }),
+        body: JSON.stringify({ leadId: selected.id }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to send agreement')
-      setAgreementSent(true)
+      setAgreementStatus('sent')
     } catch (err) {
       setAgreementError(err instanceof Error ? err.message : 'Failed to send agreement')
     }
@@ -589,55 +573,48 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
               {/* Send Agreement */}
               <section>
                 <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Send Agreement</h3>
-                {!docusignConnected ? (
-                  <p className="text-sm text-gray-500">
-                    <a href="/settings" className="text-indigo-600 hover:underline font-medium">Connect DocuSign in Settings</a> to send agreements for e-signature.
-                  </p>
-                ) : !selected?.email ? (
+                {!selected?.email ? (
                   <p className="text-sm text-gray-500">No email address on file for this lead.</p>
-                ) : agreementSent ? (
+                ) : agreementStatus === 'signed' ? (
                   <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3 flex items-center gap-2">
                     <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     <div>
-                      <p className="text-sm text-green-800 font-medium">Agreement sent for signing!</p>
-                      <p className="text-xs text-green-700 mt-0.5">Sent to {selected.email} via DocuSign</p>
+                      <p className="text-sm text-green-800 font-medium">Agreement signed!</p>
+                    </div>
+                  </div>
+                ) : agreementStatus === 'sent' || agreementStatus === 'viewed' ? (
+                  <div className="rounded-lg bg-blue-50 border border-blue-200 px-4 py-3 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <p className="text-sm text-blue-800 font-medium">
+                        Agreement {agreementStatus === 'viewed' ? 'viewed' : 'sent'}
+                      </p>
+                      <p className="text-xs text-blue-700 mt-0.5">Waiting for signature from {selected.email}</p>
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1">Move Date (optional)</label>
-                      <input
-                        type="date"
-                        value={agreementMoveDate}
-                        onChange={(e) => setAgreementMoveDate(e.target.value)}
-                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1">Service Description</label>
-                      <input
-                        type="text"
-                        value={agreementServiceDesc}
-                        onChange={(e) => setAgreementServiceDesc(e.target.value)}
-                        placeholder="Moving services"
-                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                      />
-                    </div>
+                    {!agreementTemplateUrl && (
+                      <p className="text-xs text-amber-600">
+                        <a href="/settings" className="underline font-medium">Upload an agreement template in Settings</a> for a better experience.
+                      </p>
+                    )}
                     {agreementError && (
                       <p className="text-xs text-red-600">{agreementError}</p>
                     )}
                     <button
                       onClick={handleSendAgreement}
-                      disabled={agreementSending || !selected?.name}
+                      disabled={agreementSending}
                       className="w-full px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {agreementSending ? 'Sending…' : 'Send Agreement via DocuSign'}
+                      {agreementSending ? 'Sending…' : 'Send Agreement'}
                     </button>
                     <p className="text-xs text-gray-400">
-                      Sends a Titan Tuff Moving agreement to {selected.email} for e-signature
+                      Sends a signing link to {selected.email}
                     </p>
                   </div>
                 )}

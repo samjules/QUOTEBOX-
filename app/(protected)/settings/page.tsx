@@ -58,9 +58,15 @@ export default function SettingsPage() {
   const [stripeConnectAccountId, setStripeConnectAccountId] = useState<string | null>(null)
   const [stripeDisconnecting, setStripeDisconnecting] = useState(false)
 
-  // DocuSign state
-  const [docusignConnected, setDocusignConnected] = useState(false)
-  const [docusignDisconnecting, setDocusignDisconnecting] = useState(false)
+  // Team state
+  const [teamMembers, setTeamMembers] = useState<Array<{ id: string; email: string; name: string | null; role: string; accepted_at: string | null }>>([])
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviting, setInviting] = useState(false)
+
+  // Agreement template state
+  const [agreementTemplateUrl, setAgreementTemplateUrl] = useState<string | null>(null)
+  const [agreementUploading, setAgreementUploading] = useState(false)
+  const agreementInputRef = useRef<HTMLInputElement>(null)
 
   // Delete account state
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -92,7 +98,15 @@ export default function SettingsPage() {
           setSelectedAdAccount(account.meta_ad_account_id ?? '')
         }
         setStripeConnectAccountId(account.stripe_connect_account_id ?? null)
-        setDocusignConnected(!!account.docusign_access_token)
+        setAgreementTemplateUrl(account.agreement_template_url ?? null)
+
+        // Load team members
+        const { data: members } = await supabase
+          .from('account_members')
+          .select('id, email, name, role, accepted_at')
+          .eq('account_id', account.id)
+          .order('created_at', { ascending: true })
+        setTeamMembers(members ?? [])
       }
     }
     load()
@@ -111,17 +125,6 @@ export default function SettingsPage() {
       window.history.replaceState({}, '', '/settings')
     }
 
-    const docusignParam = searchParams.get('docusign')
-    const docusignReason = searchParams.get('reason')
-    if (docusignParam === 'connected') {
-      setDocusignConnected(true)
-      setMessage('DocuSign account connected successfully!')
-      window.history.replaceState({}, '', '/settings')
-      setTimeout(() => setMessage(''), 4000)
-    } else if (docusignParam === 'error') {
-      setMessage(`Error: DocuSign connection failed${docusignReason ? ` — ${docusignReason}` : ''}. Please try again.`)
-      window.history.replaceState({}, '', '/settings')
-    }
   }, [searchParams])
 
   async function handleUpdateBusinessName(e: React.FormEvent) {
@@ -240,29 +243,75 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleDisconnectDocusign() {
-    if (!accountId) return
-    setDocusignDisconnecting(true)
+  async function handleInviteEmployee(e: React.FormEvent) {
+    e.preventDefault()
+    if (!inviteEmail.trim()) return
+    setInviting(true)
+    setMessage('')
+    try {
+      const res = await fetch('/api/employees/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: inviteEmail.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to send invite')
+      setMessage('Invite sent!')
+      setInviteEmail('')
+      setTimeout(() => setMessage(''), 3000)
+      // Refresh team members
+      const { data: members } = await supabase
+        .from('account_members')
+        .select('id, email, name, role, accepted_at')
+        .eq('account_id', accountId)
+        .order('created_at', { ascending: true })
+      setTeamMembers(members ?? [])
+    } catch (err) {
+      setMessage(`Error: ${err instanceof Error ? err.message : 'Failed to send invite'}`)
+    }
+    setInviting(false)
+  }
+
+  async function handleRevokeEmployee(memberId: string) {
     setMessage('')
     const { error } = await supabase
-      .from('accounts')
-      .update({
-        docusign_access_token: null,
-        docusign_refresh_token: null,
-        docusign_account_id: null,
-        docusign_user_id: null,
-        docusign_base_path: null,
-        docusign_connected_at: null,
-      })
-      .eq('id', accountId)
-    setDocusignDisconnecting(false)
+      .from('account_members')
+      .delete()
+      .eq('id', memberId)
     if (error) {
-      setMessage('Error: Failed to disconnect DocuSign account')
+      setMessage('Error: Failed to remove team member')
     } else {
-      setDocusignConnected(false)
-      setMessage('DocuSign account disconnected.')
+      setTeamMembers((prev) => prev.filter((m) => m.id !== memberId))
+      setMessage('Team member removed.')
       setTimeout(() => setMessage(''), 2000)
     }
+  }
+
+  async function handleAgreementUpload(file: File) {
+    if (!accountId) return
+    setAgreementUploading(true)
+    setMessage('')
+    const ext = file.name.split('.').pop() ?? 'pdf'
+    const path = `agreements/${accountId}/template-${Date.now()}.${ext}`
+    const { error: uploadErr } = await supabase.storage.from('vsls').upload(path, file, { upsert: true })
+    if (uploadErr) {
+      setMessage('Error: Failed to upload agreement template')
+      setAgreementUploading(false)
+      return
+    }
+    const { data: { publicUrl } } = supabase.storage.from('vsls').getPublicUrl(path)
+    const { error: saveErr } = await supabase
+      .from('accounts')
+      .update({ agreement_template_url: publicUrl } as Record<string, string>)
+      .eq('id', accountId)
+    if (saveErr) {
+      setMessage('Error: Failed to save agreement template')
+    } else {
+      setAgreementTemplateUrl(publicUrl)
+      setMessage('Agreement template uploaded!')
+      setTimeout(() => setMessage(''), 2000)
+    }
+    setAgreementUploading(false)
   }
 
   function copyToClipboard(text: string, label: string) {
@@ -623,52 +672,117 @@ export default function SettingsPage() {
             )}
           </div>
 
-          {/* DocuSign Integration */}
+          {/* Team Members */}
           <div className="bg-white shadow rounded-xl p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-1">DocuSign Agreements</h2>
-            <p className="text-sm text-gray-500 mb-5">Connect your DocuSign account to send agreements for e-signature directly from the Leads page.</p>
+            <h2 className="text-lg font-medium text-gray-900 mb-1">Team Members</h2>
+            <p className="text-sm text-gray-500 mb-5">Invite employees to your account. They can view leads, use the calendar, and track hours.</p>
 
-            {docusignConnected ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
+            <form onSubmit={handleInviteEmployee} className="flex gap-2 mb-5">
+              <input
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="employee@email.com"
+                required
+                className="flex-1 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border-gray-300 rounded-md px-4 py-2 border"
+              />
+              <button
+                type="submit"
+                disabled={inviting || !inviteEmail.trim()}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 text-sm font-medium whitespace-nowrap"
+              >
+                {inviting ? 'Sending…' : 'Send Invite'}
+              </button>
+            </form>
+
+            <div className="space-y-2">
+              {teamMembers.map((member) => (
+                <div key={member.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full ${member.accepted_at ? 'bg-green-500' : 'bg-yellow-400'}`} />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{member.name || member.email}</p>
+                      <p className="text-xs text-gray-500">
+                        {member.email} · {member.role}
+                        {!member.accepted_at && ' · Pending'}
+                      </p>
+                    </div>
+                  </div>
+                  {member.role !== 'owner' && (
+                    <button
+                      onClick={() => handleRevokeEmployee(member.id)}
+                      className="text-xs text-red-500 hover:text-red-600 font-medium"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              ))}
+              {teamMembers.length === 0 && (
+                <p className="text-sm text-gray-400">No team members yet.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Agreement Template */}
+          <div className="bg-white shadow rounded-xl p-6">
+            <h2 className="text-lg font-medium text-gray-900 mb-1">Agreement Template</h2>
+            <p className="text-sm text-gray-500 mb-5">Upload a PDF agreement template. It will be shown to customers when they sign.</p>
+
+            <div className="flex items-center gap-4">
+              {agreementTemplateUrl ? (
+                <div className="flex items-center gap-3 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-green-500" />
-                    <span className="text-sm font-medium text-gray-700">Connected</span>
+                    <span className="text-sm font-medium text-gray-700">Template uploaded</span>
                   </div>
                   <a
-                    href="https://app.docusign.com"
+                    href={agreementTemplateUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-indigo-600 hover:underline font-medium"
                   >
-                    Open DocuSign Dashboard →
+                    View PDF
                   </a>
                 </div>
-                <div className="pt-2 border-t border-gray-100">
-                  <button
-                    onClick={handleDisconnectDocusign}
-                    disabled={docusignDisconnecting}
-                    className="text-sm text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
-                  >
-                    {docusignDisconnecting ? 'Disconnecting…' : 'Disconnect DocuSign account'}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+              ) : (
+                <div className="flex items-center gap-2 flex-1">
                   <span className="w-2 h-2 rounded-full bg-gray-300" />
-                  <span className="text-sm text-gray-500">No DocuSign account connected</span>
+                  <span className="text-sm text-gray-500">No template uploaded</span>
                 </div>
-                <a
-                  href="/api/docusign/connect"
-                  className="inline-flex items-center gap-2 bg-[#1a1a2e] hover:bg-[#2d2d44] text-white text-sm font-medium px-4 py-2 rounded-lg transition"
+              )}
+              <button
+                onClick={() => agreementInputRef.current?.click()}
+                disabled={agreementUploading}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 text-sm font-medium whitespace-nowrap"
+              >
+                {agreementUploading ? 'Uploading…' : agreementTemplateUrl ? 'Replace Template' : 'Upload PDF'}
+              </button>
+              <input
+                ref={agreementInputRef}
+                type="file"
+                accept=".pdf"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) handleAgreementUpload(file)
+                  e.target.value = ''
+                }}
+              />
+            </div>
+            {agreementTemplateUrl && (
+              <div className="mt-3 pt-2 border-t border-gray-100">
+                <button
+                  onClick={async () => {
+                    await supabase.from('accounts').update({ agreement_template_url: null } as Record<string, null>).eq('id', accountId)
+                    setAgreementTemplateUrl(null)
+                    setMessage('Agreement template removed.')
+                    setTimeout(() => setMessage(''), 2000)
+                  }}
+                  className="text-sm text-red-500 hover:text-red-600 font-medium"
                 >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                  </svg>
-                  Connect DocuSign
-                </a>
+                  Remove template
+                </button>
               </div>
             )}
           </div>

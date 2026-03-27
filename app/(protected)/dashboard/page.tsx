@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getAccountForUser } from '@/lib/account'
 import DealNotificationBanner from '@/components/DealNotificationBanner'
 import type { ReactNode } from 'react'
 
@@ -21,11 +22,21 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const ctx = await getAccountForUser(supabase, user.id)
+  if (!ctx) {
+    return (
+      <div className="p-8 text-red-600">
+        No account found. Please contact support.
+      </div>
+    )
+  }
+
   // Fetch account
-  const { data: account } = await supabase
+  const admin = createAdminClient()
+  const { data: account } = await admin
     .from('accounts')
     .select('*')
-    .eq('owner_id', user.id)
+    .eq('id', ctx.accountId)
     .single()
 
   if (!account) {
@@ -46,7 +57,6 @@ export default async function DashboardPage() {
   const leads = allLeads ?? []
 
   // Fetch billing — create record if missing (use admin to bypass RLS)
-  const admin = createAdminClient()
   let { data: billing } = await admin
     .from('billing')
     .select('*')

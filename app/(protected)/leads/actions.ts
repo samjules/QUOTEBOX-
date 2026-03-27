@@ -25,6 +25,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getAccountForUser } from '@/lib/account'
 import { revalidatePath } from 'next/cache'
 
 function buildBookingEmailHtml({ customerName, businessName, formName, bookingDate, amount, currency, accentColor }: {
@@ -174,17 +175,14 @@ export async function deleteLead(leadId: string) {
   const supabase = createClient()
   const admin = createAdminClient()
 
-  // Verify ownership — only delete if the lead belongs to the current user's account
+  // Verify membership — only delete if the lead belongs to the current user's account
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  const { data: account } = await supabase
-    .from('accounts')
-    .select('id')
-    .eq('owner_id', user.id)
-    .single()
+  const ctx = await getAccountForUser(supabase, user.id)
+  if (!ctx) throw new Error('Unauthorized')
 
-  if (!account) throw new Error('Unauthorized')
+  const account = { id: ctx.accountId }
 
   // Remove deal notification before deleting the lead
   await admin.from('deal_notifications').delete().eq('lead_id', leadId)

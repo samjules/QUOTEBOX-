@@ -11,6 +11,8 @@ interface NavItem {
   icon: React.ReactNode
   pplHidden?: boolean
   gamesOnly?: boolean
+  ownerOnly?: boolean
+  employeeVisible?: boolean
 }
 
 const navItems: NavItem[] = [
@@ -42,6 +44,16 @@ const navItems: NavItem[] = [
     ),
   },
   {
+    href: '/time-clock',
+    label: 'Time Clock',
+    employeeVisible: true,
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+  },
+  {
     href: '/map',
     label: 'Map',
     icon: (
@@ -55,6 +67,7 @@ const navItems: NavItem[] = [
     href: '/hosted-forms',
     label: 'Hosted Forms',
     pplHidden: true,
+    ownerOnly: true,
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -65,6 +78,7 @@ const navItems: NavItem[] = [
     href: '/form-builder',
     label: 'Form Builder',
     pplHidden: true,
+    ownerOnly: true,
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -74,6 +88,7 @@ const navItems: NavItem[] = [
   {
     href: '/analytics',
     label: 'Analytics',
+    ownerOnly: true,
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
@@ -94,6 +109,7 @@ const navItems: NavItem[] = [
     href: '/lead-machine',
     label: 'Lead Machine',
     pplHidden: true,
+    ownerOnly: true,
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
@@ -103,6 +119,7 @@ const navItems: NavItem[] = [
   {
     href: '/billing',
     label: 'Billing & Credits',
+    ownerOnly: true,
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -131,6 +148,7 @@ const navItems: NavItem[] = [
   {
     href: '/settings',
     label: 'Settings',
+    ownerOnly: true,
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -146,26 +164,51 @@ export default function Sidebar() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [billingPlan, setBillingPlan] = useState<string | null>(null)
   const [gamesEnrolled, setGamesEnrolled] = useState(false)
+  const [userRole, setUserRole] = useState<'owner' | 'employee'>('owner')
 
   useEffect(() => {
     const supabase = createClient()
     async function loadData() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+
+      // Check if owner first
       const { data: account } = await supabase
         .from('accounts')
         .select('id, logo_url, games_enrolled')
         .eq('owner_id', user.id)
         .single()
-      setLogoUrl(account?.logo_url ?? null)
-      setGamesEnrolled(account?.games_enrolled ?? false)
+
       if (account) {
+        setUserRole('owner')
+        setLogoUrl(account?.logo_url ?? null)
+        setGamesEnrolled(account?.games_enrolled ?? false)
         const { data: billing } = await supabase
           .from('billing')
           .select('plan')
           .eq('account_id', account.id)
           .single()
         setBillingPlan(billing?.plan ?? null)
+      } else {
+        // Check if employee
+        const { data: membership } = await supabase
+          .from('account_members')
+          .select('account_id, role')
+          .eq('user_id', user.id)
+          .not('accepted_at', 'is', null)
+          .limit(1)
+          .single()
+        if (membership) {
+          setUserRole(membership.role as 'owner' | 'employee')
+          // Load account data for sidebar display
+          const { data: memberAccount } = await supabase
+            .from('accounts')
+            .select('logo_url, games_enrolled')
+            .eq('id', membership.account_id)
+            .single()
+          setLogoUrl(memberAccount?.logo_url ?? null)
+          setGamesEnrolled(memberAccount?.games_enrolled ?? false)
+        }
       }
     }
     loadData()
@@ -196,6 +239,13 @@ export default function Sidebar() {
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1">
           {navItems.filter((item) => {
+            // Employee role: only show employee-visible + shared items
+            if (userRole === 'employee') {
+              if (item.ownerOnly) return false
+              // Employees see: Dashboard, Leads, Calendar, Time Clock
+              const employeePages = ['/dashboard', '/leads', '/calendar', '/time-clock']
+              if (!employeePages.includes(item.href) && !item.employeeVisible) return false
+            }
             // Games tab: only show if enrolled
             if (item.gamesOnly && !gamesEnrolled) return false
             if (!item.pplHidden) return true
