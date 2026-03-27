@@ -1416,6 +1416,10 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
   // Also respect legacy show_total=false for forms saved before quote_display existed
   const effectiveDisplay = config.quote_display ?? (config.show_total === false ? 'hidden' : 'live')
   const hidePrices = effectiveDisplay === 'after_submit' || effectiveDisplay === 'hidden'
+  // DEBUG — remove after verifying
+  if (typeof window !== 'undefined') {
+    console.log('[QuoteForm] quote_display:', config.quote_display, '| show_total:', config.show_total, '| effectiveDisplay:', effectiveDisplay, '| hidePrices:', hidePrices)
+  }
 
   // ── Shared styles ──
   const inputStyle: React.CSSProperties = {
