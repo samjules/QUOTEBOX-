@@ -1,16 +1,3 @@
-import docusign from 'docusign-esign'
-
-interface DocuSignCredentials {
-  accessToken: string
-  refreshToken: string
-  accountId: string
-  basePath: string
-}
-
-/**
- * Refresh a DocuSign access token using the refresh token.
- * Returns the new access token + refresh token pair.
- */
 export async function refreshAccessToken(refreshToken: string): Promise<{
   accessToken: string
   refreshToken: string
@@ -44,18 +31,33 @@ export async function refreshAccessToken(refreshToken: string): Promise<{
 }
 
 /**
- * Build a DocuSign API client using per-user OAuth credentials.
+ * Send an envelope via DocuSign REST API (no SDK needed).
  */
-export function buildDocuSignClient(creds: DocuSignCredentials): {
-  envelopesApi: docusign.EnvelopesApi
-  accountId: string
-} {
-  const apiClient = new docusign.ApiClient()
-  apiClient.setBasePath(creds.basePath)
-  apiClient.addDefaultHeader('Authorization', `Bearer ${creds.accessToken}`)
+export async function createEnvelope(
+  basePath: string,
+  accountId: string,
+  accessToken: string,
+  envelopeBody: Record<string, unknown>,
+): Promise<{ envelopeId: string; status: string }> {
+  const res = await fetch(
+    `${basePath}/v2.1/accounts/${accountId}/envelopes`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(envelopeBody),
+    },
+  )
 
-  return {
-    envelopesApi: new docusign.EnvelopesApi(apiClient),
-    accountId: creds.accountId,
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    const error = new Error(err.message || err.errorCode || `DocuSign API error ${res.status}`)
+    ;(error as unknown as Record<string, number>).status = res.status
+    throw error
   }
+
+  const data = await res.json()
+  return { envelopeId: data.envelopeId, status: data.status }
 }

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import docusign from 'docusign-esign'
-import { buildDocuSignClient, refreshAccessToken } from '@/lib/docusign/auth'
+import { createEnvelope, refreshAccessToken } from '@/lib/docusign/auth'
 import { buildAgreementHtml, type AgreementData } from '@/lib/docusign/agreement-template'
 import { createClient } from '@/lib/supabase/server'
 
@@ -80,67 +79,53 @@ export async function POST(request: NextRequest) {
     }
     const html = buildAgreementHtml(agreementData)
 
-    // Try sending with current token, refresh if expired
-    let accessToken = account.docusign_access_token
-    let envelopesApi: docusign.EnvelopesApi
-    let docuSignAccountId = account.docusign_account_id
+    const docuSignAccountId = account.docusign_account_id
     const basePath = account.docusign_base_path || 'https://demo.docusign.net/restapi'
 
-    const buildEnvelope = () => {
-      const envDef = new docusign.EnvelopeDefinition()
-      envDef.emailSubject = `Moving Agreement from Titan Tuff Moving — ${todayDate}`
-      envDef.emailBlurb = `Hi ${customerName}, please review and sign the attached moving service agreement.`
-      envDef.status = 'sent'
-
-      const doc = new docusign.Document()
-      doc.documentBase64 = Buffer.from(html).toString('base64')
-      doc.name = 'Moving Service Agreement'
-      doc.fileExtension = 'html'
-      doc.documentId = '1'
-      envDef.documents = [doc]
-
-      const signer = new docusign.Signer()
-      signer.email = customerEmail
-      signer.name = customerName
-      signer.recipientId = '1'
-      signer.routingOrder = '1'
-
-      const signHere = new docusign.SignHere()
-      signHere.anchorString = '/sn1/'
-      signHere.anchorUnits = 'pixels'
-      signHere.anchorXOffset = '0'
-      signHere.anchorYOffset = '0'
-
-      const dateSigned = new docusign.DateSigned()
-      dateSigned.anchorString = '/ds1/'
-      dateSigned.anchorUnits = 'pixels'
-      dateSigned.anchorXOffset = '0'
-      dateSigned.anchorYOffset = '0'
-
-      const tabs = new docusign.Tabs()
-      tabs.signHereTabs = [signHere]
-      tabs.dateSignedTabs = [dateSigned]
-      signer.tabs = tabs
-
-      envDef.recipients = new docusign.Recipients()
-      envDef.recipients.signers = [signer]
-      return envDef
+    const envelopeBody = {
+      emailSubject: `Moving Agreement from Titan Tuff Moving — ${todayDate}`,
+      emailBlurb: `Hi ${customerName}, please review and sign the attached moving service agreement.`,
+      status: 'sent',
+      documents: [
+        {
+          documentBase64: Buffer.from(html).toString('base64'),
+          name: 'Moving Service Agreement',
+          fileExtension: 'html',
+          documentId: '1',
+        },
+      ],
+      recipients: {
+        signers: [
+          {
+            email: customerEmail,
+            name: customerName,
+            recipientId: '1',
+            routingOrder: '1',
+            tabs: {
+              signHereTabs: [
+                { anchorString: '/sn1/', anchorUnits: 'pixels', anchorXOffset: '0', anchorYOffset: '0' },
+              ],
+              dateSignedTabs: [
+                { anchorString: '/ds1/', anchorUnits: 'pixels', anchorXOffset: '0', anchorYOffset: '0' },
+              ],
+            },
+          },
+        ],
+      },
     }
 
     // Attempt with current token
     let result: { envelopeId: string; status: string }
+    let accessToken = account.docusign_access_token
     try {
-      const client = buildDocuSignClient({ accessToken, refreshToken: account.docusign_refresh_token, accountId: docuSignAccountId, basePath })
-      envelopesApi = client.envelopesApi
-      result = await envelopesApi.createEnvelope(docuSignAccountId, { envelopeDefinition: buildEnvelope() })
+      result = await createEnvelope(basePath, docuSignAccountId, accessToken, envelopeBody)
     } catch (err: unknown) {
-      // If 401, try refreshing the token
       const status = (err as { status?: number })?.status
       if (status === 401 && account.docusign_refresh_token) {
+        // Token expired — refresh and retry
         const refreshed = await refreshAccessToken(account.docusign_refresh_token)
         accessToken = refreshed.accessToken
 
-        // Save new tokens
         await supabase
           .from('accounts')
           .update({
@@ -149,8 +134,7 @@ export async function POST(request: NextRequest) {
           })
           .eq('id', account.id)
 
-        const client = buildDocuSignClient({ accessToken: refreshed.accessToken, refreshToken: refreshed.refreshToken, accountId: docuSignAccountId, basePath })
-        result = await client.envelopesApi.createEnvelope(docuSignAccountId, { envelopeDefinition: buildEnvelope() })
+        result = await createEnvelope(basePath, docuSignAccountId, refreshed.accessToken, envelopeBody)
       } else {
         throw err
       }
