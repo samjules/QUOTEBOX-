@@ -166,11 +166,11 @@ function computeTotal(
   for (const f of fields) {
     if (f.type === 'radio' || f.type === 'dropdown') {
       const opt = f.options?.find((o) => o.id === (answers[f.id] as string))
-      if (opt) total += opt.price
+      if (opt) total += opt.hours ? opt.price * opt.hours : opt.price
     } else if (f.type === 'checkbox') {
       for (const oid of (answers[f.id] as string[]) ?? []) {
         const opt = f.options?.find((o) => o.id === oid)
-        if (opt) total += opt.price
+        if (opt) total += opt.hours ? opt.price * opt.hours : opt.price
       }
     } else if (f.type === 'number') {
       const effectiveRate = activeRateOverrides[f.id] !== undefined
@@ -1611,7 +1611,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
                             color: sel ? accentFg : '#475569',
                             padding: '3px 11px', borderRadius: 8, transition: 'all 0.12s',
                           }}>
-                            +{currency}{o.price}
+                            {o.hours ? `${currency}${o.price}/hr × ${o.hours}h` : `+${currency}${o.price}`}
                           </span>
                         )}
                       </button>
@@ -1644,7 +1644,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
                     <option value="">Choose an option…</option>
                     {(currentField.options ?? []).map((o) => (
                       <option key={o.id} value={o.id}>
-                        {o.label}{currentField.showPrices !== false && o.price > 0 ? ` (+${currency}${o.price})` : ''}
+                        {o.label}{currentField.showPrices !== false && o.price > 0 ? (o.hours ? ` (${currency}${o.price}/hr × ${o.hours}h)` : ` (+${currency}${o.price})`) : ''}
                       </option>
                     ))}
                   </select>
@@ -1700,7 +1700,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
                               color: sel ? 'white' : '#475569',
                               padding: '3px 11px', borderRadius: 8, transition: 'all 0.12s',
                             }}>
-                              +{currency}{o.price}
+                              {o.hours ? `${currency}${o.price}/hr × ${o.hours}h` : `+${currency}${o.price}`}
                             </span>
                           )}
                         </button>

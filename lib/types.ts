@@ -18,6 +18,7 @@ export interface FieldOption {
   id: string
   label: string
   price: number
+  hours?: number                                                      // optional hours — total = price × hours
   // Per-option rate overrides applied to other fields when this option is selected
   rateOverrides?: Record<string, number>                              // fieldId → ratePerUnit (number fields)
   routeOverrides?: Record<string, { mile?: number; min?: number }>   // fieldId → route rates

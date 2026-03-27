@@ -415,7 +415,7 @@ function renderStep1(wrap,limitReached){
       const blank=document.createElement('option'); blank.value=''; blank.textContent='Select an option…'; sel.appendChild(blank);
       (field.options||[]).forEach(o=>{
         const opt=document.createElement('option'); opt.value=o.id;
-        opt.textContent=o.label+(o.price>0?' (+'+cur+o.price+')':'');
+        opt.textContent=o.label+(o.price>0?(o.hours?' ('+cur+o.price+'/hr × '+o.hours+'h)':' (+'+cur+o.price+')'):'');
         if(quoteData[field.id]===o.id) opt.selected=true;
         sel.appendChild(opt);
       });
@@ -429,7 +429,7 @@ function renderStep1(wrap,limitReached){
         card.className='radio-card'+(quoteData[field.id]===o.id?' sel':'');
         card.setAttribute('data-val',o.id);
         card.innerHTML='<div class="rc-left"><div class="rc-dot"></div><span class="rc-label">'+esc(o.label)+'</span></div>'
-          +'<span class="rc-price">'+(o.price>0?cur+o.price:'Free')+'</span>';
+          +'<span class="rc-price">'+(o.price>0?(o.hours?cur+o.price+'/hr × '+o.hours+'h':cur+o.price):'Free')+'</span>';
         card.addEventListener('click',()=>{
           grid.querySelectorAll('.radio-card').forEach(c=>c.classList.remove('sel'));
           card.classList.add('sel'); clearErr(field.id); recalc();
@@ -445,7 +445,7 @@ function renderStep1(wrap,limitReached){
         const item=document.createElement('div');
         item.className='cb-item'+(prev?' sel':''); item.setAttribute('data-val',o.id);
         item.innerHTML='<div class="cb-left"><div class="cb-box"><span class="cb-check">✓</span></div><span class="cb-label">'+esc(o.label)+'</span></div>'
-          +'<span class="cb-price">'+(o.price>0?'+'+cur+o.price:'Free')+'</span>';
+          +'<span class="cb-price">'+(o.price>0?(o.hours?cur+o.price+'/hr × '+o.hours+'h':'+'+cur+o.price):'Free')+'</span>';
         item.addEventListener('click',()=>{item.classList.toggle('sel');recalc();});
         list.appendChild(item);
       });
@@ -674,16 +674,16 @@ function recalc(){
       const g=document.querySelector('[data-fid="'+f.id+'"]');
       const s=g&&g.querySelector('.radio-card.sel');
       const o=s&&(f.options||[]).find(x=>x.id===s.getAttribute('data-val'));
-      if(o&&o.price>0){total+=o.price;items.push(esc(o.label)+': '+cur+o.price);}
+      if(o&&o.price>0){var op=o.hours?o.price*o.hours:o.price;total+=op;items.push(esc(o.label)+': '+cur+op);}
     } else if(f.type==='dropdown'){
       const el=document.querySelector('[data-fid="'+f.id+'"]');
       const o=el&&el.value&&(f.options||[]).find(x=>x.id===el.value);
-      if(o&&o.price>0){total+=o.price;items.push(esc(o.label)+': '+cur+o.price);}
+      if(o&&o.price>0){var op2=o.hours?o.price*o.hours:o.price;total+=op2;items.push(esc(o.label)+': '+cur+op2);}
     } else if(f.type==='checkbox'){
       const l=document.querySelector('[data-fid="'+f.id+'"]');
       if(l) l.querySelectorAll('.cb-item.sel').forEach(item=>{
         const o=(f.options||[]).find(x=>x.id===item.getAttribute('data-val'));
-        if(o&&o.price>0){total+=o.price;items.push('+'+cur+o.price+' '+esc(o.label));}
+        if(o&&o.price>0){var op3=o.hours?o.price*o.hours:o.price;total+=op3;items.push('+'+cur+op3+' '+esc(o.label));}
       });
     } else if(f.type==='route'){
       const rr=routeResults[f.id];

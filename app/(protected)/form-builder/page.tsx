@@ -820,7 +820,7 @@ function CanvasPreview({
                           </span>
                           {f.showPrices !== false && o.price > 0 && (
                             <span style={{ fontSize: '0.72rem', color: 'var(--accent2)', fontWeight: 700, whiteSpace: 'nowrap' }}>
-                              +{currency}{o.price}
+                              {o.hours ? `${currency}${o.price}/hr × ${o.hours}h = +${currency}${(o.price * o.hours).toFixed(2)}` : `+${currency}${o.price}`}
                             </span>
                           )}
                         </div>
@@ -1439,7 +1439,7 @@ function PropsPanel({
           <div className="prop-label">Options</div>
           <div className="opts-list">
             {(field.options ?? []).map((o) => (
-              <div key={o.id} className="opt-row">
+              <div key={o.id} className="opt-row" style={{ flexWrap: 'wrap', gap: 5 }}>
                 <input
                   className="prop-input"
                   value={o.label}
@@ -1453,6 +1453,7 @@ function PropsPanel({
                   min={0}
                   step={0.01}
                   value={o.price}
+                  title="Rate ($)"
                   onChange={(e) =>
                     onSetOpt(
                       field.id,
@@ -1461,6 +1462,24 @@ function PropsPanel({
                       parseFloat(e.target.value) || 0
                     )
                   }
+                />
+                <input
+                  className="prop-input"
+                  type="number"
+                  min={0}
+                  step={0.5}
+                  placeholder="hrs"
+                  title="Hours (optional)"
+                  value={o.hours || ''}
+                  onChange={(e) =>
+                    onSetOpt(
+                      field.id,
+                      o.id,
+                      'hours',
+                      parseFloat(e.target.value) || 0
+                    )
+                  }
+                  style={{ width: 52, flexShrink: 0, fontSize: '0.78rem', textAlign: 'center' }}
                 />
                 <button
                   className="rm-btn"
