@@ -74,6 +74,10 @@ export interface FormConfig {
   disclaimer_enabled?: boolean
   disclaimer_text?: string
   send_email_estimate?: boolean
+  confirm_title?: string
+  confirm_message?: string
+  next_step_label?: string
+  total_label?: string
   email_template?: {
     subject?: string
     intro?: string

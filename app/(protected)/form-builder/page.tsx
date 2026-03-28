@@ -636,6 +636,10 @@ function CanvasPreview({
   quoteDisplay,
   disclaimerEnabled,
   disclaimerText,
+  confirmTitle,
+  confirmMessage,
+  nextStepLabel,
+  totalLabel,
   onSelectField,
   onRemoveField,
 }: {
@@ -651,6 +655,10 @@ function CanvasPreview({
   quoteDisplay: 'live' | 'after_submit' | 'hidden'
   disclaimerEnabled: boolean
   disclaimerText: string
+  confirmTitle: string
+  confirmMessage: string
+  nextStepLabel: string
+  totalLabel: string
   onSelectField: (id: string) => void
   onRemoveField: (id: string, e: React.MouseEvent) => void
 }) {
@@ -963,7 +971,7 @@ function CanvasPreview({
                 padding: '12px 16px', display: 'flex', alignItems: 'center',
                 justifyContent: 'space-between', marginTop: 4, marginBottom: 10,
               }}>
-                <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>Estimated Total</span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>{totalLabel || 'Estimated Total'}</span>
                 <span style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)' }}>{currency}0</span>
               </div>
             )}
@@ -984,7 +992,7 @@ function CanvasPreview({
               letterSpacing: '0.04em', border: 'none', borderRadius: 12, cursor: 'default',
               background: brandColor, color: textPrimary,
             }}>
-              Next Step →
+              {nextStepLabel || 'Next Step →'}
             </button>
           </>
         )}
@@ -1034,7 +1042,7 @@ function CanvasPreview({
                 padding: '12px 16px', display: 'flex', alignItems: 'center',
                 justifyContent: 'space-between', marginBottom: 12,
               }}>
-                <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>Your Estimate</span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>{totalLabel || 'Estimated Total'}</span>
                 <span style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)' }}>{currency}0</span>
               </div>
             )}
@@ -1069,11 +1077,13 @@ function CanvasPreview({
             </div>
 
             <div style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.2rem', fontWeight: 800, color: '#111827', lineHeight: 1.2 }}>
-              You&apos;re all set!
+              {confirmTitle || "You\u2019re all set!"}
             </div>
-            <div style={{ fontSize: '0.82rem', color: '#6b7280', maxWidth: 230, lineHeight: 1.55 }}>
-              We&apos;ve received your details and will send your personalised quote shortly.
-            </div>
+            {confirmMessage && (
+              <div style={{ fontSize: '0.82rem', color: '#6b7280', maxWidth: 230, lineHeight: 1.55 }}>
+                {confirmMessage}
+              </div>
+            )}
 
             {hasPricing && quoteDisplay !== 'hidden' && (
               <div style={{
@@ -1083,7 +1093,7 @@ function CanvasPreview({
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
                 <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
-                  {quoteDisplay === 'after_submit' ? 'Your Estimate (revealed)' : 'Your Estimate'}
+                  {totalLabel || 'Estimated Total'}
                 </span>
                 <span style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.3rem', fontWeight: 800, color: 'var(--accent)' }}>{currency}–</span>
               </div>
@@ -1837,6 +1847,10 @@ export default function FormBuilderPage() {
     'I understand this quote is an estimate and is not final until confirmed in writing.'
   )
   const [sendEmailEstimate, setSendEmailEstimate] = useState(true)
+  const [confirmTitle, setConfirmTitle] = useState("You're all set!")
+  const [confirmMessage, setConfirmMessage] = useState('We\u2019ve received your details and will send your personalised quote shortly.')
+  const [nextStepLabel, setNextStepLabel] = useState('Next Step →')
+  const [totalLabel, setTotalLabel] = useState('Estimated Total')
   const [aiModalOpen, setAiModalOpen] = useState(false)
   const [aiGenerating, setAiGenerating] = useState(false)
   const [emailSubject, setEmailSubject] = useState('')
@@ -2032,6 +2046,10 @@ export default function FormBuilderPage() {
     setDisclaimerEnabled(c.disclaimer_enabled ?? true)
     setDisclaimerText(c.disclaimer_text ?? 'I understand this quote is an estimate and is not final until confirmed in writing.')
     setSendEmailEstimate(c.send_email_estimate ?? true)
+    setConfirmTitle(c.confirm_title ?? "You're all set!")
+    setConfirmMessage(c.confirm_message ?? 'We\u2019ve received your details and will send your personalised quote shortly.')
+    setNextStepLabel(c.next_step_label ?? 'Next Step →')
+    setTotalLabel(c.total_label ?? 'Estimated Total')
     setEmailSubject(c.email_template?.subject ?? '')
     setEmailIntro(c.email_template?.intro ?? '')
     setEmailOutro(c.email_template?.outro ?? '')
@@ -2355,6 +2373,10 @@ export default function FormBuilderPage() {
         disclaimer_enabled: disclaimerEnabled,
         disclaimer_text: disclaimerText,
         send_email_estimate: sendEmailEstimate,
+        confirm_title: confirmTitle,
+        confirm_message: confirmMessage,
+        next_step_label: nextStepLabel,
+        total_label: totalLabel,
         email_template: {
           subject: emailSubject || '',
           intro: emailIntro || '',
@@ -2690,6 +2712,35 @@ export default function FormBuilderPage() {
                       Customers won&apos;t receive an email with their quote after submitting.
                     </div>
                   )}
+                  <label style={{ marginTop: 14, display: 'block' }}>Next Step Button</label>
+                  <input
+                    type="text"
+                    value={nextStepLabel}
+                    onChange={(e) => setNextStepLabel(e.target.value)}
+                    placeholder="Next Step →"
+                  />
+                  <label>Total Label</label>
+                  <input
+                    type="text"
+                    value={totalLabel}
+                    onChange={(e) => setTotalLabel(e.target.value)}
+                    placeholder="Estimated Total"
+                  />
+                  <label>Confirmation Title</label>
+                  <input
+                    type="text"
+                    value={confirmTitle}
+                    onChange={(e) => setConfirmTitle(e.target.value)}
+                    placeholder="You're all set!"
+                  />
+                  <label>Confirmation Message</label>
+                  <textarea
+                    rows={2}
+                    value={confirmMessage}
+                    onChange={(e) => setConfirmMessage(e.target.value)}
+                    placeholder="We've received your details…"
+                    style={{ resize: 'vertical' }}
+                  />
                 </div>
               </div>
             )}
@@ -3047,6 +3098,10 @@ export default function FormBuilderPage() {
                 quoteDisplay={quoteDisplay}
                 disclaimerEnabled={disclaimerEnabled}
                 disclaimerText={disclaimerText}
+                confirmTitle={confirmTitle}
+                confirmMessage={confirmMessage}
+                nextStepLabel={nextStepLabel}
+                totalLabel={totalLabel}
                 onSelectField={setSelectedId}
                 onRemoveField={removeField}
               />

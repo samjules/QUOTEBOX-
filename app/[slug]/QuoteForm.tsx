@@ -1868,7 +1868,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
                 }}>
                   <div>
                     <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      {effectiveDisplay === 'live' ? 'Your Estimate' : 'Quote Total'}
+                      {config.total_label || (effectiveDisplay === 'live' ? 'Your Estimate' : 'Quote Total')}
                     </div>
                     {minApplied && <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 2 }}>Min. fee applies</div>}
                   </div>
@@ -1905,12 +1905,13 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
                 <span style={{ color: accentFg }}>✓</span>
               </div>
               <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0f172a', marginBottom: 10 }}>
-                Your quote is on its way!
+                {config.confirm_title || 'Your quote is on its way!'}
               </div>
-              <div style={{ fontSize: '0.9rem', color: '#64748b', lineHeight: 1.7, maxWidth: 340, margin: '0 auto' }}>
-                We&apos;ve received your details and will email your personalised quote to{' '}
-                <strong style={{ color: '#334155' }}>{email}</strong> shortly.
-              </div>
+              {(config.confirm_message || config.confirm_message === undefined) && (
+                <div style={{ fontSize: '0.9rem', color: '#64748b', lineHeight: 1.7, maxWidth: 340, margin: '0 auto' }}>
+                  {config.confirm_message || (<>We&apos;ve received your details and will email your personalised quote to{' '}<strong style={{ color: '#334155' }}>{email}</strong> shortly.</>)}
+                </div>
+              )}
 
               {hasPricing && effectiveDisplay !== 'hidden' && (displayTotal > 0 || effectiveDisplay === 'after_submit') && (
                 <div style={{
@@ -1925,7 +1926,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
                   textAlign: 'left',
                 }}>
                   <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    {effectiveDisplay === 'after_submit' ? 'Your Estimated Quote' : 'Estimated Total'}
+                    {config.total_label || (effectiveDisplay === 'after_submit' ? 'Your Estimated Quote' : 'Estimated Total')}
                   </div>
 
                   {/* Line-item breakdown */}

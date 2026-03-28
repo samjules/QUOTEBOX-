@@ -93,19 +93,21 @@ export default function ThankYouClient({ form }: { form: HostedForm }) {
           </div>
 
           <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0f172a', marginBottom: 10 }}>
-            Your quote is on its way!
+            {config.confirm_title || 'Your quote is on its way!'}
           </div>
 
-          <div style={{ fontSize: '0.9rem', color: '#64748b', lineHeight: 1.7, maxWidth: 340, margin: '0 auto' }}>
-            {email ? (
-              <>
-                We&apos;ve received your details and will email your personalised quote to{' '}
-                <strong style={{ color: '#334155' }}>{email}</strong> shortly.
-              </>
-            ) : (
-              <>We&apos;ve received your details and will be in touch shortly.</>
-            )}
-          </div>
+          {(config.confirm_message || config.confirm_message === undefined) && (
+            <div style={{ fontSize: '0.9rem', color: '#64748b', lineHeight: 1.7, maxWidth: 340, margin: '0 auto' }}>
+              {config.confirm_message || (email ? (
+                <>
+                  We&apos;ve received your details and will email your personalised quote to{' '}
+                  <strong style={{ color: '#334155' }}>{email}</strong> shortly.
+                </>
+              ) : (
+                <>We&apos;ve received your details and will be in touch shortly.</>
+              ))}
+            </div>
+          )}
 
           {showTotal && (
             <div style={{
@@ -116,7 +118,7 @@ export default function ThankYouClient({ form }: { form: HostedForm }) {
               textAlign: 'left',
             }}>
               <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                Your Estimated Quote
+                {config.total_label || 'Your Estimated Quote'}
               </div>
               <div style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>
                 {currency}{total.toFixed(2)}
