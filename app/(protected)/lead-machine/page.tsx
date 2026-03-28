@@ -1039,9 +1039,10 @@ export default function LeadMachinePage() {
       console.log('[savePixelToForm] forms found:', forms?.length ?? 0)
       if (!forms || forms.length === 0) return
       await Promise.all(forms.map(async (f) => {
+        console.log('[savePixelToForm] existing form_config for', f.id, ':', JSON.stringify(f.form_config))
         const cfg = (f.form_config || {}) as Record<string, unknown>
         cfg.meta_pixel_id = pixelId || null
-        console.log('[savePixelToForm] saving to form', f.id, 'meta_pixel_id =', cfg.meta_pixel_id)
+        console.log('[savePixelToForm] patched config:', JSON.stringify(cfg))
         const res = await fetch('/api/form-builder/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
