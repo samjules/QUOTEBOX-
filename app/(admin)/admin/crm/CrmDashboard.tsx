@@ -21,6 +21,7 @@ export default function CrmDashboard({ leads: initialLeads }: { leads: SalesLead
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [noteInputs, setNoteInputs] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState<string | null>(null)
+  const [sendingLink, setSendingLink] = useState<string | null>(null)
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
 
   function showToast(msg: string, ok = true) {
@@ -75,6 +76,24 @@ export default function CrmDashboard({ leads: initialLeads }: { leads: SalesLead
       showToast(`Status updated to ${newStatus}`)
     } finally {
       setSaving(null)
+    }
+  }
+
+  async function handleSendLink(id: string) {
+    setSendingLink(id)
+    try {
+      const res = await fetch(`/api/admin/sales-leads/${id}/send-link`, {
+        method: 'POST',
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        showToast(data.error ?? 'Failed to send link', false)
+        return
+      }
+      setLeads((prev) => prev.map((l) => l.id === id ? { ...l, status: 'contacted' } : l))
+      showToast(data.accountCreated ? 'Account created & magic link sent!' : 'Magic link sent (account already existed)')
+    } finally {
+      setSendingLink(null)
     }
   }
 
@@ -181,7 +200,7 @@ export default function CrmDashboard({ leads: initialLeads }: { leads: SalesLead
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
                 <thead>
                   <tr style={{ background: 'rgba(255,255,255,0.03)' }}>
-                    {['Name', 'Email', 'Phone', 'Tier', 'Monthly', 'Scheduled Call', 'Status', 'Created'].map((h) => (
+                    {['Name', 'Email', 'Phone', 'Tier', 'Monthly', 'Scheduled Call', 'Status', 'Created', ''].map((h) => (
                       <th key={h} style={{
                         padding: '12px 14px', textAlign: 'left', fontSize: '0.7rem', fontWeight: 700,
                         color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em',
@@ -275,6 +294,22 @@ export default function CrmDashboard({ leads: initialLeads }: { leads: SalesLead
                         </td>
                         <td style={{ padding: '12px 14px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap', fontSize: '0.78rem' }}>
                           {new Date(lead.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </td>
+                        <td style={{ padding: '12px 14px' }}>
+                          <button
+                            onClick={() => handleSendLink(lead.id)}
+                            disabled={sendingLink === lead.id}
+                            style={{
+                              padding: '5px 12px', fontSize: '0.72rem', fontWeight: 700, borderRadius: 6,
+                              border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+                              background: lead.status === 'closed' ? 'rgba(255,255,255,0.06)' : '#FFE500',
+                              color: lead.status === 'closed' ? 'rgba(255,255,255,0.3)' : '#0d0d1a',
+                              opacity: sendingLink === lead.id ? 0.5 : 1,
+                              fontFamily: "'Inter', sans-serif",
+                            }}
+                          >
+                            {sendingLink === lead.id ? 'Sending...' : 'Send Link'}
+                          </button>
                         </td>
                       </tr>
                     )
