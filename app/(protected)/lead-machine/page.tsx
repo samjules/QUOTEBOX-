@@ -918,8 +918,10 @@ export default function LeadMachinePage() {
 
   // Auto-select pixel if only one is available
   useEffect(() => {
+    console.log('[pixel auto-select] pixelsLoading:', pixelsLoading, 'current pixelId:', questionnaire.pixelId, 'metaPixels:', metaPixels.length)
     if (pixelsLoading || questionnaire.pixelId || metaPixels.length !== 1) return
     const pid = metaPixels[0].id
+    console.log('[pixel auto-select] auto-selecting pixel:', pid)
     setQuestionnaire((q) => ({ ...q, pixelId: pid }))
     savePixelToForm(pid)
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1019,26 +1021,33 @@ export default function LeadMachinePage() {
 
   // Save pixel ID into all hosted forms' form_config so the live forms fire the pixel
   async function savePixelToForm(pixelId: string | null) {
+    console.log('[savePixelToForm] called with pixelId:', pixelId)
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
+      console.log('[savePixelToForm] user:', user?.id ?? 'null')
       if (!user) return
       const { data: account } = await supabase.from('accounts').select('id').eq('owner_id', user.id).single()
+      console.log('[savePixelToForm] account:', account?.id ?? 'null')
       if (!account) return
       const { data: forms } = await supabase
         .from('hosted_forms')
         .select('id, form_config')
         .eq('account_id', account.id)
         .eq('is_active', true)
+      console.log('[savePixelToForm] forms found:', forms?.length ?? 0)
       if (!forms || forms.length === 0) return
       await Promise.all(forms.map(async (f) => {
         const cfg = (f.form_config || {}) as Record<string, unknown>
         cfg.meta_pixel_id = pixelId || null
-        await fetch('/api/form-builder/save', {
+        console.log('[savePixelToForm] saving to form', f.id, 'meta_pixel_id =', cfg.meta_pixel_id)
+        const res = await fetch('/api/form-builder/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ formId: f.id, payload: { form_config: cfg } }),
         })
+        const result = await res.json()
+        console.log('[savePixelToForm] save response for', f.id, ':', res.status, result)
       }))
     } catch { /* non-fatal */ }
   }

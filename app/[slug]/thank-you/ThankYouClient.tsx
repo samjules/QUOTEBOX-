@@ -32,6 +32,8 @@ export default function ThankYouClient({ form }: { form: HostedForm }) {
   // Fire Meta Pixel on this dedicated thank-you URL — triggers the custom conversion rule
   useEffect(() => {
     const pixelId = config.meta_pixel_id
+    console.log('[ThankYou] config.meta_pixel_id:', pixelId)
+    console.log('[ThankYou] full form_config:', JSON.stringify(config, null, 2))
     if (!pixelId) { setPixelStatus('no_pixel'); return }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const w = window as any
