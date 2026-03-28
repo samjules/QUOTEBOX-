@@ -344,7 +344,7 @@ function TemplatePicker({
 
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
-          <div style={{ fontFamily: 'Oswald, sans-serif', fontSize: '1.6rem', fontWeight: 700, color: 'var(--fg)', marginBottom: 8 }}>
+          <div style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.6rem', fontWeight: 700, color: 'var(--fg)', marginBottom: 8 }}>
             Start with a template
           </div>
           <div style={{ fontSize: '0.88rem', color: 'var(--muted)', lineHeight: 1.55, maxWidth: 420, margin: '0 auto' }}>
@@ -353,7 +353,7 @@ function TemplatePicker({
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 20 }}>
             <button
               className="bb bb-primary"
-              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', border: 'none', color: '#fff' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg,#e8601a,#f59e0b)', border: 'none', color: '#fff' }}
               onClick={onAi}
             >
               <img src="/icons/logo-1772578089154.jpg" alt="Robert" style={{ width: 18, height: 18, borderRadius: '50%', objectFit: 'cover' }} />
@@ -721,7 +721,7 @@ function CanvasPreview({
           </div>
 
           <div style={{
-            fontFamily: "'Oswald', sans-serif",
+            fontFamily: "'Instrument Sans', sans-serif",
             fontSize: '1.35rem', fontWeight: 800,
             lineHeight: 1.2, color: textPrimary,
           }}>
@@ -757,8 +757,8 @@ function CanvasPreview({
                     padding: '14px 15px',
                     marginBottom: 10,
                     cursor: 'pointer',
-                    background: selectedId === f.id ? 'rgba(79,70,229,0.03)' : 'white',
-                    boxShadow: selectedId === f.id ? '0 0 0 3px rgba(79,70,229,0.08)' : '0 1px 3px rgba(0,0,0,0.04)',
+                    background: selectedId === f.id ? 'rgba(232,96,26,0.03)' : 'white',
+                    boxShadow: selectedId === f.id ? '0 0 0 3px rgba(232,96,26,0.08)' : '0 1px 3px rgba(0,0,0,0.04)',
                     transition: 'border-color 0.15s, box-shadow 0.15s',
                     position: 'relative',
                   }}
@@ -958,13 +958,13 @@ function CanvasPreview({
             {/* Live total */}
             {hasPricing && quoteDisplay === 'live' && (
               <div style={{
-                background: 'linear-gradient(135deg,rgba(79,70,229,0.07),rgba(16,185,129,0.04))',
-                border: '1px solid rgba(79,70,229,0.15)', borderRadius: 12,
+                background: 'linear-gradient(135deg,rgba(232,96,26,0.07),rgba(16,185,129,0.04))',
+                border: '1px solid rgba(232,96,26,0.15)', borderRadius: 12,
                 padding: '12px 16px', display: 'flex', alignItems: 'center',
                 justifyContent: 'space-between', marginTop: 4, marginBottom: 10,
               }}>
                 <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>Estimated Total</span>
-                <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)' }}>{currency}0</span>
+                <span style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)' }}>{currency}0</span>
               </div>
             )}
             {hasPricing && quoteDisplay === 'after_submit' && (
@@ -974,13 +974,13 @@ function CanvasPreview({
                 justifyContent: 'space-between', marginTop: 4, marginBottom: 10, opacity: 0.55,
               }}>
                 <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>Total shown after submit</span>
-                <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.25rem', fontWeight: 800, color: 'var(--muted)' }}>{currency}–</span>
+                <span style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.25rem', fontWeight: 800, color: 'var(--muted)' }}>{currency}–</span>
               </div>
             )}
 
             <button style={{
               width: '100%', padding: '13px 16px',
-              fontFamily: "'Oswald', sans-serif", fontWeight: 800, fontSize: '0.95rem',
+              fontFamily: "'Instrument Sans', sans-serif", fontWeight: 800, fontSize: '0.95rem',
               letterSpacing: '0.04em', border: 'none', borderRadius: 12, cursor: 'default',
               background: brandColor, color: textPrimary,
             }}>
@@ -1019,7 +1019,7 @@ function CanvasPreview({
               <div style={{
                 display: 'flex', alignItems: 'flex-start', gap: 10,
                 padding: '11px 13px',
-                background: 'rgba(79,70,229,0.04)', border: '1px solid rgba(79,70,229,0.12)',
+                background: 'rgba(232,96,26,0.04)', border: '1px solid rgba(232,96,26,0.12)',
                 borderRadius: 10, marginBottom: 14,
               }}>
                 <input type="checkbox" readOnly style={{ marginTop: 2, flexShrink: 0, accentColor: brandColor }} />
@@ -1029,19 +1029,19 @@ function CanvasPreview({
 
             {hasPricing && quoteDisplay === 'live' && (
               <div style={{
-                background: 'linear-gradient(135deg,rgba(79,70,229,0.07),rgba(16,185,129,0.04))',
-                border: '1px solid rgba(79,70,229,0.15)', borderRadius: 12,
+                background: 'linear-gradient(135deg,rgba(232,96,26,0.07),rgba(16,185,129,0.04))',
+                border: '1px solid rgba(232,96,26,0.15)', borderRadius: 12,
                 padding: '12px 16px', display: 'flex', alignItems: 'center',
                 justifyContent: 'space-between', marginBottom: 12,
               }}>
                 <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>Your Estimate</span>
-                <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)' }}>{currency}0</span>
+                <span style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)' }}>{currency}0</span>
               </div>
             )}
 
             <button style={{
               width: '100%', padding: '13px 16px',
-              fontFamily: "'Oswald', sans-serif", fontWeight: 800, fontSize: '0.95rem',
+              fontFamily: "'Instrument Sans', sans-serif", fontWeight: 800, fontSize: '0.95rem',
               letterSpacing: '0.04em', border: 'none', borderRadius: 12, cursor: 'default',
               background: brandColor, color: textPrimary,
             }}>
@@ -1068,7 +1068,7 @@ function CanvasPreview({
               </svg>
             </div>
 
-            <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.2rem', fontWeight: 800, color: '#111827', lineHeight: 1.2 }}>
+            <div style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.2rem', fontWeight: 800, color: '#111827', lineHeight: 1.2 }}>
               You&apos;re all set!
             </div>
             <div style={{ fontSize: '0.82rem', color: '#6b7280', maxWidth: 230, lineHeight: 1.55 }}>
@@ -1077,15 +1077,15 @@ function CanvasPreview({
 
             {hasPricing && quoteDisplay !== 'hidden' && (
               <div style={{
-                background: 'linear-gradient(135deg,rgba(79,70,229,0.07),rgba(16,185,129,0.04))',
-                border: '1px solid rgba(79,70,229,0.15)', borderRadius: 12,
+                background: 'linear-gradient(135deg,rgba(232,96,26,0.07),rgba(16,185,129,0.04))',
+                border: '1px solid rgba(232,96,26,0.15)', borderRadius: 12,
                 padding: '13px 18px', marginTop: 8, width: '100%',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
                 <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
                   {quoteDisplay === 'after_submit' ? 'Your Estimate (revealed)' : 'Your Estimate'}
                 </span>
-                <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.3rem', fontWeight: 800, color: 'var(--accent)' }}>{currency}–</span>
+                <span style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.3rem', fontWeight: 800, color: 'var(--accent)' }}>{currency}–</span>
               </div>
             )}
           </div>
@@ -2508,12 +2508,12 @@ export default function FormBuilderPage() {
 
       {/* Template picker or builder */}
       {screen === 'picker' ? (
-        <div style={{ overflowY: 'auto', height: 'calc(100vh - 56px)' }}>
+        <div style={{ overflowY: 'auto', height: 'calc(100vh - 52px)' }}>
           {/* ── Existing forms ── */}
           {(existingForms.length > 0 || existingFormsLoading) && (
             <div style={{ maxWidth: 960, margin: '0 auto', padding: '28px 28px 0' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.05rem', fontWeight: 700, color: 'var(--fg)', margin: 0 }}>
+                <h2 style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.05rem', fontWeight: 700, color: 'var(--fg)', margin: 0 }}>
                   Your Forms
                 </h2>
               </div>
@@ -2529,7 +2529,7 @@ export default function FormBuilderPage() {
                     }}>
                       <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--fg)', lineHeight: 1.3 }}>{f.form_name}</div>
                       {f.form_config?.slug && (
-                        <div style={{ fontSize: '0.72rem', color: 'var(--muted)', fontFamily: 'monospace' }}>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--muted)', fontFamily: "'DM Mono', monospace" }}>
                           /{f.form_config.slug}
                         </div>
                       )}
@@ -2539,7 +2539,7 @@ export default function FormBuilderPage() {
                           setScreen('builder')
                         }}
                         style={{
-                          marginTop: 4, background: '#4f46e5', color: 'white',
+                          marginTop: 4, background: '#e8601a', color: 'white',
                           border: 'none', borderRadius: 8, padding: '8px 0',
                           fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
                         }}
@@ -2578,7 +2578,7 @@ export default function FormBuilderPage() {
                   className="ftype-btn"
                   onClick={() => setAiModalOpen(true)}
                   style={{
-                    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                    background: 'linear-gradient(135deg, #e8601a 0%, #f59e0b 100%)',
                     color: '#fff',
                     fontWeight: 600,
                     border: 'none',
@@ -2769,7 +2769,7 @@ export default function FormBuilderPage() {
                           background: hex,
                           cursor: 'pointer',
                           border: brandColor === hex ? '2px solid var(--accent)' : '2px solid transparent',
-                          boxShadow: brandColor === hex ? '0 0 0 3px rgba(79,70,229,0.18)' : undefined,
+                          boxShadow: brandColor === hex ? '0 0 0 3px rgba(232,96,26,0.18)' : undefined,
                           transition: 'all 0.13s',
                           flexShrink: 0,
                         }}
@@ -2806,7 +2806,7 @@ export default function FormBuilderPage() {
                     <div style={{ width: 20, height: 20, borderRadius: 4, background: brandColor, border: '1px solid var(--border)', flexShrink: 0 }} />
                     <input
                       className="prop-input"
-                      style={{ fontFamily: 'monospace', fontSize: '0.78rem', flex: 1 }}
+                      style={{ fontFamily: "'DM Mono', monospace", fontSize: '0.78rem', flex: 1 }}
                       value={brandColor}
                       onChange={(e) => {
                         const v = e.target.value
@@ -3070,7 +3070,7 @@ export default function FormBuilderPage() {
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 22px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
               <div>
-                <div style={{ fontFamily: 'Oswald, sans-serif', fontSize: '1rem', fontWeight: 700 }}>Media Library</div>
+                <div style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1rem', fontWeight: 700 }}>Media Library</div>
                 <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: 2 }}>
                   {heroMediaFiles.length} image{heroMediaFiles.length !== 1 ? 's' : ''} · click one to select
                 </div>
@@ -3128,7 +3128,7 @@ export default function FormBuilderPage() {
                         cursor: 'pointer',
                         background: 'var(--surface2)',
                         transition: 'all 0.13s',
-                        boxShadow: heroImageUrl === f.file_url ? '0 0 0 3px rgba(79,70,229,0.15)' : undefined,
+                        boxShadow: heroImageUrl === f.file_url ? '0 0 0 3px rgba(232,96,26,0.15)' : undefined,
                       }}
                     >
                       {/* Thumbnail */}
@@ -3155,7 +3155,7 @@ export default function FormBuilderPage() {
                       {/* Label */}
                       <div style={{ padding: '7px 9px' }}>
                         <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--fg)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.title}</div>
-                        <div style={{ fontSize: '0.65rem', color: 'var(--muted)', fontFamily: 'monospace', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.id}</div>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--muted)', fontFamily: "'DM Mono', monospace", marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.id}</div>
                         <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginTop: 2 }}>{formatMediaDate(f.created_at)}</div>
                       </div>
                     </div>
