@@ -1836,6 +1836,7 @@ export default function FormBuilderPage() {
   const [disclaimerText, setDisclaimerText] = useState(
     'I understand this quote is an estimate and is not final until confirmed in writing.'
   )
+  const [sendEmailEstimate, setSendEmailEstimate] = useState(true)
   const [aiModalOpen, setAiModalOpen] = useState(false)
   const [aiGenerating, setAiGenerating] = useState(false)
   const [emailSubject, setEmailSubject] = useState('')
@@ -2030,6 +2031,7 @@ export default function FormBuilderPage() {
     }
     if (c.disclaimer_enabled !== undefined) setDisclaimerEnabled(c.disclaimer_enabled)
     if (c.disclaimer_text) setDisclaimerText(c.disclaimer_text)
+    if (c.send_email_estimate !== undefined) setSendEmailEstimate(c.send_email_estimate)
     setEmailSubject(c.email_template?.subject ?? '')
     setEmailIntro(c.email_template?.intro ?? '')
     setEmailOutro(c.email_template?.outro ?? '')
@@ -2352,6 +2354,7 @@ export default function FormBuilderPage() {
         ...(minQuote > 0 ? { min_quote: minQuote } : {}),
         disclaimer_enabled: disclaimerEnabled,
         disclaimer_text: disclaimerText,
+        send_email_estimate: sendEmailEstimate,
         email_template: {
           ...(emailSubject ? { subject: emailSubject } : {}),
           ...(emailIntro ? { intro: emailIntro } : {}),
@@ -2674,6 +2677,18 @@ export default function FormBuilderPage() {
                       style={{ marginTop: 6, fontSize: '0.78rem', lineHeight: 1.45, resize: 'vertical' }}
                       placeholder="Disclaimer shown on the contact step…"
                     />
+                  )}
+                  <div className="prop-toggle" style={{ marginTop: 12 }}>
+                    <span className="prop-toggle-lbl">Email estimate to customer</span>
+                    <div
+                      className={`toggle${sendEmailEstimate ? ' on' : ''}`}
+                      onClick={() => setSendEmailEstimate((v) => !v)}
+                    />
+                  </div>
+                  {!sendEmailEstimate && (
+                    <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: 4, lineHeight: 1.4 }}>
+                      Customers won&apos;t receive an email with their quote after submitting.
+                    </div>
                   )}
                 </div>
               </div>

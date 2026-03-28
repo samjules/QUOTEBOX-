@@ -1338,29 +1338,32 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
       return
     }
 
-    // Strip prices from email when quote is hidden or after_submit
-    const emailLineItems = hidePrices
-      ? lineItems.map((item) => ({ ...item, price: 0 }))
-      : lineItems
-    fetch('/api/leads/send-quote-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        customerName: name.trim(),
-        customerEmail: email.trim(),
-        formName: form.form_name,
-        currency,
-        total: hidePrices ? 0 : displayTotal,
-        minApplied: hidePrices ? false : minApplied,
-        lineItems: emailLineItems,
-        businessName: businessName || undefined,
-        emailSubject: config.email_template?.subject || undefined,
-        emailIntro: config.email_template?.intro || undefined,
-        emailOutro: config.email_template?.outro || undefined,
-        emailHeaderImage: config.email_template?.header_image || undefined,
-        emailAccentColor: config.email_template?.accent_color || undefined,
-      }),
-    }).catch(() => { /* silently ignore email errors */ })
+    // Send email estimate unless disabled in form config
+    if (config.send_email_estimate !== false) {
+      // Strip prices from email when quote is hidden or after_submit
+      const emailLineItems = hidePrices
+        ? lineItems.map((item) => ({ ...item, price: 0 }))
+        : lineItems
+      fetch('/api/leads/send-quote-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerName: name.trim(),
+          customerEmail: email.trim(),
+          formName: form.form_name,
+          currency,
+          total: hidePrices ? 0 : displayTotal,
+          minApplied: hidePrices ? false : minApplied,
+          lineItems: emailLineItems,
+          businessName: businessName || undefined,
+          emailSubject: config.email_template?.subject || undefined,
+          emailIntro: config.email_template?.intro || undefined,
+          emailOutro: config.email_template?.outro || undefined,
+          emailHeaderImage: config.email_template?.header_image || undefined,
+          emailAccentColor: config.email_template?.accent_color || undefined,
+        }),
+      }).catch(() => { /* silently ignore email errors */ })
+    }
 
     // Navigate to dedicated thank-you page — pixel fires there and triggers the custom conversion
     const qs = new URLSearchParams({ email })

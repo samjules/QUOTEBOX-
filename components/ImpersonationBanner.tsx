@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 export default function ImpersonationBanner() {
   const searchParams = useSearchParams()
   const [isImpersonating, setIsImpersonating] = useState(false)
+  const [dismissed, setDismissed] = useState(false)
   const [exiting, setExiting] = useState(false)
 
   useEffect(() => {
@@ -40,7 +41,7 @@ export default function ImpersonationBanner() {
     window.location.href = '/login'
   }
 
-  if (!isImpersonating) return null
+  if (!isImpersonating || dismissed) return null
 
   return (
     <div style={{
@@ -77,6 +78,26 @@ export default function ImpersonationBanner() {
         }}
       >
         {exiting ? 'Exiting...' : 'Exit Admin View'}
+      </button>
+      <button
+        onClick={() => setDismissed(true)}
+        aria-label="Dismiss banner"
+        style={{
+          position: 'absolute',
+          right: 12,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          background: 'none',
+          border: 'none',
+          color: '#1a1a2e',
+          fontSize: '1.1rem',
+          cursor: 'pointer',
+          padding: '2px 6px',
+          lineHeight: 1,
+          opacity: 0.7,
+        }}
+      >
+        ✕
       </button>
     </div>
   )
