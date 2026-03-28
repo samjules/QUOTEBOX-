@@ -919,7 +919,9 @@ export default function LeadMachinePage() {
   // Auto-select pixel if only one is available
   useEffect(() => {
     if (pixelsLoading || questionnaire.pixelId || metaPixels.length !== 1) return
-    setQuestionnaire((q) => ({ ...q, pixelId: metaPixels[0].id }))
+    const pid = metaPixels[0].id
+    setQuestionnaire((q) => ({ ...q, pixelId: pid }))
+    savePixelToForm(pid)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pixelsLoading, metaPixels])
 
@@ -1013,6 +1015,24 @@ export default function LeadMachinePage() {
     }
 
     setGenerating(false)
+  }
+
+  // Save pixel ID into the hosted form's form_config so the live form fires the pixel
+  async function savePixelToForm(pixelId: string | null, formId?: string | null) {
+    const fid = formId ?? questionnaire.selectedFormId
+    if (!fid) return
+    try {
+      const supabase = createClient()
+      const { data: form } = await supabase
+        .from('hosted_forms')
+        .select('form_config')
+        .eq('id', fid)
+        .single()
+      if (!form) return
+      const cfg = (form.form_config || {}) as Record<string, unknown>
+      cfg.meta_pixel_id = pixelId || null
+      await supabase.from('hosted_forms').update({ form_config: cfg }).eq('id', fid)
+    } catch { /* non-fatal */ }
   }
 
   async function handleCreateCampaign() {
@@ -1730,6 +1750,7 @@ export default function LeadMachinePage() {
                                 if (data.pixel) {
                                   setMetaPixels([data.pixel])
                                   setQuestionnaire((q) => ({ ...q, pixelId: data.pixel.id }))
+                                  savePixelToForm(data.pixel.id)
                                 } else {
                                   alert(data.error || 'Failed to create pixel')
                                 }
@@ -1746,7 +1767,11 @@ export default function LeadMachinePage() {
                       ) : (
                         <select
                           value={questionnaire.pixelId ?? ''}
-                          onChange={(e) => setQuestionnaire((q) => ({ ...q, pixelId: e.target.value || null, customConversionId: null }))}
+                          onChange={(e) => {
+                            const pid = e.target.value || null
+                            setQuestionnaire((q) => ({ ...q, pixelId: pid, customConversionId: null }))
+                            savePixelToForm(pid)
+                          }}
                           className="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                         >
                           <option value="">— Select a pixel —</option>
