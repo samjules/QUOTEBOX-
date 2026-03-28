@@ -709,6 +709,7 @@ export default function LeadMachinePage() {
   const [conversionTestOpened, setConversionTestOpened] = useState(false)
   const [metaPixels, setMetaPixels] = useState<Array<{id: string; name: string}>>([])
   const [pixelsLoading, setPixelsLoading] = useState(false)
+  const [creatingPixel, setCreatingPixel] = useState(false)
 
   // Analytics/campaigns state
   const [campaigns, setCampaigns] = useState<CampaignWithInsights[]>([])
@@ -1714,7 +1715,33 @@ export default function LeadMachinePage() {
                       ) : metaPixels.length === 0 ? (
                         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
                           <p className="text-sm font-medium text-yellow-800 mb-1">No Meta Pixels found</p>
-                          <p className="text-xs text-yellow-700">Create a pixel in Meta Events Manager, then reconnect your account.</p>
+                          <p className="text-xs text-yellow-700 mb-3">You need a pixel to track conversions. Create one now or add one in Meta Events Manager.</p>
+                          <button
+                            disabled={creatingPixel}
+                            onClick={async () => {
+                              setCreatingPixel(true)
+                              try {
+                                const res = await fetch('/api/meta/pixels', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ name: 'QuoteBox Pixel' }),
+                                })
+                                const data = await res.json()
+                                if (data.pixel) {
+                                  setMetaPixels([data.pixel])
+                                  setQuestionnaire((q) => ({ ...q, pixelId: data.pixel.id }))
+                                } else {
+                                  alert(data.error || 'Failed to create pixel')
+                                }
+                              } catch {
+                                alert('Failed to create pixel')
+                              }
+                              setCreatingPixel(false)
+                            }}
+                            className="px-4 py-2 text-sm font-semibold rounded-lg bg-yellow-600 text-white hover:bg-yellow-700 transition disabled:opacity-50"
+                          >
+                            {creatingPixel ? 'Creating…' : 'Create QuoteBox Pixel'}
+                          </button>
                         </div>
                       ) : (
                         <select
