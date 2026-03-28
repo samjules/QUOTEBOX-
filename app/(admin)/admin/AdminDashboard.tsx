@@ -284,8 +284,11 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
         <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)' }}>
           {localAccounts.length} accounts
         </span>
+        <a href="/admin/crm" style={{ fontSize: '0.82rem', color: '#FFE500', textDecoration: 'none', padding: '6px 14px', border: '1px solid rgba(255,229,0,0.3)', borderRadius: 6, fontWeight: 600 }}>
+          CRM
+        </a>
         <a href="/dashboard" style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', padding: '6px 14px', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6 }}>
-          ← Dashboard
+          &larr; Dashboard
         </a>
       </div>
 
