@@ -173,9 +173,6 @@ export default function GetStartedPage() {
                     <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)', marginTop: 6 }}>
                       leads / month
                     </div>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: isSelected ? '#FFE500' : 'rgba(255,255,255,0.7)', marginTop: 8 }}>
-                      ${t * PRICE_PER_LEAD}/mo
-                    </div>
                   </button>
                 )
               })}
