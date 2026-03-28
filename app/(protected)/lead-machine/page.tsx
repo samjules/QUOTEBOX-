@@ -1017,27 +1017,29 @@ export default function LeadMachinePage() {
     setGenerating(false)
   }
 
-  // Save pixel ID into the hosted form's form_config so the live form fires the pixel
-  async function savePixelToForm(pixelId: string | null, formId?: string | null) {
-    const fid = formId ?? questionnaire.selectedFormId
-    if (!fid) return
+  // Save pixel ID into all hosted forms' form_config so the live forms fire the pixel
+  async function savePixelToForm(pixelId: string | null) {
     try {
-      // Read current config via client
       const supabase = createClient()
-      const { data: form } = await supabase
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data: account } = await supabase.from('accounts').select('id').eq('owner_id', user.id).single()
+      if (!account) return
+      const { data: forms } = await supabase
         .from('hosted_forms')
-        .select('form_config')
-        .eq('id', fid)
-        .single()
-      if (!form) return
-      const cfg = (form.form_config || {}) as Record<string, unknown>
-      cfg.meta_pixel_id = pixelId || null
-      // Save via the form-builder API (uses admin client to bypass RLS)
-      await fetch('/api/form-builder/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ formId: fid, payload: { form_config: cfg } }),
-      })
+        .select('id, form_config')
+        .eq('account_id', account.id)
+        .eq('is_active', true)
+      if (!forms || forms.length === 0) return
+      await Promise.all(forms.map(async (f) => {
+        const cfg = (f.form_config || {}) as Record<string, unknown>
+        cfg.meta_pixel_id = pixelId || null
+        await fetch('/api/form-builder/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ formId: f.id, payload: { form_config: cfg } }),
+        })
+      }))
     } catch { /* non-fatal */ }
   }
 
