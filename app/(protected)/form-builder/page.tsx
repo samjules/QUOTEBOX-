@@ -353,7 +353,7 @@ function TemplatePicker({
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 20 }}>
             <button
               className="bb bb-primary"
-              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg,#e8601a,#f59e0b)', border: 'none', color: '#fff' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg,#1a1a2e,#2a2a3e)', border: 'none', color: '#fff' }}
               onClick={onAi}
             >
               <img src="/icons/logo-1772578089154.jpg" alt="Robert" style={{ width: 18, height: 18, borderRadius: '50%', objectFit: 'cover' }} />
@@ -757,8 +757,8 @@ function CanvasPreview({
                     padding: '14px 15px',
                     marginBottom: 10,
                     cursor: 'pointer',
-                    background: selectedId === f.id ? 'rgba(232,96,26,0.03)' : 'white',
-                    boxShadow: selectedId === f.id ? '0 0 0 3px rgba(232,96,26,0.08)' : '0 1px 3px rgba(0,0,0,0.04)',
+                    background: selectedId === f.id ? 'rgba(26,26,46,0.03)' : 'white',
+                    boxShadow: selectedId === f.id ? '0 0 0 3px rgba(26,26,46,0.08)' : '0 1px 3px rgba(0,0,0,0.04)',
                     transition: 'border-color 0.15s, box-shadow 0.15s',
                     position: 'relative',
                   }}
@@ -958,8 +958,8 @@ function CanvasPreview({
             {/* Live total */}
             {hasPricing && quoteDisplay === 'live' && (
               <div style={{
-                background: 'linear-gradient(135deg,rgba(232,96,26,0.07),rgba(16,185,129,0.04))',
-                border: '1px solid rgba(232,96,26,0.15)', borderRadius: 12,
+                background: 'linear-gradient(135deg,rgba(26,26,46,0.07),rgba(16,185,129,0.04))',
+                border: '1px solid rgba(26,26,46,0.15)', borderRadius: 12,
                 padding: '12px 16px', display: 'flex', alignItems: 'center',
                 justifyContent: 'space-between', marginTop: 4, marginBottom: 10,
               }}>
@@ -1019,7 +1019,7 @@ function CanvasPreview({
               <div style={{
                 display: 'flex', alignItems: 'flex-start', gap: 10,
                 padding: '11px 13px',
-                background: 'rgba(232,96,26,0.04)', border: '1px solid rgba(232,96,26,0.12)',
+                background: 'rgba(26,26,46,0.04)', border: '1px solid rgba(26,26,46,0.12)',
                 borderRadius: 10, marginBottom: 14,
               }}>
                 <input type="checkbox" readOnly style={{ marginTop: 2, flexShrink: 0, accentColor: brandColor }} />
@@ -1029,8 +1029,8 @@ function CanvasPreview({
 
             {hasPricing && quoteDisplay === 'live' && (
               <div style={{
-                background: 'linear-gradient(135deg,rgba(232,96,26,0.07),rgba(16,185,129,0.04))',
-                border: '1px solid rgba(232,96,26,0.15)', borderRadius: 12,
+                background: 'linear-gradient(135deg,rgba(26,26,46,0.07),rgba(16,185,129,0.04))',
+                border: '1px solid rgba(26,26,46,0.15)', borderRadius: 12,
                 padding: '12px 16px', display: 'flex', alignItems: 'center',
                 justifyContent: 'space-between', marginBottom: 12,
               }}>
@@ -1077,8 +1077,8 @@ function CanvasPreview({
 
             {hasPricing && quoteDisplay !== 'hidden' && (
               <div style={{
-                background: 'linear-gradient(135deg,rgba(232,96,26,0.07),rgba(16,185,129,0.04))',
-                border: '1px solid rgba(232,96,26,0.15)', borderRadius: 12,
+                background: 'linear-gradient(135deg,rgba(26,26,46,0.07),rgba(16,185,129,0.04))',
+                border: '1px solid rgba(26,26,46,0.15)', borderRadius: 12,
                 padding: '13px 18px', marginTop: 8, width: '100%',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
@@ -2539,7 +2539,7 @@ export default function FormBuilderPage() {
                           setScreen('builder')
                         }}
                         style={{
-                          marginTop: 4, background: '#e8601a', color: 'white',
+                          marginTop: 4, background: '#1a1a2e', color: 'white',
                           border: 'none', borderRadius: 8, padding: '8px 0',
                           fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
                         }}
@@ -2578,7 +2578,7 @@ export default function FormBuilderPage() {
                   className="ftype-btn"
                   onClick={() => setAiModalOpen(true)}
                   style={{
-                    background: 'linear-gradient(135deg, #e8601a 0%, #f59e0b 100%)',
+                    background: 'linear-gradient(135deg, #1a1a2e 0%, #2a2a3e 100%)',
                     color: '#fff',
                     fontWeight: 600,
                     border: 'none',
@@ -2769,7 +2769,7 @@ export default function FormBuilderPage() {
                           background: hex,
                           cursor: 'pointer',
                           border: brandColor === hex ? '2px solid var(--accent)' : '2px solid transparent',
-                          boxShadow: brandColor === hex ? '0 0 0 3px rgba(232,96,26,0.18)' : undefined,
+                          boxShadow: brandColor === hex ? '0 0 0 3px rgba(26,26,46,0.18)' : undefined,
                           transition: 'all 0.13s',
                           flexShrink: 0,
                         }}
@@ -3128,7 +3128,7 @@ export default function FormBuilderPage() {
                         cursor: 'pointer',
                         background: 'var(--surface2)',
                         transition: 'all 0.13s',
-                        boxShadow: heroImageUrl === f.file_url ? '0 0 0 3px rgba(232,96,26,0.15)' : undefined,
+                        boxShadow: heroImageUrl === f.file_url ? '0 0 0 3px rgba(26,26,46,0.15)' : undefined,
                       }}
                     >
                       {/* Thumbnail */}
