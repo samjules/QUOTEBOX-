@@ -97,6 +97,23 @@ export default function CrmDashboard({ leads: initialLeads }: { leads: SalesLead
     }
   }
 
+  async function handleDelete(id: string) {
+    if (!confirm('Delete this lead? This cannot be undone.')) return
+    setSaving(id)
+    try {
+      const res = await fetch(`/api/admin/sales-leads/${id}/status`, { method: 'DELETE' })
+      if (!res.ok) {
+        showToast('Failed to delete lead', false)
+        return
+      }
+      setLeads((prev) => prev.filter((l) => l.id !== id))
+      setExpandedId(null)
+      showToast('Lead deleted')
+    } finally {
+      setSaving(null)
+    }
+  }
+
   async function handleSaveNotes(id: string) {
     const notes = noteInputs[id] ?? ''
     setSaving(id)
@@ -236,19 +253,35 @@ export default function CrmDashboard({ leads: initialLeads }: { leads: SalesLead
                                   outline: 'none', resize: 'vertical', fontFamily: "'Inter', sans-serif", boxSizing: 'border-box',
                                 }}
                               />
-                              <button
-                                onClick={() => handleSaveNotes(lead.id)}
-                                disabled={saving === lead.id}
-                                style={{
-                                  marginTop: 8, padding: '6px 14px', fontSize: '0.78rem', fontWeight: 600,
-                                  borderRadius: 6, border: 'none', cursor: 'pointer',
-                                  background: '#FFE500', color: '#0d0d1a',
-                                  opacity: saving === lead.id ? 0.5 : 1,
-                                  fontFamily: "'Inter', sans-serif",
-                                }}
-                              >
-                                {saving === lead.id ? 'Saving...' : 'Save Notes'}
-                              </button>
+                              <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }}>
+                                <button
+                                  onClick={() => handleSaveNotes(lead.id)}
+                                  disabled={saving === lead.id}
+                                  style={{
+                                    padding: '6px 14px', fontSize: '0.78rem', fontWeight: 600,
+                                    borderRadius: 6, border: 'none', cursor: 'pointer',
+                                    background: '#FFE500', color: '#0d0d1a',
+                                    opacity: saving === lead.id ? 0.5 : 1,
+                                    fontFamily: "'Inter', sans-serif",
+                                  }}
+                                >
+                                  {saving === lead.id ? 'Saving...' : 'Save Notes'}
+                                </button>
+                                <span style={{ flex: 1 }} />
+                                <button
+                                  onClick={() => handleDelete(lead.id)}
+                                  disabled={saving === lead.id}
+                                  style={{
+                                    padding: '6px 14px', fontSize: '0.72rem', fontWeight: 600,
+                                    borderRadius: 6, border: '1px solid rgba(239,68,68,0.3)', cursor: 'pointer',
+                                    background: 'transparent', color: '#ef4444',
+                                    opacity: saving === lead.id ? 0.5 : 1,
+                                    fontFamily: "'Inter', sans-serif",
+                                  }}
+                                >
+                                  Delete Lead
+                                </button>
+                              </div>
                             </div>
                           )}
                         </td>
