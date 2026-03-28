@@ -71,6 +71,8 @@ export interface FormConfig {
   fields: FormField[]
   meta_pixel_id?: string
   min_quote?: number
+  disclaimer_enabled?: boolean
+  disclaimer_text?: string
   send_email_estimate?: boolean
   email_template?: {
     subject?: string

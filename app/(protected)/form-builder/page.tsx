@@ -2029,9 +2029,9 @@ export default function FormBuilderPage() {
     } else {
       setQuoteDisplay(c.show_total !== false ? 'live' : 'hidden')
     }
-    if (c.disclaimer_enabled !== undefined) setDisclaimerEnabled(c.disclaimer_enabled)
-    if (c.disclaimer_text) setDisclaimerText(c.disclaimer_text)
-    if (c.send_email_estimate !== undefined) setSendEmailEstimate(c.send_email_estimate)
+    setDisclaimerEnabled(c.disclaimer_enabled ?? true)
+    setDisclaimerText(c.disclaimer_text ?? 'I understand this quote is an estimate and is not final until confirmed in writing.')
+    setSendEmailEstimate(c.send_email_estimate ?? true)
     setEmailSubject(c.email_template?.subject ?? '')
     setEmailIntro(c.email_template?.intro ?? '')
     setEmailOutro(c.email_template?.outro ?? '')
@@ -2349,18 +2349,18 @@ export default function FormBuilderPage() {
         brand_color: brandColor,
         show_total: quoteDisplay === 'live',
         quote_display: quoteDisplay,
-        ...(heroImageUrl.trim() ? { hero_image_url: heroImageUrl.trim() } : {}),
+        hero_image_url: heroImageUrl.trim() || '',
         fields,
-        ...(minQuote > 0 ? { min_quote: minQuote } : {}),
+        min_quote: minQuote || 0,
         disclaimer_enabled: disclaimerEnabled,
         disclaimer_text: disclaimerText,
         send_email_estimate: sendEmailEstimate,
         email_template: {
-          ...(emailSubject ? { subject: emailSubject } : {}),
-          ...(emailIntro ? { intro: emailIntro } : {}),
-          ...(emailOutro ? { outro: emailOutro } : {}),
-          ...(emailHeaderImage ? { header_image: emailHeaderImage } : {}),
-          ...(emailAccentColor && emailAccentColor !== '#1a1a2e' ? { accent_color: emailAccentColor } : {}),
+          subject: emailSubject || '',
+          intro: emailIntro || '',
+          outro: emailOutro || '',
+          header_image: emailHeaderImage || '',
+          accent_color: emailAccentColor || '#1a1a2e',
         },
       },
       is_active: true,
