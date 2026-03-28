@@ -1020,37 +1020,17 @@ export default function LeadMachinePage() {
     setGenerating(false)
   }
 
-  // Save pixel ID into all hosted forms' form_config so the live forms fire the pixel
+  // Save pixel ID into all hosted forms' form_config via dedicated server endpoint
   async function savePixelToForm(pixelId: string | null) {
     console.log('[savePixelToForm] called with pixelId:', pixelId)
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      console.log('[savePixelToForm] user:', user?.id ?? 'null')
-      if (!user) return
-      const { data: account } = await supabase.from('accounts').select('id').eq('owner_id', user.id).single()
-      console.log('[savePixelToForm] account:', account?.id ?? 'null')
-      if (!account) return
-      const { data: forms } = await supabase
-        .from('hosted_forms')
-        .select('id, form_config')
-        .eq('account_id', account.id)
-        .eq('is_active', true)
-      console.log('[savePixelToForm] forms found:', forms?.length ?? 0)
-      if (!forms || forms.length === 0) return
-      await Promise.all(forms.map(async (f) => {
-        console.log('[savePixelToForm] existing form_config for', f.id, ':', JSON.stringify(f.form_config))
-        const cfg = (f.form_config || {}) as Record<string, unknown>
-        cfg.meta_pixel_id = pixelId || null
-        console.log('[savePixelToForm] patched config:', JSON.stringify(cfg))
-        const res = await fetch('/api/form-builder/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ formId: f.id, payload: { form_config: cfg } }),
-        })
-        const result = await res.json()
-        console.log('[savePixelToForm] save response for', f.id, ':', res.status, result)
-      }))
+      const res = await fetch('/api/meta/save-pixel', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pixelId }),
+      })
+      const result = await res.json()
+      console.log('[savePixelToForm] response:', res.status, result)
     } catch { /* non-fatal */ }
   }
 
