@@ -14,14 +14,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  let body: { description: string; country: string }
+  let body: { description: string }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  const { description, country } = body
+  const { description } = body
   if (!description?.trim()) {
     return NextResponse.json({ error: 'Description is required' }, { status: 400 })
   }
@@ -34,19 +34,18 @@ export async function POST(request: NextRequest) {
   const prompt = `You are a geographic expert helping target Meta ads to a specific service area.
 
 User's service area description: "${description.trim()}"
-Target country code: ${country}
 
-Return a JSON object containing an array of real, accurate zip/postal codes that cover the described area.
+Return a JSON object containing an array of city names that cover the described area.
+Each city should include the state/region abbreviation (e.g. "Austin, TX" or "Calgary, AB").
 
 Rules:
-- Use ONLY real, valid zip/postal codes
-- Format each code as COUNTRY:CODE (e.g. US:90210, CA:M5V2T6, GB:SW1A)
-- Include all codes that reasonably cover the described area (up to 50)
+- Use ONLY real cities that actually exist
+- Include all cities that reasonably cover the described area (up to 30)
 - No duplicates
 - Raw JSON only — no markdown, no explanation
 
 Return format:
-{"postalCodes":["${country}:XXXXX","${country}:XXXXX"]}`
+{"cities":["Austin, TX","Round Rock, TX","Cedar Park, TX"]}`
 
   try {
     const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
@@ -70,7 +69,7 @@ Return format:
 
     const rawText = anthropicData.content?.[0]?.text || ''
 
-    let parsed: { postalCodes: string[] }
+    let parsed: { cities: string[] }
     try {
       parsed = JSON.parse(rawText)
     } catch {
@@ -82,7 +81,7 @@ Return format:
       }
     }
 
-    return NextResponse.json({ postalCodes: parsed.postalCodes || [] })
+    return NextResponse.json({ cities: parsed.cities || [] })
   } catch {
     return NextResponse.json({ error: 'AI generation failed' }, { status: 500 })
   }

@@ -83,15 +83,21 @@ interface Suggestions {
   actionItems: string[]
 }
 
+interface TargetCity {
+  key: string
+  name: string
+  region: string
+  radius: number
+}
+
 interface Questionnaire {
   objective: string
   ageMin: number
   ageMax: number
   gender: string
-  locationType: 'country' | 'postal'
+  locationType: 'country' | 'cities'
   location: string
-  postalCodes: string[]
-  postalCountry: string
+  targetCities: TargetCity[]
   interests: string
   businessOffer: string
   sellingPoints: string
@@ -156,38 +162,27 @@ const COUNTRIES = [
   { code: 'MY', name: 'Malaysia' },
 ]
 
-const POSTAL_COUNTRIES = [
-  { code: 'US', label: 'US' },
-  { code: 'CA', label: 'CA' },
-  { code: 'GB', label: 'GB' },
-  { code: 'AU', label: 'AU' },
-  { code: 'DE', label: 'DE' },
-  { code: 'FR', label: 'FR' },
-  { code: 'NL', label: 'NL' },
-]
-
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
-// ─── ZipCodeMap ───────────────────────────────────────────────────────────────
+// ─── CityTargetingMap ─────────────────────────────────────────────────────────
 
-interface PostalSuggestion {
-  text: string
-  place_name: string
-  center: [number, number]
+interface CitySearchResult {
+  key: string
+  name: string
+  region: string
+  country_code: string
 }
 
-function ZipCodeMap({
-  postalCodes,
-  postalCountry,
+function CityTargetingMap({
+  targetCities,
   onAdd,
   onRemove,
-  onCountryChange,
+  onRadiusChange,
 }: {
-  postalCodes: string[]
-  postalCountry: string
-  onAdd: (code: string) => void
-  onRemove: (code: string) => void
-  onCountryChange: (country: string) => void
+  targetCities: TargetCity[]
+  onAdd: (city: TargetCity) => void
+  onRemove: (key: string) => void
+  onRadiusChange: (key: string, radius: number) => void
 }) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -198,17 +193,18 @@ function ZipCodeMap({
   const [inputVal, setInputVal] = useState('')
   const [geocodeCache, setGeocodeCache] = useState<Record<string, [number, number] | null>>({})
   const [isGeocoding, setIsGeocoding] = useState(false)
-  const [suggestions, setSuggestions] = useState<PostalSuggestion[]>([])
-  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [searchResults, setSearchResults] = useState<CitySearchResult[]>([])
+  const [showResults, setShowResults] = useState(false)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const suggestTimer = useRef<any>(null)
+  const searchTimer = useRef<any>(null)
 
-  // AI zip suggest state
+  // AI city suggest state
   const [showAiPanel, setShowAiPanel] = useState(false)
   const [aiDescription, setAiDescription] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiResults, setAiResults] = useState<string[]>([])
   const [aiError, setAiError] = useState('')
+  const [aiResolving, setAiResolving] = useState(false)
 
   useEffect(() => {
     if (!mapContainerRef.current || !MAPBOX_TOKEN) return
@@ -241,8 +237,8 @@ function ZipCodeMap({
       markersRef.current = []
 
       const validCoords: [number, number][] = []
-      postalCodes.forEach((code) => {
-        const coords = geocodeCache[code]
+      targetCities.forEach((city) => {
+        const coords = geocodeCache[city.key]
         if (coords) {
           validCoords.push(coords)
           const el = document.createElement('div')
@@ -262,66 +258,44 @@ function ZipCodeMap({
         mapRef.current.fitBounds(bounds, { padding: 60, maxZoom: 12 })
       }
     })
-  }, [postalCodes, geocodeCache, mapLoaded])
+  }, [targetCities, geocodeCache, mapLoaded])
 
-  async function fetchSuggestions(query: string) {
-    if (!MAPBOX_TOKEN || query.length < 2) { setSuggestions([]); setShowSuggestions(false); return }
-    try {
-      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&types=postcode&country=${postalCountry.toLowerCase()}&limit=5`
-      const res = await fetch(url)
-      const data = await res.json()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const sugs: PostalSuggestion[] = (data.features || []).map((f: any) => ({
-        text: f.text as string,
-        place_name: f.place_name as string,
-        center: f.center as [number, number],
-      }))
-      setSuggestions(sugs)
-      setShowSuggestions(sugs.length > 0)
-    } catch {
-      setSuggestions([])
-    }
-  }
-
-  function selectSuggestion(sug: PostalSuggestion) {
-    const code = `${postalCountry}:${sug.text.toUpperCase()}`
-    setInputVal('')
-    setSuggestions([])
-    setShowSuggestions(false)
-    if (!postalCodes.includes(code)) {
-      onAdd(code)
-      setGeocodeCache((prev) => ({ ...prev, [code]: sug.center }))
-    }
-  }
-
-  async function geocode(code: string) {
+  async function geocodeCity(name: string, region: string, key: string) {
     if (!MAPBOX_TOKEN) return
     setIsGeocoding(true)
     try {
-      const parts = code.split(':')
-      const rawCode = parts.length === 2 ? parts[1] : code
-      const country = parts.length === 2 ? parts[0].toLowerCase() : postalCountry.toLowerCase()
-      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(rawCode)}.json?access_token=${MAPBOX_TOKEN}&types=postcode&country=${country}&limit=1`
+      const query = region ? `${name}, ${region}` : name
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&types=place&limit=1`
       const res = await fetch(url)
       const data = await res.json()
       const coords = (data.features?.[0]?.center ?? null) as [number, number] | null
-      setGeocodeCache((prev) => ({ ...prev, [code]: coords }))
+      setGeocodeCache((prev) => ({ ...prev, [key]: coords }))
     } catch {
-      setGeocodeCache((prev) => ({ ...prev, [code]: null }))
+      setGeocodeCache((prev) => ({ ...prev, [key]: null }))
     }
     setIsGeocoding(false)
   }
 
-  function handleAdd() {
-    const raw = inputVal.trim().toUpperCase()
-    if (!raw) return
-    const code = `${postalCountry}:${raw}`
-    if (postalCodes.includes(code)) return
+  async function searchCities(query: string) {
+    if (query.length < 2) { setSearchResults([]); setShowResults(false); return }
+    try {
+      const res = await fetch(`/api/meta/city-search?q=${encodeURIComponent(query)}&country=US`)
+      const data = await res.json()
+      setSearchResults(data.cities || [])
+      setShowResults((data.cities || []).length > 0)
+    } catch {
+      setSearchResults([])
+    }
+  }
+
+  function selectCity(result: CitySearchResult) {
     setInputVal('')
-    setSuggestions([])
-    setShowSuggestions(false)
-    onAdd(code)
-    geocode(code)
+    setSearchResults([])
+    setShowResults(false)
+    if (targetCities.some((c) => c.key === result.key)) return
+    const city: TargetCity = { key: result.key, name: result.name, region: result.region, radius: 25 }
+    onAdd(city)
+    geocodeCity(result.name, result.region, result.key)
   }
 
   async function handleAiSuggest() {
@@ -330,16 +304,16 @@ function ZipCodeMap({
     setAiError('')
     setAiResults([])
     try {
-      const res = await fetch('/api/meta/zip-suggest', {
+      const res = await fetch('/api/meta/city-suggest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description: aiDescription, country: postalCountry }),
+        body: JSON.stringify({ description: aiDescription }),
       })
       const data = await res.json()
       if (!res.ok) {
-        setAiError(data.error || 'Failed to generate zip codes')
+        setAiError(data.error || 'Failed to find cities')
       } else {
-        setAiResults(data.postalCodes || [])
+        setAiResults(data.cities || [])
       }
     } catch {
       setAiError('Failed to reach AI service')
@@ -347,13 +321,25 @@ function ZipCodeMap({
     setAiLoading(false)
   }
 
-  function addAllAiResults() {
-    aiResults.forEach((code) => {
-      if (!postalCodes.includes(code)) {
-        onAdd(code)
-        geocode(code)
+  async function resolveAndAddCity(cityName: string) {
+    try {
+      const res = await fetch(`/api/meta/city-search?q=${encodeURIComponent(cityName)}&country=US`)
+      const data = await res.json()
+      const match = data.cities?.[0]
+      if (match && !targetCities.some((c) => c.key === match.key)) {
+        const city: TargetCity = { key: match.key, name: match.name, region: match.region, radius: 25 }
+        onAdd(city)
+        geocodeCity(match.name, match.region, match.key)
       }
-    })
+    } catch { /* skip unresolvable cities */ }
+  }
+
+  async function addAllAiResults() {
+    setAiResolving(true)
+    for (const cityName of aiResults) {
+      await resolveAndAddCity(cityName)
+    }
+    setAiResolving(false)
     setShowAiPanel(false)
     setAiDescription('')
     setAiResults([])
@@ -362,64 +348,44 @@ function ZipCodeMap({
   return (
     <div>
       <div className="flex gap-2 mb-3">
-        <select
-          value={postalCountry}
-          onChange={(e) => { onCountryChange(e.target.value); setSuggestions([]) }}
-          className="border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          style={{ minWidth: 72 }}
-        >
-          {POSTAL_COUNTRIES.map((c) => (
-            <option key={c.code} value={c.code}>{c.label}</option>
-          ))}
-        </select>
         <div className="relative flex-1">
           <input
             type="text"
-            placeholder="Type to search zip / postal code…"
+            placeholder="Search for a city…"
             value={inputVal}
             onChange={(e) => {
               const val = e.target.value
               setInputVal(val)
-              if (suggestTimer.current) clearTimeout(suggestTimer.current)
-              suggestTimer.current = setTimeout(() => fetchSuggestions(val), 250)
+              if (searchTimer.current) clearTimeout(searchTimer.current)
+              searchTimer.current = setTimeout(() => searchCities(val), 300)
             }}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') { e.preventDefault(); if (suggestions.length > 0) selectSuggestion(suggestions[0]); else handleAdd() }
-              if (e.key === 'Escape') { setSuggestions([]); setShowSuggestions(false) }
+              if (e.key === 'Enter') { e.preventDefault(); if (searchResults.length > 0) selectCity(searchResults[0]) }
+              if (e.key === 'Escape') { setSearchResults([]); setShowResults(false) }
             }}
-            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-            onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true) }}
+            onBlur={() => setTimeout(() => setShowResults(false), 150)}
+            onFocus={() => { if (searchResults.length > 0) setShowResults(true) }}
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
-          {showSuggestions && suggestions.length > 0 && (
+          {showResults && searchResults.length > 0 && (
             <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-              {suggestions.map((sug) => (
+              {searchResults.map((result) => (
                 <button
-                  key={sug.text}
-                  onMouseDown={(e) => { e.preventDefault(); selectSuggestion(sug) }}
+                  key={result.key}
+                  onMouseDown={(e) => { e.preventDefault(); selectCity(result) }}
                   className="w-full text-left px-3 py-2.5 text-sm hover:bg-indigo-50 border-b border-gray-100 last:border-0 flex items-center justify-between gap-2"
                 >
-                  <span className="text-gray-700 truncate">{sug.place_name}</span>
-                  <span className="font-mono text-xs font-semibold text-indigo-600 shrink-0 bg-indigo-50 px-1.5 py-0.5 rounded">
-                    {postalCountry}:{sug.text.toUpperCase()}
-                  </span>
+                  <span className="text-gray-700 truncate">{result.name}, {result.region}, {result.country_code}</span>
+                  <span className="text-xs text-gray-400 shrink-0">city</span>
                 </button>
               ))}
-              <p className="px-3 py-1.5 text-xs text-gray-400 bg-gray-50">Meta targeting format: {postalCountry}:CODE</p>
             </div>
           )}
         </div>
-        <button
-          onClick={handleAdd}
-          disabled={!inputVal.trim()}
-          className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
-        >
-          Add
-        </button>
         {/* AI Suggest button */}
         <button
           onClick={() => { setShowAiPanel((v) => !v); setAiResults([]); setAiError(''); setAiDescription('') }}
-          title="Describe your service area and let Robert generate zip codes"
+          title="Describe your service area and let Robert find cities"
           className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition ${
             showAiPanel
               ? 'bg-violet-600 border-violet-600 text-white'
@@ -437,7 +403,7 @@ function ZipCodeMap({
           <div className="flex items-center gap-2 mb-2">
             <img src="/icons/logo-1772578089154.jpg" alt="Robert" className="w-9 h-9 rounded-full object-cover border-2 border-violet-300" />
             <div>
-              <p className="text-sm font-semibold text-violet-900">Robert — Zip Code Generator</p>
+              <p className="text-sm font-semibold text-violet-900">Robert — City Targeting</p>
               <p className="text-xs text-violet-600">Describe your service area in plain English</p>
             </div>
           </div>
@@ -451,7 +417,7 @@ function ZipCodeMap({
           <div className="flex gap-2">
             <button
               onClick={handleAiSuggest}
-              disabled={aiLoading || !aiDescription.trim()}
+              disabled={aiLoading || aiResolving || !aiDescription.trim()}
               className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
             >
               {aiLoading ? (
@@ -460,14 +426,14 @@ function ZipCodeMap({
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
                   </svg>
-                  Generating…
+                  Finding Cities…
                 </>
               ) : (
                 <>
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2l2.09 6.26L20 10l-5.91 1.74L12 18l-2.09-6.26L4 10l5.91-1.74L12 2z"/>
                   </svg>
-                  Generate Zip Codes
+                  Find Cities
                 </>
               )}
             </button>
@@ -486,28 +452,29 @@ function ZipCodeMap({
           {aiResults.length > 0 && (
             <div className="mt-3 pt-3 border-t border-violet-200">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-semibold text-violet-800">Robert generated {aiResults.length} zip codes</p>
+                <p className="text-xs font-semibold text-violet-800">Robert found {aiResults.length} cities</p>
                 <button
                   onClick={addAllAiResults}
-                  className="text-xs bg-violet-600 hover:bg-violet-700 text-white font-medium px-3 py-1.5 rounded-lg transition"
+                  disabled={aiResolving}
+                  className="text-xs bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-medium px-3 py-1.5 rounded-lg transition"
                 >
-                  Add All to Targeting
+                  {aiResolving ? 'Resolving…' : 'Add All to Targeting'}
                 </button>
               </div>
               <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
-                {aiResults.map((code) => (
+                {aiResults.map((cityName) => (
                   <span
-                    key={code}
-                    className="inline-flex items-center gap-1 bg-white text-violet-700 text-xs font-mono font-medium px-2 py-0.5 rounded-full border border-violet-200"
+                    key={cityName}
+                    className="inline-flex items-center gap-1 bg-white text-violet-700 text-xs font-medium px-2 py-0.5 rounded-full border border-violet-200"
                   >
-                    {code}
+                    {cityName}
                     <button
                       onClick={() => {
-                        if (!postalCodes.includes(code)) { onAdd(code); geocode(code) }
-                        setAiResults((prev) => prev.filter((c) => c !== code))
+                        resolveAndAddCity(cityName)
+                        setAiResults((prev) => prev.filter((c) => c !== cityName))
                       }}
                       className="hover:text-violet-900 leading-none ml-0.5 text-violet-400 hover:text-violet-700"
-                      title="Add this code"
+                      title="Add this city"
                     >+</button>
                   </span>
                 ))}
@@ -517,17 +484,25 @@ function ZipCodeMap({
         </div>
       )}
 
-
-      {postalCodes.length > 0 && (
+      {targetCities.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-3">
-          {postalCodes.map((code) => (
+          {targetCities.map((city) => (
             <span
-              key={code}
+              key={city.key}
               className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 text-xs font-medium px-2.5 py-1 rounded-full border border-indigo-100"
-              title="Meta targeting format"
             >
-              <span className="font-mono">{code}</span>
-              <button onClick={() => onRemove(code)} className="ml-0.5 hover:text-indigo-900 leading-none">✕</button>
+              <span>{city.name}, {city.region}</span>
+              <select
+                value={city.radius}
+                onChange={(e) => onRadiusChange(city.key, Number(e.target.value))}
+                className="bg-transparent text-indigo-600 text-xs font-medium border-none outline-none cursor-pointer px-0"
+                style={{ width: 48 }}
+              >
+                {[10, 15, 25, 50].map((r) => (
+                  <option key={r} value={r}>{r}mi</option>
+                ))}
+              </select>
+              <button onClick={() => onRemove(city.key)} className="ml-0.5 hover:text-indigo-900 leading-none">✕</button>
             </span>
           ))}
           {isGeocoding && (
@@ -540,9 +515,9 @@ function ZipCodeMap({
         ref={mapContainerRef}
         style={{ height: 220, borderRadius: 10, overflow: 'hidden', border: '1px solid #e5e4e0', background: '#eef2f7' }}
       />
-      {postalCodes.length === 0 && (
+      {targetCities.length === 0 && (
         <p className="text-xs text-gray-400 text-center mt-2">
-          Add zip codes above — they&apos;ll appear as pins on the map
+          Search for cities above — they&apos;ll appear as pins on the map
         </p>
       )}
     </div>
@@ -733,10 +708,9 @@ export default function LeadMachinePage() {
     ageMin: 25,
     ageMax: 55,
     gender: 'all',
-    locationType: 'postal',
+    locationType: 'cities',
     location: 'US',
-    postalCodes: [],
-    postalCountry: 'US',
+    targetCities: [],
     interests: '',
     businessOffer: '',
     sellingPoints: '',
@@ -1047,8 +1021,8 @@ export default function LeadMachinePage() {
           targetAge: { min: questionnaire.ageMin, max: questionnaire.ageMax },
           targetGender: questionnaire.gender,
           targetLocation: questionnaire.locationType === 'country' ? questionnaire.location : undefined,
-          targetPostalCodes: questionnaire.locationType === 'postal' && questionnaire.postalCodes.length > 0
-            ? questionnaire.postalCodes
+          targetCities: questionnaire.locationType === 'cities' && questionnaire.targetCities.length > 0
+            ? questionnaire.targetCities.map((c) => ({ key: c.key, radius: c.radius }))
             : undefined,
           destinationUrl: questionnaire.destinationUrl,
           pageId: questionnaire.pageId,
@@ -1185,10 +1159,9 @@ export default function LeadMachinePage() {
       ageMin: 25,
       ageMax: 55,
       gender: 'all',
-      locationType: 'postal',
+      locationType: 'cities',
       location: 'US',
-      postalCodes: [],
-      postalCountry: 'US',
+      targetCities: [],
       interests: '',
       businessOffer: '',
       sellingPoints: '',
@@ -1994,14 +1967,14 @@ export default function LeadMachinePage() {
                         <label className="block text-sm font-medium text-gray-700 mb-2">Location Targeting</label>
                         <div className="flex gap-2 mb-3">
                           <button
-                            onClick={() => setQuestionnaire((q) => ({ ...q, locationType: 'postal' }))}
+                            onClick={() => setQuestionnaire((q) => ({ ...q, locationType: 'cities' }))}
                             className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition ${
-                              questionnaire.locationType === 'postal'
+                              questionnaire.locationType === 'cities'
                                 ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
                                 : 'border-gray-200 text-gray-600 hover:border-gray-300'
                             }`}
                           >
-                            📍 Zip Codes
+                            📍 Cities
                           </button>
                           <button
                             onClick={() => setQuestionnaire((q) => ({ ...q, locationType: 'country' }))}
@@ -2025,12 +1998,11 @@ export default function LeadMachinePage() {
                             ))}
                           </select>
                         ) : (
-                          <ZipCodeMap
-                            postalCodes={questionnaire.postalCodes}
-                            postalCountry={questionnaire.postalCountry}
-                            onAdd={(code) => setQuestionnaire((q) => ({ ...q, postalCodes: [...q.postalCodes, code] }))}
-                            onRemove={(code) => setQuestionnaire((q) => ({ ...q, postalCodes: q.postalCodes.filter((z) => z !== code) }))}
-                            onCountryChange={(country) => setQuestionnaire((q) => ({ ...q, postalCountry: country, postalCodes: [] }))}
+                          <CityTargetingMap
+                            targetCities={questionnaire.targetCities}
+                            onAdd={(city) => setQuestionnaire((q) => ({ ...q, targetCities: [...q.targetCities, city] }))}
+                            onRemove={(key) => setQuestionnaire((q) => ({ ...q, targetCities: q.targetCities.filter((c) => c.key !== key) }))}
+                            onRadiusChange={(key, radius) => setQuestionnaire((q) => ({ ...q, targetCities: q.targetCities.map((c) => c.key === key ? { ...c, radius } : c) }))}
                           />
                         )}
                       </div>
