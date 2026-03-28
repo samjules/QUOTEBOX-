@@ -1369,7 +1369,8 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
     const qs = new URLSearchParams({ email })
     if (name) qs.set('name', name)
     if (displayTotal > 0) qs.set('total', displayTotal.toFixed(2))
-    router.push(`/${config.slug}/thank-you?${qs.toString()}`)
+    // Full page load so the Meta Pixel script initialises cleanly on thank-you
+    window.location.href = `/${config.slug}/thank-you?${qs.toString()}`
   }
 
   const hasPricing = config.fields.some(
