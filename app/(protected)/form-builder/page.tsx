@@ -622,6 +622,92 @@ function CropModal({
   )
 }
 
+// ── Inline editable text (double-click to edit) ─────────────
+function EditableText({
+  value,
+  onChange,
+  style,
+  className,
+  tag: Tag = 'span',
+  multiline,
+  placeholder,
+}: {
+  value: string
+  onChange: (v: string) => void
+  style?: React.CSSProperties
+  className?: string
+  tag?: 'span' | 'div' | 'button'
+  multiline?: boolean
+  placeholder?: string
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(value)
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null)
+
+  useEffect(() => { setDraft(value) }, [value])
+
+  useEffect(() => {
+    if (editing && inputRef.current) {
+      inputRef.current.focus()
+      inputRef.current.select()
+    }
+  }, [editing])
+
+  function commit() {
+    setEditing(false)
+    if (draft !== value) onChange(draft)
+  }
+
+  if (editing) {
+    const shared: React.CSSProperties = {
+      ...style,
+      background: 'rgba(255,255,255,0.95)',
+      border: '1.5px solid var(--accent)',
+      borderRadius: 4,
+      outline: 'none',
+      padding: '2px 4px',
+      margin: '-2px -4px',
+      width: 'calc(100% + 8px)',
+      boxSizing: 'border-box' as const,
+      display: 'block',
+    }
+    if (multiline) {
+      return (
+        <textarea
+          ref={inputRef as React.RefObject<HTMLTextAreaElement>}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => { if (e.key === 'Escape') { setDraft(value); setEditing(false) } }}
+          style={{ ...shared, resize: 'vertical', minHeight: 40 }}
+          rows={2}
+        />
+      )
+    }
+    return (
+      <input
+        ref={inputRef as React.RefObject<HTMLInputElement>}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') { setDraft(value); setEditing(false) } }}
+        style={shared}
+      />
+    )
+  }
+
+  return (
+    <Tag
+      className={className}
+      style={{ ...style, cursor: 'text' }}
+      onDoubleClick={(e) => { e.stopPropagation(); setEditing(true) }}
+      title="Double-click to edit"
+    >
+      {value || <span style={{ opacity: 0.4 }}>{placeholder || 'Double-click to edit'}</span>}
+    </Tag>
+  )
+}
+
 // ── Canvas Preview ───────────────────────────────────────────
 function CanvasPreview({
   fields,
@@ -642,6 +728,16 @@ function CanvasPreview({
   totalLabel,
   onSelectField,
   onRemoveField,
+  onChangeFormName,
+  onChangeFormDesc,
+  onChangeSubmitLabel,
+  onChangeNextStepLabel,
+  onChangeTotalLabel,
+  onChangeConfirmTitle,
+  onChangeConfirmMessage,
+  onChangeFieldLabel,
+  onChangeOptionLabel,
+  onChangeDisclaimerText,
 }: {
   fields: FormField[]
   selectedId: string | null
@@ -661,6 +757,16 @@ function CanvasPreview({
   totalLabel: string
   onSelectField: (id: string) => void
   onRemoveField: (id: string, e: React.MouseEvent) => void
+  onChangeFormName: (v: string) => void
+  onChangeFormDesc: (v: string) => void
+  onChangeSubmitLabel: (v: string) => void
+  onChangeNextStepLabel: (v: string) => void
+  onChangeTotalLabel: (v: string) => void
+  onChangeConfirmTitle: (v: string) => void
+  onChangeConfirmMessage: (v: string) => void
+  onChangeFieldLabel: (fieldId: string, v: string) => void
+  onChangeOptionLabel: (fieldId: string, optId: string, v: string) => void
+  onChangeDisclaimerText: (v: string) => void
 }) {
   const isDark = isColorDark(brandColor)
   const textPrimary = isDark ? 'white' : '#1a1a2e'
@@ -728,18 +834,24 @@ function CanvasPreview({
             </span>
           </div>
 
-          <div style={{
-            fontFamily: "'Instrument Sans', sans-serif",
-            fontSize: '1.35rem', fontWeight: 800,
-            lineHeight: 1.2, color: textPrimary,
-          }}>
-            {esc(formName) || 'My Quote Form'}
-          </div>
-          {formDesc && (
-            <div style={{ fontSize: '0.82rem', marginTop: 5, color: textSecondary, lineHeight: 1.4 }}>
-              {esc(formDesc)}
-            </div>
-          )}
+          <EditableText
+            tag="div"
+            value={formName}
+            onChange={onChangeFormName}
+            placeholder="My Quote Form"
+            style={{
+              fontFamily: "'Instrument Sans', sans-serif",
+              fontSize: '1.35rem', fontWeight: 800,
+              lineHeight: 1.2, color: textPrimary,
+            }}
+          />
+          <EditableText
+            tag="div"
+            value={formDesc}
+            onChange={onChangeFormDesc}
+            placeholder="Add a description…"
+            style={{ fontSize: '0.82rem', marginTop: 5, color: textSecondary, lineHeight: 1.4 }}
+          />
         </div>
       </div>
 
@@ -806,7 +918,12 @@ function CanvasPreview({
                     {f.required && (
                       <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#ef4444', flexShrink: 0, display: 'inline-block' }} />
                     )}
-                    {esc(f.label) || <em style={{ color: 'var(--muted)', fontWeight: 400 }}>Untitled field</em>}
+                    <EditableText
+                      value={f.label}
+                      onChange={(v) => onChangeFieldLabel(f.id, v)}
+                      placeholder="Untitled field"
+                      style={{ flex: 1 }}
+                    />
                   </div>
 
                   {/* Radio / Checkbox / Dropdown → big tap-target buttons */}
@@ -823,9 +940,12 @@ function CanvasPreview({
                             borderRadius: f.type === 'checkbox' ? 4 : '50%',
                             border: '2px solid #d1d5db',
                           }} />
-                          <span style={{ fontSize: '0.84rem', fontWeight: 500, color: '#374151', flex: 1 }}>
-                            {esc(o.label)}
-                          </span>
+                          <EditableText
+                            value={o.label}
+                            onChange={(v) => onChangeOptionLabel(f.id, o.id, v)}
+                            placeholder="Option"
+                            style={{ fontSize: '0.84rem', fontWeight: 500, color: '#374151', flex: 1 }}
+                          />
                           {f.showPrices !== false && o.price > 0 && (
                             <span style={{ fontSize: '0.72rem', color: 'var(--accent2)', fontWeight: 700, whiteSpace: 'nowrap' }}>
                               {o.hours ? `${currency}${o.price}/hr × ${o.hours}h = +${currency}${(o.price * o.hours).toFixed(2)}` : `+${currency}${o.price}`}
@@ -971,7 +1091,12 @@ function CanvasPreview({
                 padding: '12px 16px', display: 'flex', alignItems: 'center',
                 justifyContent: 'space-between', marginTop: 4, marginBottom: 10,
               }}>
-                <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>{totalLabel || 'Estimated Total'}</span>
+                <EditableText
+                  value={totalLabel}
+                  onChange={onChangeTotalLabel}
+                  placeholder="Estimated Total"
+                  style={{ fontSize: '0.8rem', color: 'var(--muted)' }}
+                />
                 <span style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)' }}>{currency}0</span>
               </div>
             )}
@@ -981,19 +1106,29 @@ function CanvasPreview({
                 padding: '12px 16px', display: 'flex', alignItems: 'center',
                 justifyContent: 'space-between', marginTop: 4, marginBottom: 10, opacity: 0.55,
               }}>
-                <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>Total shown after submit</span>
+                <EditableText
+                  value={totalLabel}
+                  onChange={onChangeTotalLabel}
+                  placeholder="Estimated Total"
+                  style={{ fontSize: '0.8rem', color: 'var(--muted)' }}
+                />
                 <span style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.25rem', fontWeight: 800, color: 'var(--muted)' }}>{currency}–</span>
               </div>
             )}
 
-            <button style={{
+            <div style={{
               width: '100%', padding: '13px 16px',
               fontFamily: "'Instrument Sans', sans-serif", fontWeight: 800, fontSize: '0.95rem',
-              letterSpacing: '0.04em', border: 'none', borderRadius: 12, cursor: 'default',
-              background: brandColor, color: textPrimary,
+              letterSpacing: '0.04em', border: 'none', borderRadius: 12,
+              background: brandColor, color: textPrimary, textAlign: 'center',
             }}>
-              {nextStepLabel || 'Next Step →'}
-            </button>
+              <EditableText
+                value={nextStepLabel}
+                onChange={onChangeNextStepLabel}
+                placeholder="Next Step →"
+                style={{ color: 'inherit', fontWeight: 'inherit' }}
+              />
+            </div>
           </>
         )}
 
@@ -1023,7 +1158,7 @@ function CanvasPreview({
               ))}
             </div>
 
-            {disclaimerEnabled && disclaimerText && (
+            {disclaimerEnabled && (
               <div style={{
                 display: 'flex', alignItems: 'flex-start', gap: 10,
                 padding: '11px 13px',
@@ -1031,7 +1166,13 @@ function CanvasPreview({
                 borderRadius: 10, marginBottom: 14,
               }}>
                 <input type="checkbox" readOnly style={{ marginTop: 2, flexShrink: 0, accentColor: brandColor }} />
-                <span style={{ fontSize: '0.74rem', color: '#6b7280', lineHeight: 1.5 }}>{disclaimerText}</span>
+                <EditableText
+                  value={disclaimerText}
+                  onChange={onChangeDisclaimerText}
+                  placeholder="Add disclaimer text…"
+                  multiline
+                  style={{ fontSize: '0.74rem', color: '#6b7280', lineHeight: 1.5, flex: 1 }}
+                />
               </div>
             )}
 
@@ -1042,19 +1183,29 @@ function CanvasPreview({
                 padding: '12px 16px', display: 'flex', alignItems: 'center',
                 justifyContent: 'space-between', marginBottom: 12,
               }}>
-                <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>{totalLabel || 'Estimated Total'}</span>
+                <EditableText
+                  value={totalLabel}
+                  onChange={onChangeTotalLabel}
+                  placeholder="Estimated Total"
+                  style={{ fontSize: '0.8rem', color: 'var(--muted)' }}
+                />
                 <span style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)' }}>{currency}0</span>
               </div>
             )}
 
-            <button style={{
+            <div style={{
               width: '100%', padding: '13px 16px',
               fontFamily: "'Instrument Sans', sans-serif", fontWeight: 800, fontSize: '0.95rem',
-              letterSpacing: '0.04em', border: 'none', borderRadius: 12, cursor: 'default',
-              background: brandColor, color: textPrimary,
+              letterSpacing: '0.04em', border: 'none', borderRadius: 12,
+              background: brandColor, color: textPrimary, textAlign: 'center',
             }}>
-              {esc(submitLabel) || 'Get My Quote'}
-            </button>
+              <EditableText
+                value={submitLabel}
+                onChange={onChangeSubmitLabel}
+                placeholder="Get My Quote"
+                style={{ color: 'inherit', fontWeight: 'inherit' }}
+              />
+            </div>
           </>
         )}
 
@@ -1076,14 +1227,21 @@ function CanvasPreview({
               </svg>
             </div>
 
-            <div style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.2rem', fontWeight: 800, color: '#111827', lineHeight: 1.2 }}>
-              {confirmTitle || "You\u2019re all set!"}
-            </div>
-            {confirmMessage && (
-              <div style={{ fontSize: '0.82rem', color: '#6b7280', maxWidth: 230, lineHeight: 1.55 }}>
-                {confirmMessage}
-              </div>
-            )}
+            <EditableText
+              tag="div"
+              value={confirmTitle}
+              onChange={onChangeConfirmTitle}
+              placeholder="You're all set!"
+              style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.2rem', fontWeight: 800, color: '#111827', lineHeight: 1.2 }}
+            />
+            <EditableText
+              tag="div"
+              value={confirmMessage}
+              onChange={onChangeConfirmMessage}
+              placeholder="Add a confirmation message…"
+              multiline
+              style={{ fontSize: '0.82rem', color: '#6b7280', maxWidth: 230, lineHeight: 1.55 }}
+            />
 
             {hasPricing && quoteDisplay !== 'hidden' && (
               <div style={{
@@ -1092,9 +1250,12 @@ function CanvasPreview({
                 padding: '13px 18px', marginTop: 8, width: '100%',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
-                <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
-                  {totalLabel || 'Estimated Total'}
-                </span>
+                <EditableText
+                  value={totalLabel}
+                  onChange={onChangeTotalLabel}
+                  placeholder="Estimated Total"
+                  style={{ fontSize: '0.8rem', color: 'var(--muted)' }}
+                />
                 <span style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.3rem', fontWeight: 800, color: 'var(--accent)' }}>{currency}–</span>
               </div>
             )}
@@ -3104,6 +3265,16 @@ export default function FormBuilderPage() {
                 totalLabel={totalLabel}
                 onSelectField={setSelectedId}
                 onRemoveField={removeField}
+                onChangeFormName={setFormName}
+                onChangeFormDesc={setFormDesc}
+                onChangeSubmitLabel={setSubmitLabel}
+                onChangeNextStepLabel={setNextStepLabel}
+                onChangeTotalLabel={setTotalLabel}
+                onChangeConfirmTitle={setConfirmTitle}
+                onChangeConfirmMessage={setConfirmMessage}
+                onChangeFieldLabel={(fid, v) => setFields((prev) => prev.map((f) => f.id === fid ? { ...f, label: v } : f))}
+                onChangeOptionLabel={(fid, oid, v) => setFields((prev) => prev.map((f) => f.id === fid ? { ...f, options: (f.options ?? []).map((o) => o.id === oid ? { ...o, label: v } : o) } : f))}
+                onChangeDisclaimerText={setDisclaimerText}
               />
             )}
           </div>
