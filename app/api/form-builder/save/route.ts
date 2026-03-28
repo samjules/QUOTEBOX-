@@ -39,19 +39,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Form not found' }, { status: 404 })
   }
 
-  console.log('[form-builder/save] formId:', body.formId, 'payload keys:', Object.keys(body.payload))
-  if (body.payload.form_config) {
-    const fc = body.payload.form_config as Record<string, unknown>
-    console.log('[form-builder/save] form_config.meta_pixel_id:', fc.meta_pixel_id)
-  }
-
-  const { error, data: updateResult } = await admin
+  const { error } = await admin
     .from('hosted_forms')
     .update({ ...body.payload, account_id: account.id })
     .eq('id', body.formId)
-    .select('form_config')
-
-  console.log('[form-builder/save] update result:', JSON.stringify(updateResult), 'error:', error)
 
   if (error) {
     console.error('Form save error:', error)

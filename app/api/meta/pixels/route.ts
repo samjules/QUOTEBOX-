@@ -15,7 +15,6 @@ export async function GET() {
     .single()
 
   if (!account?.meta_access_token || !account?.meta_ad_account_id) {
-    console.log('[GET pixels] missing token or ad account:', { hasToken: !!account?.meta_access_token, adAccountId: account?.meta_ad_account_id })
     return NextResponse.json({ pixels: [], connected: false })
   }
 
@@ -28,10 +27,8 @@ export async function GET() {
     url.searchParams.set('fields', 'id,name')
     url.searchParams.set('access_token', account.meta_access_token)
 
-    console.log('[GET pixels] fetching from Meta for adAccount:', adAccountId)
     const res = await fetch(url.toString())
     const data = await res.json()
-    console.log('[GET pixels] Meta response:', JSON.stringify(data))
 
     if (data.error) {
       return NextResponse.json({ pixels: [], connected: true, error: data.error.message })

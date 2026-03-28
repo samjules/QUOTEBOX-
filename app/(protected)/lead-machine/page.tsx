@@ -868,9 +868,8 @@ export default function LeadMachinePage() {
             try {
               const pxRes = await fetch('/api/meta/pixels')
               const pxData = await pxRes.json()
-              console.log('[pixels fetch] response:', JSON.stringify(pxData))
               setMetaPixels(pxData.pixels || [])
-            } catch (err) { console.error('[pixels fetch] error:', err) }
+            } catch { /* non-fatal */ }
             setPixelsLoading(false)
           })(),
         ])
@@ -919,10 +918,8 @@ export default function LeadMachinePage() {
 
   // Auto-select pixel if only one is available
   useEffect(() => {
-    console.log('[pixel auto-select] pixelsLoading:', pixelsLoading, 'current pixelId:', questionnaire.pixelId, 'metaPixels:', metaPixels.length)
     if (pixelsLoading || questionnaire.pixelId || metaPixels.length !== 1) return
     const pid = metaPixels[0].id
-    console.log('[pixel auto-select] auto-selecting pixel:', pid)
     setQuestionnaire((q) => ({ ...q, pixelId: pid }))
     savePixelToForm(pid)
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1022,15 +1019,12 @@ export default function LeadMachinePage() {
 
   // Save pixel ID into all hosted forms' form_config via dedicated server endpoint
   async function savePixelToForm(pixelId: string | null) {
-    console.log('[savePixelToForm] called with pixelId:', pixelId)
     try {
-      const res = await fetch('/api/meta/save-pixel', {
+      await fetch('/api/meta/save-pixel', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pixelId }),
       })
-      const result = await res.json()
-      console.log('[savePixelToForm] response:', res.status, result)
     } catch { /* non-fatal */ }
   }
 

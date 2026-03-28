@@ -48,7 +48,6 @@ export async function PATCH(request: NextRequest) {
       .eq('id', f.id)
 
     results.push({ formId: f.id, error: error?.message ?? null })
-    console.log('[save-pixel] form', f.id, 'pixel:', body.pixelId, 'error:', error?.message ?? 'none')
   }
 
   return NextResponse.json({ success: true, results })
