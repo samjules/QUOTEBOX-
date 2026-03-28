@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,5 +37,55 @@ export async function GET() {
     return NextResponse.json({ pixels: data.data ?? [], connected: true })
   } catch {
     return NextResponse.json({ pixels: [], connected: true, error: 'Failed to fetch pixels' })
+  }
+}
+
+export async function POST(request: NextRequest) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { data: account } = await supabase
+    .from('accounts')
+    .select('meta_access_token, meta_ad_account_id')
+    .eq('owner_id', user.id)
+    .single()
+
+  if (!account?.meta_access_token || !account?.meta_ad_account_id) {
+    return NextResponse.json({ error: 'Meta account not connected' }, { status: 400 })
+  }
+
+  let body: { name?: string }
+  try {
+    body = await request.json()
+  } catch {
+    body = {}
+  }
+
+  const pixelName = body.name || 'QuoteBox Pixel'
+
+  const adAccountId = account.meta_ad_account_id.startsWith('act_')
+    ? account.meta_ad_account_id
+    : `act_${account.meta_ad_account_id}`
+
+  try {
+    const res = await fetch(`https://graph.facebook.com/v18.0/${adAccountId}/adspixels`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: pixelName,
+        access_token: account.meta_access_token,
+      }),
+    })
+
+    const data = await res.json()
+
+    if (data.error) {
+      return NextResponse.json({ error: data.error.message }, { status: 400 })
+    }
+
+    return NextResponse.json({ pixel: { id: data.id, name: pixelName } })
+  } catch {
+    return NextResponse.json({ error: 'Failed to create pixel' }, { status: 500 })
   }
 }
