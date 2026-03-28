@@ -1022,6 +1022,7 @@ export default function LeadMachinePage() {
     const fid = formId ?? questionnaire.selectedFormId
     if (!fid) return
     try {
+      // Read current config via client
       const supabase = createClient()
       const { data: form } = await supabase
         .from('hosted_forms')
@@ -1031,7 +1032,12 @@ export default function LeadMachinePage() {
       if (!form) return
       const cfg = (form.form_config || {}) as Record<string, unknown>
       cfg.meta_pixel_id = pixelId || null
-      await supabase.from('hosted_forms').update({ form_config: cfg }).eq('id', fid)
+      // Save via the form-builder API (uses admin client to bypass RLS)
+      await fetch('/api/form-builder/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ formId: fid, payload: { form_config: cfg } }),
+      })
     } catch { /* non-fatal */ }
   }
 
