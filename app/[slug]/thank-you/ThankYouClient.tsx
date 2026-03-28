@@ -27,12 +27,12 @@ export default function ThankYouClient({ form }: { form: HostedForm }) {
   const accentFg = isDark ? '#ffffff' : '#1a1a2e'
 
   const isTestMode = searchParams.get('pixel_test') === '1'
-  const [pixelStatus, setPixelStatus] = useState<'loading' | 'fired'>('loading')
+  const [pixelStatus, setPixelStatus] = useState<'loading' | 'fired' | 'no_pixel'>('loading')
 
   // Fire Meta Pixel on this dedicated thank-you URL — triggers the custom conversion rule
   useEffect(() => {
     const pixelId = config.meta_pixel_id
-    if (!pixelId) return
+    if (!pixelId) { setPixelStatus('no_pixel'); return }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const w = window as any
     if (!w.fbq) {
@@ -57,10 +57,10 @@ export default function ThankYouClient({ form }: { form: HostedForm }) {
 
   return (
     <>
-    {isTestMode && config.meta_pixel_id && (
+    {isTestMode && (
       <div style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
-        background: pixelStatus === 'fired' ? '#14532d' : '#1c1917',
+        background: pixelStatus === 'fired' ? '#14532d' : pixelStatus === 'no_pixel' ? '#7f1d1d' : '#1c1917',
         color: 'white',
         padding: '10px 16px',
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16,
@@ -71,15 +71,23 @@ export default function ThankYouClient({ form }: { form: HostedForm }) {
           <span style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             width: 18, height: 18, borderRadius: '50%',
-            background: pixelStatus === 'fired' ? '#22c55e' : '#6b7280',
+            background: pixelStatus === 'fired' ? '#22c55e' : pixelStatus === 'no_pixel' ? '#ef4444' : '#6b7280',
             fontSize: 10, fontWeight: 700, flexShrink: 0,
           }}>
-            {pixelStatus === 'fired' ? '✓' : '…'}
+            {pixelStatus === 'fired' ? '✓' : pixelStatus === 'no_pixel' ? '✕' : '…'}
           </span>
-          Pixel {config.meta_pixel_id} — {pixelStatus === 'fired' ? 'PageView + Lead fired' : 'loading…'}
+          {pixelStatus === 'no_pixel'
+            ? 'No pixel ID saved on this form — go to Lead Machine and assign a pixel'
+            : pixelStatus === 'fired'
+              ? `Pixel ${config.meta_pixel_id} — PageView + Lead fired`
+              : `Pixel ${config.meta_pixel_id} — loading…`}
         </span>
-        <span style={{ opacity: 0.4 }}>|</span>
-        <span style={{ opacity: 0.55, fontSize: 11 }}>Thank-you page — conversion URL matched</span>
+        {pixelStatus === 'fired' && (
+          <>
+            <span style={{ opacity: 0.4 }}>|</span>
+            <span style={{ opacity: 0.55, fontSize: 11 }}>Thank-you page — conversion URL matched</span>
+          </>
+        )}
       </div>
     )}
     <div style={{
