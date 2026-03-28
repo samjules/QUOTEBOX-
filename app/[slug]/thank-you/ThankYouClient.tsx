@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import type { HostedForm, FormConfig } from '@/lib/types'
 
@@ -26,6 +26,9 @@ export default function ThankYouClient({ form }: { form: HostedForm }) {
   const isDark = isColorDark(accentBg)
   const accentFg = isDark ? '#ffffff' : '#1a1a2e'
 
+  const isTestMode = searchParams.get('pixel_test') === '1'
+  const [pixelStatus, setPixelStatus] = useState<'loading' | 'fired'>('loading')
+
   // Fire Meta Pixel on this dedicated thank-you URL — triggers the custom conversion rule
   useEffect(() => {
     const pixelId = config.meta_pixel_id
@@ -45,6 +48,7 @@ export default function ThankYouClient({ form }: { form: HostedForm }) {
     w.fbq('init', pixelId)
     w.fbq('track', 'PageView') // custom conversion URL rule fires here: /{slug}/thank-you
     w.fbq('track', 'Lead')     // standard event for reporting
+    setPixelStatus('fired')
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -52,6 +56,32 @@ export default function ThankYouClient({ form }: { form: HostedForm }) {
   const showTotal = effectiveDisplay !== 'hidden' && total > 0
 
   return (
+    <>
+    {isTestMode && config.meta_pixel_id && (
+      <div style={{
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
+        background: pixelStatus === 'fired' ? '#14532d' : '#1c1917',
+        color: 'white',
+        padding: '10px 16px',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16,
+        fontSize: 13, fontFamily: 'system-ui, sans-serif',
+        transition: 'background 0.4s',
+      }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            width: 18, height: 18, borderRadius: '50%',
+            background: pixelStatus === 'fired' ? '#22c55e' : '#6b7280',
+            fontSize: 10, fontWeight: 700, flexShrink: 0,
+          }}>
+            {pixelStatus === 'fired' ? '✓' : '…'}
+          </span>
+          Pixel {config.meta_pixel_id} — {pixelStatus === 'fired' ? 'PageView + Lead fired' : 'loading…'}
+        </span>
+        <span style={{ opacity: 0.4 }}>|</span>
+        <span style={{ opacity: 0.55, fontSize: 11 }}>Thank-you page — conversion URL matched</span>
+      </div>
+    )}
     <div style={{
       minHeight: '100vh',
       background: isDark
@@ -128,5 +158,6 @@ export default function ThankYouClient({ form }: { form: HostedForm }) {
         </div>
       </div>
     </div>
+    </>
   )
 }
