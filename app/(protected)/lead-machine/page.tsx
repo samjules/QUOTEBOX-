@@ -868,8 +868,9 @@ export default function LeadMachinePage() {
             try {
               const pxRes = await fetch('/api/meta/pixels')
               const pxData = await pxRes.json()
+              console.log('[pixels fetch] response:', JSON.stringify(pxData))
               setMetaPixels(pxData.pixels || [])
-            } catch { /* non-fatal */ }
+            } catch (err) { console.error('[pixels fetch] error:', err) }
             setPixelsLoading(false)
           })(),
         ])
