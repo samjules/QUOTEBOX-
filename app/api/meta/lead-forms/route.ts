@@ -45,22 +45,26 @@ export async function GET(request: NextRequest) {
   }
 
   // Get page access token
-  const pageRes = await fetch(
-    `https://graph.facebook.com/v18.0/${pageId}?fields=access_token&access_token=${account.meta_access_token}`
-  )
+  const pageTokenUrl = `https://graph.facebook.com/v18.0/${pageId}?fields=access_token&access_token=${account.meta_access_token}`
+  const pageRes = await fetch(pageTokenUrl)
   const pageData = await pageRes.json()
+  console.log('[lead-forms] page token response:', JSON.stringify(pageData).slice(0, 200))
+
+  if (pageData.error) {
+    return NextResponse.json({ error: pageData.error.message || 'Failed to get page token', fbError: pageData.error }, { status: 502 })
+  }
   if (!pageData.access_token) {
-    return NextResponse.json({ error: 'Failed to get page token' }, { status: 502 })
+    return NextResponse.json({ error: 'Failed to get page token — no token in response', pageData }, { status: 502 })
   }
 
-  // Fetch lead gen forms
-  const formsRes = await fetch(
-    `https://graph.facebook.com/v18.0/${pageId}/leadgen_forms?fields=id,name,status,created_time&limit=100&access_token=${pageData.access_token}`
-  )
+  // Fetch lead gen forms using the PAGE token
+  const formsUrl = `https://graph.facebook.com/v18.0/${pageId}/leadgen_forms?fields=id,name,status,created_time&limit=100&access_token=${pageData.access_token}`
+  const formsRes = await fetch(formsUrl)
   const formsData = await formsRes.json()
+  console.log('[lead-forms] forms response:', JSON.stringify(formsData).slice(0, 300))
 
   if (formsData.error) {
-    return NextResponse.json({ error: formsData.error.message || 'Failed to fetch forms' }, { status: 502 })
+    return NextResponse.json({ error: formsData.error.message || 'Failed to fetch forms', fbError: formsData.error }, { status: 502 })
   }
 
   return NextResponse.json({
