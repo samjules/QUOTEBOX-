@@ -4,7 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 export const dynamic = 'force-dynamic'
 
 // GET — fetch lead gen forms from the user's Meta page
-export async function GET() {
+// Accepts optional ?pageId= query param to avoid needing the DB value
+export async function GET(request: NextRequest) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -15,13 +16,19 @@ export async function GET() {
     .eq('owner_id', user.id)
     .single()
 
-  if (!account?.meta_access_token || !account?.meta_page_id) {
-    return NextResponse.json({ error: 'Meta not connected or no page selected' }, { status: 400 })
+  if (!account?.meta_access_token) {
+    return NextResponse.json({ error: 'Meta not connected' }, { status: 400 })
+  }
+
+  // Use query param if provided, fall back to DB value
+  const pageId = request.nextUrl.searchParams.get('pageId') || account.meta_page_id
+  if (!pageId) {
+    return NextResponse.json({ error: 'No page selected' }, { status: 400 })
   }
 
   // Get page access token
   const pageRes = await fetch(
-    `https://graph.facebook.com/v18.0/${account.meta_page_id}?fields=access_token&access_token=${account.meta_access_token}`
+    `https://graph.facebook.com/v18.0/${pageId}?fields=access_token&access_token=${account.meta_access_token}`
   )
   const pageData = await pageRes.json()
   if (!pageData.access_token) {
@@ -30,7 +37,7 @@ export async function GET() {
 
   // Fetch lead gen forms
   const formsRes = await fetch(
-    `https://graph.facebook.com/v18.0/${account.meta_page_id}/leadgen_forms?fields=id,name,status,created_time&limit=100&access_token=${pageData.access_token}`
+    `https://graph.facebook.com/v18.0/${pageId}/leadgen_forms?fields=id,name,status,created_time&limit=100&access_token=${pageData.access_token}`
   )
   const formsData = await formsRes.json()
 

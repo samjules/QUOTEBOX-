@@ -354,7 +354,8 @@ export default function SettingsPage() {
     setLoadingForms(true)
     setMessage('')
     try {
-      const res = await fetch('/api/meta/lead-forms')
+      const params = selectedPageId ? `?pageId=${selectedPageId}` : ''
+      const res = await fetch(`/api/meta/lead-forms${params}`)
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to load forms')
       setMetaLeadForms(data.forms || [])
