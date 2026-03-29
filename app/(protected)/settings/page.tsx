@@ -63,8 +63,10 @@ export default function SettingsPage() {
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviting, setInviting] = useState(false)
 
-  // Meta lead forms state
-  const [metaPageId, setMetaPageId] = useState<string | null>(null)
+  // Meta pages + lead forms state
+  const [pages, setPages] = useState<Array<{ id: string; name: string }>>([])
+  const [selectedPageId, setSelectedPageId] = useState<string>('')
+  const [loadingPages, setLoadingPages] = useState(false)
   const [metaLeadForms, setMetaLeadForms] = useState<Array<{ id: string; name: string; status: string }>>([])
   const [allowedFormIds, setAllowedFormIds] = useState<string[]>([])
   const [loadingForms, setLoadingForms] = useState(false)
@@ -104,7 +106,33 @@ export default function SettingsPage() {
           setMetaAdAccountId(account.meta_ad_account_id ?? null)
           setMetaAccessToken(account.meta_access_token)
           setSelectedAdAccount(account.meta_ad_account_id ?? '')
-          setMetaPageId(account.meta_page_id ?? null)
+          const savedPageId = account.meta_page_id ?? ''
+          setSelectedPageId(savedPageId)
+
+          // Auto-fetch Facebook Pages
+          setLoadingPages(true)
+          try {
+            const pagesRes = await fetch(
+              `https://graph.facebook.com/v18.0/me/accounts?fields=id,name&access_token=${account.meta_access_token}`
+            )
+            const pagesData = await pagesRes.json()
+            const fetchedPages: Array<{ id: string; name: string }> = pagesData.data || []
+            setPages(fetchedPages)
+            // If no page saved yet and only one page, auto-select it
+            if (!savedPageId && fetchedPages.length === 1) {
+              const autoPageId = fetchedPages[0].id
+              setSelectedPageId(autoPageId)
+              // Save automatically
+              fetch('/api/meta/save-page', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pageId: autoPageId }),
+              })
+            }
+          } catch {
+            // Pages will just be empty
+          }
+          setLoadingPages(false)
         }
         setStripeConnectAccountId(account.stripe_connect_account_id ?? null)
         setAgreementTemplateUrl(account.agreement_template_url ?? null)
@@ -229,6 +257,11 @@ export default function SettingsPage() {
       setMetaAccessToken(null)
       setAdAccounts([])
       setSelectedAdAccount('')
+      setPages([])
+      setSelectedPageId('')
+      setMetaLeadForms([])
+      setAllowedFormIds([])
+      setFormsLoaded(false)
       setMessage('Meta account disconnected.')
       setTimeout(() => setMessage(''), 2000)
     }
@@ -293,6 +326,25 @@ export default function SettingsPage() {
       setTeamMembers((prev) => prev.filter((m) => m.id !== memberId))
       setMessage('Team member removed.')
       setTimeout(() => setMessage(''), 2000)
+    }
+  }
+
+  async function handlePageChange(pageId: string) {
+    setSelectedPageId(pageId)
+    setFormsLoaded(false)
+    setMetaLeadForms([])
+    setAllowedFormIds([])
+    try {
+      await fetch('/api/meta/save-page', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pageId: pageId || null }),
+      })
+      if (pageId) {
+        handleLoadLeadForms()
+      }
+    } catch {
+      setMessage('Error: Failed to save page selection')
     }
   }
 
@@ -571,10 +623,10 @@ export default function SettingsPage() {
             </form>
           </div>
 
-          {/* Meta Ads Integration */}
+          {/* Meta Integration */}
           <div className="bg-white shadow rounded-xl p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-1">Meta Ads Integration</h2>
-            <p className="text-sm text-gray-500 mb-5">Manage your connected Facebook account and ad account.</p>
+            <h2 className="text-lg font-medium text-gray-900 mb-1">Meta Integration</h2>
+            <p className="text-sm text-gray-500 mb-5">Connect your Facebook account, select a page, and manage ad accounts and lead forms.</p>
 
             {!metaConnected ? (
               <div className="flex items-center justify-between">
@@ -611,7 +663,30 @@ export default function SettingsPage() {
                   </a>
                 </div>
 
-                {/* Current ad account */}
+                {/* Facebook Page selection */}
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-1">Facebook Page</p>
+                  {loadingPages ? (
+                    <p className="text-sm text-gray-400">Loading pages…</p>
+                  ) : pages.length === 0 ? (
+                    <p className="text-sm text-gray-400">No Facebook Pages found on this account.</p>
+                  ) : (
+                    <select
+                      value={selectedPageId}
+                      onChange={(e) => handlePageChange(e.target.value)}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">Select a page…</option>
+                      {pages.map((page) => (
+                        <option key={page.id} value={page.id}>
+                          {page.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                {/* Ad Account */}
                 <div>
                   <p className="text-sm font-medium text-gray-700 mb-1">Ad Account</p>
                   <p className="text-sm text-gray-500 mb-3">
@@ -651,6 +726,71 @@ export default function SettingsPage() {
                   )}
                 </div>
 
+                {/* Lead Forms — only when a page is selected */}
+                {selectedPageId && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-1">Lead Forms</p>
+                    <p className="text-xs text-gray-400 mb-3">
+                      Choose which lead forms send leads to your account. If none are selected, all forms are accepted.
+                    </p>
+
+                    {!formsLoaded ? (
+                      <button
+                        onClick={handleLoadLeadForms}
+                        disabled={loadingForms}
+                        className="text-sm text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50"
+                      >
+                        {loadingForms ? 'Loading forms…' : 'Load lead forms →'}
+                      </button>
+                    ) : metaLeadForms.length === 0 ? (
+                      <p className="text-sm text-gray-400">No lead forms found on this page.</p>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                          {metaLeadForms.map((form) => (
+                            <label
+                              key={form.id}
+                              className="flex items-center gap-3 py-2 px-3 rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer transition"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={allowedFormIds.includes(form.id)}
+                                onChange={() => toggleFormId(form.id)}
+                                className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">{form.name}</p>
+                                <p className="text-xs text-gray-400">ID: {form.id} · {form.status}</p>
+                              </div>
+                            </label>
+                          ))}
+                        </div>
+
+                        {allowedFormIds.length === 0 && (
+                          <p className="text-xs text-gray-400">No forms selected — all forms will be accepted.</p>
+                        )}
+
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={handleSaveAllowedForms}
+                            disabled={savingForms}
+                            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 text-sm font-medium"
+                          >
+                            {savingForms ? 'Saving…' : 'Save Preferences'}
+                          </button>
+                          <button
+                            onClick={handleLoadLeadForms}
+                            disabled={loadingForms}
+                            className="text-sm text-gray-500 hover:text-gray-700 font-medium disabled:opacity-50"
+                          >
+                            {loadingForms ? 'Refreshing…' : 'Refresh'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Disconnect */}
                 <div className="pt-2 border-t border-gray-100">
                   <button
@@ -664,75 +804,6 @@ export default function SettingsPage() {
               </div>
             )}
           </div>
-
-          {/* Meta Lead Forms */}
-          {metaConnected && (
-            <div className="bg-white shadow rounded-xl p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-1">Meta Lead Forms</h2>
-              <p className="text-sm text-gray-500 mb-5">
-                Choose which Meta lead forms send leads to your account. If none are selected, all forms are accepted.
-              </p>
-
-              {!metaPageId ? (
-                <p className="text-sm text-gray-500">
-                  No Facebook Page linked yet. <a href="/lead-machine" className="text-indigo-600 hover:underline font-medium">Select a page in Lead Machine</a> or reconnect your Meta account.
-                </p>
-              ) : !formsLoaded ? (
-                <button
-                  onClick={handleLoadLeadForms}
-                  disabled={loadingForms}
-                  className="text-sm text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50"
-                >
-                  {loadingForms ? 'Loading forms…' : 'Load lead forms →'}
-                </button>
-              ) : metaLeadForms.length === 0 ? (
-                <p className="text-sm text-gray-400">No lead forms found on your page.</p>
-              ) : (
-                <div className="space-y-4">
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {metaLeadForms.map((form) => (
-                      <label
-                        key={form.id}
-                        className="flex items-center gap-3 py-2 px-3 rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer transition"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={allowedFormIds.includes(form.id)}
-                          onChange={() => toggleFormId(form.id)}
-                          className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{form.name}</p>
-                          <p className="text-xs text-gray-400">ID: {form.id} · {form.status}</p>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-
-                  {allowedFormIds.length === 0 && (
-                    <p className="text-xs text-gray-400">No forms selected — all forms will be accepted.</p>
-                  )}
-
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={handleSaveAllowedForms}
-                      disabled={savingForms}
-                      className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 text-sm font-medium"
-                    >
-                      {savingForms ? 'Saving…' : 'Save Preferences'}
-                    </button>
-                    <button
-                      onClick={handleLoadLeadForms}
-                      disabled={loadingForms}
-                      className="text-sm text-gray-500 hover:text-gray-700 font-medium disabled:opacity-50"
-                    >
-                      {loadingForms ? 'Refreshing…' : 'Refresh'}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
 
           {/* Stripe Payments */}
           <div className="bg-white shadow rounded-xl p-6">
