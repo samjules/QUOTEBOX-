@@ -12,30 +12,14 @@ export async function GET(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const admin = createAdminClient()
-  const { data: account, error: accountErr } = await admin
+  const { data: account } = await admin
     .from('accounts')
     .select('meta_access_token, meta_page_id, meta_allowed_form_ids')
     .eq('owner_id', user.id)
     .single()
 
-  console.log('[lead-forms] user.id:', user.id)
-  console.log('[lead-forms] account lookup error:', accountErr ? JSON.stringify(accountErr) : 'none')
-  console.log('[lead-forms] account found:', !!account)
-  console.log('[lead-forms] has meta_access_token:', !!account?.meta_access_token)
-  console.log('[lead-forms] meta_page_id:', account?.meta_page_id ?? 'null')
-  console.log('[lead-forms] SUPABASE_SERVICE_ROLE_KEY set:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
-  console.log('[lead-forms] SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
-
   if (!account?.meta_access_token) {
-    return NextResponse.json({
-      error: 'Meta not connected',
-      debug: {
-        accountFound: !!account,
-        accountErr: accountErr?.message ?? null,
-        userId: user.id,
-        serviceKeySet: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-      },
-    }, { status: 400 })
+    return NextResponse.json({ error: 'Meta not connected' }, { status: 400 })
   }
 
   // Use query param if provided, fall back to DB value
@@ -44,31 +28,27 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'No page selected' }, { status: 400 })
   }
 
-  // Try fetching lead forms with the user access token first (works with ads_management),
-  // fall back to page access token if needed
-  let formsData: { data?: Array<{ id: string; name: string; status: string }>; error?: { message: string; code: number } }
-
-  const formsUrl = `https://graph.facebook.com/v18.0/${pageId}/leadgen_forms?fields=id,name,status,created_time&limit=100&access_token=${account.meta_access_token}`
-  const formsRes = await fetch(formsUrl)
-  formsData = await formsRes.json()
-
-  // If user token fails, try with page token
-  if (formsData.error) {
-    console.log('[lead-forms] user token failed, trying page token:', formsData.error.message)
-    const pageRes = await fetch(
-      `https://graph.facebook.com/v18.0/${pageId}?fields=access_token&access_token=${account.meta_access_token}`
-    )
-    const pageData = await pageRes.json()
-    if (pageData.access_token) {
-      const retryRes = await fetch(
-        `https://graph.facebook.com/v18.0/${pageId}/leadgen_forms?fields=id,name,status,created_time&limit=100&access_token=${pageData.access_token}`
-      )
-      formsData = await retryRes.json()
-    }
+  // Get page access token
+  const pageRes = await fetch(
+    `https://graph.facebook.com/v18.0/${pageId}?fields=access_token&access_token=${account.meta_access_token}`
+  )
+  const pageData = await pageRes.json()
+  if (pageData.error || !pageData.access_token) {
+    return NextResponse.json({ error: 'Failed to get page token' }, { status: 502 })
   }
 
+  // Fetch lead gen forms using the page token
+  const formsRes = await fetch(
+    `https://graph.facebook.com/v18.0/${pageId}/leadgen_forms?fields=id,name,status,created_time&limit=100&access_token=${pageData.access_token}`
+  )
+  const formsData = await formsRes.json()
+
   if (formsData.error) {
-    return NextResponse.json({ error: formsData.error.message || 'Failed to fetch forms', fbError: formsData.error }, { status: 502 })
+    // Check if it's a permissions issue
+    if (formsData.error.code === 200) {
+      return NextResponse.json({ error: 'permission_required', message: formsData.error.message }, { status: 403 })
+    }
+    return NextResponse.json({ error: formsData.error.message || 'Failed to fetch forms' }, { status: 502 })
   }
 
   return NextResponse.json({

@@ -72,6 +72,7 @@ export default function SettingsPage() {
   const [loadingForms, setLoadingForms] = useState(false)
   const [savingForms, setSavingForms] = useState(false)
   const [formsLoaded, setFormsLoaded] = useState(false)
+  const [formsPermissionNeeded, setFormsPermissionNeeded] = useState(false)
 
   // Agreement template state
   const [agreementTemplateUrl, setAgreementTemplateUrl] = useState<string | null>(null)
@@ -359,7 +360,15 @@ export default function SettingsPage() {
       const params = selectedPageId ? `?pageId=${selectedPageId}` : ''
       const res = await fetch(`/api/meta/lead-forms${params}`)
       const data = await res.json()
+      if (res.status === 403 && data.error === 'permission_required') {
+        setFormsLoaded(true)
+        setMetaLeadForms([])
+        setFormsPermissionNeeded(true)
+        setLoadingForms(false)
+        return
+      }
       if (!res.ok) throw new Error(data.error || 'Failed to load forms')
+      setFormsPermissionNeeded(false)
       setMetaLeadForms(data.forms || [])
       setAllowedFormIds(data.allowedFormIds || [])
       setFormsLoaded(true)
@@ -747,6 +756,13 @@ export default function SettingsPage() {
                       >
                         {loadingForms ? 'Loading forms…' : 'Load lead forms →'}
                       </button>
+                    ) : formsPermissionNeeded ? (
+                      <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
+                        <p className="text-sm text-amber-800 font-medium">Additional Meta permission required</p>
+                        <p className="text-xs text-amber-700 mt-1">
+                          The <code className="bg-amber-100 px-1 rounded">leads_retrieval</code> permission needs to be approved in your Meta App Dashboard before lead forms can be loaded. All incoming leads from this page will still be accepted in the meantime.
+                        </p>
+                      </div>
                     ) : metaLeadForms.length === 0 ? (
                       <p className="text-sm text-gray-400">No lead forms found on this page.</p>
                     ) : (
