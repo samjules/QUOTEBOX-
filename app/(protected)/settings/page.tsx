@@ -122,10 +122,11 @@ export default function SettingsPage() {
             if (!savedPageId && fetchedPages.length === 1) {
               const autoPageId = fetchedPages[0].id
               setSelectedPageId(autoPageId)
-              await supabase
-                .from('accounts')
-                .update({ meta_page_id: autoPageId })
-                .eq('id', account.id)
+              await fetch('/api/meta/save-page', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pageId: autoPageId }),
+              })
             }
           } catch {
             // Pages will just be empty
@@ -334,13 +335,14 @@ export default function SettingsPage() {
     setAllowedFormIds([])
     setMessage('')
 
-    // Save directly via client — same pattern as business name / ad account
-    const { error } = await supabase
-      .from('accounts')
-      .update({ meta_page_id: pageId || null })
-      .eq('id', accountId)
-
-    if (error) {
+    try {
+      const res = await fetch('/api/meta/save-page', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pageId: pageId || null }),
+      })
+      if (!res.ok) throw new Error('Save failed')
+    } catch {
       setMessage('Error: Failed to save page selection')
       return
     }
