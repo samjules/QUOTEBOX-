@@ -122,8 +122,7 @@ export default function SettingsPage() {
             if (!savedPageId && fetchedPages.length === 1) {
               const autoPageId = fetchedPages[0].id
               setSelectedPageId(autoPageId)
-              // Save automatically
-              fetch('/api/meta/save-page', {
+              await fetch('/api/meta/save-page', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ pageId: autoPageId }),
@@ -335,13 +334,14 @@ export default function SettingsPage() {
     setMetaLeadForms([])
     setAllowedFormIds([])
     try {
-      await fetch('/api/meta/save-page', {
+      const res = await fetch('/api/meta/save-page', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pageId: pageId || null }),
       })
+      if (!res.ok) throw new Error('Save failed')
       if (pageId) {
-        handleLoadLeadForms()
+        await handleLoadLeadForms()
       }
     } catch {
       setMessage('Error: Failed to save page selection')
