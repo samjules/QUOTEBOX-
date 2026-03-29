@@ -9,6 +9,7 @@ export interface Account {
   meta_ad_account_id?: string
   meta_user_id?: string
   meta_connected_at?: string
+  meta_page_id?: string
   stripe_connect_account_id?: string | null
   stripe_connect_completed_at?: string | null
   agreement_template_url?: string | null
@@ -107,6 +108,7 @@ export interface Lead {
   phone: string | null
   form_type: string | null
   form_data: Record<string, unknown> | null
+  source?: string
   status: 'new' | 'contacted' | 'booked' | 'lost' | 'held'
   created_at: string
   notes?: string | null

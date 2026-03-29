@@ -834,6 +834,11 @@ export default function LeadMachinePage() {
               setPages(pageList)
               if (pageList.length === 1) {
                 setQuestionnaire((q) => ({ ...q, pageId: pageList[0].id }))
+                fetch('/api/meta/save-page', {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ pageId: pageList[0].id }),
+                }).catch(() => {})
               }
             }),
           // conversions fetched separately once pixel is known (see useEffect below)
@@ -2268,7 +2273,17 @@ export default function LeadMachinePage() {
                           <div>
                             <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Facebook Page</label>
                             <select value={questionnaire.pageId}
-                              onChange={(e) => setQuestionnaire((q) => ({ ...q, pageId: e.target.value }))}
+                              onChange={(e) => {
+                                const pid = e.target.value
+                                setQuestionnaire((q) => ({ ...q, pageId: pid }))
+                                if (pid) {
+                                  fetch('/api/meta/save-page', {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ pageId: pid }),
+                                  }).catch(() => {})
+                                }
+                              }}
                               className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             >
                               <option value="">Select a page...</option>

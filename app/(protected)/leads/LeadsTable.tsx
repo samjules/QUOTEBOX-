@@ -237,6 +237,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quote</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
@@ -245,7 +246,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
             <tbody className="bg-white divide-y divide-gray-200">
               {leads.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
+                  <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">
                     No leads yet. They will appear here once you receive them.
                   </td>
                 </tr>
@@ -268,6 +269,11 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
                         {(() => { const q = getQuote(lead); return q ? `${q.currency}${q.total.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}` : <span className="text-gray-400 font-normal">—</span> })()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${lead.source === 'meta_leadgen' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'}`}>
+                          {lead.source === 'meta_leadgen' ? 'Meta' : 'Form'}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColor(displayStatus)}`}>
@@ -309,7 +315,12 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">{selected.name || 'Unnamed Lead'}</h2>
-                <p className="text-sm text-gray-500">{selected.form_type || 'Lead'} · {new Date(selected.created_at).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}</p>
+                <p className="text-sm text-gray-500">
+                  {selected.form_type || 'Lead'} · {new Date(selected.created_at).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
+                  {selected.source === 'meta_leadgen' && (
+                    <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-800">Meta</span>
+                  )}
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 {!confirmDelete ? (

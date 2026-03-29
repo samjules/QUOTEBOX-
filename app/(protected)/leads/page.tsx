@@ -66,7 +66,7 @@ export default async function LeadsPage() {
 
   const { data: allLeads } = await admin
     .from('leads')
-    .select('id, account_id, hosted_form_id, name, email, phone, form_type, form_data, status, created_at, notes')
+    .select('id, account_id, hosted_form_id, name, email, phone, form_type, form_data, source, status, created_at, notes')
     .eq('account_id', account.id)
     .order('created_at', { ascending: false })
 

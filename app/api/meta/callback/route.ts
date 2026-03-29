@@ -125,6 +125,42 @@ export async function GET(request: NextRequest) {
     updatePayload.meta_ad_account_id = adAccounts[0].account_id
   }
 
+  // Subscribe pages to leadgen webhook + store first page ID
+  let firstPageId: string | null = null
+  try {
+    const pagesRes = await fetch(
+      `https://graph.facebook.com/v18.0/me/accounts?fields=id,name,access_token&access_token=${longLivedToken}`
+    )
+    const pagesData = await pagesRes.json()
+    const pageList: Array<{ id: string; name: string; access_token: string }> = pagesData.data || []
+
+    for (const page of pageList) {
+      if (!firstPageId) firstPageId = page.id
+      // Subscribe page to leadgen webhook
+      try {
+        await fetch(
+          `https://graph.facebook.com/v18.0/${page.id}/subscribed_apps`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              subscribed_fields: ['leadgen'],
+              access_token: page.access_token,
+            }),
+          }
+        )
+      } catch {
+        // Non-fatal: continue with other pages
+      }
+    }
+  } catch {
+    // Non-fatal: page subscription failed
+  }
+
+  if (firstPageId) {
+    updatePayload.meta_page_id = firstPageId
+  }
+
   // PPL onboarding path — use accountId directly, update via admin client
   if (from === 'ppl-onboarding' && accountId) {
     const admin = createAdminClient()

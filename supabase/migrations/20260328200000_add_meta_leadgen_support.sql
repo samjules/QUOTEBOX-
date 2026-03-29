@@ -1,0 +1,2 @@
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'hosted_form';
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS meta_page_id TEXT;
