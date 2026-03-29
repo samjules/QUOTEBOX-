@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 
   const redirectUri = `${siteUrl}/api/meta/callback`
   const state = Buffer.from(JSON.stringify(statePayload)).toString('base64')
-  const scopes = 'ads_management,ads_read,pages_read_engagement,pages_show_list'
+  const scopes = 'ads_management,ads_read,pages_read_engagement,pages_show_list,pages_manage_ads,business_management,email'
 
   const oauthUrl = new URL('https://www.facebook.com/v18.0/dialog/oauth')
   oauthUrl.searchParams.set('client_id', appId)
