@@ -12,14 +12,30 @@ export async function GET(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const admin = createAdminClient()
-  const { data: account } = await admin
+  const { data: account, error: accountErr } = await admin
     .from('accounts')
     .select('meta_access_token, meta_page_id, meta_allowed_form_ids')
     .eq('owner_id', user.id)
     .single()
 
+  console.log('[lead-forms] user.id:', user.id)
+  console.log('[lead-forms] account lookup error:', accountErr ? JSON.stringify(accountErr) : 'none')
+  console.log('[lead-forms] account found:', !!account)
+  console.log('[lead-forms] has meta_access_token:', !!account?.meta_access_token)
+  console.log('[lead-forms] meta_page_id:', account?.meta_page_id ?? 'null')
+  console.log('[lead-forms] SUPABASE_SERVICE_ROLE_KEY set:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+  console.log('[lead-forms] SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+
   if (!account?.meta_access_token) {
-    return NextResponse.json({ error: 'Meta not connected' }, { status: 400 })
+    return NextResponse.json({
+      error: 'Meta not connected',
+      debug: {
+        accountFound: !!account,
+        accountErr: accountErr?.message ?? null,
+        userId: user.id,
+        serviceKeySet: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      },
+    }, { status: 400 })
   }
 
   // Use query param if provided, fall back to DB value
