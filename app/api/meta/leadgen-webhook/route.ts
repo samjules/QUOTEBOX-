@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       id: string
       changes?: Array<{
         field: string
-        value: { leadgen_id: string; page_id: string; created_time: number }
+        value: { leadgen_id: string; page_id: string; form_id: string; created_time: number }
       }>
     }>
   }
@@ -73,17 +73,21 @@ export async function POST(request: NextRequest) {
     for (const change of entry.changes ?? []) {
       if (change.field !== 'leadgen') continue
 
-      const { leadgen_id, page_id } = change.value
+      const { leadgen_id, page_id, form_id } = change.value
 
       try {
         // Look up account by meta_page_id
         const { data: account } = await admin
           .from('accounts')
-          .select('id, meta_access_token')
+          .select('id, meta_access_token, meta_allowed_form_ids')
           .eq('meta_page_id', page_id)
           .single()
 
         if (!account || !account.meta_access_token) continue
+
+        // If allowed form IDs are configured, skip forms not in the list
+        const allowedIds: string[] = account.meta_allowed_form_ids || []
+        if (allowedIds.length > 0 && !allowedIds.includes(form_id)) continue
 
         // Get page access token
         const pagesRes = await fetch(

@@ -63,6 +63,13 @@ export default function SettingsPage() {
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviting, setInviting] = useState(false)
 
+  // Meta lead forms state
+  const [metaLeadForms, setMetaLeadForms] = useState<Array<{ id: string; name: string; status: string }>>([])
+  const [allowedFormIds, setAllowedFormIds] = useState<string[]>([])
+  const [loadingForms, setLoadingForms] = useState(false)
+  const [savingForms, setSavingForms] = useState(false)
+  const [formsLoaded, setFormsLoaded] = useState(false)
+
   // Agreement template state
   const [agreementTemplateUrl, setAgreementTemplateUrl] = useState<string | null>(null)
   const [agreementUploading, setAgreementUploading] = useState(false)
@@ -285,6 +292,47 @@ export default function SettingsPage() {
       setMessage('Team member removed.')
       setTimeout(() => setMessage(''), 2000)
     }
+  }
+
+  async function handleLoadLeadForms() {
+    setLoadingForms(true)
+    setMessage('')
+    try {
+      const res = await fetch('/api/meta/lead-forms')
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to load forms')
+      setMetaLeadForms(data.forms || [])
+      setAllowedFormIds(data.allowedFormIds || [])
+      setFormsLoaded(true)
+    } catch (err) {
+      setMessage(`Error: ${err instanceof Error ? err.message : 'Failed to load lead forms'}`)
+    }
+    setLoadingForms(false)
+  }
+
+  function toggleFormId(formId: string) {
+    setAllowedFormIds((prev) =>
+      prev.includes(formId) ? prev.filter((id) => id !== formId) : [...prev, formId]
+    )
+  }
+
+  async function handleSaveAllowedForms() {
+    setSavingForms(true)
+    setMessage('')
+    try {
+      const res = await fetch('/api/meta/lead-forms', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ formIds: allowedFormIds }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to save')
+      setMessage('Lead form preferences saved!')
+      setTimeout(() => setMessage(''), 3000)
+    } catch (err) {
+      setMessage(`Error: ${err instanceof Error ? err.message : 'Failed to save lead forms'}`)
+    }
+    setSavingForms(false)
   }
 
   async function handleAgreementUpload(file: File) {
@@ -614,6 +662,71 @@ export default function SettingsPage() {
               </div>
             )}
           </div>
+
+          {/* Meta Lead Forms */}
+          {metaConnected && (
+            <div className="bg-white shadow rounded-xl p-6">
+              <h2 className="text-lg font-medium text-gray-900 mb-1">Meta Lead Forms</h2>
+              <p className="text-sm text-gray-500 mb-5">
+                Choose which Meta lead forms send leads to your account. If none are selected, all forms are accepted.
+              </p>
+
+              {!formsLoaded ? (
+                <button
+                  onClick={handleLoadLeadForms}
+                  disabled={loadingForms}
+                  className="text-sm text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50"
+                >
+                  {loadingForms ? 'Loading forms…' : 'Load lead forms →'}
+                </button>
+              ) : metaLeadForms.length === 0 ? (
+                <p className="text-sm text-gray-400">No lead forms found on your page.</p>
+              ) : (
+                <div className="space-y-4">
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {metaLeadForms.map((form) => (
+                      <label
+                        key={form.id}
+                        className="flex items-center gap-3 py-2 px-3 rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer transition"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={allowedFormIds.includes(form.id)}
+                          onChange={() => toggleFormId(form.id)}
+                          className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{form.name}</p>
+                          <p className="text-xs text-gray-400">ID: {form.id} · {form.status}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+
+                  {allowedFormIds.length === 0 && (
+                    <p className="text-xs text-gray-400">No forms selected — all forms will be accepted.</p>
+                  )}
+
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleSaveAllowedForms}
+                      disabled={savingForms}
+                      className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 text-sm font-medium"
+                    >
+                      {savingForms ? 'Saving…' : 'Save Preferences'}
+                    </button>
+                    <button
+                      onClick={handleLoadLeadForms}
+                      disabled={loadingForms}
+                      className="text-sm text-gray-500 hover:text-gray-700 font-medium disabled:opacity-50"
+                    >
+                      {loadingForms ? 'Refreshing…' : 'Refresh'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Stripe Payments */}
           <div className="bg-white shadow rounded-xl p-6">

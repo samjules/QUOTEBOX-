@@ -10,6 +10,7 @@ export interface Account {
   meta_user_id?: string
   meta_connected_at?: string
   meta_page_id?: string
+  meta_allowed_form_ids?: string[]
   stripe_connect_account_id?: string | null
   stripe_connect_completed_at?: string | null
   agreement_template_url?: string | null
