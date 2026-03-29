@@ -64,6 +64,7 @@ export default function SettingsPage() {
   const [inviting, setInviting] = useState(false)
 
   // Meta lead forms state
+  const [metaPageId, setMetaPageId] = useState<string | null>(null)
   const [metaLeadForms, setMetaLeadForms] = useState<Array<{ id: string; name: string; status: string }>>([])
   const [allowedFormIds, setAllowedFormIds] = useState<string[]>([])
   const [loadingForms, setLoadingForms] = useState(false)
@@ -103,6 +104,7 @@ export default function SettingsPage() {
           setMetaAdAccountId(account.meta_ad_account_id ?? null)
           setMetaAccessToken(account.meta_access_token)
           setSelectedAdAccount(account.meta_ad_account_id ?? '')
+          setMetaPageId(account.meta_page_id ?? null)
         }
         setStripeConnectAccountId(account.stripe_connect_account_id ?? null)
         setAgreementTemplateUrl(account.agreement_template_url ?? null)
@@ -671,7 +673,11 @@ export default function SettingsPage() {
                 Choose which Meta lead forms send leads to your account. If none are selected, all forms are accepted.
               </p>
 
-              {!formsLoaded ? (
+              {!metaPageId ? (
+                <p className="text-sm text-gray-500">
+                  No Facebook Page linked yet. <a href="/lead-machine" className="text-indigo-600 hover:underline font-medium">Select a page in Lead Machine</a> or reconnect your Meta account.
+                </p>
+              ) : !formsLoaded ? (
                 <button
                   onClick={handleLoadLeadForms}
                   disabled={loadingForms}
