@@ -64,11 +64,17 @@ export default async function LeadsPage() {
       .eq('status', 'held')
   }
 
-  const { data: allLeads } = await admin
+  const { data: allLeads, error: leadsError } = await admin
     .from('leads')
     .select('id, account_id, hosted_form_id, name, email, phone, form_type, form_data, source, status, created_at, notes')
     .eq('account_id', account.id)
     .order('created_at', { ascending: false })
+
+  if (leadsError) {
+    console.error('LEADS QUERY ERROR:', leadsError)
+    console.error('account_id used:', account.id)
+  }
+  console.log('LEADS DEBUG: account_id =', account.id, '| leads returned =', allLeads?.length ?? 0)
 
   const leads: Lead[] = allLeads ?? []
 
