@@ -105,27 +105,24 @@ export default async function LeadsPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
         <div className="py-4">
-          {!hasAccess ? (
-            /* No plan — subscribe gate */
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="flex items-center justify-center w-20 h-20 rounded-full bg-indigo-100 mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-indigo-500">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
-                </svg>
+            {/* No plan banner */}
+            {!hasAccess && (
+              <div className="mb-6 rounded-lg p-4 flex items-center justify-between bg-yellow-50 border border-yellow-300">
+                <div className="flex items-center gap-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-yellow-500 flex-shrink-0">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                  </svg>
+                  <div>
+                    <p className="font-semibold text-sm text-yellow-800">No active subscription</p>
+                    <p className="text-sm text-yellow-700">Subscribe to a plan to start receiving new leads.</p>
+                  </div>
+                </div>
+                <Link href="/billing" className="ml-4 flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold bg-yellow-500 text-white hover:bg-yellow-600 transition">
+                  View Plans
+                </Link>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Subscribe to access your leads</h2>
-              <p className="text-gray-500 max-w-md mb-8">
-                Choose a plan to start receiving and managing leads. The Starter plan includes a 7-day free trial.
-              </p>
-              <Link
-                href="/billing"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition shadow-md"
-              >
-                View Plans
-              </Link>
-            </div>
-          ) : (
-            <>
+            )}
+
               {/* Trial banner */}
               {isOnTrial && (
                 <div className="mb-6 rounded-lg p-4 flex items-center justify-between bg-indigo-50 border border-indigo-200">
@@ -190,8 +187,6 @@ export default async function LeadsPage() {
 
               {/* Leads table */}
               <LeadsTable leads={leads} stripeConnectAccountId={account.stripe_connect_account_id ?? null} agreementTemplateUrl={account.agreement_template_url ?? null} fieldMap={fieldMap} />
-            </>
-          )}
         </div>
       </div>
     </div>
