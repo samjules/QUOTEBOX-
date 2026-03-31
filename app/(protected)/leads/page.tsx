@@ -128,7 +128,7 @@ export default async function LeadsPage() {
       .from('leads')
       .select('account_id')
       .limit(20)
-    const uniqueIds = [...new Set(distinctAccounts?.map(r => r.account_id))]
+    const uniqueIds = Array.from(new Set(distinctAccounts?.map(r => r.account_id)))
     console.log('DEBUG [8e] distinct account_ids found in leads table:', JSON.stringify(uniqueIds))
     console.log('DEBUG [8f] does our account_id appear in that list?', uniqueIds.includes(account.id))
   }
