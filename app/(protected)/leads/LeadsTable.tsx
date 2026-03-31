@@ -271,8 +271,8 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                         {(() => { const q = getQuote(lead); return q ? `${q.currency}${q.total.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}` : <span className="text-gray-400 font-normal">—</span> })()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${lead.source === 'meta_leadgen' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'}`}>
-                          {lead.source === 'meta_leadgen' ? 'Meta' : 'Form'}
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-600">
+                          Form
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -317,9 +317,6 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                 <h2 className="text-lg font-semibold text-gray-900">{selected.name || 'Unnamed Lead'}</h2>
                 <p className="text-sm text-gray-500">
                   {selected.form_type || 'Lead'} · {new Date(selected.created_at).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
-                  {selected.source === 'meta_leadgen' && (
-                    <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-800">Meta</span>
-                  )}
                 </p>
               </div>
               <div className="flex items-center gap-2">

@@ -109,7 +109,6 @@ export interface Lead {
   phone: string | null
   form_type: string | null
   form_data: Record<string, unknown> | null
-  source?: string
   status: 'new' | 'contacted' | 'booked' | 'lost' | 'held'
   created_at: string
   notes?: string | null
