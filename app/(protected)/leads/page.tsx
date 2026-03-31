@@ -7,20 +7,25 @@ import type { Lead } from '@/lib/types'
 import LeadsTable, { type FieldMap } from './LeadsTable'
 
 export default async function LeadsPage() {
+  console.log('========== LEADS PAGE DEBUG START ==========')
   const supabase = createClient()
 
   const {
     data: { session },
   } = await supabase.auth.getSession()
+  console.log('DEBUG [1] session exists:', !!session, '| session user id:', session?.user?.id)
   if (!session) redirect('/login')
 
   const {
     data: { user },
   } = await supabase.auth.getUser()
+  console.log('DEBUG [2] user exists:', !!user, '| user.id:', user?.id, '| user.email:', user?.email)
   if (!user) redirect('/login')
 
   const ctx = await getAccountForUser(supabase, user.id)
+  console.log('DEBUG [3] getAccountForUser result:', JSON.stringify(ctx))
   if (!ctx) {
+    console.error('DEBUG [3a] NO ACCOUNT CONTEXT FOUND for user', user.id)
     return (
       <div className="p-8 text-red-600">
         No account found. Please contact support.
@@ -29,13 +34,26 @@ export default async function LeadsPage() {
   }
 
   const admin = createAdminClient()
-  const { data: account } = await admin
+
+  // Debug: check what accounts exist for this user directly
+  const { data: debugOwnedAccounts, error: debugOwnedErr } = await admin
+    .from('accounts')
+    .select('id, owner_id, business_name')
+    .eq('owner_id', user.id)
+  console.log('DEBUG [3b] accounts owned by user:', JSON.stringify(debugOwnedAccounts), '| error:', debugOwnedErr?.message)
+
+  const { data: account, error: accountError } = await admin
     .from('accounts')
     .select('*')
     .eq('id', ctx.accountId)
     .single()
+  console.log('DEBUG [4] account lookup by ctx.accountId:', ctx.accountId, '| found:', !!account, '| error:', accountError?.message)
+  if (account) {
+    console.log('DEBUG [4a] account.id:', account.id, '| account.owner_id:', account.owner_id, '| account.business_name:', account.business_name)
+  }
 
   if (!account) {
+    console.error('DEBUG [4b] NO ACCOUNT ROW FOUND for id', ctx.accountId)
     return (
       <div className="p-8 text-red-600">
         No account found. Please contact support.
@@ -43,26 +61,51 @@ export default async function LeadsPage() {
     )
   }
 
-  const { data: billingData } = await admin
+  const { data: billingData, error: billingError } = await admin
     .from('billing')
     .select('plan, trial_ends_at, blessed')
     .eq('account_id', account.id)
     .single()
+  console.log('DEBUG [5] billing data:', JSON.stringify(billingData), '| error:', billingError?.message)
 
   const plan = billingData?.plan ?? null
   const trialEndsAt = billingData?.trial_ends_at ?? null
   const isOnTrial = trialEndsAt ? new Date(trialEndsAt) > new Date() : false
   const blessed = billingData?.blessed === true
   const hasAccess = blessed || plan !== null
+  console.log('DEBUG [5a] plan:', plan, '| trialEndsAt:', trialEndsAt, '| isOnTrial:', isOnTrial, '| blessed:', blessed, '| hasAccess:', hasAccess)
 
   // Auto-promote held leads to 'new' when account has an active plan
   if (hasAccess) {
-    await admin
+    const { data: promotedLeads, error: promoteError } = await admin
       .from('leads')
       .update({ status: 'new' })
       .eq('account_id', account.id)
       .eq('status', 'held')
+      .select('id')
+    console.log('DEBUG [6] promoted held→new:', promotedLeads?.length ?? 0, '| error:', promoteError?.message)
   }
+
+  // Debug: count ALL leads for this account (no column filter, just count)
+  const { count: totalLeadCount, error: countError } = await admin
+    .from('leads')
+    .select('*', { count: 'exact', head: true })
+    .eq('account_id', account.id)
+  console.log('DEBUG [7] total lead count (head query) for account_id', account.id, ':', totalLeadCount, '| error:', countError?.message)
+
+  // Debug: also check if leads exist under ANY account to rule out wrong account_id
+  const { count: globalLeadCount } = await admin
+    .from('leads')
+    .select('*', { count: 'exact', head: true })
+  console.log('DEBUG [7a] total leads in entire leads table:', globalLeadCount)
+
+  // Debug: sample some leads to see what account_ids they belong to
+  const { data: sampleLeads } = await admin
+    .from('leads')
+    .select('id, account_id, name, status, created_at')
+    .order('created_at', { ascending: false })
+    .limit(5)
+  console.log('DEBUG [7b] sample of 5 most recent leads (any account):', JSON.stringify(sampleLeads))
 
   const { data: allLeads, error: leadsError } = await admin
     .from('leads')
@@ -71,10 +114,25 @@ export default async function LeadsPage() {
     .order('created_at', { ascending: false })
 
   if (leadsError) {
-    console.error('LEADS QUERY ERROR:', leadsError)
-    console.error('account_id used:', account.id)
+    console.error('DEBUG [8] LEADS QUERY ERROR:', JSON.stringify(leadsError))
+    console.error('DEBUG [8a] account_id used:', account.id)
   }
-  console.log('LEADS DEBUG: account_id =', account.id, '| leads returned =', allLeads?.length ?? 0)
+  console.log('DEBUG [8b] leads returned for account:', allLeads?.length ?? 0)
+  if (allLeads && allLeads.length > 0) {
+    console.log('DEBUG [8c] first lead:', JSON.stringify(allLeads[0]))
+  }
+  if (allLeads && allLeads.length === 0) {
+    console.log('DEBUG [8d] ZERO leads returned! The account_id', account.id, 'has no matching rows in leads table')
+    // Extra debug: check distinct account_ids in leads table
+    const { data: distinctAccounts } = await admin
+      .from('leads')
+      .select('account_id')
+      .limit(20)
+    const uniqueIds = [...new Set(distinctAccounts?.map(r => r.account_id))]
+    console.log('DEBUG [8e] distinct account_ids found in leads table:', JSON.stringify(uniqueIds))
+    console.log('DEBUG [8f] does our account_id appear in that list?', uniqueIds.includes(account.id))
+  }
+  console.log('========== LEADS PAGE DEBUG END ==========')
 
   const leads: Lead[] = allLeads ?? []
 
