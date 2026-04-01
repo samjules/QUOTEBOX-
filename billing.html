@@ -283,7 +283,7 @@
                     billing = newBilling;
                 }
                 currentBalance = billing.credit_balance;
-                const { data: leads } = await sb.from('leads').select('*').eq('account_id', accountId);
+                const { data: leads } = await sb.from('leads').select('id, account_id, hosted_form_id, name, email, phone, form_type, form_data, status, created_at').eq('account_id', accountId);
                 const totalLeads = leads ? leads.length : 0;
                 const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0,0,0,0);
                 const monthlyLeads = leads ? leads.filter(l => new Date(l.created_at) >= startOfMonth).length : 0;

@@ -50,7 +50,7 @@ export default async function DashboardPage() {
   // Fetch all leads
   const { data: allLeads } = await supabase
     .from('leads')
-    .select('*')
+    .select('id, account_id, hosted_form_id, name, email, phone, form_type, form_data, status, created_at')
     .eq('account_id', account.id)
     .order('created_at', { ascending: false })
 
