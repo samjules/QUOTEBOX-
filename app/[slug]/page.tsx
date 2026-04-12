@@ -35,7 +35,9 @@ export default async function PublicFormPage({
   const hasCredits = billing?.plan === 'pay_per_lead' || (billing?.credit_balance ?? 0) >= 15
   const businessName = account?.business_name ?? ''
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.quote-box.com'
+  const siteUrl = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.quote-box.com'
   const pixelEndpoint = `${siteUrl}/api/pixel/event`
 
   return (
