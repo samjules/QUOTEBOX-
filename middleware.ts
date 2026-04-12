@@ -2,6 +2,13 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // Skip auth for public API routes (pixel events, cron jobs)
+  if (pathname.startsWith('/api/pixel') || pathname.startsWith('/api/cron')) {
+    return NextResponse.next()
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -32,10 +39,9 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const { pathname } = request.nextUrl
   const isAuthPage = pathname === '/login' || pathname === '/signup'
   const isProtectedPage = [
-    '/dashboard', '/leads', '/hosted-forms', '/billing', '/settings', '/form-builder', '/meta-ads', '/admin', '/time-clock',
+    '/dashboard', '/leads', '/hosted-forms', '/billing', '/settings', '/form-builder', '/meta-ads', '/admin', '/time-clock', '/intelligence',
   ].some((p) => pathname.startsWith(p))
   const isPublicPage = isAuthPage || pathname === '/' || !isProtectedPage
 

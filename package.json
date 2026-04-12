@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "build:pixel": "esbuild src/pixel/index.ts --bundle --minify --format=iife --outfile=public/pixel/qb.min.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
@@ -32,6 +33,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.0.1",
+    "esbuild": "^0.24.2",
     "eslint": "^8",
     "eslint-config-next": "14.2.30",
     "postcss": "^8",
