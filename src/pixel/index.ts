@@ -17,7 +17,10 @@
   const ENDPOINT =
     script?.getAttribute('data-endpoint') ?? '/api/pixel/event'
 
-  if (!API_KEY) return // no key → silently exit
+  if (!API_KEY) {
+    console.warn('[QB Pixel] No API key found — pixel disabled')
+    return
+  }
 
   /* ── Session ────────────────────────────────────────────── */
   let sessionId: string
@@ -29,6 +32,9 @@
   } catch {
     sessionId = crypto.randomUUID()
   }
+
+  console.log('[QB Pixel] Activated — session:', sessionId)
+  console.log('[QB Pixel] Endpoint:', ENDPOINT)
 
   /* ── Consent ────────────────────────────────────────────── */
   let consentGiven = false
@@ -47,6 +53,7 @@
 
   /* ── Beacon helper ──────────────────────────────────────── */
   function send(eventType: string, payload: Record<string, unknown> = {}) {
+    console.log(`[QB Pixel] Sending event: ${eventType}`, payload)
     const body = JSON.stringify({
       api_key: API_KEY,
       session_id: sessionId,
