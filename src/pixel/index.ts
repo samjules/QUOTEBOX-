@@ -163,6 +163,7 @@
       const el = e.target as HTMLElement
       const btn = el.closest('button[type="submit"], [data-qb-submit]')
       if (btn) {
+        console.log('[QB Pixel] Submit button clicked')
         send('form_submit_detected', {
           form_id: btn.closest('form')?.id || 'spa_form',
         })
@@ -170,6 +171,17 @@
     },
     { passive: true },
   )
+
+  // Intercept fetch calls to /api/leads/submit as a fallback detection
+  const origFetch = window.fetch
+  window.fetch = function (...args: Parameters<typeof fetch>) {
+    const url = typeof args[0] === 'string' ? args[0] : (args[0] as Request)?.url ?? ''
+    if (url.includes('/api/leads/submit')) {
+      console.log('[QB Pixel] Detected /api/leads/submit fetch')
+      send('form_submit_detected', { form_id: 'quote_form', detection: 'fetch_intercept' })
+    }
+    return origFetch.apply(this, args)
+  }
 
   /* ── Session end / time on page ─────────────────────────── */
   function sendTimeOnPage() {
