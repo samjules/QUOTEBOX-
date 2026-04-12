@@ -35,5 +35,19 @@ export default async function PublicFormPage({
   const hasCredits = billing?.plan === 'pay_per_lead' || (billing?.credit_balance ?? 0) >= 15
   const businessName = account?.business_name ?? ''
 
-  return <QuoteForm form={form as HostedForm} hasCredits={hasCredits} businessName={businessName} />
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.quote-box.com'
+  const pixelEndpoint = `${siteUrl}/api/pixel/event`
+
+  return (
+    <>
+      <QuoteForm form={form as HostedForm} hasCredits={hasCredits} businessName={businessName} />
+      {/* Lead Intelligence Pixel — passive tracking, never reads form values */}
+      <script
+        src={`${siteUrl}/pixel/qb.min.js`}
+        data-api-key={form.account_id}
+        data-endpoint={pixelEndpoint}
+        async
+      />
+    </>
+  )
 }
