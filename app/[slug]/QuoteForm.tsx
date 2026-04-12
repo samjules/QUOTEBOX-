@@ -1887,6 +1887,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
+                data-qb-submit
                 style={{ ...continueBtn, opacity: isSubmitting ? 0.6 : 1 }}
               >
                 {isSubmitting ? 'Submitting…' : (config.submit_label ?? 'Get My Quote →')}
