@@ -23,7 +23,7 @@ const faqs = [
   },
   {
     q: 'Why do you require $50/day in ad spend?',
-    a: 'Meta's algorithm needs data to optimize. Accounts spending less than $50/day rarely exit the learning phase, which means higher costs and fewer leads. We require a minimum to protect your results and our reputation.',
+    a: "Meta's algorithm needs data to optimize. Accounts spending less than $50/day rarely exit the learning phase, which means higher costs and fewer leads. We require a minimum to protect your results and our reputation.",
   },
   {
     q: 'Are the moving leads exclusive to my company?',
