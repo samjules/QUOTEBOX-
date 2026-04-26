@@ -16,6 +16,7 @@ const compareLinks = [
 const companyLinks = [
   { label: 'Home', href: '/' },
   { label: 'Done for You', href: '/agency' },
+  { label: 'Moving Management', href: '/moving-management' },
   { label: 'Log in', href: '/login' },
   { label: 'Sign up', href: '/signup' },
   { label: 'Privacy Policy', href: '/privacy' },
