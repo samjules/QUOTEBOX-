@@ -51,9 +51,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: formsData.error.message || 'Failed to fetch forms' }, { status: 502 })
   }
 
+  console.log('[lead-forms] pageId:', pageId, 'raw formsData:', JSON.stringify(formsData))
+
   return NextResponse.json({
     forms: formsData.data || [],
     allowedFormIds: account.meta_allowed_form_ids || [],
+    _debug: { pageId, formCount: (formsData.data || []).length, paging: formsData.paging },
   })
 }
 
