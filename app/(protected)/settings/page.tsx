@@ -73,6 +73,8 @@ export default function SettingsPage() {
   const [savingForms, setSavingForms] = useState(false)
   const [formsLoaded, setFormsLoaded] = useState(false)
   const [formsPermissionNeeded, setFormsPermissionNeeded] = useState(false)
+  const [syncingLeads, setSyncingLeads] = useState(false)
+  const [syncResult, setSyncResult] = useState<{ imported: number; skipped: number } | null>(null)
 
   // Agreement template state
   const [agreementTemplateUrl, setAgreementTemplateUrl] = useState<string | null>(null)
@@ -424,6 +426,20 @@ export default function SettingsPage() {
       setMessage(`Error: ${err instanceof Error ? err.message : 'Failed to save lead forms'}`)
     }
     setSavingForms(false)
+  }
+
+  async function handleSyncLeads() {
+    setSyncingLeads(true)
+    setSyncResult(null)
+    try {
+      const res = await fetch('/api/meta/sync-leads', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Sync failed')
+      setSyncResult(data)
+    } catch (err) {
+      setMessage(`Error: ${err instanceof Error ? err.message : 'Failed to sync leads'}`)
+    }
+    setSyncingLeads(false)
   }
 
   async function handleAgreementUpload(file: File) {
@@ -829,6 +845,24 @@ export default function SettingsPage() {
                           >
                             {loadingForms ? 'Refreshing…' : 'Refresh'}
                           </button>
+                        </div>
+
+                        <div className="pt-2 border-t border-gray-100">
+                          <p className="text-xs text-gray-400 mb-2">Import leads that were submitted before you connected Meta.</p>
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={handleSyncLeads}
+                              disabled={syncingLeads}
+                              className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900 transition disabled:opacity-50 text-sm font-medium"
+                            >
+                              {syncingLeads ? 'Syncing…' : 'Sync past leads'}
+                            </button>
+                            {syncResult && (
+                              <p className="text-xs text-gray-500">
+                                {syncResult.imported} imported · {syncResult.skipped} already exist
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </div>
                     )}
