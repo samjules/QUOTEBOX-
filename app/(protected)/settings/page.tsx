@@ -133,6 +133,29 @@ export default function SettingsPage() {
             // Pages will just be empty
           }
           setLoadingPages(false)
+
+          // Auto-load lead forms and saved preferences if a page is already configured
+          const pageIdToLoad = account.meta_page_id
+          if (pageIdToLoad) {
+            setLoadingForms(true)
+            try {
+              const formsRes = await fetch(`/api/meta/lead-forms?pageId=${pageIdToLoad}`)
+              const formsData = await formsRes.json()
+              if (formsRes.status === 403 && formsData.error === 'permission_required') {
+                setFormsLoaded(true)
+                setMetaLeadForms([])
+                setFormsPermissionNeeded(true)
+              } else if (formsRes.ok) {
+                setFormsPermissionNeeded(false)
+                setMetaLeadForms(formsData.forms || [])
+                setAllowedFormIds(formsData.allowedFormIds || [])
+                setFormsLoaded(true)
+              }
+            } catch {
+              // User can still load manually
+            }
+            setLoadingForms(false)
+          }
         }
         setStripeConnectAccountId(account.stripe_connect_account_id ?? null)
         setAgreementTemplateUrl(account.agreement_template_url ?? null)
