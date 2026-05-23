@@ -133,7 +133,6 @@ export async function POST(request: NextRequest) {
           phone,
           form_type: 'meta_lead_form',
           form_data: formData,
-          source: 'meta_leadgen',
           status: 'new',
         })
 
