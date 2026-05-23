@@ -171,6 +171,18 @@ export async function saveLeadNote(leadId: string, notes: string) {
   revalidatePath('/leads')
 }
 
+export async function updateContactCount(leadId: string, count: number) {
+  const supabase = createClient()
+  const { data: lead } = await supabase
+    .from('leads')
+    .select('form_data')
+    .eq('id', leadId)
+    .single()
+  const formData = { ...((lead?.form_data as Record<string, unknown>) || {}), _contact_count: count }
+  await supabase.from('leads').update({ form_data: formData }).eq('id', leadId)
+  revalidatePath('/leads')
+}
+
 export async function deleteLead(leadId: string) {
   const supabase = createClient()
   const admin = createAdminClient()

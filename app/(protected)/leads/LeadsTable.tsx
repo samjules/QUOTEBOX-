@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import type { Lead } from '@/lib/types'
-import { updateLeadStatus, saveLeadNote, deleteLead } from './actions'
+import { updateLeadStatus, saveLeadNote, deleteLead, updateContactCount } from './actions'
 
 const SEND_INVOICE_FUNCTION_URL =
   process.env.NEXT_PUBLIC_SEND_INVOICE_FUNCTION_URL ||
@@ -75,8 +75,36 @@ function resolveValue(key: string, value: unknown, fieldMap: FieldMap): string {
   return String(value)
 }
 
+function ContactBubbles({ count, onChange }: { count: number; onChange: (n: number) => void }) {
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3].map((n) => (
+        <button
+          key={n}
+          onClick={(e) => { e.stopPropagation(); onChange(count === n ? n - 1 : n) }}
+          className="focus:outline-none"
+          title={`${n} contact${n !== 1 ? 's' : ''}`}
+        >
+          {n <= count ? (
+            <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          ) : (
+            <div className="w-5 h-5 rounded-full border-2 border-dashed border-gray-300" />
+          )}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId, agreementTemplateUrl, fieldMap }: { leads: Lead[]; stripeConnectAccountId: string | null; agreementTemplateUrl: string | null; fieldMap: FieldMap }) {
   const [leads, setLeads] = useState<Lead[]>(initialLeads)
+  const [contactCounts, setContactCounts] = useState<Record<string, number>>(
+    () => Object.fromEntries(initialLeads.map((l) => [l.id, Number(l.form_data?._contact_count) || 0]))
+  )
   const [selected, setSelected] = useState<Lead | null>(null)
   const [localStatus, setLocalStatus] = useState<string>('')
   const [isPending, startTransition] = useTransition()
@@ -124,6 +152,11 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
 
   function closeLead() {
     setSelected(null)
+  }
+
+  function handleContactCount(leadId: string, count: number) {
+    setContactCounts((prev) => ({ ...prev, [leadId]: count }))
+    updateContactCount(leadId, count)
   }
 
   function handleStatusSave() {
@@ -238,6 +271,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quote</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contacted</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
@@ -246,7 +280,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
             <tbody className="bg-white divide-y divide-gray-200">
               {leads.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">
+                  <td colSpan={9} className="px-6 py-4 text-center text-sm text-gray-500">
                     No leads yet. They will appear here once you receive them.
                   </td>
                 </tr>
@@ -276,6 +310,12 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                         ) : (
                           <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-600">Form</span>
                         )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <ContactBubbles
+                          count={contactCounts[lead.id] ?? 0}
+                          onChange={(n) => handleContactCount(lead.id, n)}
+                        />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColor(displayStatus)}`}>
@@ -372,7 +412,13 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
               {/* Contact info */}
               <section>
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Contact</h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Contact</h3>
+                  <ContactBubbles
+                    count={contactCounts[selected.id] ?? 0}
+                    onChange={(n) => handleContactCount(selected.id, n)}
+                  />
+                </div>
                 <dl className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <dt className="text-gray-500">Name</dt>
