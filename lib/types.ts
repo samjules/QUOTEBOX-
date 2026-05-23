@@ -110,7 +110,6 @@ export interface Lead {
   form_type: string | null
   form_data: Record<string, unknown> | null
   status: 'new' | 'contacted' | 'booked' | 'lost' | 'held'
-  source: 'hosted_form' | 'meta_leadgen' | null
   created_at: string
   notes?: string | null
 }
