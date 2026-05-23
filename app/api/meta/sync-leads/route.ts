@@ -48,11 +48,12 @@ export async function POST(request: NextRequest) {
   let skipped = 0
 
   for (const formId of formIds) {
-    let url: string | null =
+    let nextUrl: string | null =
       `https://graph.facebook.com/v18.0/${formId}/leads?fields=id,field_data,created_time&sort=created_time_descending&limit=100&access_token=${pageToken}`
 
-    while (url) {
-      const leadsRes = await fetch(url)
+    while (nextUrl) {
+      const fetchUrl: string = nextUrl
+      const leadsRes = await fetch(fetchUrl)
       const leadsData = await leadsRes.json()
 
       if (leadsData.error || !leadsData.data) break
@@ -103,7 +104,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Follow pagination cursor (newest → oldest)
-      url = leadsData.paging?.next ?? null
+      nextUrl = leadsData.paging?.next ?? null
     }
   }
 
