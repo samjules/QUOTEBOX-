@@ -6,6 +6,9 @@
 // STRIPE CONNECT MIGRATION — run once before Stripe Connect works:
 //   ALTER TABLE accounts ADD COLUMN IF NOT EXISTS stripe_connect_account_id TEXT;
 //   ALTER TABLE accounts ADD COLUMN IF NOT EXISTS stripe_connect_completed_at TIMESTAMPTZ;
+//
+// LEADERBOARD MIGRATION — run once before the leaderboard opt-out toggle works:
+//   ALTER TABLE accounts ADD COLUMN IF NOT EXISTS leaderboard_hidden BOOLEAN NOT NULL DEFAULT FALSE;
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
