@@ -81,6 +81,10 @@ export default function SettingsPage() {
   const [agreementUploading, setAgreementUploading] = useState(false)
   const agreementInputRef = useRef<HTMLInputElement>(null)
 
+  // Leaderboard opt-out state
+  const [leaderboardHidden, setLeaderboardHidden] = useState(false)
+  const [savingLeaderboard, setSavingLeaderboard] = useState(false)
+
   // Delete account state
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
@@ -161,6 +165,7 @@ export default function SettingsPage() {
         }
         setStripeConnectAccountId(account.stripe_connect_account_id ?? null)
         setAgreementTemplateUrl(account.agreement_template_url ?? null)
+        setLeaderboardHidden(account.leaderboard_hidden ?? false)
 
         // Load team members
         const { data: members } = await supabase
@@ -501,6 +506,23 @@ export default function SettingsPage() {
       setTimeout(() => setMessage(''), 2000)
     }
     setLogoUploading(false)
+  }
+
+  async function handleToggleLeaderboard(hidden: boolean) {
+    if (!accountId) return
+    setSavingLeaderboard(true)
+    const { error } = await supabase
+      .from('accounts')
+      .update({ leaderboard_hidden: hidden })
+      .eq('id', accountId)
+    setSavingLeaderboard(false)
+    if (!error) {
+      setLeaderboardHidden(hidden)
+      setMessage(hidden ? 'You are now hidden from the leaderboard.' : 'You are now visible on the leaderboard.')
+      setTimeout(() => setMessage(''), 3000)
+    } else {
+      setMessage('Error: Failed to update leaderboard preference')
+    }
   }
 
   async function handleDeleteAccount() {
@@ -1108,6 +1130,41 @@ export default function SettingsPage() {
               <p className="text-sm font-medium">{message}</p>
             </div>
           )}
+
+          {/* Leaderboard Privacy */}
+          <div className="bg-white shadow rounded-xl p-6">
+            <h2 className="text-lg font-medium text-gray-900 mb-1">Leaderboard Privacy</h2>
+            <p className="text-sm text-gray-500 mb-5">
+              Control whether your business appears on the pipeline leaderboard visible to all users.
+            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-700">
+                  {leaderboardHidden ? 'Hidden from leaderboard' : 'Visible on leaderboard'}
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {leaderboardHidden
+                    ? 'Your business and pipeline revenue are not shown to other users.'
+                    : 'Your business name and pipeline total are visible to all users.'}
+                </p>
+              </div>
+              <button
+                onClick={() => handleToggleLeaderboard(!leaderboardHidden)}
+                disabled={savingLeaderboard}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${
+                  leaderboardHidden ? 'bg-gray-300' : 'bg-indigo-600'
+                }`}
+                role="switch"
+                aria-checked={!leaderboardHidden}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition duration-200 ease-in-out ${
+                    leaderboardHidden ? 'translate-x-0' : 'translate-x-5'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
 
           {/* Danger Zone */}
           <div className="bg-white shadow rounded-xl p-6 border border-red-200">

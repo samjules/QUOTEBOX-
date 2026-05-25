@@ -23,10 +23,11 @@ export default async function LeaderboardPage() {
 
   const admin = createAdminClient()
 
-  // Fetch all accounts
+  // Fetch all accounts that haven't opted out
   const { data: allAccounts } = await admin
     .from('accounts')
     .select('id, business_name, owner_id')
+    .or(`leaderboard_hidden.is.null,leaderboard_hidden.eq.false`)
 
   const accounts = allAccounts ?? []
 
