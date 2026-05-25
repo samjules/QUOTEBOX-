@@ -47,15 +47,30 @@ export default async function LeaderboardPage() {
     }
   }
 
-  // Build ranked list (only accounts with pipeline > 0, then the rest)
-  const ranked = accounts
+  // Build real ranked list
+  const real = accounts
     .map((a) => ({
       id: a.id,
       name: a.business_name || 'Unnamed Business',
       pipeline: pipelineByAccount[a.id] ?? 0,
       isMe: a.owner_id === user.id,
+      fake: false,
     }))
     .sort((a, b) => b.pipeline - a.pipeline)
+
+  // Pull Titantuff Moving to the front, inject 2 fakes at 2nd and 3rd
+  const titantuffIdx = real.findIndex((r) => r.name.toLowerCase().includes('titantuff'))
+  const titantuff = titantuffIdx >= 0 ? real.splice(titantuffIdx, 1)[0] : null
+  const topPipeline = titantuff?.pipeline ?? real[0]?.pipeline ?? 100000
+  const fakes = [
+    { id: '__fake_1__', name: 'Summit Home Services', pipeline: Math.round(topPipeline * 0.82), isMe: false, fake: true },
+    { id: '__fake_2__', name: 'BlueLine Contractors', pipeline: Math.round(topPipeline * 0.67), isMe: false, fake: true },
+  ]
+  const ranked = [
+    ...(titantuff ? [titantuff] : []),
+    ...fakes,
+    ...real,
+  ]
 
   const myEntry = ranked.find((r) => r.isMe)
   const myRank = myEntry ? ranked.indexOf(myEntry) + 1 : null
