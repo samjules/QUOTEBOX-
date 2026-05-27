@@ -72,6 +72,11 @@ export default async function DashboardPage() {
     billing = newBilling
   }
 
+  // Today boundaries
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+  const todayDateStr = startOfToday.toISOString().slice(0, 10) // YYYY-MM-DD
+
   // Monthly transactions
   const startOfMonth = new Date()
   startOfMonth.setDate(1)
@@ -147,6 +152,13 @@ export default async function DashboardPage() {
   const plan = billing?.plan ?? null
   const monthlyLeads = leads.filter((l) => new Date(l.created_at) >= startOfMonth).length
 
+  // Today's data
+  const todayLeads = leads.filter((l) => new Date(l.created_at) >= startOfToday)
+  const todayAppointments = leads.filter((l) => {
+    const fd = l.form_data as Record<string, unknown> | null
+    return fd?._booking_date === todayDateStr
+  })
+
   // Monthly pipeline: sum of _quote_total from leads this month
   const monthlyPipeline = leads
     .filter((l) => new Date(l.created_at) >= startOfMonth)
@@ -167,6 +179,9 @@ export default async function DashboardPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
         <div className="py-4 space-y-6">
+          {/* Today at a Glance */}
+          <DailyView todayLeads={todayLeads} todayAppointments={todayAppointments} />
+
           {/* Lead usage banner — hidden for blessed accounts */}
           {!blessed && <LeadUsageBanner plan={plan} monthlyLeads={monthlyLeads} />}
 
@@ -548,6 +563,106 @@ function ChecklistStep({
         </Link>
       )}
     </li>
+  )
+}
+
+// ── Daily View ────────────────────────────────────────────────
+
+type LeadRow = {
+  id: string
+  name: string | null
+  phone: string | null
+  email: string | null
+  status: string
+  created_at: string
+  form_data: Record<string, unknown> | null
+}
+
+function DailyView({
+  todayLeads,
+  todayAppointments,
+}: {
+  todayLeads: LeadRow[]
+  todayAppointments: LeadRow[]
+}) {
+  const now = new Date()
+  const dateLabel = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+
+  return (
+    <div className="bg-white shadow rounded-xl overflow-hidden">
+      <div className="px-6 pt-5 pb-4 border-b border-gray-100 flex items-center justify-between">
+        <div>
+          <h3 className="text-base font-semibold text-gray-900">Today</h3>
+          <p className="text-sm text-gray-500 mt-0.5">{dateLabel}</p>
+        </div>
+        <div className="flex gap-4 text-center">
+          <div>
+            <p className="text-2xl font-bold text-indigo-600">{todayLeads.length}</p>
+            <p className="text-xs text-gray-400 uppercase tracking-wide">New leads</p>
+          </div>
+          <div className="border-l border-gray-100 pl-4">
+            <p className="text-2xl font-bold text-green-600">{todayAppointments.length}</p>
+            <p className="text-xs text-gray-400 uppercase tracking-wide">Appointments</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="divide-y divide-gray-50">
+        {/* Today's leads */}
+        {todayLeads.length === 0 && todayAppointments.length === 0 ? (
+          <p className="px-6 py-4 text-sm text-gray-400">No leads or appointments today yet.</p>
+        ) : null}
+
+        {todayLeads.slice(0, 5).map((lead) => (
+          <Link key={lead.id} href="/leads" className="flex items-center gap-3 px-6 py-3 hover:bg-gray-50 transition">
+            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-indigo-600">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">{lead.name ?? 'Unknown'}</p>
+              <p className="text-xs text-gray-400 truncate">{lead.phone ?? lead.email ?? 'No contact info'}</p>
+            </div>
+            <span className="flex-shrink-0 text-xs font-medium text-gray-400">
+              {new Date(lead.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+            </span>
+          </Link>
+        ))}
+
+        {todayLeads.length > 5 && (
+          <div className="px-6 py-2 text-center">
+            <Link href="/leads" className="text-xs text-indigo-600 font-medium hover:underline">
+              +{todayLeads.length - 5} more leads today
+            </Link>
+          </div>
+        )}
+
+        {/* Today's appointments */}
+        {todayAppointments.map((lead) => {
+          const fd = lead.form_data ?? {}
+          const amount = fd._amount as string | undefined
+          return (
+            <Link key={`appt-${lead.id}`} href="/calendar" className="flex items-center gap-3 px-6 py-3 hover:bg-green-50 transition">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-green-600">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">{lead.name ?? 'Unknown'} — Appointment</p>
+                <p className="text-xs text-gray-400 truncate">{lead.phone ?? lead.email ?? 'No contact info'}</p>
+              </div>
+              {amount && (
+                <span className="flex-shrink-0 text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                  ${amount}
+                </span>
+              )}
+            </Link>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
