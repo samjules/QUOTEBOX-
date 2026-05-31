@@ -4,14 +4,56 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAccountForUser } from '@/lib/account'
 import DealNotificationBanner from '@/components/DealNotificationBanner'
+import TimeframeBar from '@/components/TimeframeBar'
 import type { ReactNode } from 'react'
 
 const PLAN_LIMITS: Record<string, number> = { starter: 10, growth: 50 }
 
-export default async function DashboardPage() {
+type Timeframe = 'today' | 'week' | 'month' | 'year' | 'all'
+
+function getStartDate(timeframe: Timeframe): Date | null {
+  const now = new Date()
+  if (timeframe === 'today') {
+    const d = new Date(now)
+    d.setHours(0, 0, 0, 0)
+    return d
+  }
+  if (timeframe === 'week') {
+    const d = new Date(now)
+    d.setDate(d.getDate() - 6)
+    d.setHours(0, 0, 0, 0)
+    return d
+  }
+  if (timeframe === 'month') {
+    const d = new Date(now)
+    d.setDate(1)
+    d.setHours(0, 0, 0, 0)
+    return d
+  }
+  if (timeframe === 'year') {
+    const d = new Date(now)
+    d.setMonth(0, 1)
+    d.setHours(0, 0, 0, 0)
+    return d
+  }
+  return null // all time
+}
+
+function timeframeLabel(tf: Timeframe): string {
+  if (tf === 'today') return 'Today'
+  if (tf === 'week') return 'This Week'
+  if (tf === 'month') return 'This Month'
+  if (tf === 'year') return 'This Year'
+  return 'All Time'
+}
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: { timeframe?: string }
+}) {
   const supabase = createClient()
 
-  // Auth timing fix: session first, then user validation
   const {
     data: { session },
   } = await supabase.auth.getSession()
@@ -31,7 +73,6 @@ export default async function DashboardPage() {
     )
   }
 
-  // Fetch account
   const admin = createAdminClient()
   const { data: account } = await admin
     .from('accounts')
@@ -56,7 +97,7 @@ export default async function DashboardPage() {
 
   const leads = allLeads ?? []
 
-  // Fetch billing — create record if missing (use admin to bypass RLS)
+  // Billing
   let { data: billing } = await admin
     .from('billing')
     .select('*')
@@ -72,16 +113,37 @@ export default async function DashboardPage() {
     billing = newBilling
   }
 
-  // Today boundaries
+  // Timeframe
+  const raw = searchParams?.timeframe
+  const timeframe: Timeframe =
+    raw === 'today' || raw === 'week' || raw === 'month' || raw === 'year' || raw === 'all'
+      ? raw
+      : 'month'
+
+  const startOfPeriod = getStartDate(timeframe)
+  const periodLabel = timeframeLabel(timeframe)
+
+  // Today boundaries (always needed for DailyView)
   const startOfToday = new Date()
   startOfToday.setHours(0, 0, 0, 0)
-  const todayDateStr = startOfToday.toISOString().slice(0, 10) // YYYY-MM-DD
+  const todayDateStr = startOfToday.toISOString().slice(0, 10)
 
-  // Monthly transactions
+  // startOfMonth always needed for games rank + usage banner
   const startOfMonth = new Date()
   startOfMonth.setDate(1)
   startOfMonth.setHours(0, 0, 0, 0)
 
+  // Period transactions for spending stat
+  const txnQuery = supabase
+    .from('billing_transactions')
+    .select('*')
+    .eq('account_id', account.id)
+    .eq('type', 'lead_charge')
+  const { data: periodTxns } = startOfPeriod
+    ? await txnQuery.gte('created_at', startOfPeriod.toISOString())
+    : await txnQuery
+
+  // Monthly transactions always for usage banner
   const { data: monthlyTxns } = await supabase
     .from('billing_transactions')
     .select('*')
@@ -96,7 +158,7 @@ export default async function DashboardPage() {
     supabase.from('meta_campaigns').select('id').eq('account_id', account.id).limit(1),
   ])
 
-  // QuoteBox Games ranking (only if enrolled)
+  // QuoteBox Games ranking (only if enrolled — always monthly)
   let gamesRank: number | null = null
   let gamesBookedThisMonth = 0
   if (account.games_enrolled) {
@@ -104,14 +166,12 @@ export default async function DashboardPage() {
       (l) => l.status === 'booked' && new Date(l.created_at) >= startOfMonth
     ).length
 
-    // Get all enrolled accounts
     const { data: enrolledAccounts } = await admin
       .from('accounts')
       .select('id')
       .eq('games_enrolled', true)
     const enrolledIds = (enrolledAccounts ?? []).map((a: { id: string }) => a.id)
 
-    // Get all booked leads this month for enrolled accounts
     const { data: allBookedLeads } = await admin
       .from('leads')
       .select('account_id')
@@ -119,7 +179,6 @@ export default async function DashboardPage() {
       .gte('created_at', startOfMonth.toISOString())
       .in('account_id', enrolledIds)
 
-    // Count per account
     const counts: Record<string, number> = {}
     for (const l of allBookedLeads ?? []) {
       counts[l.account_id] = (counts[l.account_id] ?? 0) + 1
@@ -138,43 +197,53 @@ export default async function DashboardPage() {
   const hasCampaign = (campaigns?.length ?? 0) > 0
   const onboardingComplete = metaConnected && hasBillingPlan && hasCreatives && hasForm
 
-  // Compute stats
-  const totalLeads = leads.length
-  const newLeads = leads.filter((l) => l.status === 'new').length
-  const bookedLeads = leads.filter((l) => l.status === 'booked').length
-  const contactedLeads = leads.filter((l) => l.status === 'contacted').length
-  const lostLeads = leads.filter((l) => l.status === 'lost').length
+  // Period-filtered leads
+  const periodLeads = startOfPeriod
+    ? leads.filter((l) => new Date(l.created_at) >= startOfPeriod)
+    : leads
+
+  // Stats computed from period
+  const totalLeads = periodLeads.length
+  const newLeads = periodLeads.filter((l) => l.status === 'new').length
+  const bookedLeads = periodLeads.filter((l) => l.status === 'booked').length
+  const contactedLeads = periodLeads.filter((l) => l.status === 'contacted').length
+  const lostLeads = periodLeads.filter((l) => l.status === 'lost').length
   const conversionRate =
     totalLeads > 0 ? ((bookedLeads / totalLeads) * 100).toFixed(1) : '0'
-  const monthlySpending = monthlyTxns
-    ? Math.abs(monthlyTxns.reduce((sum: number, tx: { amount: number }) => sum + tx.amount, 0))
+  const periodSpending = periodTxns
+    ? Math.abs(periodTxns.reduce((sum: number, tx: { amount: number }) => sum + tx.amount, 0))
     : 0
   const plan = billing?.plan ?? null
+
+  // Monthly leads for usage banner (always month)
   const monthlyLeads = leads.filter((l) => new Date(l.created_at) >= startOfMonth).length
 
-  // Today's data
+  // Today's data (DailyView always shows today)
   const todayLeads = leads.filter((l) => new Date(l.created_at) >= startOfToday)
   const todayAppointments = leads.filter((l) => {
     const fd = l.form_data as Record<string, unknown> | null
     return fd?._booking_date === todayDateStr
   })
 
-  // Monthly pipeline: sum of _quote_total from leads this month
-  const monthlyPipeline = leads
-    .filter((l) => new Date(l.created_at) >= startOfMonth)
-    .reduce((sum, l) => {
-      const qt = (l.form_data as Record<string, unknown> | null)?._quote_total
-      return sum + (typeof qt === 'number' ? qt : 0)
-    }, 0)
+  // Pipeline value for the selected period
+  const periodPipeline = periodLeads.reduce((sum, l) => {
+    const qt = (l.form_data as Record<string, unknown> | null)?._quote_total
+    return sum + (typeof qt === 'number' ? qt : 0)
+  }, 0)
 
   return (
     <div className="py-6">
       <DealNotificationBanner position="top" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Overview of your lead generation performance
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
+            <p className="mt-1 text-sm text-gray-600">
+              Overview of your lead generation performance
+            </p>
+          </div>
+          <TimeframeBar active={timeframe} />
+        </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
@@ -185,7 +254,7 @@ export default async function DashboardPage() {
           {/* Lead usage banner — hidden for blessed accounts */}
           {!blessed && <LeadUsageBanner plan={plan} monthlyLeads={monthlyLeads} />}
 
-          {/* Onboarding checklist — hidden for PPL (they have their own onboarding) */}
+          {/* Onboarding checklist — hidden for PPL */}
           {!onboardingComplete && plan !== 'pay_per_lead' && (
             <OnboardingChecklist
               metaConnected={metaConnected}
@@ -203,28 +272,32 @@ export default async function DashboardPage() {
               iconBg="bg-indigo-600"
               label="Total Leads"
               value={totalLeads}
+              sub={periodLabel}
             />
             <StatCard
               icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>}
               iconBg="bg-yellow-500"
               label="New Leads"
               value={newLeads}
+              sub={periodLabel}
             />
             <StatCard
               icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
               iconBg="bg-green-500"
               label="Booked Leads"
               value={bookedLeads}
+              sub={periodLabel}
             />
             <StatCard
               icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
               iconBg="bg-purple-600"
-              label="Monthly Spending"
-              value={`$${monthlySpending.toFixed(2)}`}
+              label="Spending"
+              value={`$${periodSpending.toFixed(2)}`}
+              sub={periodLabel}
             />
           </div>
 
-          {/* Monthly Pipeline */}
+          {/* Pipeline Value */}
           <div className="bg-white overflow-hidden shadow rounded-xl">
             <div className="p-5">
               <div className="flex items-center justify-between">
@@ -238,17 +311,17 @@ export default async function DashboardPage() {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Monthly Pipeline Value</dt>
+                      <dt className="text-sm font-medium text-gray-500 truncate">Pipeline Value</dt>
                       <dd className="text-3xl font-semibold text-gray-900">
-                        ${monthlyPipeline.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                        ${periodPipeline.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                       </dd>
                     </dl>
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0 ml-4">
-                  <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">This month</p>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">{periodLabel}</p>
                   <p className="text-sm text-gray-500 mt-0.5">
-                    {leads.filter((l) => new Date(l.created_at) >= startOfMonth).length} leads
+                    {totalLeads} lead{totalLeads !== 1 ? 's' : ''}
                   </p>
                 </div>
               </div>
@@ -352,11 +425,13 @@ function StatCard({
   iconBg,
   label,
   value,
+  sub,
 }: {
   icon: ReactNode
   iconBg: string
   label: string
   value: string | number
+  sub?: string
 }) {
   return (
     <div className="bg-white overflow-hidden shadow rounded-xl">
@@ -371,6 +446,7 @@ function StatCard({
             <dl>
               <dt className="text-sm font-medium text-gray-500 truncate">{label}</dt>
               <dd className="text-3xl font-semibold text-gray-900">{value}</dd>
+              {sub && <dd className="text-xs text-gray-400 mt-0.5">{sub}</dd>}
             </dl>
           </div>
         </div>
@@ -528,7 +604,6 @@ function ChecklistStep({
 }) {
   return (
     <li className={`flex items-center gap-4 px-6 py-3.5 ${done ? 'bg-gray-50/50' : ''}`}>
-      {/* Step indicator */}
       <div
         className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
           done
@@ -544,14 +619,12 @@ function ChecklistStep({
           number
         )}
       </div>
-      {/* Text */}
       <div className="flex-1 min-w-0">
         <p className={`text-sm font-medium ${done ? 'line-through text-gray-400' : 'text-gray-900'}`}>
           {label}
         </p>
         <p className="text-xs text-gray-400 mt-0.5 truncate">{desc}</p>
       </div>
-      {/* Action */}
       {done ? (
         <span className="flex-shrink-0 text-xs font-medium text-green-600">Done</span>
       ) : (
@@ -608,7 +681,6 @@ function DailyView({
       </div>
 
       <div className="divide-y divide-gray-50">
-        {/* Today's leads */}
         {todayLeads.length === 0 && todayAppointments.length === 0 ? (
           <p className="px-6 py-4 text-sm text-gray-400">No leads or appointments today yet.</p>
         ) : null}
@@ -638,7 +710,6 @@ function DailyView({
           </div>
         )}
 
-        {/* Today's appointments */}
         {todayAppointments.map((lead) => {
           const fd = lead.form_data ?? {}
           const amount = fd._amount as string | undefined
@@ -675,7 +746,6 @@ function LeadUsageBanner({
   plan: string | null
   monthlyLeads: number
 }) {
-  // No plan
   if (!plan) {
     return (
       <div className="rounded-lg p-5 flex items-center justify-between bg-yellow-50 border border-yellow-300">
@@ -695,7 +765,6 @@ function LeadUsageBanner({
     )
   }
 
-  // Fully managed / Pay per lead — $15/lead, no monthly cap
   if (plan === 'fully_managed' || plan === 'pay_per_lead') {
     const accrued = monthlyLeads * 15
     const label = plan === 'pay_per_lead' ? 'Pay Per Lead' : 'Fully Managed'
@@ -717,7 +786,6 @@ function LeadUsageBanner({
     )
   }
 
-  // Starter / Growth — monthly lead cap
   const limit = PLAN_LIMITS[plan] ?? 10
   const pct = Math.min(100, Math.round((monthlyLeads / limit) * 100))
   const isOver = monthlyLeads >= limit
