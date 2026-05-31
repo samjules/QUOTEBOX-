@@ -1,32 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-const VALID_TIERS = [25, 50, 100, 200]
-const PRICE_PER_LEAD = 30
+const VALID_REVENUES = [
+  'Under $10k/mo',
+  '$10k–$50k/mo',
+  '$50k–$100k/mo',
+  '$100k+/mo',
+]
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { name, email, phone, tier, scheduled_date, scheduled_time } = body
+    const { name, email, phone, monthly_revenue, scheduled_date, scheduled_time } = body
 
-    if (!name || !email || !tier) {
-      return NextResponse.json({ error: 'Name, email, and tier are required' }, { status: 400 })
+    if (!name || !email) {
+      return NextResponse.json({ error: 'Name and email are required' }, { status: 400 })
     }
 
-    if (!VALID_TIERS.includes(tier)) {
-      return NextResponse.json({ error: 'Invalid tier' }, { status: 400 })
+    if (monthly_revenue && !VALID_REVENUES.includes(monthly_revenue)) {
+      return NextResponse.json({ error: 'Invalid monthly revenue value' }, { status: 400 })
     }
-
-    const monthly_total = tier * PRICE_PER_LEAD
 
     const supabase = createAdminClient()
     const { data, error } = await supabase.from('sales_leads').insert({
       name,
       email,
       phone: phone || null,
-      tier,
-      price_per_lead: PRICE_PER_LEAD,
-      monthly_total,
+      monthly_revenue: monthly_revenue || null,
       scheduled_date: scheduled_date || null,
       scheduled_time: scheduled_time || null,
     }).select().single()

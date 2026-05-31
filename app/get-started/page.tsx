@@ -2,8 +2,13 @@
 
 import { useState } from 'react'
 
-const TIERS = [25, 50, 100, 200] as const
-const PRICE_PER_LEAD = 30
+const REVENUE_OPTIONS = [
+  'Under $10k/mo',
+  '$10k–$50k/mo',
+  '$50k–$100k/mo',
+  '$100k+/mo',
+]
+
 const TIME_SLOTS = ['7:00 AM', '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM']
 
 function getWeekdays(weeks: number): Date[] {
@@ -11,7 +16,7 @@ function getWeekdays(weeks: number): Date[] {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const start = new Date(today)
-  start.setDate(start.getDate() + 1) // start tomorrow
+  start.setDate(start.getDate() + 1)
   const end = new Date(today)
   end.setDate(end.getDate() + weeks * 7)
   const d = new Date(start)
@@ -25,7 +30,7 @@ function getWeekdays(weeks: number): Date[] {
 
 export default function GetStartedPage() {
   const [step, setStep] = useState(0)
-  const [tier, setTier] = useState<number | null>(null)
+  const [revenue, setRevenue] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
   const [name, setName] = useState('')
@@ -35,7 +40,6 @@ export default function GetStartedPage() {
   const [error, setError] = useState('')
 
   const weekdays = getWeekdays(3)
-  const monthlyTotal = tier ? tier * PRICE_PER_LEAD : 0
 
   async function handleSubmit() {
     if (!name.trim() || !email.trim()) {
@@ -52,7 +56,7 @@ export default function GetStartedPage() {
           name: name.trim(),
           email: email.trim(),
           phone: phone.trim() || null,
-          tier,
+          monthly_revenue: revenue,
           scheduled_date: selectedDate,
           scheduled_time: selectedTime,
         }),
@@ -63,7 +67,7 @@ export default function GetStartedPage() {
         setSubmitting(false)
         return
       }
-      setStep(3)
+      setStep(2)
     } catch {
       setError('Network error. Please try again.')
     }
@@ -116,10 +120,9 @@ export default function GetStartedPage() {
     fontFamily: "'Inter', sans-serif",
   }
 
-  // Progress dots
   const dots = (
     <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 32 }}>
-      {[0, 1, 2, 3].map((i) => (
+      {[0, 1, 2].map((i) => (
         <div key={i} style={{
           width: 10, height: 10, borderRadius: 99,
           background: i <= step ? '#FFE500' : 'rgba(255,255,255,0.15)',
@@ -131,7 +134,6 @@ export default function GetStartedPage() {
 
   return (
     <div style={containerStyle}>
-      {/* Logo */}
       <div style={{ marginBottom: 32 }}>
         <span style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: '1.6rem', color: 'white', letterSpacing: '0.02em' }}>
           Quote<span style={{ color: '#FFE500' }}>.</span>Box
@@ -141,22 +143,22 @@ export default function GetStartedPage() {
       {dots}
 
       <div style={cardStyle}>
-        {/* Step 0: Select Tier */}
+        {/* Step 0: Monthly Revenue */}
         {step === 0 && (
           <>
             <h1 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.8rem', fontWeight: 700, textAlign: 'center', margin: '0 0 8px', lineHeight: 1.2 }}>
-              How many leads do you need?
+              {"What's your monthly revenue?"}
             </h1>
             <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', margin: '0 0 28px' }}>
-              Select a monthly lead volume to get started
+              This helps us understand the right fit for your business
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              {TIERS.map((t) => {
-                const isSelected = tier === t
+              {REVENUE_OPTIONS.map((opt) => {
+                const isSelected = revenue === opt
                 return (
                   <button
-                    key={t}
-                    onClick={() => setTier(t)}
+                    key={opt}
+                    onClick={() => setRevenue(opt)}
                     style={{
                       padding: '28px 20px',
                       borderRadius: 12,
@@ -165,76 +167,36 @@ export default function GetStartedPage() {
                       cursor: 'pointer',
                       textAlign: 'center',
                       transition: 'all 0.2s',
+                      fontFamily: "'Oswald', sans-serif",
+                      fontSize: '1.4rem',
+                      fontWeight: 700,
+                      color: isSelected ? '#FFE500' : 'white',
+                      lineHeight: 1.2,
                     }}
                   >
-                    <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: '2.2rem', fontWeight: 700, color: isSelected ? '#FFE500' : 'white', lineHeight: 1 }}>
-                      {t}
-                    </div>
-                    <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)', marginTop: 6 }}>
-                      leads / month
-                    </div>
+                    {opt}
                   </button>
                 )
               })}
             </div>
             <button
-              onClick={() => tier && setStep(1)}
-              disabled={!tier}
-              style={{ ...yellowBtn, opacity: tier ? 1 : 0.4, cursor: tier ? 'pointer' : 'not-allowed' }}
+              onClick={() => revenue && setStep(1)}
+              disabled={!revenue}
+              style={{ ...yellowBtn, opacity: revenue ? 1 : 0.4, cursor: revenue ? 'pointer' : 'not-allowed' }}
             >
               Continue
             </button>
           </>
         )}
 
-        {/* Step 1: Pricing Confirmation */}
+        {/* Step 1: Schedule + Contact */}
         {step === 1 && (
           <>
             <h1 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.8rem', fontWeight: 700, textAlign: 'center', margin: '0 0 8px' }}>
-              Your Plan
-            </h1>
-            <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', margin: '0 0 28px' }}>
-              Confirm your monthly lead package
-            </p>
-            <div style={{
-              background: '#0d0d1a',
-              borderRadius: 12,
-              padding: '28px 24px',
-              textAlign: 'center',
-              border: '1px solid rgba(255,229,0,0.2)',
-            }}>
-              <div style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.6)', marginBottom: 16 }}>
-                <span style={{ fontWeight: 700, color: 'white', fontSize: '1.2rem' }}>{tier}</span> leads
-                <span style={{ margin: '0 10px', color: 'rgba(255,255,255,0.3)' }}>&times;</span>
-                <span style={{ fontWeight: 700, color: 'white', fontSize: '1.2rem' }}>${PRICE_PER_LEAD}</span> per lead
-              </div>
-              <div style={{
-                width: '60%', height: 1, background: 'rgba(255,255,255,0.1)', margin: '0 auto 16px',
-              }} />
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: '2.5rem', fontWeight: 700, color: '#FFE500', lineHeight: 1 }}>
-                ${monthlyTotal.toLocaleString()}
-              </div>
-              <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', marginTop: 6 }}>per month</div>
-            </div>
-            <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-              <button onClick={() => setStep(0)} style={{ flex: 1, padding: '14px 24px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'white', fontWeight: 600, cursor: 'pointer', fontSize: '0.95rem', fontFamily: "'Inter', sans-serif" }}>
-                Back
-              </button>
-              <button onClick={() => setStep(2)} style={{ ...yellowBtn, flex: 2, marginTop: 0 }}>
-                Looks Good
-              </button>
-            </div>
-          </>
-        )}
-
-        {/* Step 2: Schedule + Contact */}
-        {step === 2 && (
-          <>
-            <h1 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.8rem', fontWeight: 700, textAlign: 'center', margin: '0 0 8px' }}>
-              Schedule Your Setup Call
+              Book Your Setup Call
             </h1>
             <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', margin: '0 0 24px' }}>
-              Pick a date and time, then tell us how to reach you
+              Pick a time and we{"'"}ll walk you through everything
             </p>
 
             {/* Date picker */}
@@ -262,7 +224,7 @@ export default function GetStartedPage() {
                       fontFamily: "'Inter', sans-serif",
                     }}
                   >
-                    <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)' }}>
+                    <div style={{ fontSize: '0.65rem', color: isSel ? 'rgba(255,229,0,0.7)' : 'rgba(255,255,255,0.4)' }}>
                       {d.toLocaleDateString('en-US', { weekday: 'short' })}
                     </div>
                     <div>
@@ -277,7 +239,7 @@ export default function GetStartedPage() {
             <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 10 }}>
               Select a Time <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(Alaska Time)</span>
             </label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 28 }}>
               {TIME_SLOTS.map((t) => {
                 const isSel = selectedTime === t
                 return (
@@ -302,6 +264,9 @@ export default function GetStartedPage() {
               })}
             </div>
 
+            {/* Divider */}
+            <div style={{ width: '100%', height: 1, background: 'rgba(255,255,255,0.08)', marginBottom: 24 }} />
+
             {/* Contact fields */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 8 }}>
               <div>
@@ -323,7 +288,7 @@ export default function GetStartedPage() {
             )}
 
             <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
-              <button onClick={() => setStep(1)} style={{ flex: 1, padding: '14px 24px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'white', fontWeight: 600, cursor: 'pointer', fontSize: '0.95rem', fontFamily: "'Inter', sans-serif" }}>
+              <button onClick={() => setStep(0)} style={{ flex: 1, padding: '14px 24px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'white', fontWeight: 600, cursor: 'pointer', fontSize: '0.95rem', fontFamily: "'Inter', sans-serif" }}>
                 Back
               </button>
               <button
@@ -337,8 +302,8 @@ export default function GetStartedPage() {
           </>
         )}
 
-        {/* Step 3: Confirmation */}
-        {step === 3 && (
+        {/* Step 2: Confirmation */}
+        {step === 2 && (
           <div style={{ textAlign: 'center', padding: '20px 0' }}>
             <div style={{ fontSize: '3rem', marginBottom: 16 }}>&#10003;</div>
             <h1 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.8rem', fontWeight: 700, margin: '0 0 12px' }}>
@@ -359,19 +324,6 @@ export default function GetStartedPage() {
                 {"We'll be in touch soon to get you set up."}
               </p>
             )}
-            <div style={{
-              background: '#0d0d1a',
-              borderRadius: 12,
-              padding: '20px 24px',
-              marginTop: 24,
-              border: '1px solid rgba(255,229,0,0.15)',
-              textAlign: 'left',
-            }}>
-              <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>Your plan</div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>
-                {tier} leads/mo &mdash; <span style={{ color: '#FFE500' }}>${monthlyTotal.toLocaleString()}/mo</span>
-              </div>
-            </div>
           </div>
         )}
       </div>
