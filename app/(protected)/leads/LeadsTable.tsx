@@ -100,8 +100,35 @@ function ContactBubbles({ count, onChange }: { count: number; onChange: (n: numb
   )
 }
 
+function buildSuperLeadIds(leads: Lead[]): Set<string> {
+  const key = (l: Lead) => `${(l.name ?? '').trim().toLowerCase()}||${(l.email ?? '').trim().toLowerCase()}`
+  const seen = new Map<string, string[]>()
+  for (const l of leads) {
+    if (!l.name && !l.email) continue
+    const k = key(l)
+    seen.set(k, [...(seen.get(k) ?? []), l.id])
+  }
+  const ids = new Set<string>()
+  for (const group of seen.values()) {
+    if (group.length > 1) group.forEach((id) => ids.add(id))
+  }
+  return ids
+}
+
+function SuperLeadBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
+      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+      </svg>
+      Super Lead
+    </span>
+  )
+}
+
 export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId, agreementTemplateUrl, fieldMap }: { leads: Lead[]; stripeConnectAccountId: string | null; agreementTemplateUrl: string | null; fieldMap: FieldMap }) {
   const [leads, setLeads] = useState<Lead[]>(initialLeads)
+  const superLeadIds = buildSuperLeadIds(leads)
   const [contactCounts, setContactCounts] = useState<Record<string, number>>(
     () => Object.fromEntries(initialLeads.map((l) => [l.id, Number(l.form_data?._contact_count) || 0]))
   )
@@ -293,7 +320,10 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                       className={`hover:bg-gray-50 ${selected?.id === lead.id ? 'bg-indigo-50' : ''}`}
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {lead.name || '-'}
+                        <div className="flex items-center gap-2">
+                          {lead.name || '-'}
+                          {superLeadIds.has(lead.id) && <SuperLeadBadge />}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {lead.email || '-'}
@@ -356,7 +386,10 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">{selected.name || 'Unnamed Lead'}</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold text-gray-900">{selected.name || 'Unnamed Lead'}</h2>
+                  {superLeadIds.has(selected.id) && <SuperLeadBadge />}
+                </div>
                 <p className="text-sm text-gray-500 flex items-center gap-2">
                   {selected.form_type || 'Lead'} · {new Date(selected.created_at).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
                   {selected.form_type === 'meta_lead_form' ? (
