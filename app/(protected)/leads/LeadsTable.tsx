@@ -57,13 +57,11 @@ function resolveValue(key: string, value: unknown, fieldMap: FieldMap): string {
 
   const field = fieldMap[key]
 
-  // Single option ID → label
   if (typeof value === 'string' && field?.options) {
     const opt = field.options.find((o) => o.id === value)
     if (opt) return opt.label
   }
 
-  // Array of option IDs (checkbox) → labels
   if (Array.isArray(value) && field?.options) {
     return (value as string[])
       .map((id) => field.options?.find((o) => o.id === id)?.label ?? id)
@@ -100,21 +98,6 @@ function ContactBubbles({ count, onChange }: { count: number; onChange: (n: numb
   )
 }
 
-function buildSuperLeadIds(leads: Lead[]): Set<string> {
-  const key = (l: Lead) => `${(l.name ?? '').trim().toLowerCase()}||${(l.email ?? '').trim().toLowerCase()}`
-  const seen = new Map<string, string[]>()
-  for (const l of leads) {
-    if (!l.name && !l.email) continue
-    const k = key(l)
-    seen.set(k, [...(seen.get(k) ?? []), l.id])
-  }
-  const ids = new Set<string>()
-  for (const group of Array.from(seen.values())) {
-    if (group.length > 1) group.forEach((id) => ids.add(id))
-  }
-  return ids
-}
-
 function SuperLeadBadge() {
   return (
     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
@@ -126,13 +109,56 @@ function SuperLeadBadge() {
   )
 }
 
+function SourceBadge({ formType, size = 'md' }: { formType: string | null | undefined; size?: 'sm' | 'md' }) {
+  const base = size === 'sm'
+    ? 'px-1.5 py-0.5 text-xs font-semibold rounded'
+    : 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full'
+  if (formType === 'meta_lead_form') {
+    return <span className={`${base} bg-blue-100 text-blue-700`}>Meta</span>
+  }
+  return <span className={`${base} bg-gray-100 text-gray-600`}>Form</span>
+}
+
+type DisplayRow = {
+  primary: Lead
+  group: Lead[]
+  isSuperLead: boolean
+}
+
+function groupLeads(leads: Lead[]): DisplayRow[] {
+  const key = (l: Lead) => {
+    if (!l.name && !l.email) return `__solo_${l.id}`
+    return `${(l.name ?? '').trim().toLowerCase()}||${(l.email ?? '').trim().toLowerCase()}`
+  }
+  const map = new Map<string, Lead[]>()
+  for (const l of leads) {
+    const k = key(l)
+    map.set(k, [...(map.get(k) ?? []), l])
+  }
+  const seen = new Set<string>()
+  const rows: DisplayRow[] = []
+  for (const l of leads) {
+    const k = key(l)
+    if (!seen.has(k)) {
+      seen.add(k)
+      const group = map.get(k)!
+      rows.push({ primary: group[0], group, isSuperLead: group.length > 1 })
+    }
+  }
+  return rows
+}
+
+const INTERNAL_KEYS = ['name', 'email', 'phone', '_quote_total', '_quote_currency', '_breakdown']
+
 export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId, agreementTemplateUrl, fieldMap }: { leads: Lead[]; stripeConnectAccountId: string | null; agreementTemplateUrl: string | null; fieldMap: FieldMap }) {
   const [leads, setLeads] = useState<Lead[]>(initialLeads)
-  const superLeadIds = buildSuperLeadIds(leads)
+  const displayRows = groupLeads(leads)
+
   const [contactCounts, setContactCounts] = useState<Record<string, number>>(
     () => Object.fromEntries(initialLeads.map((l) => [l.id, Number(l.form_data?._contact_count) || 0]))
   )
   const [selected, setSelected] = useState<Lead | null>(null)
+  const [selectedGroup, setSelectedGroup] = useState<Lead[]>([])
   const [localStatus, setLocalStatus] = useState<string>('')
   const [isPending, startTransition] = useTransition()
   const [savedStatus, setSavedStatus] = useState<Record<string, string>>({})
@@ -140,35 +166,34 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
   const [isPendingNote, startNoteTransition] = useTransition()
   const [noteSaved, setNoteSaved] = useState(false)
 
-  // Delete state
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [isDeleting, startDeleteTransition] = useTransition()
 
-  // Invoice state
   const [invoiceAmount, setInvoiceAmount] = useState<string>('')
   const [invoiceDescription, setInvoiceDescription] = useState<string>('')
   const [invoiceSending, setInvoiceSending] = useState(false)
   const [invoiceSent, setInvoiceSent] = useState<false | 'email' | 'email+sms'>(false)
   const [invoiceError, setInvoiceError] = useState<string | null>(null)
 
-  // Agreement state
   const [agreementSending, setAgreementSending] = useState(false)
   const [agreementStatus, setAgreementStatus] = useState<string | null>(null)
   const [agreementError, setAgreementError] = useState<string | null>(null)
 
-  function openLead(lead: Lead) {
+  const isSuperLeadSelected = selectedGroup.length > 1
+
+  function openLead(row: DisplayRow) {
+    const lead = row.primary
     setSelected(lead)
+    setSelectedGroup(row.group)
     setLocalStatus(savedStatus[lead.id] ?? lead.status)
     setNoteText(lead.notes ?? '')
     setNoteSaved(false)
     setConfirmDelete(false)
-    // Reset invoice state and pre-fill from quote
     setInvoiceSent(false as false)
     setInvoiceError(null)
     const quote = getQuote(lead)
     setInvoiceAmount(quote ? String(quote.total) : '')
     setInvoiceDescription(lead.form_type ? `${lead.form_type} quote` : 'Service quote')
-    // Reset agreement state and fetch status
     setAgreementStatus(null)
     setAgreementError(null)
     fetch(`/api/agreements/status?leadId=${lead.id}`)
@@ -179,6 +204,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
 
   function closeLead() {
     setSelected(null)
+    setSelectedGroup([])
   }
 
   function handleContactCount(leadId: string, count: number) {
@@ -209,6 +235,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
     setInvoiceSending(true)
     setInvoiceError(null)
     try {
+      const phone = selectedGroup.find((l) => l.phone)?.phone
       const res = await fetch(SEND_INVOICE_FUNCTION_URL, {
         method: 'POST',
         headers: {
@@ -218,7 +245,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
         body: JSON.stringify({
           email: selected.email,
           name: selected.name,
-          phone: selected.phone || undefined,
+          phone: phone || undefined,
           amount: parseFloat(invoiceAmount),
           description: invoiceDescription || 'Service quote',
           stripeConnectAccountId,
@@ -254,18 +281,18 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
 
   function handleDeleteLead() {
     if (!selected) return
-    const id = selected.id
+    const ids = selectedGroup.map((l) => l.id)
     startDeleteTransition(async () => {
-      await deleteLead(id)
-      setLeads((prev) => prev.filter((l) => l.id !== id))
-      setSelected(null)
+      for (const id of ids) {
+        await deleteLead(id)
+      }
+      setLeads((prev) => prev.filter((l) => !ids.includes(l.id)))
+      closeLead()
     })
   }
 
   const getDisplayStatus = (lead: Lead) =>
     savedStatus[lead.id] ?? lead.status
-
-  const INTERNAL_KEYS = ['name', 'email', 'phone', '_quote_total', '_quote_currency', '_breakdown']
 
   function getQuote(lead: Lead): { total: number; currency: string } | null {
     const total = lead.form_data?._quote_total
@@ -274,11 +301,15 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
     return { total, currency }
   }
 
-  const formDataEntries = selected?.form_data
+  const formDataEntries = !isSuperLeadSelected && selected?.form_data
     ? Object.entries(selected.form_data).filter(([key]) => !INTERNAL_KEYS.includes(key))
     : []
 
-  const selectedQuote = selected ? getQuote(selected) : null
+  const selectedQuote = selectedGroup.length > 0
+    ? selectedGroup.map((l) => getQuote(l)).find((q) => q !== null) ?? null
+    : selected ? getQuote(selected) : null
+
+  const selectedPhone = selectedGroup.find((l) => l.phone)?.phone ?? selected?.phone
 
   return (
     <div className="relative">
@@ -305,41 +336,48 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {leads.length === 0 ? (
+              {displayRows.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="px-6 py-4 text-center text-sm text-gray-500">
                     No leads yet. They will appear here once you receive them.
                   </td>
                 </tr>
               ) : (
-                leads.map((lead) => {
+                displayRows.map((row) => {
+                  const { primary: lead, group, isSuperLead } = row
                   const displayStatus = getDisplayStatus(lead)
+                  const rowPhone = group.find((l) => l.phone)?.phone
+                  const rowQuote = group.map((l) => getQuote(l)).find((q) => q !== null)
+                  const isSelected = selected?.id === lead.id
                   return (
                     <tr
                       key={lead.id}
-                      className={`hover:bg-gray-50 ${selected?.id === lead.id ? 'bg-indigo-50' : ''}`}
+                      className={`hover:bg-gray-50 ${isSelected ? 'bg-indigo-50' : ''}`}
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         <div className="flex items-center gap-2">
                           {lead.name || '-'}
-                          {superLeadIds.has(lead.id) && <SuperLeadBadge />}
+                          {isSuperLead && <SuperLeadBadge />}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {lead.email || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {lead.phone || '-'}
+                        {rowPhone || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                        {(() => { const q = getQuote(lead); return q ? `${q.currency}${q.total.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}` : <span className="text-gray-400 font-normal">—</span> })()}
+                        {rowQuote
+                          ? `${rowQuote.currency}${rowQuote.total.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
+                          : <span className="text-gray-400 font-normal">—</span>
+                        }
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {lead.form_type === 'meta_lead_form' ? (
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-700">Meta</span>
-                        ) : (
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-600">Form</span>
-                        )}
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {group.map((l) => (
+                            <SourceBadge key={l.id} formType={l.form_type} />
+                          ))}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <ContactBubbles
@@ -357,7 +395,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <button
-                          onClick={() => openLead(lead)}
+                          onClick={() => openLead(row)}
                           className="text-indigo-600 hover:text-indigo-900 font-medium"
                         >
                           View
@@ -388,14 +426,21 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-semibold text-gray-900">{selected.name || 'Unnamed Lead'}</h2>
-                  {superLeadIds.has(selected.id) && <SuperLeadBadge />}
+                  {isSuperLeadSelected && <SuperLeadBadge />}
                 </div>
-                <p className="text-sm text-gray-500 flex items-center gap-2">
-                  {selected.form_type || 'Lead'} · {new Date(selected.created_at).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
-                  {selected.form_type === 'meta_lead_form' ? (
-                    <span className="px-1.5 py-0.5 text-xs font-semibold rounded bg-blue-100 text-blue-700">Meta</span>
+                <p className="text-sm text-gray-500 flex items-center gap-2 flex-wrap">
+                  {isSuperLeadSelected ? (
+                    <>
+                      {selectedGroup.map((l) => (
+                        <SourceBadge key={l.id} formType={l.form_type} size="sm" />
+                      ))}
+                      · {new Date(selected.created_at).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
+                    </>
                   ) : (
-                    <span className="px-1.5 py-0.5 text-xs font-semibold rounded bg-gray-100 text-gray-600">Form</span>
+                    <>
+                      {selected.form_type || 'Lead'} · {new Date(selected.created_at).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
+                      <SourceBadge formType={selected.form_type} size="sm" />
+                    </>
                   )}
                 </p>
               </div>
@@ -413,7 +458,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                   </button>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">Delete?</span>
+                    <span className="text-xs text-gray-500">{isSuperLeadSelected ? 'Delete all?' : 'Delete?'}</span>
                     <button
                       onClick={handleDeleteLead}
                       disabled={isDeleting}
@@ -468,8 +513,8 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                   <div className="flex justify-between text-sm">
                     <dt className="text-gray-500">Phone</dt>
                     <dd className="text-gray-900 font-medium">
-                      {selected.phone
-                        ? <a href={`tel:${selected.phone}`} className="text-indigo-600 hover:underline">{selected.phone}</a>
+                      {selectedPhone
+                        ? <a href={`tel:${selectedPhone}`} className="text-indigo-600 hover:underline">{selectedPhone}</a>
                         : '-'}
                     </dd>
                   </div>
@@ -489,7 +534,52 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                 </section>
               )}
 
-              {/* Form data */}
+              {/* Sources — super lead breakdown */}
+              {isSuperLeadSelected && (
+                <section>
+                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Sources</h3>
+                  <div className="space-y-3">
+                    {selectedGroup.map((l) => {
+                      const entries = l.form_data
+                        ? Object.entries(l.form_data).filter(([key]) => !INTERNAL_KEYS.includes(key))
+                        : []
+                      const lQuote = getQuote(l)
+                      return (
+                        <div key={l.id} className="rounded-lg border border-gray-200 p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <SourceBadge formType={l.form_type} />
+                            <span className="text-xs text-gray-400">
+                              {new Date(l.created_at).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
+                            </span>
+                          </div>
+                          {lQuote && (
+                            <div className="flex justify-between text-xs pt-1">
+                              <span className="text-gray-500">Quote</span>
+                              <span className="font-semibold text-green-700">
+                                {lQuote.currency}{lQuote.total.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                              </span>
+                            </div>
+                          )}
+                          {entries.length > 0 && (
+                            <dl className="space-y-1 pt-2 border-t border-gray-100">
+                              {entries.map(([key, value]) => (
+                                <div key={key} className="flex justify-between text-xs">
+                                  <dt className="text-gray-500">{resolveLabel(key, fieldMap)}</dt>
+                                  <dd className="text-gray-900 font-medium text-right max-w-[60%]">
+                                    {resolveValue(key, value, fieldMap)}
+                                  </dd>
+                                </div>
+                              ))}
+                            </dl>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </section>
+              )}
+
+              {/* Form data — single lead */}
               {formDataEntries.length > 0 && (
                 <section>
                   <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Form Details</h3>
@@ -497,7 +587,6 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                     {formDataEntries.map(([key, value]) => {
                       const label = resolveLabel(key, fieldMap)
 
-                      // Route field — full-width card
                       if (isRouteValue(value)) {
                         const route = value as RouteValue
                         return (
@@ -533,7 +622,6 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                         )
                       }
 
-                      // Standard key-value row
                       return (
                         <div key={key} className="flex justify-between text-sm">
                           <dt className="text-gray-500">{label}</dt>
@@ -615,7 +703,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                       <p className="text-sm text-green-800 font-medium">Invoice sent!</p>
                       <p className="text-xs text-green-700 mt-0.5">
                         {invoiceSent === 'email+sms'
-                          ? `Email → ${selected.email} · SMS → ${selected.phone}`
+                          ? `Email → ${selected.email} · SMS → ${selectedPhone}`
                           : `Email → ${selected.email}`}
                       </p>
                     </div>
@@ -658,7 +746,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                       {invoiceSending ? 'Sending…' : 'Send Invoice'}
                     </button>
                     <p className="text-xs text-gray-400">
-                      Email → {selected.email}{selected.phone ? ` · SMS → ${selected.phone}` : ''} · due in 7 days
+                      Email → {selected.email}{selectedPhone ? ` · SMS → ${selectedPhone}` : ''} · due in 7 days
                     </p>
                   </div>
                 )}
