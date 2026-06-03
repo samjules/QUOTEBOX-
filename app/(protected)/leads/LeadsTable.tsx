@@ -109,7 +109,7 @@ function buildSuperLeadIds(leads: Lead[]): Set<string> {
     seen.set(k, [...(seen.get(k) ?? []), l.id])
   }
   const ids = new Set<string>()
-  for (const group of seen.values()) {
+  for (const group of Array.from(seen.values())) {
     if (group.length > 1) group.forEach((id) => ids.add(id))
   }
   return ids
