@@ -155,7 +155,7 @@ export default function FirstLeadPage() {
               </button>
             </form>
             <p style={{ fontSize: '0.75rem', color: '#aaa', margin: '14px 0 0', textAlign: 'center' }}>
-              No spam. Unsubscribe anytime.
+              No credit card required. No spam. Unsubscribe anytime.
             </p>
           </div>
         </div>
