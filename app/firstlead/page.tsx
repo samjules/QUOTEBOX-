@@ -164,6 +164,34 @@ export default function FirstLeadPage() {
         </div>
       </section>
 
+      {/* Social proof screenshot */}
+      <section style={{ padding: '64px 24px', background: '#fff', textAlign: 'center' }}>
+        <div style={{ maxWidth: 680, margin: '0 auto' }}>
+          <p style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#999', margin: '0 0 12px' }}>
+            Real leads coming in through the software
+          </p>
+          <h2 style={{ fontSize: 'clamp(1.3rem, 2.5vw, 1.75rem)', fontWeight: 800, margin: '0 0 32px', lineHeight: 1.25 }}>
+            This is what your dashboard looks like<br />when the leads start rolling in
+          </h2>
+          <div style={{
+            borderRadius: 16, overflow: 'hidden',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.12)',
+            border: '1px solid #e5e7eb',
+            display: 'inline-block', width: '100%',
+          }}>
+            <img
+              src="/leads-proof.png"
+              alt="QuoteBox leads dashboard showing real leads coming in"
+              style={{ width: '100%', display: 'block' }}
+            />
+          </div>
+          <p style={{ color: '#777', fontSize: '0.88rem', margin: '20px 0 0', lineHeight: 1.6 }}>
+            Real quotes from real customers — delivered straight to your dashboard. The software that comes
+            free with this course makes this happen automatically.
+          </p>
+        </div>
+      </section>
+
       {/* What you'll learn */}
       <section style={{ padding: '72px 24px', background: '#fafafa' }}>
         <div style={{ maxWidth: 760, margin: '0 auto' }}>
