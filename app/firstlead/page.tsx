@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 const lessons = [
-  { num: '01', title: 'Pick your niche & ideal customer', desc: 'Stop chasing everyone. Learn which customers are worth targeting and why it changes everything.' },
-  { num: '02', title: 'Build a lead magnet in 60 minutes', desc: 'Create a simple offer that makes strangers want to give you their contact info.' },
-  { num: '03', title: 'Set up your first quote form', desc: 'The exact form structure that pre-qualifies leads so you only talk to buyers, not tire-kickers.' },
-  { num: '04', title: 'Drive traffic for free', desc: 'Organic strategies that actually work for local service businesses — no ad budget required.' },
-  { num: '05', title: 'Follow up and close the job', desc: 'A simple 3-step follow-up sequence that converts more leads into booked jobs.' },
+  { num: '01', title: 'Why most service businesses never get leads online', desc: 'The real reason your phone isn\'t ringing — and the simple shift that fixes it without any software or marketing experience.' },
+  { num: '02', title: 'Your first lead magnet in 60 minutes', desc: 'Create a simple, irresistible offer that makes your ideal customer reach out — no fancy tools, no agency needed.' },
+  { num: '03', title: 'Set up a free quote form that sells for you', desc: 'The exact form structure built for service businesses that pre-qualifies leads so you only talk to serious buyers.' },
+  { num: '04', title: 'Get traffic without a marketing budget', desc: 'Proven organic strategies that work for local service businesses — no ad spend, no marketing degree required.' },
+  { num: '05', title: 'Follow up and close your first job', desc: 'A dead-simple 3-step follow-up process that turns a fresh lead into a booked job, starting today.' },
 ]
 
 export default function FirstLeadPage() {
@@ -74,15 +74,18 @@ export default function FirstLeadPage() {
             fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em',
             textTransform: 'uppercase', padding: '6px 16px', borderRadius: 100, marginBottom: 24,
           }}>
-            Free Video Course
+            Free Video Course + Free Software
           </div>
           <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.2rem)', fontWeight: 800, lineHeight: 1.15, margin: '0 0 20px' }}>
-            How to Get Your<br />
-            <span style={{ color: '#FFE500' }}>First Lead Online</span>
+            Get Your First Lead Online —<br />
+            <span style={{ color: '#FFE500' }}>No Software. No Marketing Strategy.</span>
           </h1>
-          <p style={{ fontSize: '1.15rem', color: '#b0b8cc', lineHeight: 1.7, maxWidth: 580, margin: '0 auto 40px' }}>
-            A free 5-lesson video course for contractors and service businesses who want to start generating
-            real leads online — without wasting money on ads or complicated software.
+          <p style={{ fontSize: '1.15rem', color: '#b0b8cc', lineHeight: 1.7, maxWidth: 600, margin: '0 auto 16px' }}>
+            A free 5-lesson video course that shows service businesses exactly how to land their first real lead online —
+            no expensive software, no proven marketing strategy, no agency required.
+          </p>
+          <p style={{ fontSize: '1rem', color: '#FFE500', fontWeight: 700, margin: '0 auto 40px' }}>
+            You get the course <em style={{ fontStyle: 'normal' }}>and</em> the software to start generating leads — completely free.
           </p>
 
           {/* Form card */}
@@ -91,10 +94,10 @@ export default function FirstLeadPage() {
             maxWidth: 440, margin: '0 auto', boxShadow: '0 24px 60px rgba(0,0,0,0.25)',
           }}>
             <p style={{ fontSize: '1rem', fontWeight: 700, color: '#1a1a2e', margin: '0 0 6px' }}>
-              Get instant free access
+              Get the course + software free
             </p>
             <p style={{ fontSize: '0.84rem', color: '#777', margin: '0 0 24px' }}>
-              Enter your details and we'll send you the course link.
+              Instant access. No experience needed. Start getting leads today.
             </p>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <input
@@ -165,10 +168,10 @@ export default function FirstLeadPage() {
       <section style={{ padding: '72px 24px', background: '#fafafa' }}>
         <div style={{ maxWidth: 760, margin: '0 auto' }}>
           <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: 800, textAlign: 'center', margin: '0 0 8px' }}>
-            What's inside the course
+            What's inside the free course
           </h2>
           <p style={{ textAlign: 'center', color: '#666', fontSize: '0.95rem', margin: '0 0 48px' }}>
-            5 short, practical lessons. No fluff. Just what works.
+            5 short, practical lessons for service businesses. No fluff, no jargon — just what actually works.
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {lessons.map((l) => (
@@ -198,12 +201,12 @@ export default function FirstLeadPage() {
       <section style={{ padding: '72px 24px' }}>
         <div style={{ maxWidth: 760, margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: 800, margin: '0 0 16px' }}>
-            Who this is for
+            Built for service businesses
           </h2>
-          <p style={{ color: '#555', fontSize: '0.95rem', lineHeight: 1.8, maxWidth: 580, margin: '0 auto 40px' }}>
-            This course is built for contractors, tradespeople, and local service businesses — roofers,
-            plumbers, movers, landscapers — who know their trade but aren't sure how to turn that into
-            a steady stream of online leads.
+          <p style={{ color: '#555', fontSize: '0.95rem', lineHeight: 1.8, maxWidth: 600, margin: '0 auto 40px' }}>
+            This course — and the free software that comes with it — was built specifically for contractors
+            and service businesses. You don't need a marketing background, a big budget, or any existing
+            software. If you can answer your phone and do the work, this will get you leads.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
             {['Contractors', 'Roofers', 'Plumbers', 'HVAC', 'Movers', 'Landscapers'].map((t) => (
@@ -222,10 +225,10 @@ export default function FirstLeadPage() {
       <section style={{ background: '#1a1a2e', color: '#fff', padding: '72px 24px', textAlign: 'center' }}>
         <div style={{ maxWidth: 560, margin: '0 auto' }}>
           <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: 800, margin: '0 0 16px' }}>
-            Ready to get your first lead?
+            The course and the software. Both free.
           </h2>
           <p style={{ color: '#b0b8cc', fontSize: '0.95rem', margin: '0 0 32px' }}>
-            It's free. Takes 30 seconds to sign up. Start watching immediately.
+            No credit card. No marketing experience. No catch. Sign up in 30 seconds and start getting leads today.
           </p>
           <a href="#top" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }} style={{
             display: 'inline-block', background: '#FFE500', color: '#1a1a2e',
