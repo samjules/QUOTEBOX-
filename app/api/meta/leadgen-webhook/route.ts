@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
+import { scheduleLeadAutomation } from '@/lib/schedule-automation'
 
 const supabaseAdmin = () =>
   createClient(
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Insert lead
-        await admin.from('leads').insert({
+        const { data: insertedLead } = await admin.from('leads').insert({
           account_id: account.id,
           hosted_form_id: null,
           name,
@@ -134,7 +135,14 @@ export async function POST(request: NextRequest) {
           form_type: 'meta_lead_form',
           form_data: formData,
           status: 'new',
-        })
+        }).select('id').single()
+
+        // Schedule automation (fire-and-forget — don't block webhook response)
+        if (insertedLead?.id) {
+          scheduleLeadAutomation(insertedLead.id, account.id).catch((err) =>
+            console.error('Automation scheduling error:', err)
+          )
+        }
 
         // Credit deduction (same logic as leads/submit)
         const COST_PER_LEAD = 15
