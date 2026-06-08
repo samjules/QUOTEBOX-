@@ -1095,8 +1095,17 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
   const [pixelReady, setPixelReady] = useState(false)
   const [leadEventFired, setLeadEventFired] = useState(false)
 
+  // Automation context from email click
+  const [automationStep, setAutomationStep] = useState<string | null>(null)
+  const [automationDiscount, setAutomationDiscount] = useState<number | null>(null)
+
   useEffect(() => {
-    setIsTestMode(new URLSearchParams(window.location.search).get('pixel_test') === '1')
+    const params = new URLSearchParams(window.location.search)
+    setIsTestMode(params.get('pixel_test') === '1')
+    const as = params.get('automation_step')
+    if (as) setAutomationStep(as)
+    const d = params.get('discount')
+    if (d) setAutomationDiscount(Number(d))
   }, [])
 
   // Load Meta Pixel and fire PageView
@@ -1473,6 +1482,27 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
           </span>
           <span style={{ opacity: 0.4 }}>|</span>
           <span style={{ opacity: 0.55, fontSize: 11 }}>Test mode — not visible to visitors</span>
+        </div>
+      )}
+
+      {/* ── Automation discount banner ── */}
+      {automationStep === 'discount_offer' && automationDiscount && (
+        <div style={{
+          width: '100%',
+          maxWidth: 520,
+          marginBottom: 12,
+          background: '#14532d',
+          borderRadius: 10,
+          padding: '10px 16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          color: '#dcfce7',
+          fontSize: 14,
+          fontWeight: 600,
+        }}>
+          <span style={{ fontSize: 18 }}>🎁</span>
+          <span>Your {automationDiscount}% discount is reserved — we&apos;ll apply it when we confirm your booking.</span>
         </div>
       )}
 
