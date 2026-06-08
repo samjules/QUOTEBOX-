@@ -139,6 +139,7 @@ export async function sendAutomationStep(params: {
   leadId?: string | null
   accountId?: string | null
   heroImageUrl?: string | null
+  smsOptIn?: boolean
 }) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://quote-box.com'
   const trackBase = `${siteUrl}/api/automations/track`
@@ -185,7 +186,7 @@ export async function sendAutomationStep(params: {
     }
   }
 
-  if (params.phone) {
+  if (params.phone && params.smsOptIn) {
     const smsText = buildSmsText(emailParams)
     await sendSms(params.phone, smsText)
   }

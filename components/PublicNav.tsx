@@ -2,6 +2,19 @@ import Link from 'next/link'
 
 export default function PublicNav() {
   return (
+    <>
+      <div style={{
+        background: '#1a1a2e', color: 'rgba(255,255,255,0.55)',
+        textAlign: 'center', fontSize: '0.72rem', padding: '6px 16px',
+        letterSpacing: '0.03em',
+      }}>
+        Quote Box is a product of{' '}
+        <span style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>Arctic Reach LLC</span>
+        {' '}·{' '}
+        <Link href="/privacy" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'underline' }}>Privacy Policy</Link>
+        {' '}·{' '}
+        <Link href="/terms" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'underline' }}>Terms of Service</Link>
+      </div>
     <nav style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '0 32px', height: 60, borderBottom: '1px solid #f0f0f0',
@@ -30,5 +43,6 @@ export default function PublicNav() {
         </Link>
       </div>
     </nav>
+    </>
   )
 }

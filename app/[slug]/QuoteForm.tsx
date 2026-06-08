@@ -1176,6 +1176,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
+  const [smsOptIn, setSmsOptIn] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
 
@@ -1340,7 +1341,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
         email: email.trim(),
         phone: phone.trim(),
         form_type: form.form_type,
-        form_data: formData,
+        form_data: { ...formData, _sms_opt_in: smsOptIn },
         status: hasCredits ? 'new' : 'held',
       }),
     })
@@ -1892,6 +1893,23 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
                   </label>
                   <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 555 000 0000" style={inputStyle} autoComplete="tel" />
                 </div>
+
+                {/* SMS opt-in */}
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginTop: 2 }}>
+                  <input
+                    type="checkbox"
+                    checked={smsOptIn}
+                    onChange={(e) => setSmsOptIn(e.target.checked)}
+                    style={{ marginTop: 2, flexShrink: 0, width: 15, height: 15, accentColor: accentBg }}
+                  />
+                  <span style={{ fontSize: '0.75rem', color: '#64748b', lineHeight: 1.5 }}>
+                    I agree to receive text message notifications from this business, delivered via Quote Box (Arctic Reach LLC).
+                    Message and data rates may apply. Reply <strong>STOP</strong> to unsubscribe at any time.{' '}
+                    <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: accentBg, textDecoration: 'underline' }}>Privacy Policy</a>
+                    {' '}·{' '}
+                    <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: accentBg, textDecoration: 'underline' }}>Terms</a>
+                  </span>
+                </label>
               </div>
 
               {/* Quote total preview — only in live mode (after_submit reveals on confirm page) */}

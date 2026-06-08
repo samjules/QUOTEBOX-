@@ -45,8 +45,11 @@ export default function PublicFooter() {
 
           {/* Brand */}
           <div>
-            <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.4rem', fontWeight: 700, marginBottom: 12 }}>
+            <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.4rem', fontWeight: 700, marginBottom: 4 }}>
               Quote<span style={{ color: '#FFE500' }}>.</span>Box
+            </div>
+            <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', marginBottom: 12, letterSpacing: '0.03em' }}>
+              A product of Arctic Reach LLC
             </div>
             <p style={{ fontSize: '0.83rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, maxWidth: 220, margin: 0 }}>
               Exclusive contractor leads from Facebook & Instagram ads. Pay $15 per lead — no monthly fees, no contracts.
@@ -97,7 +100,7 @@ export default function PublicFooter() {
           flexWrap: 'wrap', gap: 12,
         }}>
           <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.35)' }}>
-            © 2025 Quote Box. All rights reserved.
+            © 2026 Arctic Reach LLC. Quote Box is a product of Arctic Reach LLC. All rights reserved.
           </span>
           <div style={{ display: 'flex', gap: 20 }}>
             <Link href="/privacy" style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>Privacy</Link>

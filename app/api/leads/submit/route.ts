@@ -190,6 +190,7 @@ export async function POST(request: NextRequest) {
           leadId: insertedLead.id,
           accountId: body.account_id,
           heroImageUrl,
+          smsOptIn: body.form_data?._sms_opt_in === true,
         })
 
         await scheduleLeadAutomation(insertedLead.id, body.account_id)

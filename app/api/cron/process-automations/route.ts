@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     const { data: lead } = await admin
       .from('leads')
-      .select('name, email, phone, status')
+      .select('name, email, phone, status, form_data')
       .eq('id', step.lead_id)
       .single()
 
@@ -103,6 +103,7 @@ export async function POST(request: NextRequest) {
       leadId: step.lead_id,
       accountId: step.account_id,
       heroImageUrl,
+      smsOptIn: (lead.form_data as Record<string, unknown> | null)?._sms_opt_in === true,
     })
 
     processed++
