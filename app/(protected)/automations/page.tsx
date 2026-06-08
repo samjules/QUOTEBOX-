@@ -5,7 +5,17 @@ import { useEffect, useState } from 'react'
 interface AutomationConfig {
   is_enabled: boolean
   discount_percent: number
+  hero_image_url: string | null
 }
+
+const HERO_IMAGES = [
+  { url: '/DSCN8733.jpg', label: 'Photo' },
+  { url: '/FW93315_1080x.webp', label: 'Banner' },
+  { url: '/Garden-Supplies-_1600x1000.jpg', label: 'Garden' },
+  { url: '/lead-machine.png', label: 'Lead Machine' },
+  { url: '/leads-proof.png', label: 'Proof' },
+  { url: '/quotebox-share.png', label: 'QuoteBox' },
+]
 
 interface TestLead {
   id: string
@@ -101,7 +111,7 @@ function ArrowDown() {
 }
 
 export default function AutomationsPage() {
-  const [config, setConfig] = useState<AutomationConfig>({ is_enabled: true, discount_percent: 10 })
+  const [config, setConfig] = useState<AutomationConfig>({ is_enabled: true, discount_percent: 10, hero_image_url: null })
   const [activity, setActivity] = useState<ActivityStep[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -296,6 +306,39 @@ export default function AutomationsPage() {
               <span className="text-sm text-gray-500">%</span>
               <span className="text-xs text-gray-400">off in step 3</span>
             </div>
+          </div>
+
+          {/* Hero image */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Email Hero Image</h2>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => save({ hero_image_url: null })}
+                className={`aspect-video rounded-lg border-2 flex items-center justify-center text-xs text-gray-400 transition-colors ${
+                  !config.hero_image_url ? 'border-indigo-500 bg-indigo-50 text-indigo-600 font-medium' : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                None
+              </button>
+              {HERO_IMAGES.map((img) => (
+                <button
+                  key={img.url}
+                  onClick={() => save({ hero_image_url: img.url })}
+                  className={`aspect-video rounded-lg border-2 overflow-hidden relative transition-colors ${
+                    config.hero_image_url === img.url ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  title={img.label}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={img.url} alt={img.label} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+            {config.hero_image_url && (
+              <p className="text-xs text-gray-400 mt-2">
+                Selected: {HERO_IMAGES.find((i) => i.url === config.hero_image_url)?.label ?? config.hero_image_url}
+              </p>
+            )}
           </div>
 
           {/* Test panel */}

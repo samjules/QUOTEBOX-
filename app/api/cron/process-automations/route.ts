@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
 
     const { data: automationConfig } = await admin
       .from('lead_automations')
-      .select('discount_percent')
+      .select('discount_percent, hero_image_url')
       .eq('account_id', step.account_id)
       .single()
 
@@ -88,6 +88,10 @@ export async function POST(request: NextRequest) {
     const slug = (form?.form_config as { slug?: string } | null)?.slug
     const formUrl = slug ? `${siteUrl}/${slug}` : null
 
+    const heroImageUrl = automationConfig?.hero_image_url
+      ? `${siteUrl}${automationConfig.hero_image_url}`
+      : null
+
     await sendAutomationStep({
       email: lead.email,
       phone: lead.phone,
@@ -96,6 +100,9 @@ export async function POST(request: NextRequest) {
       formUrl,
       step: step.step as 'initial_contact' | 'day1_followup' | 'discount_offer',
       discountPercent: automationConfig?.discount_percent ?? 10,
+      leadId: step.lead_id,
+      accountId: step.account_id,
+      heroImageUrl,
     })
 
     processed++

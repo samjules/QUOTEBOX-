@@ -15,16 +15,28 @@ export function buildAutomationEmail(params: {
   formUrl: string | null
   step: 'initial_contact' | 'day1_followup' | 'discount_offer'
   discountPercent: number
+  heroImageUrl?: string | null
+  trackingPixelUrl?: string | null
+  trackedFormUrl?: string | null
 }): { subject: string; html: string } {
-  const { name, businessName, formUrl, step, discountPercent } = params
+  const { name, businessName, formUrl, step, discountPercent, heroImageUrl, trackingPixelUrl, trackedFormUrl } = params
   const accentColor = '#4f46e5'
   const btnStyle = `display:inline-block;background:${accentColor};color:#fff;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:700;text-decoration:none;`
 
-  const ctaBlock = formUrl
+  const ctaUrl = trackedFormUrl ?? formUrl
+  const ctaBlock = ctaUrl
     ? `<div style="text-align:center;margin:28px 0;">
-        <a href="${esc(formUrl)}" style="${btnStyle}">Get My Free Estimate →</a>
+        <a href="${esc(ctaUrl)}" style="${btnStyle}">Get My Free Estimate →</a>
        </div>`
     : `<p style="color:#475569;font-size:14px;">Reply to this email and we'll get you sorted out right away.</p>`
+
+  const heroBlock = heroImageUrl
+    ? `<tr><td style="padding:0;"><img src="${esc(heroImageUrl)}" alt="" width="520" style="width:100%;max-width:520px;display:block;border-radius:0;" /></td></tr>`
+    : ''
+
+  const pixelBlock = trackingPixelUrl
+    ? `<img src="${esc(trackingPixelUrl)}" width="1" height="1" style="display:none;" alt="" />`
+    : ''
 
   const configs = {
     initial_contact: {
@@ -62,7 +74,7 @@ export function buildAutomationEmail(params: {
       <td align="center">
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
           <tr>
-            <td style="background:${accentColor};border-radius:14px 14px 0 0;padding:24px 28px;">
+            <td style="background:${accentColor};border-radius:${heroBlock ? '14px 14px 0 0' : '14px 14px 0 0'};padding:24px 28px;">
               <span style="font-family:Georgia,serif;font-size:18px;font-weight:900;color:#fff;letter-spacing:0.02em;">
                 Quote<span style="color:#FFE500;">.</span>Box
               </span>
@@ -71,6 +83,7 @@ export function buildAutomationEmail(params: {
               </div>
             </td>
           </tr>
+          ${heroBlock}
           <tr>
             <td style="background:white;padding:32px 32px 28px;border-radius:0 0 14px 14px;">
               <p style="margin:0 0 8px;font-size:15px;color:#64748b;">Hi ${esc(name)},</p>
@@ -92,6 +105,7 @@ export function buildAutomationEmail(params: {
       </td>
     </tr>
   </table>
+  ${pixelBlock}
 </body>
 </html>`
 
@@ -122,13 +136,30 @@ export async function sendAutomationStep(params: {
   formUrl: string | null
   step: 'initial_contact' | 'day1_followup' | 'discount_offer'
   discountPercent: number
+  leadId?: string | null
+  accountId?: string | null
+  heroImageUrl?: string | null
 }) {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://quote-box.com'
+  const trackBase = `${siteUrl}/api/automations/track`
+
+  const trackingPixelUrl = params.leadId && params.accountId
+    ? `${trackBase}?e=o&a=${params.accountId}&l=${params.leadId}&s=${params.step}`
+    : null
+
+  const trackedFormUrl = params.leadId && params.accountId && params.formUrl
+    ? `${trackBase}?e=c&a=${params.accountId}&l=${params.leadId}&s=${params.step}&r=${encodeURIComponent(params.formUrl)}`
+    : null
+
   const emailParams = {
     name: params.name,
     businessName: params.businessName,
     formUrl: params.formUrl,
     step: params.step,
     discountPercent: params.discountPercent,
+    heroImageUrl: params.heroImageUrl ?? null,
+    trackingPixelUrl,
+    trackedFormUrl,
   }
 
   if (params.email) {

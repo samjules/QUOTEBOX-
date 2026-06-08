@@ -39,6 +39,7 @@ export async function PUT(request: NextRequest) {
         account_id: accountId,
         is_enabled: Boolean(body.is_enabled),
         discount_percent: Math.min(100, Math.max(0, Number(body.discount_percent) || 10)),
+        hero_image_url: body.hero_image_url ?? null,
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'account_id' }

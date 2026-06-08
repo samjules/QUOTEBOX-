@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
   const [{ data: account }, { data: automationConfig }] = await Promise.all([
     admin.from('accounts').select('business_name').eq('id', accountId).single(),
-    admin.from('lead_automations').select('discount_percent').eq('account_id', accountId).single(),
+    admin.from('lead_automations').select('discount_percent, hero_image_url').eq('account_id', accountId).single(),
   ])
 
   // Get form URL — prefer the lead's own form, fall back to the account's first active form
@@ -67,6 +67,11 @@ export async function POST(request: NextRequest) {
   const slug = (formData?.form_config as { slug?: string } | null)?.slug
   if (slug) formUrl = `${siteUrl}/${slug}`
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://quote-box.com'
+  const heroImageUrl = automationConfig?.hero_image_url
+    ? `${siteUrl}${automationConfig.hero_image_url}`
+    : null
+
   const commonParams = {
     email: lead.email,
     phone: lead.phone ?? null,
@@ -74,6 +79,7 @@ export async function POST(request: NextRequest) {
     businessName: account?.business_name || 'Your service provider',
     formUrl,
     discountPercent: automationConfig?.discount_percent ?? 10,
+    heroImageUrl,
   }
 
   const results: { step: string; ok: boolean; error?: string }[] = []

@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
                 .upsert({ account_id: account.id }, { onConflict: 'account_id', ignoreDuplicates: true })
               const { data: automationConfig } = await admin
                 .from('lead_automations')
-                .select('is_enabled, discount_percent')
+                .select('is_enabled, discount_percent, hero_image_url')
                 .eq('account_id', account.id)
                 .single()
 
@@ -175,6 +175,10 @@ export async function POST(request: NextRequest) {
               const formUrl = slug ? `${siteUrl}/${slug}` : null
 
               // Send initial contact immediately
+              const heroImageUrl = automationConfig.hero_image_url
+                ? `${siteUrl}${automationConfig.hero_image_url}`
+                : null
+
               await sendAutomationStep({
                 email,
                 phone,
@@ -183,6 +187,9 @@ export async function POST(request: NextRequest) {
                 formUrl,
                 step: 'initial_contact',
                 discountPercent: automationConfig.discount_percent ?? 10,
+                leadId: insertedLead.id,
+                accountId: account.id,
+                heroImageUrl,
               })
 
               // Schedule day 1, discount, and mark-lost follow-ups

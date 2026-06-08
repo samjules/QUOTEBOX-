@@ -5,8 +5,10 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getAccountForUser } from '@/lib/account'
 import type { Lead } from '@/lib/types'
 import LeadsTable, { type FieldMap } from './LeadsTable'
+import LeadActivityTab from './LeadActivityTab'
 
-export default async function LeadsPage() {
+export default async function LeadsPage({ searchParams }: { searchParams: { tab?: string } }) {
+  const activeTab = searchParams.tab === 'activity' ? 'activity' : 'leads'
   console.log('========== LEADS PAGE DEBUG START ==========')
   const supabase = createClient()
 
@@ -249,8 +251,39 @@ export default async function LeadsPage() {
                 </div>
               </div>
 
-              {/* Leads table */}
-              <LeadsTable leads={leads} stripeConnectAccountId={account.stripe_connect_account_id ?? null} agreementTemplateUrl={account.agreement_template_url ?? null} fieldMap={fieldMap} />
+              {/* Tabs */}
+              <div className="mb-6">
+                <div className="border-b border-gray-200">
+                  <nav className="-mb-px flex gap-6">
+                    <Link
+                      href="/leads"
+                      className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+                        activeTab === 'leads'
+                          ? 'border-indigo-600 text-indigo-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      All Leads
+                    </Link>
+                    <Link
+                      href="/leads?tab=activity"
+                      className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+                        activeTab === 'activity'
+                          ? 'border-indigo-600 text-indigo-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      Automation Activity
+                    </Link>
+                  </nav>
+                </div>
+              </div>
+
+              {activeTab === 'leads' ? (
+                <LeadsTable leads={leads} stripeConnectAccountId={account.stripe_connect_account_id ?? null} agreementTemplateUrl={account.agreement_template_url ?? null} fieldMap={fieldMap} />
+              ) : (
+                <LeadActivityTab />
+              )}
         </div>
       </div>
     </div>

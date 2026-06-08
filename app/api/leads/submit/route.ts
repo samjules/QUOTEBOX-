@@ -99,6 +99,48 @@ export async function POST(request: NextRequest) {
     console.error('Credit deduction error:', err)
   }
 
+  // Record form_submit event if this email was in an automation sequence
+  if (body.email) {
+    Promise.resolve().then(async () => {
+      try {
+        // Find the most recently automated lead with the same email
+        const { data: automatedLeads } = await supabaseAdmin
+          .from('automation_steps')
+          .select('lead_id, account_id, step, sent_at')
+          .eq('account_id', body.account_id)
+          .eq('status', 'sent')
+          .order('sent_at', { ascending: false })
+          .limit(20)
+
+        if (!automatedLeads?.length) return
+
+        // Find the lead among them that matches this email
+        const leadIds = [...new Set(automatedLeads.map((s) => s.lead_id))]
+        const { data: matchedLeads } = await supabaseAdmin
+          .from('leads')
+          .select('id')
+          .in('id', leadIds)
+          .eq('email', body.email)
+          .limit(1)
+
+        if (!matchedLeads?.length) return
+
+        const matchedLeadId = matchedLeads[0].id
+        const lastStep = automatedLeads.find((s) => s.lead_id === matchedLeadId)
+        if (!lastStep) return
+
+        await supabaseAdmin.from('automation_events').insert({
+          account_id: body.account_id,
+          lead_id: matchedLeadId,
+          step: lastStep.step,
+          event_type: 'form_submit',
+        })
+      } catch (err) {
+        console.error('form_submit event error:', err)
+      }
+    })
+  }
+
   // Fire automation (fire-and-forget — lead is already saved)
   if (insertedLead?.id && body.email) {
     Promise.resolve().then(async () => {
@@ -109,7 +151,7 @@ export async function POST(request: NextRequest) {
 
         const { data: automationConfig } = await supabaseAdmin
           .from('lead_automations')
-          .select('is_enabled, discount_percent')
+          .select('is_enabled, discount_percent, hero_image_url')
           .eq('account_id', body.account_id)
           .single()
 
@@ -124,6 +166,11 @@ export async function POST(request: NextRequest) {
         const slug = (formData?.form_config as { slug?: string } | null)?.slug
         const formUrl = slug ? `${siteUrl}/${slug}` : null
 
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://quote-box.com'
+        const heroImageUrl = automationConfig.hero_image_url
+          ? `${siteUrl}${automationConfig.hero_image_url}`
+          : null
+
         await sendAutomationStep({
           email: body.email,
           phone: body.phone ?? null,
@@ -132,6 +179,9 @@ export async function POST(request: NextRequest) {
           formUrl,
           step: 'initial_contact',
           discountPercent: automationConfig.discount_percent ?? 10,
+          leadId: insertedLead.id,
+          accountId: body.account_id,
+          heroImageUrl,
         })
 
         await scheduleLeadAutomation(insertedLead.id, body.account_id)
