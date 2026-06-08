@@ -129,12 +129,19 @@ export async function POST(request: NextRequest) {
         const lastStep = automatedLeads.find((s) => s.lead_id === matchedLeadId)
         if (!lastStep) return
 
-        await supabaseAdmin.from('automation_events').insert({
-          account_id: body.account_id,
-          lead_id: matchedLeadId,
-          step: lastStep.step,
-          event_type: 'form_submit',
-        })
+        await Promise.all([
+          supabaseAdmin.from('automation_events').insert({
+            account_id: body.account_id,
+            lead_id: matchedLeadId,
+            step: lastStep.step,
+            event_type: 'form_submit',
+          }),
+          supabaseAdmin
+            .from('automation_steps')
+            .update({ status: 'skipped', sent_at: new Date().toISOString() })
+            .eq('lead_id', matchedLeadId)
+            .eq('status', 'pending'),
+        ])
       } catch (err) {
         console.error('form_submit event error:', err)
       }
