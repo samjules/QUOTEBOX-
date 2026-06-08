@@ -7,6 +7,20 @@ interface AutomationConfig {
   discount_percent: number
 }
 
+interface TestLead {
+  id: string
+  name: string | null
+  email: string | null
+  phone: string | null
+  form_type: string | null
+}
+
+interface TestResult {
+  step: string
+  ok: boolean
+  error?: string
+}
+
 interface ActivityStep {
   id: string
   step: string
@@ -92,18 +106,43 @@ export default function AutomationsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
+  const [testLeads, setTestLeads] = useState<TestLead[]>([])
+  const [testLeadId, setTestLeadId] = useState<string>('')
+  const [testSending, setTestSending] = useState(false)
+  const [testResults, setTestResults] = useState<TestResult[] | null>(null)
+
   useEffect(() => {
     async function load() {
-      const [cfgRes, actRes] = await Promise.all([
+      const [cfgRes, actRes, leadsRes] = await Promise.all([
         fetch('/api/automations'),
         fetch('/api/automations/activity'),
+        fetch('/api/automations/test'),
       ])
       if (cfgRes.ok) setConfig(await cfgRes.json())
       if (actRes.ok) setActivity(await actRes.json())
+      if (leadsRes.ok) {
+        const leads = await leadsRes.json()
+        setTestLeads(leads)
+        if (leads.length > 0) setTestLeadId(leads[0].id)
+      }
       setLoading(false)
     }
     load()
   }, [])
+
+  async function sendTest() {
+    if (!testLeadId) return
+    setTestSending(true)
+    setTestResults(null)
+    const res = await fetch('/api/automations/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lead_id: testLeadId }),
+    })
+    const data = await res.json()
+    setTestResults(res.ok ? data.results : [{ step: 'error', ok: false, error: data.error }])
+    setTestSending(false)
+  }
 
   async function save(updates: Partial<AutomationConfig>) {
     const next = { ...config, ...updates }
@@ -257,6 +296,63 @@ export default function AutomationsPage() {
               <span className="text-sm text-gray-500">%</span>
               <span className="text-xs text-gray-400">off in step 3</span>
             </div>
+          </div>
+
+          {/* Test panel */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Send Test</h2>
+            {testLeads.length === 0 ? (
+              <p className="text-xs text-gray-400">No leads with emails yet.</p>
+            ) : (
+              <div className="space-y-3">
+                <select
+                  value={testLeadId}
+                  onChange={(e) => { setTestLeadId(e.target.value); setTestResults(null) }}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                >
+                  {testLeads.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.name || 'Unnamed'} — {l.email}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={sendTest}
+                  disabled={testSending}
+                  className="w-full px-3 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {testSending ? (
+                    <>
+                      <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                      </svg>
+                      Sending…
+                    </>
+                  ) : 'Send All Steps Now'}
+                </button>
+                {testResults && (
+                  <div className="space-y-1.5 pt-1">
+                    {testResults.map((r) => (
+                      <div key={r.step} className="flex items-center gap-2 text-xs">
+                        {r.ok ? (
+                          <span className="w-4 h-4 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0">✓</span>
+                        ) : (
+                          <span className="w-4 h-4 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">✕</span>
+                        )}
+                        <span className={r.ok ? 'text-gray-700' : 'text-red-600'}>
+                          {r.step === 'initial_contact' ? 'Instant Contact'
+                            : r.step === 'day1_followup' ? 'Day 1 Follow-up'
+                            : r.step === 'discount_offer' ? 'Discount Offer'
+                            : r.step}
+                          {!r.ok && r.error ? ` — ${r.error}` : ''}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Activity feed */}
