@@ -19,6 +19,7 @@ const STEP_ICONS: Record<string, string> = {
 const EVENT_LABELS: Record<string, { icon: string; label: string; color: string }> = {
   email_open: { icon: '👁', label: 'Email opened', color: 'text-blue-600' },
   link_click: { icon: '🔗', label: 'Link clicked', color: 'text-indigo-600' },
+  form_view: { icon: '📋', label: 'Form viewed', color: 'text-purple-600' },
   form_submit: { icon: '✅', label: 'Form submitted', color: 'text-green-600' },
 }
 

@@ -114,13 +114,15 @@ export async function POST(request: NextRequest) {
 
         if (!automatedLeads?.length) return
 
-        // Find the lead among them that matches this email
+        // Find the ORIGINAL lead (not the one just inserted) that matches this email
         const leadIds = Array.from(new Set(automatedLeads.map((s) => s.lead_id)))
         const { data: matchedLeads } = await supabaseAdmin
           .from('leads')
           .select('id')
           .in('id', leadIds)
           .eq('email', body.email)
+          .neq('id', insertedLead!.id)
+          .order('created_at', { ascending: true })
           .limit(1)
 
         if (!matchedLeads?.length) return

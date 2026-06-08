@@ -828,7 +828,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                       {automationActivity.steps.map((s) => {
                         const STEP_ICONS: Record<string, string> = { initial_contact: '⚡', day1_followup: '🔔', discount_offer: '🎁', mark_lost: '🚫' }
                         const STEP_LABELS: Record<string, string> = { initial_contact: 'Instant Contact', day1_followup: 'Day 1 Follow-up', discount_offer: 'Discount Offer', mark_lost: 'Mark as Lost' }
-                        const EVENT_META: Record<string, { icon: string; label: string }> = { email_open: { icon: '👁', label: 'Opened' }, link_click: { icon: '🔗', label: 'Clicked' }, form_submit: { icon: '✅', label: 'Submitted' } }
+                        const EVENT_META: Record<string, { icon: string; label: string }> = { email_open: { icon: '👁', label: 'Opened' }, link_click: { icon: '🔗', label: 'Clicked' }, form_view: { icon: '📋', label: 'Viewed form' }, form_submit: { icon: '✅', label: 'Submitted' } }
                         return (
                           <div key={s.step} className="relative pl-8">
                             <div className={`absolute left-0 w-6 h-6 rounded-full flex items-center justify-center text-xs border-2 bg-white ${s.status === 'sent' ? 'border-indigo-400' : s.status === 'skipped' ? 'border-gray-200' : 'border-gray-300'}`}>

@@ -147,11 +147,11 @@ export async function sendAutomationStep(params: {
     ? `${trackBase}?e=o&a=${params.accountId}&l=${params.leadId}&s=${params.step}`
     : null
 
-  const destinationUrl = params.formUrl
+  const destinationUrl = params.formUrl && params.leadId && params.accountId
     ? params.step === 'discount_offer'
-      ? `${params.formUrl}?automation_step=discount_offer&discount=${params.discountPercent}`
-      : `${params.formUrl}?automation_step=${params.step}`
-    : null
+      ? `${params.formUrl}?automation_step=discount_offer&discount=${params.discountPercent}&a=${params.accountId}&l=${params.leadId}`
+      : `${params.formUrl}?automation_step=${params.step}&a=${params.accountId}&l=${params.leadId}`
+    : params.formUrl
 
   const trackedFormUrl = params.leadId && params.accountId && destinationUrl
     ? `${trackBase}?e=c&a=${params.accountId}&l=${params.leadId}&s=${params.step}&r=${encodeURIComponent(destinationUrl)}`

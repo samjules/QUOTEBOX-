@@ -1103,9 +1103,14 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
     const params = new URLSearchParams(window.location.search)
     setIsTestMode(params.get('pixel_test') === '1')
     const as = params.get('automation_step')
+    const a = params.get('a')
+    const l = params.get('l')
     if (as) setAutomationStep(as)
     const d = params.get('discount')
     if (d) setAutomationDiscount(Number(d))
+    if (as && a && l) {
+      fetch(`/api/automations/track?e=v&a=${a}&l=${l}&s=${as}`).catch(() => {})
+    }
   }, [])
 
   // Load Meta Pixel and fire PageView

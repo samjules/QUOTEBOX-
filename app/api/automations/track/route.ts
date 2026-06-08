@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   const redirectUrl = searchParams.get('r')
 
   if (accountId && leadId && step && event) {
-    const eventType = event === 'o' ? 'email_open' : event === 'c' ? 'link_click' : null
+    const eventType = event === 'o' ? 'email_open' : event === 'c' ? 'link_click' : event === 'v' ? 'form_view' : null
     if (eventType) {
       const admin = createAdminClient()
       void Promise.resolve(admin.from('automation_events').insert({
@@ -27,6 +27,10 @@ export async function GET(request: NextRequest) {
 
   if (event === 'c' && redirectUrl) {
     return NextResponse.redirect(decodeURIComponent(redirectUrl))
+  }
+
+  if (event === 'v') {
+    return new NextResponse(null, { status: 204 })
   }
 
   return new NextResponse(PIXEL, {
