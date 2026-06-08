@@ -1485,27 +1485,6 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
         </div>
       )}
 
-      {/* ── Automation discount banner ── */}
-      {automationStep === 'discount_offer' && automationDiscount && (
-        <div style={{
-          width: '100%',
-          maxWidth: 520,
-          marginBottom: 12,
-          background: '#14532d',
-          borderRadius: 10,
-          padding: '10px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          color: '#dcfce7',
-          fontSize: 14,
-          fontWeight: 600,
-        }}>
-          <span style={{ fontSize: 18 }}>🎁</span>
-          <span>Your {automationDiscount}% discount is reserved — we&apos;ll apply it when we confirm your booking.</span>
-        </div>
-      )}
-
       <div style={{
         width: '100%',
         maxWidth: 520,
@@ -1574,6 +1553,26 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
 
         {/* ── Body ── */}
         <div style={{ padding: '30px 26px 36px' }}>
+
+          {/* ── Discount banner ── */}
+          {automationStep === 'discount_offer' && automationDiscount && (
+            <div style={{
+              marginBottom: 24,
+              background: '#f0fdf4',
+              border: '1px solid #bbf7d0',
+              borderRadius: 10,
+              padding: '10px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              color: '#166534',
+              fontSize: 14,
+              fontWeight: 600,
+            }}>
+              <span style={{ fontSize: 18 }}>🎁</span>
+              <span>Your {automationDiscount}% discount is reserved — we&apos;ll apply it when we confirm your booking.</span>
+            </div>
+          )}
 
           {/* ── Field step: one question at a time ── */}
           {isFieldStep && currentField && (
