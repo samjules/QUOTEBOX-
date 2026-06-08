@@ -79,6 +79,8 @@ export async function POST(request: NextRequest) {
     formUrl,
     discountPercent: automationConfig?.discount_percent ?? 10,
     heroImageUrl,
+    leadId: lead_id,
+    accountId,
   }
 
   const results: { step: string; ok: boolean; error?: string }[] = []
