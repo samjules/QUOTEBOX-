@@ -4,6 +4,49 @@ import { useState, useTransition } from 'react'
 import type { Lead } from '@/lib/types'
 import { updateLeadStatus, saveLeadNote, deleteLead, updateContactCount } from './actions'
 
+function formatPhone(raw: string | null | undefined): string {
+  if (!raw) return ''
+  const digits = raw.replace(/\D/g, '')
+  if (digits.length === 10) return `+1${digits}`
+  if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`
+  if (digits.length > 7) return `+${digits}`
+  return raw
+}
+
+function phoneFlag(raw: string | null | undefined): string {
+  if (!raw) return ''
+  const digits = raw.replace(/\D/g, '')
+  const e164 = digits.length === 10 ? `1${digits}` : digits
+  if (e164.startsWith('1')) return '🇺🇸'
+  if (e164.startsWith('44')) return '🇬🇧'
+  if (e164.startsWith('61')) return '🇦🇺'
+  if (e164.startsWith('64')) return '🇳🇿'
+  if (e164.startsWith('353')) return '🇮🇪'
+  if (e164.startsWith('52')) return '🇲🇽'
+  if (e164.startsWith('55')) return '🇧🇷'
+  if (e164.startsWith('91')) return '🇮🇳'
+  if (e164.startsWith('33')) return '🇫🇷'
+  if (e164.startsWith('49')) return '🇩🇪'
+  if (e164.startsWith('34')) return '🇪🇸'
+  if (e164.startsWith('39')) return '🇮🇹'
+  if (e164.startsWith('31')) return '🇳🇱'
+  if (e164.startsWith('46')) return '🇸🇪'
+  if (e164.startsWith('47')) return '🇳🇴'
+  if (e164.startsWith('45')) return '🇩🇰'
+  if (e164.startsWith('41')) return '🇨🇭'
+  if (e164.startsWith('32')) return '🇧🇪'
+  if (e164.startsWith('351')) return '🇵🇹'
+  if (e164.startsWith('48')) return '🇵🇱'
+  if (e164.startsWith('7')) return '🇷🇺'
+  if (e164.startsWith('81')) return '🇯🇵'
+  if (e164.startsWith('82')) return '🇰🇷'
+  if (e164.startsWith('86')) return '🇨🇳'
+  if (e164.startsWith('65')) return '🇸🇬'
+  if (e164.startsWith('27')) return '🇿🇦'
+  if (e164.startsWith('971')) return '🇦🇪'
+  return '🌐'
+}
+
 const SEND_INVOICE_FUNCTION_URL =
   process.env.NEXT_PUBLIC_SEND_INVOICE_FUNCTION_URL ||
   `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-invoice`
@@ -375,7 +418,12 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                         {lead.email || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {rowPhone || '-'}
+                        {rowPhone ? (
+                          <span className="flex items-center gap-1.5">
+                            <span>{phoneFlag(rowPhone)}</span>
+                            <span>{formatPhone(rowPhone)}</span>
+                          </span>
+                        ) : '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
                         {rowQuote
@@ -524,9 +572,12 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                   <div className="flex justify-between text-sm">
                     <dt className="text-gray-500">Phone</dt>
                     <dd className="text-gray-900 font-medium">
-                      {selectedPhone
-                        ? <a href={`tel:${selectedPhone}`} className="text-indigo-600 hover:underline">{selectedPhone}</a>
-                        : '-'}
+                      {selectedPhone ? (
+                        <span className="flex items-center gap-1.5">
+                          <span>{phoneFlag(selectedPhone)}</span>
+                          <a href={`tel:${formatPhone(selectedPhone)}`} className="text-indigo-600 hover:underline">{formatPhone(selectedPhone)}</a>
+                        </span>
+                      ) : '-'}
                     </dd>
                   </div>
                 </dl>
