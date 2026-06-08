@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { scheduleLeadAutomation } from '@/lib/schedule-automation'
+import { sendAutomationStep } from '@/lib/send-automation-step'
 
 export async function POST(request: NextRequest) {
   // Use service role key to bypass RLS — FK constraint check on hosted_form_id
@@ -41,7 +43,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'This form is no longer active' }, { status: 400 })
   }
 
-  const { error } = await supabaseAdmin.from('leads').insert({
+  const { data: insertedLead, error } = await supabaseAdmin.from('leads').insert({
     account_id: body.account_id,
     hosted_form_id: body.hosted_form_id,
     name: body.name,
@@ -50,7 +52,7 @@ export async function POST(request: NextRequest) {
     form_type: body.form_type,
     form_data: body.form_data,
     status: body.status,
-  })
+  }).select('id').single()
 
   if (error) {
     console.error('Lead insert error:', error)
@@ -95,6 +97,48 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     // Non-fatal: lead is already saved, log billing error
     console.error('Credit deduction error:', err)
+  }
+
+  // Fire automation (fire-and-forget — lead is already saved)
+  if (insertedLead?.id && body.email) {
+    Promise.resolve().then(async () => {
+      try {
+        await supabaseAdmin
+          .from('lead_automations')
+          .upsert({ account_id: body.account_id }, { onConflict: 'account_id', ignoreDuplicates: true })
+
+        const { data: automationConfig } = await supabaseAdmin
+          .from('lead_automations')
+          .select('is_enabled, discount_percent')
+          .eq('account_id', body.account_id)
+          .single()
+
+        if (!automationConfig?.is_enabled) return
+
+        const [{ data: accountDetails }, { data: formData }] = await Promise.all([
+          supabaseAdmin.from('accounts').select('business_name').eq('id', body.account_id).single(),
+          supabaseAdmin.from('hosted_forms').select('form_config').eq('id', body.hosted_form_id).single(),
+        ])
+
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://quote-box.com'
+        const slug = (formData?.form_config as { slug?: string } | null)?.slug
+        const formUrl = slug ? `${siteUrl}/${slug}` : null
+
+        await sendAutomationStep({
+          email: body.email,
+          phone: body.phone ?? null,
+          name: body.name || 'there',
+          businessName: accountDetails?.business_name || 'Your service provider',
+          formUrl,
+          step: 'initial_contact',
+          discountPercent: automationConfig.discount_percent ?? 10,
+        })
+
+        await scheduleLeadAutomation(insertedLead.id, body.account_id)
+      } catch (err) {
+        console.error('Automation error (form lead):', err)
+      }
+    })
   }
 
   return NextResponse.json({ success: true })

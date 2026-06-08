@@ -177,7 +177,8 @@ export default function AutomationsPage() {
                   </div>
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wider text-indigo-200 leading-none mb-0.5">Trigger</p>
-                    <p className="font-semibold leading-tight">Meta Lead Arrives</p>
+                    <p className="font-semibold leading-tight">Any New Lead</p>
+                    <p className="text-xs text-indigo-300 mt-0.5">Meta or hosted form</p>
                   </div>
                 </div>
               </div>
@@ -297,7 +298,7 @@ export default function AutomationsPage() {
           <div className="rounded-xl bg-indigo-50 border border-indigo-100 px-4 py-3 text-xs text-indigo-600 space-y-1">
             <p className="font-semibold text-indigo-700">How it works</p>
             <ul className="list-disc list-inside space-y-0.5 text-indigo-500">
-              <li>Triggered by every new Meta lead</li>
+              <li>Triggered by every new lead (Meta or form)</li>
               <li>Stops if quote form is submitted</li>
               <li>Requires Twilio env vars for SMS</li>
             </ul>
