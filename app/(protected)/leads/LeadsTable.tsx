@@ -494,14 +494,15 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/20 z-30"
+            className="fixed inset-0 z-30 animate-fade-in"
+            style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(2px)' }}
             onClick={closeLead}
           />
 
           {/* Slide-in panel */}
-          <div className="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-40 flex flex-col overflow-hidden">
+          <div className="fixed top-0 right-0 h-full w-full max-w-md bg-white z-40 flex flex-col overflow-hidden animate-slide-in-right" style={{ boxShadow: '-8px 0 48px rgba(0,0,0,0.16)' }}>
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white">
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-semibold text-gray-900">{selected.name || 'Unnamed Lead'}</h2>

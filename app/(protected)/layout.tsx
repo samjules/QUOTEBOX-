@@ -30,7 +30,7 @@ export default async function ProtectedLayout({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden" style={{ background: '#f4f4f6' }}>
       <Suspense>
         <ImpersonationBanner />
       </Suspense>
