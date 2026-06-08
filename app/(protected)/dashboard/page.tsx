@@ -255,7 +255,7 @@ export default async function DashboardPage({
           {!blessed && <LeadUsageBanner plan={plan} monthlyLeads={monthlyLeads} />}
 
           {/* Onboarding checklist — hidden for PPL */}
-          {!onboardingComplete && plan !== 'pay_per_lead' && (
+          {!onboardingComplete && (
             <OnboardingChecklist
               metaConnected={metaConnected}
               hasBillingPlan={hasBillingPlan}
