@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import type { Lead } from '@/lib/types'
-import { updateLeadStatus, saveLeadNote, deleteLead, updateContactCount } from './actions'
+import { updateLeadStatus, saveLeadNote, deleteLead, updateContactCount, saveCustomQuote } from './actions'
 
 function formatPhone(raw: string | null | undefined): string {
   if (!raw) return ''
@@ -191,7 +191,7 @@ function groupLeads(leads: Lead[]): DisplayRow[] {
   return rows
 }
 
-const INTERNAL_KEYS = ['name', 'email', 'phone', '_quote_total', '_quote_currency', '_breakdown']
+const INTERNAL_KEYS = ['name', 'email', 'phone', '_quote_total', '_quote_currency', '_breakdown', '_custom_quote_total', '_custom_quote_currency', '_contact_count', '_sms_opt_in', '_booking_date']
 
 export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId, agreementTemplateUrl, fieldMap }: { leads: Lead[]; stripeConnectAccountId: string | null; agreementTemplateUrl: string | null; fieldMap: FieldMap }) {
   const [leads, setLeads] = useState<Lead[]>(initialLeads)
@@ -222,6 +222,11 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
   const [agreementStatus, setAgreementStatus] = useState<string | null>(null)
   const [agreementError, setAgreementError] = useState<string | null>(null)
 
+  const [customQuoteAmount, setCustomQuoteAmount] = useState<string>('')
+  const [customQuoteCurrency, setCustomQuoteCurrency] = useState<string>('$')
+  const [customQuoteSaved, setCustomQuoteSaved] = useState(false)
+  const [isPendingCustomQuote, startCustomQuoteTransition] = useTransition()
+
   const [automationActivity, setAutomationActivity] = useState<{
     steps: { step: string; status: string; scheduled_at: string; sent_at: string | null; events: { step: string; event_type: string; created_at: string }[] }[]
     converted: boolean
@@ -246,6 +251,10 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
     setAgreementStatus(null)
     setAgreementError(null)
     setAutomationActivity(null)
+    const existingCustom = lead.form_data?._custom_quote_total
+    setCustomQuoteAmount(typeof existingCustom === 'number' && existingCustom > 0 ? String(existingCustom) : '')
+    setCustomQuoteCurrency((lead.form_data?._custom_quote_currency as string) ?? (lead.form_data?._quote_currency as string) ?? '$')
+    setCustomQuoteSaved(false)
     fetch(`/api/agreements/status?leadId=${lead.id}`)
       .then((r) => r.json())
       .then((d) => { if (d.agreement) setAgreementStatus(d.agreement.status) })
@@ -348,11 +357,20 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
   const getDisplayStatus = (lead: Lead) =>
     savedStatus[lead.id] ?? lead.status
 
-  function getQuote(lead: Lead): { total: number; currency: string } | null {
+  function getQuote(lead: Lead): { total: number; currency: string; isCustom: boolean } | null {
+    const customTotal = lead.form_data?._custom_quote_total
+    if (typeof customTotal === 'number' && customTotal > 0) {
+      return { total: customTotal, currency: (lead.form_data?._custom_quote_currency as string) ?? '$', isCustom: true }
+    }
     const total = lead.form_data?._quote_total
     if (typeof total !== 'number' || total === 0) return null
-    const currency = (lead.form_data?._quote_currency as string) ?? '$'
-    return { total, currency }
+    return { total, currency: (lead.form_data?._quote_currency as string) ?? '$', isCustom: false }
+  }
+
+  function getOriginalQuote(lead: Lead): { total: number; currency: string } | null {
+    const total = lead.form_data?._quote_total
+    if (typeof total !== 'number' || total === 0) return null
+    return { total, currency: (lead.form_data?._quote_currency as string) ?? '$' }
   }
 
   const formDataEntries = !isSuperLeadSelected && selected?.form_data
@@ -426,10 +444,12 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                         ) : '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                        {rowQuote
-                          ? `${rowQuote.currency}${rowQuote.total.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
-                          : <span className="text-gray-400 font-normal">—</span>
-                        }
+                        {rowQuote ? (
+                          <span className="flex items-center gap-1" title={rowQuote.isCustom ? 'Edited quote' : 'Form quote'}>
+                            <span className="text-xs">{rowQuote.isCustom ? '✏️' : '📋'}</span>
+                            {rowQuote.currency}{rowQuote.total.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                          </span>
+                        ) : <span className="text-gray-400 font-normal">—</span>}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-1 flex-wrap">
@@ -584,17 +604,70 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
               </section>
 
               {/* Quote total */}
-              {selectedQuote && (
-                <section>
-                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Estimated Quote</h3>
-                  <div className="rounded-xl bg-green-50 border border-green-200 px-5 py-4 flex items-center justify-between">
-                    <span className="text-sm text-green-700 font-medium">Total</span>
-                    <span className="text-2xl font-bold text-green-800">
-                      {selectedQuote.currency}{selectedQuote.total.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                </section>
-              )}
+              {(() => {
+                const originalQuote = selected ? getOriginalQuote(selected) : null
+                const hasAnyQuote = originalQuote || customQuoteAmount
+                if (!hasAnyQuote && !originalQuote) return null
+                return (
+                  <section>
+                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Quote</h3>
+
+                    {/* Original form quote */}
+                    {originalQuote && (
+                      <div className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-3 flex items-center justify-between mb-3">
+                        <span className="flex items-center gap-1.5 text-sm text-gray-500">
+                          <span>📋</span> Form quote
+                        </span>
+                        <span className="text-lg font-semibold text-gray-700">
+                          {originalQuote.currency}{originalQuote.total.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Editable custom quote */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        <span>✏️</span> Edited quote
+                      </div>
+                      <div className="flex gap-2">
+                        <select
+                          value={customQuoteCurrency}
+                          onChange={(e) => { setCustomQuoteCurrency(e.target.value); setCustomQuoteSaved(false) }}
+                          className="rounded-md border border-gray-300 bg-white px-2 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 w-16"
+                        >
+                          {['$', '€', '£', 'CA$', 'A$', 'NZ$', 'R', '¥'].map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={customQuoteAmount}
+                          onChange={(e) => { setCustomQuoteAmount(e.target.value); setCustomQuoteSaved(false) }}
+                          placeholder="0.00"
+                          className="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                        <button
+                          onClick={() => {
+                            if (!selected) return
+                            const total = customQuoteAmount ? parseFloat(customQuoteAmount) : null
+                            startCustomQuoteTransition(async () => {
+                              await saveCustomQuote(selected.id, total, customQuoteCurrency)
+                              setCustomQuoteSaved(true)
+                            })
+                          }}
+                          disabled={isPendingCustomQuote}
+                          className="px-3 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                        >
+                          {isPendingCustomQuote ? '…' : 'Save'}
+                        </button>
+                      </div>
+                      {customQuoteSaved && <p className="text-xs text-green-600 font-medium">Saved</p>}
+                    </div>
+                  </section>
+                )
+              })()}
 
               {/* Sources — super lead breakdown */}
               {isSuperLeadSelected && (
