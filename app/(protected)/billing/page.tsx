@@ -306,18 +306,18 @@ export default function BillingPage() {
       {/* Current Plan Card */}
       {plan && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 mt-8">
-          <div className={`rounded-xl p-6 flex items-center justify-between ${plan === 'fully_managed' || plan === 'pay_per_lead' ? 'bg-gray-900 text-white' : 'bg-indigo-50 border border-indigo-200'}`}>
+          <div className={`rounded-xl p-6 flex items-center justify-between ${plan === 'fully_managed' || plan === 'pay_per_lead' ? 'bg-gray-900 text-white' : 'bg-brand-50 border border-brand-200'}`}>
             <div>
-              <p className={`text-xs font-semibold uppercase tracking-widest mb-1 ${plan === 'fully_managed' || plan === 'pay_per_lead' ? 'text-gray-400' : 'text-indigo-400'}`}>
+              <p className={`text-xs font-semibold uppercase tracking-widest mb-1 ${plan === 'fully_managed' || plan === 'pay_per_lead' ? 'text-gray-400' : 'text-brand-400'}`}>
                 Current Plan
               </p>
-              <p className={`text-xl font-bold ${plan === 'fully_managed' || plan === 'pay_per_lead' ? 'text-white' : 'text-indigo-900'}`}>
+              <p className={`text-xl font-bold ${plan === 'fully_managed' || plan === 'pay_per_lead' ? 'text-white' : 'text-brand-900'}`}>
                 {plan === 'starter' && 'Starter — $20/month'}
                 {plan === 'growth' && 'Growth — $30/month'}
                 {plan === 'fully_managed' && 'Fully Managed — $15/lead'}
                 {plan === 'pay_per_lead' && 'Pay Per Lead — $15/lead'}
               </p>
-              <p className={`text-sm mt-1 ${plan === 'fully_managed' || plan === 'pay_per_lead' ? 'text-gray-400' : 'text-indigo-600'}`}>
+              <p className={`text-sm mt-1 ${plan === 'fully_managed' || plan === 'pay_per_lead' ? 'text-gray-400' : 'text-brand-600'}`}>
                 {plan === 'starter' && '1 quote form · 10 leads/month · 1 VSL'}
                 {plan === 'growth' && '3 quote forms · 50 leads/month · Priority support'}
                 {plan === 'fully_managed' && 'Guaranteed qualified leads · Dedicated account manager'}
@@ -333,7 +333,7 @@ export default function BillingPage() {
               <button
                 onClick={openPortal}
                 disabled={openingPortal}
-                className="ml-6 flex-shrink-0 px-5 py-2.5 rounded-lg text-sm font-semibold bg-white border border-indigo-300 text-indigo-700 hover:bg-indigo-50 transition disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+                className="ml-6 flex-shrink-0 px-5 py-2.5 rounded-lg text-sm font-semibold bg-white border border-brand-300 text-brand-700 hover:bg-brand-50 transition disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
               >
                 {openingPortal ? 'Opening…' : 'Manage Subscription'}
               </button>
@@ -389,7 +389,7 @@ export default function BillingPage() {
               <button
                 onClick={() => purchaseSubscription('starter')}
                 disabled={subscribing !== null || plan !== null}
-                className="w-full py-2 px-4 rounded-lg border-2 border-indigo-500 text-indigo-600 font-semibold text-sm hover:bg-indigo-50 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full py-2 px-4 rounded-lg border-2 border-brand-500 text-brand-600 font-semibold text-sm hover:bg-brand-50 transition disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {subscribing === 'starter' ? 'Redirecting…' : plan ? 'Switch Plan via Portal' : 'Get Started'}
               </button>
@@ -397,12 +397,12 @@ export default function BillingPage() {
           </div>
 
           {/* Growth */}
-          <div className="bg-white rounded-xl shadow-lg border-2 border-indigo-500 p-6 flex flex-col relative">
+          <div className="bg-white rounded-xl shadow-lg border-2 border-brand-500 p-6 flex flex-col relative">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-              <span className="bg-indigo-500 text-white text-xs font-bold px-3 py-1 rounded-full">MOST POPULAR</span>
+              <span className="bg-brand-500 text-white text-xs font-bold px-3 py-1 rounded-full">MOST POPULAR</span>
             </div>
             <div className="mb-4">
-              <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-600 mb-3">GROWTH</span>
+              <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-brand-100 text-brand-600 mb-3">GROWTH</span>
               <div className="flex items-end gap-1">
                 <span className="text-4xl font-bold text-gray-900">$30</span>
                 <span className="text-gray-500 mb-1">/month</span>
@@ -431,7 +431,7 @@ export default function BillingPage() {
               <button
                 onClick={() => purchaseSubscription('growth')}
                 disabled={subscribing !== null || plan !== null}
-                className="w-full py-2 px-4 rounded-lg bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full py-2 px-4 rounded-lg bg-brand-600 text-white font-semibold text-sm hover:bg-brand-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {subscribing === 'growth' ? 'Redirecting…' : plan ? 'Switch Plan via Portal' : 'Upgrade to Growth'}
               </button>
@@ -498,23 +498,23 @@ export default function BillingPage() {
           <div className="space-y-6">
             {/* Credit Balance Card — credit-based plans */}
             {(plan === 'fully_managed' || plan === 'pay_per_lead') && (
-              <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg p-8 text-white">
+              <div className="bg-gradient-to-br from-brand-500 to-purple-600 rounded-xl shadow-lg p-8 text-white">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-indigo-100 text-sm font-medium">
+                    <p className="text-brand-100 text-sm font-medium">
                       Available Credits
                     </p>
                     <p className="text-5xl font-bold mt-2">
                       ${currentBalance.toFixed(2)}
                     </p>
-                    <p className="text-indigo-100 text-sm mt-2">
+                    <p className="text-brand-100 text-sm mt-2">
                       {Math.floor(currentBalance / COST_PER_LEAD)} leads remaining
                       at ${COST_PER_LEAD.toFixed(2)}/lead
                     </p>
                   </div>
                   <button
                     onClick={() => setShowModal(true)}
-                    className="bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:bg-indigo-50 transition shadow-md"
+                    className="bg-white text-brand-600 px-6 py-3 rounded-lg font-semibold hover:bg-brand-50 transition shadow-md"
                   >
                     Add Credits
                   </button>
@@ -663,7 +663,7 @@ export default function BillingPage() {
             />
             <div className="relative z-10 bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
               {/* Header */}
-              <div style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #2d2d5e 100%)' }} className="px-8 py-8 text-center">
+              <div style={{ background: 'linear-gradient(135deg, #5b5bd6 0%, #2d2d5e 100%)' }} className="px-8 py-8 text-center">
                 <div className="text-5xl mb-4">🤝</div>
                 <h2 className="text-2xl font-extrabold text-white leading-tight">
                   I didn&apos;t know you were chill like that
@@ -681,11 +681,11 @@ export default function BillingPage() {
                 <button
                   onClick={() => purchaseSubscription('starter', 14)}
                   disabled={!!broSubscribing}
-                  className="w-full text-left rounded-xl border-2 border-gray-200 hover:border-indigo-400 p-4 transition disabled:opacity-60 disabled:cursor-not-allowed group"
+                  className="w-full text-left rounded-xl border-2 border-gray-200 hover:border-brand-400 p-4 transition disabled:opacity-60 disabled:cursor-not-allowed group"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="font-bold text-gray-900 group-hover:text-indigo-700 transition">Starter</div>
+                      <div className="font-bold text-gray-900 group-hover:text-brand-700 transition">Starter</div>
                       <div className="text-sm text-gray-500 mt-0.5">1 form · 10 leads/month</div>
                       <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">
                         14-day free trial
@@ -695,7 +695,7 @@ export default function BillingPage() {
                       <div className="text-2xl font-extrabold text-gray-900">$20</div>
                       <div className="text-xs text-gray-400">/month after</div>
                       {broSubscribing === 'starter' && (
-                        <div className="text-xs text-indigo-500 mt-1 font-medium">Redirecting…</div>
+                        <div className="text-xs text-brand-500 mt-1 font-medium">Redirecting…</div>
                       )}
                     </div>
                   </div>
@@ -705,24 +705,24 @@ export default function BillingPage() {
                 <button
                   onClick={() => purchaseSubscription('growth', 14)}
                   disabled={!!broSubscribing}
-                  className="w-full text-left rounded-xl border-2 border-indigo-500 bg-indigo-50 hover:bg-indigo-100 p-4 transition disabled:opacity-60 disabled:cursor-not-allowed relative"
+                  className="w-full text-left rounded-xl border-2 border-brand-500 bg-brand-50 hover:bg-brand-100 p-4 transition disabled:opacity-60 disabled:cursor-not-allowed relative"
                 >
                   <div className="absolute -top-2.5 left-4">
-                    <span className="bg-indigo-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full">MOST POPULAR</span>
+                    <span className="bg-brand-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full">MOST POPULAR</span>
                   </div>
                   <div className="flex items-center justify-between mt-1">
                     <div>
-                      <div className="font-bold text-indigo-900">Growth</div>
-                      <div className="text-sm text-indigo-600 mt-0.5">3 forms · 50 leads/month</div>
+                      <div className="font-bold text-brand-900">Growth</div>
+                      <div className="text-sm text-brand-600 mt-0.5">3 forms · 50 leads/month</div>
                       <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">
                         14-day free trial
                       </span>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-extrabold text-indigo-900">$30</div>
-                      <div className="text-xs text-indigo-400">/month after</div>
+                      <div className="text-2xl font-extrabold text-brand-900">$30</div>
+                      <div className="text-xs text-brand-400">/month after</div>
                       {broSubscribing === 'growth' && (
-                        <div className="text-xs text-indigo-500 mt-1 font-medium">Redirecting…</div>
+                        <div className="text-xs text-brand-500 mt-1 font-medium">Redirecting…</div>
                       )}
                     </div>
                   </div>
@@ -769,7 +769,7 @@ export default function BillingPage() {
                         purchaseCredits(pkg.amount, pkg.credits)
                       }
                       disabled={purchasing}
-                      className={`w-full text-left rounded-lg p-4 hover:bg-indigo-50 transition border-2 ${pkg.featured ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-indigo-500'}`}
+                      className={`w-full text-left rounded-lg p-4 hover:bg-brand-50 transition border-2 ${pkg.featured ? 'border-brand-500 bg-brand-50' : 'border-gray-200 hover:border-brand-500'}`}
                     >
                       <div className="flex justify-between items-center">
                         <div>
@@ -778,7 +778,7 @@ export default function BillingPage() {
                           </p>
                           <p className="text-sm text-gray-500">{pkg.perLead}</p>
                           {pkg.featured && (
-                            <span className="inline-block mt-1 px-2 py-1 text-xs font-semibold text-indigo-800 bg-indigo-200 rounded">
+                            <span className="inline-block mt-1 px-2 py-1 text-xs font-semibold text-brand-800 bg-brand-200 rounded">
                               BEST VALUE
                             </span>
                           )}
@@ -801,9 +801,9 @@ export default function BillingPage() {
                 {purchasing && (
                   <div className="mt-4 text-center">
                     <div className="animate-pulse flex space-x-2 justify-center items-center">
-                      <div className="h-3 w-3 bg-indigo-600 rounded-full" />
-                      <div className="h-3 w-3 bg-indigo-600 rounded-full" />
-                      <div className="h-3 w-3 bg-indigo-600 rounded-full" />
+                      <div className="h-3 w-3 bg-brand-600 rounded-full" />
+                      <div className="h-3 w-3 bg-brand-600 rounded-full" />
+                      <div className="h-3 w-3 bg-brand-600 rounded-full" />
                     </div>
                     <p className="text-sm text-gray-600 mt-2">
                       Redirecting to checkout…

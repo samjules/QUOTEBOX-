@@ -39,7 +39,7 @@ export default async function GamesPage() {
       <div className="py-6">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="bg-white shadow rounded-xl p-10">
-            <svg className="w-16 h-16 mx-auto text-indigo-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-16 h-16 mx-auto text-brand-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 002.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 012.916.52 6.003 6.003 0 01-5.395 4.972m0 0a6.726 6.726 0 01-2.749 1.35m0 0a6.772 6.772 0 01-3.044 0" />
             </svg>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">QuoteBox Games</h2>
@@ -111,14 +111,14 @@ export default async function GamesPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
         <div className="py-4 space-y-6">
           {/* User rank card */}
-          <div className="bg-gradient-to-br from-indigo-600 to-purple-700 shadow rounded-xl p-6 text-white">
+          <div className="bg-gradient-to-br from-brand-600 to-purple-700 shadow rounded-xl p-6 text-white">
             <div className="flex items-center gap-6">
               <div>
-                <p className="text-sm text-indigo-200">Your Rank</p>
+                <p className="text-sm text-brand-200">Your Rank</p>
                 <p className="text-4xl font-extrabold">#{userRank}</p>
               </div>
               <div>
-                <p className="text-sm text-indigo-200">Booked This Month</p>
+                <p className="text-sm text-brand-200">Booked This Month</p>
                 <p className="text-4xl font-extrabold">{counts[account.id] ?? 0}</p>
               </div>
               {(() => {
@@ -151,13 +151,13 @@ export default async function GamesPage() {
                   const tier = getAwardTier(entry.booked)
                   const isUser = entry.id === account.id
                   return (
-                    <tr key={entry.id} className={isUser ? 'bg-indigo-50' : ''}>
+                    <tr key={entry.id} className={isUser ? 'bg-brand-50' : ''}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
                         #{i + 1}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {entry.name}
-                        {isUser && <span className="ml-2 text-xs font-semibold text-indigo-600">(You)</span>}
+                        {isUser && <span className="ml-2 text-xs font-semibold text-brand-600">(You)</span>}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-gray-900">
                         {entry.booked}
@@ -216,7 +216,7 @@ function EnrollButton({ accountId }: { accountId: string }) {
     }}>
       <button
         type="submit"
-        className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition-colors"
+        className="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-lg transition-colors"
       >
         Enroll in QuoteBox Games
       </button>

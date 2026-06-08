@@ -47,9 +47,9 @@ const STEPS = [
     label: 'Instant Contact',
     wait: 'Immediately',
     icon: '⚡',
-    colorBg: 'bg-indigo-500',
-    colorBorder: 'border-indigo-200',
-    colorIcon: 'bg-indigo-50 text-indigo-600',
+    colorBg: 'bg-brand-500',
+    colorBorder: 'border-brand-200',
+    colorIcon: 'bg-brand-50 text-brand-600',
     channels: ['Email', 'SMS'],
     description: 'Send a direct link to your quote form the moment the lead arrives.',
   },
@@ -192,7 +192,7 @@ export default function AutomationsPage() {
           <button
             onClick={() => save({ is_enabled: !config.is_enabled })}
             className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none ${
-              config.is_enabled ? 'bg-indigo-600' : 'bg-gray-300'
+              config.is_enabled ? 'bg-brand-600' : 'bg-gray-300'
             }`}
           >
             <span
@@ -219,15 +219,15 @@ export default function AutomationsPage() {
 
             {/* Trigger node */}
             <div className="w-full max-w-xs">
-              <div className="bg-indigo-600 rounded-xl p-4 text-white shadow-md">
+              <div className="bg-brand-600 rounded-xl p-4 text-white shadow-md">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center text-lg shrink-0">
                     🎯
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-indigo-200 leading-none mb-0.5">Trigger</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-brand-200 leading-none mb-0.5">Trigger</p>
                     <p className="font-semibold leading-tight">Any New Lead</p>
-                    <p className="text-xs text-indigo-300 mt-0.5">Meta or hosted form</p>
+                    <p className="text-xs text-brand-300 mt-0.5">Meta or hosted form</p>
                   </div>
                 </div>
               </div>
@@ -301,7 +301,7 @@ export default function AutomationsPage() {
                 value={config.discount_percent}
                 onChange={(e) => setConfig({ ...config, discount_percent: Number(e.target.value) })}
                 onBlur={() => save({ discount_percent: config.discount_percent })}
-                className="w-16 border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-16 border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
               <span className="text-sm text-gray-500">%</span>
               <span className="text-xs text-gray-400">off in step 3</span>
@@ -315,7 +315,7 @@ export default function AutomationsPage() {
               <button
                 onClick={() => save({ hero_image_url: null })}
                 className={`aspect-video rounded-lg border-2 flex items-center justify-center text-xs text-gray-400 transition-colors ${
-                  !config.hero_image_url ? 'border-indigo-500 bg-indigo-50 text-indigo-600 font-medium' : 'border-gray-200 hover:border-gray-300'
+                  !config.hero_image_url ? 'border-brand-500 bg-brand-50 text-brand-600 font-medium' : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
                 None
@@ -325,7 +325,7 @@ export default function AutomationsPage() {
                   key={img.url}
                   onClick={() => save({ hero_image_url: img.url })}
                   className={`aspect-video rounded-lg border-2 overflow-hidden relative transition-colors ${
-                    config.hero_image_url === img.url ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-gray-200 hover:border-gray-300'
+                    config.hero_image_url === img.url ? 'border-brand-500 ring-2 ring-brand-200' : 'border-gray-200 hover:border-gray-300'
                   }`}
                   title={img.label}
                 >
@@ -351,7 +351,7 @@ export default function AutomationsPage() {
                 <select
                   value={testLeadId}
                   onChange={(e) => { setTestLeadId(e.target.value); setTestResults(null) }}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
                 >
                   {testLeads.map((l) => (
                     <option key={l.id} value={l.id}>
@@ -362,7 +362,7 @@ export default function AutomationsPage() {
                 <button
                   onClick={sendTest}
                   disabled={testSending}
-                  className="w-full px-3 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full px-3 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {testSending ? (
                     <>
@@ -434,9 +434,9 @@ export default function AutomationsPage() {
           </div>
 
           {/* Info */}
-          <div className="rounded-xl bg-indigo-50 border border-indigo-100 px-4 py-3 text-xs text-indigo-600 space-y-1">
-            <p className="font-semibold text-indigo-700">How it works</p>
-            <ul className="list-disc list-inside space-y-0.5 text-indigo-500">
+          <div className="rounded-xl bg-brand-50 border border-brand-100 px-4 py-3 text-xs text-brand-600 space-y-1">
+            <p className="font-semibold text-brand-700">How it works</p>
+            <ul className="list-disc list-inside space-y-0.5 text-brand-500">
               <li>Triggered by every new lead (Meta or form)</li>
               <li>Stops if quote form is submitted</li>
               <li>Requires Twilio env vars for SMS</li>

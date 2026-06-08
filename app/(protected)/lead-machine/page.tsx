@@ -365,7 +365,7 @@ function CityTargetingMap({
             }}
             onBlur={() => setTimeout(() => setShowResults(false), 150)}
             onFocus={() => { if (searchResults.length > 0) setShowResults(true) }}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
           {showResults && searchResults.length > 0 && (
             <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
@@ -373,7 +373,7 @@ function CityTargetingMap({
                 <button
                   key={result.key}
                   onMouseDown={(e) => { e.preventDefault(); selectCity(result) }}
-                  className="w-full text-left px-3 py-2.5 text-sm hover:bg-indigo-50 border-b border-gray-100 last:border-0 flex items-center justify-between gap-2"
+                  className="w-full text-left px-3 py-2.5 text-sm hover:bg-brand-50 border-b border-gray-100 last:border-0 flex items-center justify-between gap-2"
                 >
                   <span className="text-gray-700 truncate">{result.name}, {result.region}, {result.country_code}</span>
                   <span className="text-xs text-gray-400 shrink-0">city</span>
@@ -399,7 +399,7 @@ function CityTargetingMap({
 
       {/* AI Service Area Panel */}
       {showAiPanel && (
-        <div className="mb-3 rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50 p-4 shadow-sm">
+        <div className="mb-3 rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-brand-50 p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <img src="/icons/logo-1772578089154.jpg" alt="Robert" className="w-9 h-9 rounded-full object-cover border-2 border-violet-300" />
             <div>
@@ -489,20 +489,20 @@ function CityTargetingMap({
           {targetCities.map((city) => (
             <span
               key={city.key}
-              className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 text-xs font-medium px-2.5 py-1 rounded-full border border-indigo-100"
+              className="inline-flex items-center gap-1 bg-brand-50 text-brand-700 text-xs font-medium px-2.5 py-1 rounded-full border border-brand-100"
             >
               <span>{city.name}, {city.region}</span>
               <select
                 value={city.radius}
                 onChange={(e) => onRadiusChange(city.key, Number(e.target.value))}
-                className="bg-transparent text-indigo-600 text-xs font-medium border-none outline-none cursor-pointer px-0"
+                className="bg-transparent text-brand-600 text-xs font-medium border-none outline-none cursor-pointer px-0"
                 style={{ width: 48 }}
               >
                 {[10, 15, 25, 50].map((r) => (
                   <option key={r} value={r}>{r}mi</option>
                 ))}
               </select>
-              <button onClick={() => onRemove(city.key)} className="ml-0.5 hover:text-indigo-900 leading-none">✕</button>
+              <button onClick={() => onRemove(city.key)} className="ml-0.5 hover:text-brand-900 leading-none">✕</button>
             </span>
           ))}
           {isGeocoding && (
@@ -1192,7 +1192,7 @@ export default function LeadMachinePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600" />
       </div>
     )
   }
@@ -1270,7 +1270,7 @@ export default function LeadMachinePage() {
               <select
                 value={selectedAdAccount}
                 onChange={(e) => setSelectedAdAccount(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 mb-4"
               >
                 <option value="">Select an ad account...</option>
                 {adAccounts.map((acc) => (
@@ -1285,7 +1285,7 @@ export default function LeadMachinePage() {
               <button
                 onClick={handleSaveAdAccount}
                 disabled={!selectedAdAccount || savingAccount}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-lg transition text-sm"
+                className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-lg transition text-sm"
               >
                 {savingAccount ? 'Saving...' : 'Continue'}
               </button>
@@ -1347,7 +1347,7 @@ export default function LeadMachinePage() {
                   onClick={() => setDateRange(d)}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
                     dateRange === d
-                      ? 'bg-indigo-600 text-white'
+                      ? 'bg-brand-600 text-white'
                       : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
                   }`}
                 >
@@ -1357,7 +1357,7 @@ export default function LeadMachinePage() {
             </div>
             {campaignsLoading && (
               <div className="flex items-center gap-2 text-xs text-gray-400">
-                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-indigo-500" />
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-brand-500" />
                 Loading…
               </div>
             )}
@@ -1426,7 +1426,7 @@ export default function LeadMachinePage() {
                   href={`https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=${metaAdAccountId}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-indigo-600 hover:underline"
+                  className="text-xs text-brand-600 hover:underline"
                 >
                   Open in Meta Ads Manager →
                 </a>
@@ -1444,10 +1444,10 @@ export default function LeadMachinePage() {
                 <img src="/icons/logo-1772578089154.jpg" alt="Robert" className="w-6 h-6 rounded-full object-cover" />
                 <span className="text-sm font-semibold text-gray-900">Robert&apos;s Suggestions</span>
                 {suggestionsLoading && (
-                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-indigo-500" />
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-brand-500" />
                 )}
                 {suggestions && !suggestionsLoading && (
-                  <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-medium">
+                  <span className="text-xs bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full font-medium">
                     {suggestions.actionItems.length} actions
                   </span>
                 )}
@@ -1481,7 +1481,7 @@ export default function LeadMachinePage() {
                       <ul className="space-y-2">
                         {suggestions.suggestions.map((s, i) => (
                           <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                            <span className="mt-1 w-1.5 h-1.5 rounded-full bg-indigo-400 flex-shrink-0" />
+                            <span className="mt-1 w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
                             {s}
                           </li>
                         ))}
@@ -1492,7 +1492,7 @@ export default function LeadMachinePage() {
                       <ul className="space-y-2">
                         {suggestions.actionItems.map((a, i) => (
                           <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center font-bold">{i + 1}</span>
+                            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand-600 text-white text-xs flex items-center justify-center font-bold">{i + 1}</span>
                             {a}
                           </li>
                         ))}
@@ -1513,7 +1513,7 @@ export default function LeadMachinePage() {
             <h2 className="font-semibold text-gray-900">All Campaigns</h2>
             <button
               onClick={() => setActiveTab('create')}
-              className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+              className="text-sm text-brand-600 hover:text-brand-700 font-medium"
             >
               + Create Campaign
             </button>
@@ -1521,7 +1521,7 @@ export default function LeadMachinePage() {
 
           {campaignsLoading ? (
             <div className="flex items-center justify-center py-16">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600" />
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-600" />
             </div>
           ) : campaigns.length === 0 ? (
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-12 text-center">
@@ -1530,7 +1530,7 @@ export default function LeadMachinePage() {
               <p className="text-sm text-gray-400 mb-4">Create your first campaign to start generating leads.</p>
               <button
                 onClick={() => setActiveTab('create')}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition"
+                className="bg-brand-600 hover:bg-brand-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition"
               >
                 Create Campaign
               </button>
@@ -1615,7 +1615,7 @@ export default function LeadMachinePage() {
                     <div className="space-y-1.5">
                       {createdCampaign.adIds.map((adId, i) => (
                         <div key={adId} className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-indigo-600 bg-indigo-50 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">
+                          <span className="text-xs font-bold text-brand-600 bg-brand-50 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">
                             {String.fromCharCode(65 + i)}
                           </span>
                           <span className="font-mono text-xs text-gray-600 truncate">{adId}</span>
@@ -1658,7 +1658,7 @@ export default function LeadMachinePage() {
                 </div>
                 <div className="w-full bg-gray-100 rounded-full h-2">
                   <div
-                    className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                    className="bg-brand-600 h-2 rounded-full transition-all duration-300"
                     style={{ width: `${(step / 6) * 100}%` }}
                   />
                 </div>
@@ -1700,7 +1700,7 @@ export default function LeadMachinePage() {
                       <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Meta Pixel</label>
                       {pixelsLoading ? (
                         <div className="flex items-center gap-2 py-2 text-sm text-gray-400">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500" />
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-500" />
                           Loading pixels…
                         </div>
                       ) : metaPixels.length === 0 ? (
@@ -1743,7 +1743,7 @@ export default function LeadMachinePage() {
                             setQuestionnaire((q) => ({ ...q, pixelId: pid, customConversionId: null }))
                             savePixelToForm(pid)
                           }}
-                          className="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                          className="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
                         >
                           <option value="">— Select a pixel —</option>
                           {metaPixels.map((px) => (
@@ -1756,7 +1756,7 @@ export default function LeadMachinePage() {
                     {/* Existing conversions list — always shown */}
                     {conversionsLoading ? (
                       <div className="flex items-center gap-2 py-3 text-sm text-gray-400">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500" />
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-500" />
                         Loading conversions…
                       </div>
                     ) : (
@@ -1765,10 +1765,10 @@ export default function LeadMachinePage() {
                         <button
                           onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: null }))}
                           className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 text-sm transition ${
-                            !questionnaire.customConversionId ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
+                            !questionnaire.customConversionId ? 'border-brand-600 bg-brand-50' : 'border-gray-200 hover:border-gray-300'
                           }`}
                         >
-                          <span className={!questionnaire.customConversionId ? 'text-indigo-700 font-medium' : 'text-gray-500'}>
+                          <span className={!questionnaire.customConversionId ? 'text-brand-700 font-medium' : 'text-gray-500'}>
                             None — skip conversion tracking
                           </span>
                         </button>
@@ -1777,10 +1777,10 @@ export default function LeadMachinePage() {
                             <button
                               onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: cv.id, pixelId: cv.pixel_id || q.pixelId }))}
                               className={`flex-1 text-left px-3.5 py-2.5 rounded-xl border-2 transition ${
-                                questionnaire.customConversionId === cv.id ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
+                                questionnaire.customConversionId === cv.id ? 'border-brand-600 bg-brand-50' : 'border-gray-200 hover:border-gray-300'
                               }`}
                             >
-                              <p className={`font-medium text-sm ${questionnaire.customConversionId === cv.id ? 'text-indigo-700' : 'text-gray-900'}`}>
+                              <p className={`font-medium text-sm ${questionnaire.customConversionId === cv.id ? 'text-brand-700' : 'text-gray-900'}`}>
                                 {cv.name}
                               </p>
                               <p className="text-xs text-gray-400 mt-0.5">Event: {cv.custom_event_type}</p>
@@ -1809,7 +1809,7 @@ export default function LeadMachinePage() {
                         <button
                           onClick={() => questionnaire.pixelId && handleCreateQuoteBoxConversion(questionnaire.pixelId, selectedForm?.slug ?? undefined)}
                           disabled={creatingConversion}
-                          className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition"
+                          className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition"
                         >
                           {creatingConversion ? 'Creating…' : `Create conversion for ${selectedForm?.slug ?? 'this form'}`}
                         </button>
@@ -1854,11 +1854,11 @@ export default function LeadMachinePage() {
                             onClick={() => setQuestionnaire((q) => ({ ...q, objective: obj.value }))}
                             className={`w-full text-left px-4 py-3.5 rounded-xl border-2 transition ${
                               questionnaire.objective === obj.value
-                                ? 'border-indigo-600 bg-indigo-50'
+                                ? 'border-brand-600 bg-brand-50'
                                 : 'border-gray-200 hover:border-gray-300'
                             }`}
                           >
-                            <p className={`font-medium ${questionnaire.objective === obj.value ? 'text-indigo-700' : 'text-gray-900'}`}>
+                            <p className={`font-medium ${questionnaire.objective === obj.value ? 'text-brand-700' : 'text-gray-900'}`}>
                               {obj.label}
                             </p>
                             <p className="text-sm text-gray-500 mt-0.5">{obj.desc}</p>
@@ -1874,7 +1874,7 @@ export default function LeadMachinePage() {
                           onClick={() => setQuestionnaire((q) => ({ ...q, destinationType: 'form' }))}
                           className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition ${
                             questionnaire.destinationType === 'form'
-                              ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                              ? 'border-brand-600 bg-brand-50 text-brand-700'
                               : 'border-gray-200 text-gray-600 hover:border-gray-300'
                           }`}
                         >
@@ -1884,7 +1884,7 @@ export default function LeadMachinePage() {
                           onClick={() => setQuestionnaire((q) => ({ ...q, destinationType: 'custom' }))}
                           className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition ${
                             questionnaire.destinationType === 'custom'
-                              ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                              ? 'border-brand-600 bg-brand-50 text-brand-700'
                               : 'border-gray-200 text-gray-600 hover:border-gray-300'
                           }`}
                         >
@@ -1896,7 +1896,7 @@ export default function LeadMachinePage() {
                         hostedForms.length === 0 ? (
                           <div className="text-sm text-gray-400 bg-gray-50 rounded-lg px-3 py-2.5 flex items-center gap-2">
                             No active forms found.{' '}
-                            <Link href="/hosted-forms" className="text-indigo-600 hover:underline font-medium">Create one</Link>
+                            <Link href="/hosted-forms" className="text-brand-600 hover:underline font-medium">Create one</Link>
                           </div>
                         ) : (
                           <select
@@ -1910,7 +1910,7 @@ export default function LeadMachinePage() {
                                 destinationUrl: form ? `${siteUrl}/${form.slug}` : '',
                               }))
                             }}
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                           >
                             <option value="">Select a form...</option>
                             {hostedForms.map((f) => (
@@ -1924,11 +1924,11 @@ export default function LeadMachinePage() {
                           placeholder="https://yourwebsite.com/landing-page"
                           value={questionnaire.destinationType === 'custom' ? questionnaire.destinationUrl : ''}
                           onChange={(e) => setQuestionnaire((q) => ({ ...q, destinationUrl: e.target.value }))}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                         />
                       )}
                       {questionnaire.destinationUrl && (
-                        <p className="text-xs text-indigo-600 mt-1.5 truncate">↗ {questionnaire.destinationUrl}</p>
+                        <p className="text-xs text-brand-600 mt-1.5 truncate">↗ {questionnaire.destinationUrl}</p>
                       )}
                     </div>
                   </div>
@@ -1944,14 +1944,14 @@ export default function LeadMachinePage() {
                           <label className="block text-sm font-medium text-gray-700 mb-1">Min Age</label>
                           <input type="number" min={18} max={65} value={questionnaire.ageMin}
                             onChange={(e) => setQuestionnaire((q) => ({ ...q, ageMin: Number(e.target.value) }))}
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                           />
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">Max Age</label>
                           <input type="number" min={18} max={65} value={questionnaire.ageMax}
                             onChange={(e) => setQuestionnaire((q) => ({ ...q, ageMax: Number(e.target.value) }))}
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                           />
                         </div>
                       </div>
@@ -1960,7 +1960,7 @@ export default function LeadMachinePage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
                         <select value={questionnaire.gender}
                           onChange={(e) => setQuestionnaire((q) => ({ ...q, gender: e.target.value }))}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                         >
                           <option value="all">All Genders</option>
                           <option value="male">Male</option>
@@ -1975,7 +1975,7 @@ export default function LeadMachinePage() {
                             onClick={() => setQuestionnaire((q) => ({ ...q, locationType: 'cities' }))}
                             className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition ${
                               questionnaire.locationType === 'cities'
-                                ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                                ? 'border-brand-600 bg-brand-50 text-brand-700'
                                 : 'border-gray-200 text-gray-600 hover:border-gray-300'
                             }`}
                           >
@@ -1985,7 +1985,7 @@ export default function LeadMachinePage() {
                             onClick={() => setQuestionnaire((q) => ({ ...q, locationType: 'country' }))}
                             className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition ${
                               questionnaire.locationType === 'country'
-                                ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                                ? 'border-brand-600 bg-brand-50 text-brand-700'
                                 : 'border-gray-200 text-gray-600 hover:border-gray-300'
                             }`}
                           >
@@ -1996,7 +1996,7 @@ export default function LeadMachinePage() {
                         {questionnaire.locationType === 'country' ? (
                           <select value={questionnaire.location}
                             onChange={(e) => setQuestionnaire((q) => ({ ...q, location: e.target.value }))}
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                           >
                             {COUNTRIES.map((c) => (
                               <option key={c.code} value={c.code}>{c.name} ({c.code})</option>
@@ -2017,7 +2017,7 @@ export default function LeadMachinePage() {
                         <input type="text" placeholder="e.g. home improvement, real estate, DIY"
                           value={questionnaire.interests}
                           onChange={(e) => setQuestionnaire((q) => ({ ...q, interests: e.target.value }))}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                         />
                       </div>
                     </div>
@@ -2034,7 +2034,7 @@ export default function LeadMachinePage() {
                         <textarea rows={3} placeholder="e.g. We provide local moving services for residential customers in the Dallas area."
                           value={questionnaire.businessOffer}
                           onChange={(e) => setQuestionnaire((q) => ({ ...q, businessOffer: e.target.value }))}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
                         />
                       </div>
 
@@ -2043,7 +2043,7 @@ export default function LeadMachinePage() {
                         <textarea rows={3} placeholder="e.g. Licensed & insured, same-day quotes, no hidden fees, 5-star rated"
                           value={questionnaire.sellingPoints}
                           onChange={(e) => setQuestionnaire((q) => ({ ...q, sellingPoints: e.target.value }))}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
                         />
                       </div>
 
@@ -2055,7 +2055,7 @@ export default function LeadMachinePage() {
                               onClick={() => setQuestionnaire((q) => ({ ...q, tone: tone.value }))}
                               className={`py-2.5 px-3 rounded-lg border-2 text-sm font-medium transition ${
                                 questionnaire.tone === tone.value
-                                  ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                                  ? 'border-brand-600 bg-brand-50 text-brand-700'
                                   : 'border-gray-200 text-gray-700 hover:border-gray-300'
                               }`}
                             >
@@ -2072,7 +2072,7 @@ export default function LeadMachinePage() {
                         {creatives.length === 0 ? (
                           <div className="flex items-center gap-2 text-sm text-gray-400 bg-gray-50 rounded-lg px-3 py-2.5">
                             No creatives uploaded yet.{' '}
-                            <Link href="/vsls" className="text-indigo-600 hover:underline font-medium">Upload in Media Library</Link>
+                            <Link href="/vsls" className="text-brand-600 hover:underline font-medium">Upload in Media Library</Link>
                           </div>
                         ) : (
                           <select
@@ -2086,7 +2086,7 @@ export default function LeadMachinePage() {
                                 vslTitle: selected?.name || null,
                               }))
                             }}
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                           >
                             <option value="">No creative (skip)</option>
                             {creatives.map((c) => (
@@ -2095,7 +2095,7 @@ export default function LeadMachinePage() {
                           </select>
                         )}
                         {questionnaire.vslUrl && (
-                          <p className="text-xs text-indigo-600 mt-1.5 truncate">Selected: {questionnaire.vslTitle}</p>
+                          <p className="text-xs text-brand-600 mt-1.5 truncate">Selected: {questionnaire.vslTitle}</p>
                         )}
                       </div>
                     </div>
@@ -2113,7 +2113,7 @@ export default function LeadMachinePage() {
                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">$</span>
                           <input type="number" min={1} step={1} value={questionnaire.dailyBudget}
                             onChange={(e) => setQuestionnaire((q) => ({ ...q, dailyBudget: Number(e.target.value) }))}
-                            className="w-full border border-gray-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full border border-gray-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                           />
                         </div>
                         <p className="text-xs text-gray-400 mt-1">Meta minimum is $1/day</p>
@@ -2127,7 +2127,7 @@ export default function LeadMachinePage() {
                               onClick={() => setQuestionnaire((q) => ({ ...q, duration: dur.value }))}
                               className={`w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-medium transition ${
                                 questionnaire.duration === dur.value
-                                  ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                                  ? 'border-brand-600 bg-brand-50 text-brand-700'
                                   : 'border-gray-200 text-gray-700 hover:border-gray-300'
                               }`}
                             >
@@ -2151,7 +2151,7 @@ export default function LeadMachinePage() {
 
                     {!generatedCopy && !generating && (
                       <button onClick={handleGenerate}
-                        className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-xl transition"
+                        className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-medium py-3 px-4 rounded-xl transition"
                       >
                         <img src="/icons/logo-1772578089154.jpg" alt="Robert" className="w-5 h-5 rounded-full object-cover" />
                         Generate with Robert
@@ -2160,7 +2160,7 @@ export default function LeadMachinePage() {
 
                     {generating && (
                       <div className="flex flex-col items-center justify-center py-12 gap-3">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600" />
                         <p className="text-sm text-gray-500">Generating your split test variants…</p>
                       </div>
                     )}
@@ -2186,7 +2186,7 @@ export default function LeadMachinePage() {
                             value={questionnaire.adImageUrl}
                             onChange={(e) => setQuestionnaire((q) => ({ ...q, adImageUrl: e.target.value }))}
                             placeholder="https://your-site.com/ad-image.jpg"
-                            className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                           />
                           <p className="text-xs text-gray-400 mt-1">Min 600×315px. Must be reachable by Meta — no redirects, no robots.txt blocks.</p>
                         </div>
@@ -2198,7 +2198,7 @@ export default function LeadMachinePage() {
                             {generatedCopy.headlines.map((headline, i) => (
                               <div key={i} className="border-2 border-gray-100 rounded-xl overflow-hidden">
                                 <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border-b border-gray-100">
-                                  <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                                  <span className="w-6 h-6 rounded-full bg-brand-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
                                     {String.fromCharCode(65 + i)}
                                   </span>
                                   <span className="text-xs font-semibold text-gray-600">Variant {String.fromCharCode(65 + i)}</span>
@@ -2224,7 +2224,7 @@ export default function LeadMachinePage() {
                           <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Suggested Targeting Keywords</p>
                           <div className="flex flex-wrap gap-2">
                             {generatedCopy.targetingKeywords.map((kw) => (
-                              <span key={kw} className="bg-indigo-50 text-indigo-700 text-xs font-medium px-2.5 py-1 rounded-full border border-indigo-100">{kw}</span>
+                              <span key={kw} className="bg-brand-50 text-brand-700 text-xs font-medium px-2.5 py-1 rounded-full border border-brand-100">{kw}</span>
                             ))}
                           </div>
                         </div>
@@ -2284,7 +2284,7 @@ export default function LeadMachinePage() {
                                   }).catch(() => {})
                                 }
                               }}
-                              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                             >
                               <option value="">Select a page...</option>
                               {pages.map((p) => (
@@ -2311,7 +2311,7 @@ export default function LeadMachinePage() {
                           <button
                             onClick={handleCreateCampaign}
                             disabled={creating || !questionnaire.pageId || !questionnaire.destinationUrl || !questionnaire.adImageUrl}
-                            className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl transition text-sm"
+                            className="flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl transition text-sm"
                           >
                             {creating ? 'Creating...' : 'Launch Split Test'}
                           </button>
@@ -2339,7 +2339,7 @@ export default function LeadMachinePage() {
                     )}
                     <button
                       onClick={() => { setError(''); setStep((s) => (s + 1) as Step) }}
-                      className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-4 rounded-xl transition text-sm"
+                      className="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-medium py-2.5 px-4 rounded-xl transition text-sm"
                     >
                       {step === 5 ? 'Preview' : 'Next'}
                     </button>

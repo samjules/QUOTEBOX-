@@ -75,10 +75,10 @@ function LeftPanel() {
     'Know exactly what every lead costs',
   ]
   return (
-    <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-indigo-600 to-purple-700 flex-col justify-center px-12 py-16 text-white">
+    <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-brand-600 to-purple-700 flex-col justify-center px-12 py-16 text-white">
       <div className="max-w-sm">
         <h1 className="text-4xl font-extrabold tracking-tight mb-3">QuoteBox</h1>
-        <p className="text-lg text-indigo-200 mb-10">
+        <p className="text-lg text-brand-200 mb-10">
           Turn clicks into customers, automatically.
         </p>
         <ul className="space-y-4">
@@ -89,7 +89,7 @@ function LeftPanel() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M2 6l3 3 5-5" />
                 </svg>
               </span>
-              <span className="text-indigo-100 text-sm leading-relaxed">{b}</span>
+              <span className="text-brand-100 text-sm leading-relaxed">{b}</span>
             </li>
           ))}
         </ul>
@@ -136,9 +136,9 @@ function ProgressBar({ current }: { current: Step }) {
             <div
               className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-300 ${
                 s < current
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-brand-600 text-white'
                   : s === current
-                  ? 'bg-indigo-600 text-white ring-4 ring-indigo-100'
+                  ? 'bg-brand-600 text-white ring-4 ring-brand-100'
                   : 'bg-gray-200 text-gray-400'
               }`}
             >
@@ -152,7 +152,7 @@ function ProgressBar({ current }: { current: Step }) {
             </div>
             <span
               className={`mt-1 text-xs font-medium whitespace-nowrap ${
-                s <= current ? 'text-indigo-600' : 'text-gray-400'
+                s <= current ? 'text-brand-600' : 'text-gray-400'
               }`}
             >
               {STEP_LABELS[s]}
@@ -161,7 +161,7 @@ function ProgressBar({ current }: { current: Step }) {
           {i < steps.length - 1 && (
             <div
               className={`flex-1 h-0.5 mx-2 mb-4 transition-colors duration-300 ${
-                s < current ? 'bg-indigo-600' : 'bg-gray-200'
+                s < current ? 'bg-brand-600' : 'bg-gray-200'
               }`}
             />
           )}
@@ -362,13 +362,13 @@ function SignupWizard() {
                     <button
                       key={opt.value}
                       onClick={() => handleLeadsSelect(opt.value)}
-                      className={`relative p-5 rounded-xl border-2 transition-all duration-200 hover:border-indigo-500 hover:bg-indigo-50 text-center ${
+                      className={`relative p-5 rounded-xl border-2 transition-all duration-200 hover:border-brand-500 hover:bg-brand-50 text-center ${
                         leadsPerWeek === opt.value
-                          ? 'border-indigo-500 bg-indigo-50'
+                          ? 'border-brand-500 bg-brand-50'
                           : 'border-gray-200 bg-white'
                       }`}
                     >
-                      <div className="text-2xl font-extrabold text-indigo-600 mb-1">
+                      <div className="text-2xl font-extrabold text-brand-600 mb-1">
                         {opt.value === 20 ? '20+' : opt.value}
                       </div>
                       <div className="text-xs text-gray-500 font-medium">leads / week</div>
@@ -378,7 +378,7 @@ function SignupWizard() {
 
                 <p className="mt-6 text-center text-sm text-gray-500">
                   Already have an account?{' '}
-                  <Link href="/login" className="text-indigo-600 hover:underline font-medium">
+                  <Link href="/login" className="text-brand-600 hover:underline font-medium">
                     Sign in
                   </Link>
                 </p>
@@ -399,9 +399,9 @@ function SignupWizard() {
                   {/* Card A: Self-serve */}
                   <button
                     onClick={() => handleServiceSelect('self')}
-                    className={`text-left p-5 rounded-xl border-2 transition-all duration-200 hover:border-indigo-500 hover:bg-indigo-50 ${
+                    className={`text-left p-5 rounded-xl border-2 transition-all duration-200 hover:border-brand-500 hover:bg-brand-50 ${
                       serviceChoice === 'self'
-                        ? 'border-indigo-500 bg-indigo-50'
+                        ? 'border-brand-500 bg-brand-50'
                         : 'border-gray-200 bg-white'
                     }`}
                   >
@@ -417,13 +417,13 @@ function SignupWizard() {
                   {/* Card B: Managed */}
                   <button
                     onClick={() => handleServiceSelect('managed')}
-                    className={`text-left p-5 rounded-xl border-2 transition-all duration-200 hover:border-indigo-500 hover:bg-indigo-50 relative overflow-hidden ${
+                    className={`text-left p-5 rounded-xl border-2 transition-all duration-200 hover:border-brand-500 hover:bg-brand-50 relative overflow-hidden ${
                       serviceChoice === 'managed'
-                        ? 'border-indigo-500 bg-indigo-50'
+                        ? 'border-brand-500 bg-brand-50'
                         : 'border-gray-200 bg-white'
                     }`}
                   >
-                    <span className="absolute top-2 right-2 text-xs font-semibold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">
+                    <span className="absolute top-2 right-2 text-xs font-semibold bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full">
                       Popular
                     </span>
                     <div className="text-3xl mb-3">✨</div>
@@ -438,10 +438,10 @@ function SignupWizard() {
 
                 {/* Managed estimate */}
                 {serviceChoice === 'managed' && leadsPerWeek && (
-                  <div className="mt-6 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 p-5">
+                  <div className="mt-6 rounded-xl bg-gradient-to-br from-brand-50 to-purple-50 border border-brand-200 p-5">
                     <p className="text-sm font-medium text-gray-700 mb-3">Your estimated investment</p>
                     <div className="flex items-baseline gap-2 mb-1">
-                      <span className="text-3xl font-extrabold text-indigo-600">
+                      <span className="text-3xl font-extrabold text-brand-600">
                         ${managedWeeklyEstimate}
                       </span>
                       <span className="text-sm text-gray-500">/ week</span>
@@ -449,7 +449,7 @@ function SignupWizard() {
                     <p className="text-xs text-gray-500 mb-3">
                       {leadsPerWeek === 20 ? '20+' : leadsPerWeek} leads x ${COST_PER_LEAD}/lead = ~${managedMonthlyEstimate.toLocaleString()}/mo
                     </p>
-                    <div className="flex items-center gap-2 text-xs text-indigo-600 font-medium mb-4">
+                    <div className="flex items-center gap-2 text-xs text-brand-600 font-medium mb-4">
                       <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l3 3 7-7" />
                       </svg>
@@ -457,7 +457,7 @@ function SignupWizard() {
                     </div>
                     <button
                       onClick={() => animateTo(3)}
-                      className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-md transition-colors"
+                      className="w-full py-2.5 px-4 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-md transition-colors"
                     >
                       Looks good, let&apos;s go →
                     </button>
@@ -466,12 +466,12 @@ function SignupWizard() {
 
                 {/* QuoteBox Games toggle */}
                 <div className="mt-5">
-                  <label className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 hover:border-indigo-300 transition-colors cursor-pointer">
+                  <label className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 hover:border-brand-300 transition-colors cursor-pointer">
                     <input
                       type="checkbox"
                       checked={gamesEnrolled}
                       onChange={(e) => setGamesEnrolled(e.target.checked)}
-                      className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      className="w-5 h-5 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                     />
                     <div>
                       <p className="text-sm font-semibold text-gray-900">Enroll me in the QuoteBox Games</p>
@@ -512,7 +512,7 @@ function SignupWizard() {
                       value={businessName}
                       onChange={(e) => setBusinessName(e.target.value)}
                       onKeyDown={handleAccountKeyDown}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
                       placeholder="Acme Roofing Co."
                     />
                   </div>
@@ -529,7 +529,7 @@ function SignupWizard() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       onKeyDown={handleAccountKeyDown}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
                       placeholder="you@example.com"
                     />
                   </div>
@@ -546,7 +546,7 @@ function SignupWizard() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       onKeyDown={handleAccountKeyDown}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
                       placeholder="Minimum 6 characters"
                     />
                     <p className="mt-1 text-xs text-gray-400">Must be at least 6 characters</p>
@@ -561,7 +561,7 @@ function SignupWizard() {
                   <button
                     onClick={handleCreateAccount}
                     disabled={step1Loading}
-                    className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                    className="w-full py-2.5 px-4 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
                   >
                     {step1Loading ? 'Creating account…' : 'Create account & continue →'}
                   </button>
@@ -592,7 +592,7 @@ function SignupWizard() {
                   <div className="space-y-4">
                     <a
                       href="/api/meta/connect?from=signup"
-                      className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
+                      className="w-full py-2.5 px-4 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-md transition-colors flex items-center justify-center gap-2"
                     >
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.931-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
@@ -603,7 +603,7 @@ function SignupWizard() {
                     <div className="text-center">
                       <button
                         onClick={() => animateTo(5)}
-                        className="text-sm text-indigo-600 hover:underline"
+                        className="text-sm text-brand-600 hover:underline"
                       >
                         Skip for now →
                       </button>
@@ -640,7 +640,7 @@ function SignupWizard() {
                       className={`rounded-2xl p-6 border-2 ${
                         p.dark
                           ? 'bg-gray-900 border-gray-700 text-white'
-                          : 'bg-white border-indigo-500 text-gray-900'
+                          : 'bg-white border-brand-500 text-gray-900'
                       }`}
                     >
                       <div className="flex items-start justify-between mb-1">
@@ -648,13 +648,13 @@ function SignupWizard() {
                           {p.name}
                         </h3>
                         {p.badge && (
-                          <span className="text-xs font-semibold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">
+                          <span className="text-xs font-semibold bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full">
                             {p.badge}
                           </span>
                         )}
                       </div>
 
-                      <p className={`text-3xl font-extrabold mb-4 ${p.dark ? 'text-white' : 'text-indigo-600'}`}>
+                      <p className={`text-3xl font-extrabold mb-4 ${p.dark ? 'text-white' : 'text-brand-600'}`}>
                         {displayPrice}
                       </p>
 
@@ -662,7 +662,7 @@ function SignupWizard() {
                         {displayFeatures.map((f) => (
                           <li key={f} className="flex items-center gap-2 text-sm">
                             <svg
-                              className={`w-4 h-4 flex-shrink-0 ${p.dark ? 'text-indigo-400' : 'text-indigo-500'}`}
+                              className={`w-4 h-4 flex-shrink-0 ${p.dark ? 'text-brand-400' : 'text-brand-500'}`}
                               fill="none"
                               viewBox="0 0 16 16"
                               stroke="currentColor"
@@ -679,8 +679,8 @@ function SignupWizard() {
                         href={p.href}
                         className={`block w-full text-center py-2.5 px-4 rounded-md text-sm font-semibold transition-colors ${
                           p.dark
-                            ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                            : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                            ? 'bg-brand-600 hover:bg-brand-700 text-white'
+                            : 'bg-brand-600 hover:bg-brand-700 text-white'
                         }`}
                       >
                         {p.cta}

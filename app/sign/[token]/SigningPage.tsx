@@ -192,7 +192,7 @@ export default function SigningPage({
                 type="text"
                 value={signerName}
                 onChange={(e) => setSignerName(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
               />
             </div>
             <div>
@@ -217,7 +217,7 @@ export default function SigningPage({
               onClick={() => setMode('draw')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                 mode === 'draw'
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-brand-600 text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
@@ -227,7 +227,7 @@ export default function SigningPage({
               onClick={() => setMode('type')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                 mode === 'type'
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-brand-600 text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
@@ -271,7 +271,7 @@ export default function SigningPage({
                 value={typedName}
                 onChange={(e) => setTypedName(e.target.value)}
                 placeholder="Type your full name"
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
               />
               {typedName && (
                 <div className="mt-3 p-4 border border-gray-200 rounded-xl bg-gray-50 text-center">
@@ -294,7 +294,7 @@ export default function SigningPage({
               type="checkbox"
               checked={agreed}
               onChange={(e) => setAgreed(e.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
             />
             <span className="text-sm text-gray-700">
               I agree that the signature above represents my legal signature and I consent to signing this agreement electronically.
@@ -309,7 +309,7 @@ export default function SigningPage({
         <button
           onClick={handleSign}
           disabled={loading || !agreed}
-          className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-3 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? 'Signing...' : 'Sign Agreement'}
         </button>

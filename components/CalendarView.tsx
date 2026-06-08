@@ -54,7 +54,7 @@ export default function CalendarView({ leads }: Props) {
   const hasLeadsThisMonth = Object.keys(leadsByDate).some(d => d.startsWith(monthPrefix))
 
   function pillStyle(status: Lead['status']) {
-    if (status === 'booked') return { bg: 'bg-indigo-600 hover:bg-indigo-700', detail: 'bg-indigo-50 border-indigo-200', accent: 'text-indigo-700' }
+    if (status === 'booked') return { bg: 'bg-brand-600 hover:bg-brand-700', detail: 'bg-brand-50 border-brand-200', accent: 'text-brand-700' }
     return { bg: 'bg-yellow-400 hover:bg-yellow-500', detail: 'bg-yellow-50 border-yellow-200', accent: 'text-yellow-700' }
   }
 
@@ -122,7 +122,7 @@ export default function CalendarView({ leads }: Props) {
                       <span
                         className={`text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full ${
                           isToday
-                            ? 'bg-indigo-600 text-white'
+                            ? 'bg-brand-600 text-white'
                             : 'text-gray-500'
                         }`}
                       >

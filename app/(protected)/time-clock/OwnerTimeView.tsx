@@ -167,7 +167,7 @@ export default function OwnerTimeView({
         {/* Total hours */}
         <div className="bg-white overflow-hidden shadow rounded-xl">
           <div className="p-5 flex items-center gap-4">
-            <div className="h-12 w-12 rounded-md bg-indigo-600 text-white flex-shrink-0 flex items-center justify-center">
+            <div className="h-12 w-12 rounded-md bg-brand-600 text-white flex-shrink-0 flex items-center justify-center">
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
             </div>
             <div>
@@ -211,7 +211,7 @@ export default function OwnerTimeView({
         {/* Currently clocked in */}
         <div className="bg-white overflow-hidden shadow rounded-xl">
           <div className="p-5 flex items-center gap-4">
-            <div className="h-12 w-12 rounded-md bg-indigo-600 text-white flex-shrink-0 flex items-center justify-center">
+            <div className="h-12 w-12 rounded-md bg-brand-600 text-white flex-shrink-0 flex items-center justify-center">
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" /></svg>
             </div>
             <div>
@@ -236,7 +236,7 @@ export default function OwnerTimeView({
                   onClick={() => setFilter(f)}
                   className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                     filter === f
-                      ? 'bg-indigo-100 text-indigo-700 font-semibold'
+                      ? 'bg-brand-100 text-brand-700 font-semibold'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
@@ -247,7 +247,7 @@ export default function OwnerTimeView({
           </div>
           <button
             onClick={exportCsv}
-            className="bg-indigo-600 text-white text-sm font-semibold rounded-lg px-4 py-2 hover:bg-indigo-700 transition-colors"
+            className="bg-brand-600 text-white text-sm font-semibold rounded-lg px-4 py-2 hover:bg-brand-700 transition-colors"
           >
             Export CSV
           </button>
@@ -262,7 +262,7 @@ export default function OwnerTimeView({
                 type="date"
                 value={customFrom}
                 onChange={(e) => setCustomFrom(e.target.value)}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
               />
             </div>
             <div>
@@ -271,7 +271,7 @@ export default function OwnerTimeView({
                 type="date"
                 value={customTo}
                 onChange={(e) => setCustomTo(e.target.value)}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
               />
             </div>
             {(customFrom || customTo) && (
@@ -294,11 +294,11 @@ export default function OwnerTimeView({
             <div key={userId}>
               {/* Employee header */}
               <div className="px-6 py-4 border-b border-gray-200 flex items-center gap-3 bg-gray-50/50">
-                <div className="h-9 w-9 rounded-full bg-indigo-600 text-white text-sm font-semibold flex items-center justify-center">
+                <div className="h-9 w-9 rounded-full bg-brand-600 text-white text-sm font-semibold flex items-center justify-center">
                   {initials}
                 </div>
                 <h3 className="text-base font-semibold text-gray-900">{name}</h3>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-100 text-brand-700">
                   {formatDuration(totalMs)}
                 </span>
               </div>

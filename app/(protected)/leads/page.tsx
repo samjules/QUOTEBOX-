@@ -191,16 +191,16 @@ export default async function LeadsPage({ searchParams }: { searchParams: { tab?
 
               {/* Trial banner */}
               {isOnTrial && (
-                <div className="mb-6 rounded-lg p-4 flex items-center justify-between bg-indigo-50 border border-indigo-200">
+                <div className="mb-6 rounded-lg p-4 flex items-center justify-between bg-brand-50 border border-brand-200">
                   <div className="flex items-center gap-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-indigo-500 flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-brand-500 flex-shrink-0">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <p className="text-sm font-semibold text-indigo-800">
+                    <p className="text-sm font-semibold text-brand-800">
                       Free trial — {trialDaysLeft} day{trialDaysLeft !== 1 ? 's' : ''} remaining
                     </p>
                   </div>
-                  <Link href="/billing" className="text-xs font-semibold text-indigo-600 hover:underline">
+                  <Link href="/billing" className="text-xs font-semibold text-brand-600 hover:underline">
                     Manage plan
                   </Link>
                 </div>
@@ -210,7 +210,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: { tab?
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-8">
                 <div className="bg-white overflow-hidden shadow rounded-xl">
                   <div className="p-5 flex items-center">
-                    <div className="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-600 text-white flex-shrink-0">
+                    <div className="flex items-center justify-center h-12 w-12 rounded-md bg-brand-600 text-white flex-shrink-0">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                       </svg>
@@ -259,7 +259,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: { tab?
                       href="/leads"
                       className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
                         activeTab === 'leads'
-                          ? 'border-indigo-600 text-indigo-600'
+                          ? 'border-brand-600 text-brand-600'
                           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                       }`}
                     >
@@ -269,7 +269,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: { tab?
                       href="/leads?tab=activity"
                       className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
                         activeTab === 'activity'
-                          ? 'border-indigo-600 text-indigo-600'
+                          ? 'border-brand-600 text-brand-600'
                           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                       }`}
                     >

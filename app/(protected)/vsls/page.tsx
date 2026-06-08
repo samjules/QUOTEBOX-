@@ -236,7 +236,7 @@ export default function VSLsPage() {
           <button
             onClick={() => setShowLibrary(true)}
             disabled={uploading}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-xl transition text-sm"
+            className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-xl transition text-sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -269,7 +269,7 @@ export default function VSLsPage() {
             <span className="text-sm text-gray-400">{uploadProgress}%</span>
           </div>
           <div className="w-full bg-gray-100 rounded-full h-2">
-            <div className="bg-indigo-600 h-2 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+            <div className="bg-brand-600 h-2 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
           </div>
         </div>
       )}
@@ -277,15 +277,15 @@ export default function VSLsPage() {
       {/* Loading */}
       {loading && (
         <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600" />
         </div>
       )}
 
       {/* Empty state */}
       {!loading && vsls.length === 0 && (
         <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-16 text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-indigo-50 mb-4">
-            <svg className="w-7 h-7 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-brand-50 mb-4">
+            <svg className="w-7 h-7 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
@@ -293,7 +293,7 @@ export default function VSLsPage() {
           <p className="text-sm text-gray-500 mb-5">Upload an image or video to use it in your Meta Ads campaigns.</p>
           <button
             onClick={() => setShowLibrary(true)}
-            className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-5 rounded-xl transition text-sm"
+            className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-medium py-2.5 px-5 rounded-xl transition text-sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -336,7 +336,7 @@ export default function VSLsPage() {
               {/* Actions */}
               <div className="flex items-center gap-2 flex-shrink-0">
                 <button onClick={() => copyUrl(vsl.file_url, vsl.id)} title="Copy URL"
-                  className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition">
+                  className="p-2 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition">
                   {copiedId === vsl.id ? (
                     <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -348,7 +348,7 @@ export default function VSLsPage() {
                   )}
                 </button>
                 <a href={vsl.file_url} target="_blank" rel="noopener noreferrer" title="Preview"
-                  className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition">
+                  className="p-2 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
@@ -370,7 +370,7 @@ export default function VSLsPage() {
       )}
 
       {/* Info callout */}
-      <div className="mt-8 bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-sm text-indigo-700 flex gap-3">
+      <div className="mt-8 bg-brand-50 border border-brand-100 rounded-xl p-4 text-sm text-brand-700 flex gap-3">
         <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
@@ -400,7 +400,7 @@ export default function VSLsPage() {
                 {!atLimit && (
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition"
+                    className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -423,7 +423,7 @@ export default function VSLsPage() {
             <div className="overflow-y-auto flex-1 p-6">
               {loading ? (
                 <div className="flex items-center justify-center py-20">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600" />
                 </div>
               ) : vsls.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -435,7 +435,7 @@ export default function VSLsPage() {
                   <p className="text-gray-500 text-sm mb-4">No media uploaded yet.</p>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2.5 px-5 rounded-xl transition"
+                    className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium py-2.5 px-5 rounded-xl transition"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -448,7 +448,7 @@ export default function VSLsPage() {
                   {vsls.map((vsl) => (
                     <div
                       key={vsl.id}
-                      className="group rounded-xl border border-gray-100 bg-gray-50 overflow-hidden hover:border-indigo-300 hover:shadow-md transition-all"
+                      className="group rounded-xl border border-gray-100 bg-gray-50 overflow-hidden hover:border-brand-300 hover:shadow-md transition-all"
                     >
                       {/* Thumbnail */}
                       <div className="w-full aspect-video bg-gray-200 relative overflow-hidden">
@@ -528,7 +528,7 @@ export default function VSLsPage() {
                 onChange={(e) => setTitleInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && titleInput.trim() && handleUpload()}
                 placeholder="e.g. Summer Roofing Promo 2025"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
             <div className="bg-gray-50 rounded-lg px-3 py-2 mb-5 text-xs text-gray-500 flex items-center gap-2">
@@ -547,7 +547,7 @@ export default function VSLsPage() {
               <button
                 onClick={handleUpload}
                 disabled={!titleInput.trim()}
-                className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl transition text-sm"
+                className="flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl transition text-sm"
               >
                 Upload
               </button>

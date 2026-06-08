@@ -269,7 +269,7 @@ export default async function DashboardPage({
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard
               icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>}
-              iconBg="bg-[#1a1a2e]"
+              iconBg="bg-[#5b5bd6]"
               label="Total Leads"
               value={totalLeads}
               sub={periodLabel}
@@ -352,7 +352,7 @@ export default async function DashboardPage({
 
           {/* QuoteBox Games Card */}
           {account.games_enrolled && gamesRank !== null && (
-            <div className="overflow-hidden rounded-2xl" style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)', boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.12)' }}>
+            <div className="overflow-hidden rounded-2xl" style={{ background: 'linear-gradient(135deg, #5b5bd6 0%, #16213e 50%, #0f3460 100%)', boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.12)' }}>
               <div className="p-6 text-white">
                 <div className="flex items-center gap-3 mb-4">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -363,11 +363,11 @@ export default async function DashboardPage({
                 <div className="flex items-baseline gap-4 mb-2">
                   <div>
                     <p className="text-3xl font-extrabold">#{gamesRank}</p>
-                    <p className="text-sm text-indigo-200">Your rank</p>
+                    <p className="text-sm text-brand-200">Your rank</p>
                   </div>
                   <div>
                     <p className="text-3xl font-extrabold">{gamesBookedThisMonth}</p>
-                    <p className="text-sm text-indigo-200">Booked this month</p>
+                    <p className="text-sm text-brand-200">Booked this month</p>
                   </div>
                 </div>
                 <Link
@@ -572,7 +572,7 @@ function OnboardingChecklist({
             <div className="w-28 h-2 bg-gray-100 rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-500"
-                style={{ width: `${progressPct}%`, background: '#1a1a2e' }}
+                style={{ width: `${progressPct}%`, background: '#5b5bd6' }}
               />
             </div>
             <span className="text-xs font-semibold text-gray-400 w-8 text-right">{progressPct}%</span>
@@ -630,7 +630,7 @@ function ChecklistStep({
         <Link
           href={href}
           className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold rounded-lg transition whitespace-nowrap"
-          style={{ background: 'rgba(26,26,46,0.06)', color: '#1a1a2e' }}
+          style={{ background: 'rgba(26,26,46,0.06)', color: '#5b5bd6' }}
         >
           Start &rarr;
         </Link>
@@ -670,7 +670,7 @@ function DailyView({
         </div>
         <div className="flex gap-4 text-center">
           <div>
-            <p className="text-2xl font-bold" style={{ color: '#1a1a2e' }}>{todayLeads.length}</p>
+            <p className="text-2xl font-bold" style={{ color: '#5b5bd6' }}>{todayLeads.length}</p>
             <p className="text-xs text-gray-400 uppercase tracking-wide">New leads</p>
           </div>
           <div className="border-l border-gray-100 pl-4">
@@ -688,7 +688,7 @@ function DailyView({
         {todayLeads.slice(0, 5).map((lead) => (
           <Link key={lead.id} href="/leads" className="flex items-center gap-3 px-6 py-3 hover:bg-gray-50 transition">
             <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'rgba(26,26,46,0.08)' }}>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4" style={{ color: '#1a1a2e' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4" style={{ color: '#5b5bd6' }}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
               </svg>
             </div>
@@ -704,7 +704,7 @@ function DailyView({
 
         {todayLeads.length > 5 && (
           <div className="px-6 py-2 text-center">
-            <Link href="/leads" className="text-xs font-medium hover:underline" style={{ color: '#1a1a2e' }}>
+            <Link href="/leads" className="text-xs font-medium hover:underline" style={{ color: '#5b5bd6' }}>
               +{todayLeads.length - 5} more leads today
             </Link>
           </div>
@@ -819,19 +819,19 @@ function LeadUsageBanner({
     <div className={`rounded-lg p-5 border ${isNearing ? 'bg-yellow-50 border-yellow-300' : 'bg-white border-gray-200'}`}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`w-5 h-5 flex-shrink-0 ${isNearing ? 'text-yellow-500' : ''}`} style={isNearing ? {} : { color: '#1a1a2e' }}>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`w-5 h-5 flex-shrink-0 ${isNearing ? 'text-yellow-500' : ''}`} style={isNearing ? {} : { color: '#5b5bd6' }}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
           </svg>
           <span className={`font-semibold text-sm ${isNearing ? 'text-yellow-800' : 'text-gray-800'}`}>
             {planLabel} plan — {monthlyLeads} / {limit} leads this month
           </span>
         </div>
-        <span className={`text-xs font-bold ${isNearing ? 'text-yellow-600' : ''}`} style={isNearing ? {} : { color: '#1a1a2e' }}>{pct}%</span>
+        <span className={`text-xs font-bold ${isNearing ? 'text-yellow-600' : ''}`} style={isNearing ? {} : { color: '#5b5bd6' }}>{pct}%</span>
       </div>
       <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
         <div
           className={`h-full rounded-full transition-all ${isNearing ? 'bg-yellow-400' : ''}`}
-          style={{ width: `${pct}%`, ...(isNearing ? {} : { background: '#1a1a2e' }) }}
+          style={{ width: `${pct}%`, ...(isNearing ? {} : { background: '#5b5bd6' }) }}
         />
       </div>
       {isNearing && (

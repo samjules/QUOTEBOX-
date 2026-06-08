@@ -85,7 +85,7 @@ export default function EmployeeTimeClock({
           <div className="space-y-4">
             <div className="text-center">
               <p className="text-sm text-gray-500 mb-1">Clocked in since {new Date(openEntry.clock_in).toLocaleTimeString()}</p>
-              <p className="text-5xl font-mono font-bold text-indigo-600">{elapsed}</p>
+              <p className="text-5xl font-mono font-bold text-brand-600">{elapsed}</p>
               {openEntry.lead_id && (
                 <p className="text-sm text-gray-500 mt-2">Job: {leadName(openEntry.lead_id)}</p>
               )}
@@ -105,7 +105,7 @@ export default function EmployeeTimeClock({
               <select
                 value={selectedLead}
                 onChange={(e) => setSelectedLead(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
               >
                 <option value="">No specific job</option>
                 {leads.map((l) => (
@@ -120,7 +120,7 @@ export default function EmployeeTimeClock({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="What are you working on?"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none"
               />
             </div>
             <button

@@ -18,7 +18,7 @@ const STEP_ICONS: Record<string, string> = {
 
 const EVENT_LABELS: Record<string, { icon: string; label: string; color: string }> = {
   email_open: { icon: '👁', label: 'Email opened', color: 'text-blue-600' },
-  link_click: { icon: '🔗', label: 'Link clicked', color: 'text-indigo-600' },
+  link_click: { icon: '🔗', label: 'Link clicked', color: 'text-brand-600' },
   form_view: { icon: '📋', label: 'Form viewed', color: 'text-purple-600' },
   form_submit: { icon: '✅', label: 'Form submitted', color: 'text-green-600' },
 }
@@ -116,7 +116,7 @@ export default function LeadActivityTab() {
                   <div key={s.step} className="relative pl-10">
                     {/* Step dot */}
                     <div className={`absolute left-0 w-7 h-7 rounded-full flex items-center justify-center text-sm border-2 bg-white ${
-                      s.status === 'sent' ? 'border-indigo-400' :
+                      s.status === 'sent' ? 'border-brand-400' :
                       s.status === 'skipped' ? 'border-gray-200' : 'border-gray-300'
                     }`}>
                       {STEP_ICONS[s.step] ?? '•'}

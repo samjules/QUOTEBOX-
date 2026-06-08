@@ -27,7 +27,7 @@ export default async function InvitePage({ params }: { params: { token: string }
         <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center">
           <h1 className="text-xl font-bold text-gray-900 mb-2">Already Accepted</h1>
           <p className="text-gray-500 mb-4">This invite has already been accepted.</p>
-          <a href="/login" className="text-indigo-600 hover:underline font-medium">Go to Login</a>
+          <a href="/login" className="text-brand-600 hover:underline font-medium">Go to Login</a>
         </div>
       </div>
     )

@@ -589,7 +589,7 @@ export default function SettingsPage() {
                 <button
                   onClick={() => logoInputRef.current?.click()}
                   disabled={logoUploading}
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 text-sm font-medium"
+                  className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition disabled:opacity-50 text-sm font-medium"
                 >
                   {logoUploading ? 'Uploading…' : logoUrl ? 'Change Logo' : 'Upload Logo'}
                 </button>
@@ -641,13 +641,13 @@ export default function SettingsPage() {
                   type="text"
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
-                  className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-2 border"
+                  className="shadow-sm focus:ring-brand-500 focus:border-brand-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-2 border"
                 />
               </div>
               <button
                 type="submit"
                 disabled={saving}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
+                className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition disabled:opacity-50"
               >
                 {saving ? 'Updating…' : 'Update Business Name'}
               </button>
@@ -669,7 +669,7 @@ export default function SettingsPage() {
                   onChange={(e) => setNewPassword(e.target.value)}
                   autoComplete="new-password"
                   placeholder="Min. 8 characters"
-                  className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-2 border"
+                  className="shadow-sm focus:ring-brand-500 focus:border-brand-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-2 border"
                 />
               </div>
               <div>
@@ -683,7 +683,7 @@ export default function SettingsPage() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   autoComplete="new-password"
                   placeholder="Repeat new password"
-                  className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-2 border"
+                  className="shadow-sm focus:ring-brand-500 focus:border-brand-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-2 border"
                 />
               </div>
               {passwordMessage && (
@@ -694,7 +694,7 @@ export default function SettingsPage() {
               <button
                 type="submit"
                 disabled={changingPassword || !newPassword || !confirmPassword}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
+                className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition disabled:opacity-50"
               >
                 {changingPassword ? 'Updating…' : 'Update Password'}
               </button>
@@ -752,7 +752,7 @@ export default function SettingsPage() {
                     <select
                       value={selectedPageId}
                       onChange={(e) => handlePageChange(e.target.value)}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                     >
                       <option value="">Select a page…</option>
                       {pages.map((page) => (
@@ -775,7 +775,7 @@ export default function SettingsPage() {
                     <button
                       onClick={handleLoadAdAccounts}
                       disabled={loadingAdAccounts}
-                      className="text-sm text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50"
+                      className="text-sm text-brand-600 hover:text-brand-700 font-medium disabled:opacity-50"
                     >
                       {loadingAdAccounts ? 'Loading…' : 'Change ad account →'}
                     </button>
@@ -784,7 +784,7 @@ export default function SettingsPage() {
                       <select
                         value={selectedAdAccount}
                         onChange={(e) => setSelectedAdAccount(e.target.value)}
-                        className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                       >
                         <option value="">Select an ad account…</option>
                         {adAccounts.map((acc) => (
@@ -796,7 +796,7 @@ export default function SettingsPage() {
                       <button
                         onClick={handleSaveAdAccount}
                         disabled={!selectedAdAccount || savingAdAccount}
-                        className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition whitespace-nowrap"
+                        className="bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition whitespace-nowrap"
                       >
                         {savingAdAccount ? 'Saving…' : 'Save'}
                       </button>
@@ -816,7 +816,7 @@ export default function SettingsPage() {
                       <button
                         onClick={handleLoadLeadForms}
                         disabled={loadingForms}
-                        className="text-sm text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50"
+                        className="text-sm text-brand-600 hover:text-brand-700 font-medium disabled:opacity-50"
                       >
                         {loadingForms ? 'Loading forms…' : 'Load lead forms →'}
                       </button>
@@ -841,7 +841,7 @@ export default function SettingsPage() {
                                 type="checkbox"
                                 checked={allowedFormIds.includes(form.id)}
                                 onChange={() => toggleFormId(form.id)}
-                                className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                className="h-4 w-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500"
                               />
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-gray-900 truncate">{form.name}</p>
@@ -859,7 +859,7 @@ export default function SettingsPage() {
                           <button
                             onClick={handleSaveAllowedForms}
                             disabled={savingForms}
-                            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 text-sm font-medium"
+                            className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition disabled:opacity-50 text-sm font-medium"
                           >
                             {savingForms ? 'Saving…' : 'Save Preferences'}
                           </button>
@@ -925,7 +925,7 @@ export default function SettingsPage() {
                     href="https://dashboard.stripe.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-indigo-600 hover:underline font-medium"
+                    className="text-sm text-brand-600 hover:underline font-medium"
                   >
                     Open Stripe Dashboard →
                   </a>
@@ -977,12 +977,12 @@ export default function SettingsPage() {
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="employee@email.com"
                 required
-                className="flex-1 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border-gray-300 rounded-md px-4 py-2 border"
+                className="flex-1 shadow-sm focus:ring-brand-500 focus:border-brand-500 sm:text-sm border-gray-300 rounded-md px-4 py-2 border"
               />
               <button
                 type="submit"
                 disabled={inviting || !inviteEmail.trim()}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 text-sm font-medium whitespace-nowrap"
+                className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition disabled:opacity-50 text-sm font-medium whitespace-nowrap"
               >
                 {inviting ? 'Sending…' : 'Send Invite'}
               </button>
@@ -1033,7 +1033,7 @@ export default function SettingsPage() {
                     href={agreementTemplateUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-indigo-600 hover:underline font-medium"
+                    className="text-sm text-brand-600 hover:underline font-medium"
                   >
                     View PDF
                   </a>
@@ -1047,7 +1047,7 @@ export default function SettingsPage() {
               <button
                 onClick={() => agreementInputRef.current?.click()}
                 disabled={agreementUploading}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 text-sm font-medium whitespace-nowrap"
+                className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition disabled:opacity-50 text-sm font-medium whitespace-nowrap"
               >
                 {agreementUploading ? 'Uploading…' : agreementTemplateUrl ? 'Replace Template' : 'Upload PDF'}
               </button>
@@ -1155,7 +1155,7 @@ export default function SettingsPage() {
                 onClick={() => handleToggleLeaderboard(!leaderboardHidden)}
                 disabled={savingLeaderboard}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${
-                  leaderboardHidden ? 'bg-gray-300' : 'bg-indigo-600'
+                  leaderboardHidden ? 'bg-gray-300' : 'bg-brand-600'
                 }`}
                 role="switch"
                 aria-checked={!leaderboardHidden}

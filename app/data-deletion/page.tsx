@@ -37,9 +37,9 @@ export default function DataDeletionPage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">How to Delete Your Data</h2>
 
-            <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-5 mb-5">
-              <h3 className="font-semibold text-indigo-900 mb-3">Option 1 — Delete from within QuoteBox (Recommended)</h3>
-              <ol className="list-decimal pl-5 space-y-2 text-indigo-800">
+            <div className="bg-brand-50 border border-brand-100 rounded-xl p-5 mb-5">
+              <h3 className="font-semibold text-brand-900 mb-3">Option 1 — Delete from within QuoteBox (Recommended)</h3>
+              <ol className="list-decimal pl-5 space-y-2 text-brand-800">
                 <li>Log in to your QuoteBox account at <a href="https://quote-box.com" className="underline">quote-box.com</a></li>
                 <li>Go to <strong>Settings</strong></li>
                 <li>Find the <strong>Meta Ads</strong> section and click <strong>Disconnect</strong></li>
@@ -61,7 +61,7 @@ export default function DataDeletionPage() {
               <h3 className="font-semibold text-gray-900 mb-3">Option 3 — Email us</h3>
               <p>
                 If you no longer have access to your QuoteBox account, send an email to{' '}
-                <a href="mailto:support@quote-box.com" className="text-indigo-600 hover:underline">
+                <a href="mailto:support@quote-box.com" className="text-brand-600 hover:underline">
                   support@quote-box.com
                 </a>{' '}
                 with the subject line <strong>&quot;Data Deletion Request&quot;</strong> and include the email
@@ -77,7 +77,7 @@ export default function DataDeletionPage() {
               You can also revoke QuoteBox&apos;s access to your Facebook account directly through Facebook:
             </p>
             <ol className="list-decimal pl-5 space-y-2">
-              <li>Go to your <a href="https://www.facebook.com/settings?tab=applications" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">Facebook App Settings</a></li>
+              <li>Go to your <a href="https://www.facebook.com/settings?tab=applications" target="_blank" rel="noopener noreferrer" className="text-brand-600 hover:underline">Facebook App Settings</a></li>
               <li>Find <strong>QuoteBox</strong> in the list of apps</li>
               <li>Click <strong>Remove</strong></li>
             </ol>
@@ -91,7 +91,7 @@ export default function DataDeletionPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-2">Contact</h2>
             <p>
               For any questions about data deletion, contact us at{' '}
-              <a href="mailto:support@quote-box.com" className="text-indigo-600 hover:underline">
+              <a href="mailto:support@quote-box.com" className="text-brand-600 hover:underline">
                 support@quote-box.com
               </a>.
             </p>

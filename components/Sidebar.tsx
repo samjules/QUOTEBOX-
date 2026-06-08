@@ -240,30 +240,25 @@ export default function Sidebar() {
   return (
     <div
       className="w-60 flex-shrink-0 flex flex-col h-full"
-      style={{ background: '#0d0d1a', borderRight: '1px solid rgba(255,255,255,0.06)' }}
+      style={{ background: '#13122b', borderRight: '1px solid rgba(255,255,255,0.07)' }}
     >
       {/* Logo / Brand */}
       <div
-        className="flex items-center px-5 h-[60px] flex-shrink-0"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        className="flex items-center px-4 h-[60px] flex-shrink-0"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}
       >
-        <div className="flex items-center gap-2.5">
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg, #FFE500 0%, #f59e0b 100%)' }}
+        <div className="flex items-center gap-3">
+          <img
+            src="/quotebox_icon.png"
+            alt="QuoteBox"
+            className="w-8 h-8 rounded-xl object-cover flex-shrink-0"
+          />
+          <span
+            className="text-white font-bold text-[15px] leading-none tracking-tight"
+            style={{ fontFamily: "'Instrument Sans', sans-serif" }}
           >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="#1a1a2e" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-          <div>
-            <span
-              className="text-white font-bold text-[15px] leading-none tracking-tight"
-              style={{ fontFamily: "'Instrument Sans', sans-serif" }}
-            >
-              Quote<span style={{ color: '#FFE500' }}>Box</span>
-            </span>
-          </div>
+            QuoteBox
+          </span>
         </div>
       </div>
 
@@ -288,25 +283,25 @@ export default function Sidebar() {
               href={href}
               className="group flex items-center gap-3 px-3 py-2 mb-0.5 rounded-lg text-[13px] font-medium transition-all duration-150 relative active:scale-95"
               style={isActive ? {
-                background: 'rgba(255,229,0,0.08)',
-                color: '#FFE500',
-                borderLeft: '2px solid #FFE500',
+                background: 'rgba(91,91,214,0.18)',
+                color: '#a5a5ef',
+                borderLeft: '2px solid #5b5bd6',
                 paddingLeft: '10px',
               } : {
-                color: 'rgba(255,255,255,0.5)',
+                color: 'rgba(255,255,255,0.45)',
                 borderLeft: '2px solid transparent',
                 paddingLeft: '10px',
               }}
               onMouseEnter={e => {
                 if (!isActive) {
                   (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)'
-                  ;(e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.85)'
+                  ;(e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.8)'
                 }
               }}
               onMouseLeave={e => {
                 if (!isActive) {
                   (e.currentTarget as HTMLElement).style.background = 'transparent'
-                  ;(e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.5)'
+                  ;(e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.45)'
                 }
               }}
             >

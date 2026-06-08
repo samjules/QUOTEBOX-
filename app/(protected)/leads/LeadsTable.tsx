@@ -424,7 +424,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                   return (
                     <tr
                       key={lead.id}
-                      className={`hover:bg-gray-50 ${isSelected ? 'bg-indigo-50' : ''}`}
+                      className={`hover:bg-gray-50 ${isSelected ? 'bg-brand-50' : ''}`}
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         <div className="flex items-center gap-2">
@@ -475,7 +475,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <button
                           onClick={() => openLead(row)}
-                          className="text-indigo-600 hover:text-indigo-900 font-medium"
+                          className="text-brand-600 hover:text-brand-900 font-medium"
                         >
                           View
                         </button>
@@ -586,7 +586,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                     <dt className="text-gray-500">Email</dt>
                     <dd className="text-gray-900 font-medium">
                       {selected.email
-                        ? <a href={`mailto:${selected.email}`} className="text-indigo-600 hover:underline">{selected.email}</a>
+                        ? <a href={`mailto:${selected.email}`} className="text-brand-600 hover:underline">{selected.email}</a>
                         : '-'}
                     </dd>
                   </div>
@@ -596,7 +596,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                       {selectedPhone ? (
                         <span className="flex items-center gap-1.5">
                           <span>{phoneFlag(selectedPhone)}</span>
-                          <a href={`tel:${formatPhone(selectedPhone)}`} className="text-indigo-600 hover:underline">{formatPhone(selectedPhone)}</a>
+                          <a href={`tel:${formatPhone(selectedPhone)}`} className="text-brand-600 hover:underline">{formatPhone(selectedPhone)}</a>
                         </span>
                       ) : '-'}
                     </dd>
@@ -634,7 +634,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                         <select
                           value={customQuoteCurrency}
                           onChange={(e) => { setCustomQuoteCurrency(e.target.value); setCustomQuoteSaved(false) }}
-                          className="rounded-md border border-gray-300 bg-white px-2 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 w-16"
+                          className="rounded-md border border-gray-300 bg-white px-2 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 w-16"
                         >
                           {['$', '€', '£', 'CA$', 'A$', 'NZ$', 'R', '¥'].map((s) => (
                             <option key={s} value={s}>{s}</option>
@@ -647,7 +647,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                           value={customQuoteAmount}
                           onChange={(e) => { setCustomQuoteAmount(e.target.value); setCustomQuoteSaved(false) }}
                           placeholder="0.00"
-                          className="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          className="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
                         />
                         <button
                           onClick={() => {
@@ -659,7 +659,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                             })
                           }}
                           disabled={isPendingCustomQuote}
-                          className="px-3 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                          className="px-3 py-2 bg-brand-600 text-white text-sm font-medium rounded-md hover:bg-brand-700 disabled:opacity-50"
                         >
                           {isPendingCustomQuote ? '…' : 'Save'}
                         </button>
@@ -778,7 +778,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                   <select
                     value={localStatus}
                     onChange={(e) => setLocalStatus(e.target.value)}
-                    className="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
                   >
                     {STATUS_OPTIONS.map((s) => (
                       <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
@@ -787,7 +787,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                   <button
                     onClick={handleStatusSave}
                     disabled={isPending || localStatus === (savedStatus[selected.id] ?? selected.status)}
-                    className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-md hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isPending ? 'Saving…' : 'Save'}
                   </button>
@@ -807,13 +807,13 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                   onChange={(e) => { setNoteText(e.target.value); setNoteSaved(false) }}
                   rows={4}
                   placeholder="Add a note about this lead…"
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 resize-none"
                 />
                 <div className="mt-2 flex items-center gap-3">
                   <button
                     onClick={handleNoteSave}
                     disabled={isPendingNote}
-                    className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-md hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isPendingNote ? 'Saving…' : 'Save Note'}
                   </button>
@@ -826,7 +826,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                 <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Send Invoice</h3>
                 {!stripeConnectAccountId ? (
                   <p className="text-sm text-gray-500">
-                    <a href="/settings" className="text-indigo-600 hover:underline font-medium">Connect Stripe in Settings</a> to send invoices to your leads.
+                    <a href="/settings" className="text-brand-600 hover:underline font-medium">Connect Stripe in Settings</a> to send invoices to your leads.
                   </p>
                 ) : !selected?.email ? (
                   <p className="text-sm text-gray-500">No email address on file for this lead.</p>
@@ -857,7 +857,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                           value={invoiceAmount}
                           onChange={(e) => setInvoiceAmount(e.target.value)}
                           placeholder="0.00"
-                          className="w-full rounded-md border border-gray-300 bg-white pl-7 pr-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          className="w-full rounded-md border border-gray-300 bg-white pl-7 pr-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
                         />
                       </div>
                     </div>
@@ -868,7 +868,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                         value={invoiceDescription}
                         onChange={(e) => setInvoiceDescription(e.target.value)}
                         placeholder="Service quote"
-                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
                       />
                     </div>
                     {invoiceError && (
@@ -877,7 +877,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                     <button
                       onClick={handleSendInvoice}
                       disabled={invoiceSending || !invoiceAmount}
-                      className="w-full px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-md hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {invoiceSending ? 'Sending…' : 'Send Invoice'}
                     </button>
@@ -927,7 +927,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                     <button
                       onClick={handleSendAgreement}
                       disabled={agreementSending}
-                      className="w-full px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-md hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {agreementSending ? 'Sending…' : 'Send Agreement'}
                     </button>
@@ -956,7 +956,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                         const EVENT_META: Record<string, { icon: string; label: string }> = { email_open: { icon: '👁', label: 'Opened' }, link_click: { icon: '🔗', label: 'Clicked' }, form_view: { icon: '📋', label: 'Viewed form' }, form_submit: { icon: '✅', label: 'Submitted' } }
                         return (
                           <div key={s.step} className="relative pl-8">
-                            <div className={`absolute left-0 w-6 h-6 rounded-full flex items-center justify-center text-xs border-2 bg-white ${s.status === 'sent' ? 'border-indigo-400' : s.status === 'skipped' ? 'border-gray-200' : 'border-gray-300'}`}>
+                            <div className={`absolute left-0 w-6 h-6 rounded-full flex items-center justify-center text-xs border-2 bg-white ${s.status === 'sent' ? 'border-brand-400' : s.status === 'skipped' ? 'border-gray-200' : 'border-gray-300'}`}>
                               {STEP_ICONS[s.step] ?? '•'}
                             </div>
                             <div>

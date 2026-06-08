@@ -105,7 +105,7 @@ export default function TermsPage() {
             <p>
               SMS delivery is powered by Twilio. By using the SMS features of Quote Box, you agree to
               Twilio&apos;s{' '}
-              <a href="https://www.twilio.com/en-us/legal/aup" className="text-indigo-600 hover:underline" target="_blank" rel="noopener noreferrer">
+              <a href="https://www.twilio.com/en-us/legal/aup" className="text-brand-600 hover:underline" target="_blank" rel="noopener noreferrer">
                 Acceptable Use Policy
               </a>.
             </p>
@@ -210,11 +210,11 @@ export default function TermsPage() {
             <p className="mb-1">Arctic Reach LLC — Quote Box</p>
             <p>
               Email:{' '}
-              <a href="mailto:support@quote-box.com" className="text-indigo-600 hover:underline">
+              <a href="mailto:support@quote-box.com" className="text-brand-600 hover:underline">
                 support@quote-box.com
               </a>
               <br />
-              Website: <a href="https://quote-box.com" className="text-indigo-600 hover:underline">quote-box.com</a>
+              Website: <a href="https://quote-box.com" className="text-brand-600 hover:underline">quote-box.com</a>
             </p>
           </section>
 

@@ -98,7 +98,7 @@ export default async function AnalyticsPage() {
 
         {/* Summary cards */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-          <SummaryCard label="Total Visits" value={totalVisits} sub="last 30 days" color="bg-indigo-600" />
+          <SummaryCard label="Total Visits" value={totalVisits} sub="last 30 days" color="bg-brand-600" />
           <SummaryCard label="Total Leads" value={totalLeads} sub="from visits" color="bg-green-500" />
           <SummaryCard label="Conversion Rate" value={`${totalConvRate}%`} sub="visits → leads" color="bg-purple-600" />
         </div>
@@ -118,7 +118,7 @@ export default async function AnalyticsPage() {
                   title={`${label}: ${count} visit${count !== 1 ? 's' : ''}`}
                 >
                   <div
-                    className="w-full rounded-sm bg-indigo-500 group-hover:bg-indigo-400 transition-colors"
+                    className="w-full rounded-sm bg-brand-500 group-hover:bg-brand-400 transition-colors"
                     style={{ height: count === 0 ? '2px' : `${Math.max(pct, 4)}%`, opacity: count === 0 ? 0.2 : 1 }}
                   />
                 </div>
@@ -180,7 +180,7 @@ export default async function AnalyticsPage() {
                           href={`/${fs.slug}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                          className="text-xs text-brand-600 hover:text-brand-800 font-medium"
                         >
                           View →
                         </a>

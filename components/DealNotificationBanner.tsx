@@ -102,7 +102,7 @@ export default function DealNotificationBanner({ position = 'bottom-left' }: { p
           width: 40,
           height: 40,
           borderRadius: '50%',
-          background: '#1a1a2e',
+          background: '#5b5bd6',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -112,7 +112,7 @@ export default function DealNotificationBanner({ position = 'bottom-left' }: { p
           🎉
         </div>
         <div>
-          <div style={{ fontSize: '0.83rem', fontWeight: 700, color: '#1a1a2e', lineHeight: 1.3 }}>
+          <div style={{ fontSize: '0.83rem', fontWeight: 700, color: '#5b5bd6', lineHeight: 1.3 }}>
             {current.display_name}
           </div>
           <div style={{ fontSize: '0.78rem', color: '#6b7280', marginTop: 3, lineHeight: 1.4 }}>

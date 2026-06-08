@@ -135,7 +135,7 @@ export default function HostedFormsPage() {
           </div>
           <Link
             href="/form-builder"
-            className={`inline-flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-indigo-700 transition shadow-sm text-sm ${atLimit ? 'opacity-50 pointer-events-none' : ''}`}
+            className={`inline-flex items-center gap-2 bg-brand-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-brand-700 transition shadow-sm text-sm ${atLimit ? 'opacity-50 pointer-events-none' : ''}`}
           >
             + New Form
           </Link>
@@ -216,7 +216,7 @@ export default function HostedFormsPage() {
             </p>
             <Link
               href="/form-builder"
-              className="inline-flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-indigo-700 transition"
+              className="inline-flex items-center gap-2 bg-brand-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-brand-700 transition"
             >
               + Create your first form
             </Link>
@@ -244,7 +244,7 @@ export default function HostedFormsPage() {
 
               const isBlue = color === 'blue'
               const headerBg = isBlue ? '#1a56ff' : '#ffe500'
-              const headerFg = isBlue ? '#ffffff' : '#1a1a2e'
+              const headerFg = isBlue ? '#ffffff' : '#5b5bd6'
               const progressBg = isBlue ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.14)'
               const progressFill = isBlue ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.38)'
               const pillBg = isBlue ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)'

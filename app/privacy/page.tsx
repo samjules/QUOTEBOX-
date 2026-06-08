@@ -61,13 +61,13 @@ export default function PrivacyPage() {
             </p>
             <p className="mb-3">
               <strong>For help:</strong> Reply <strong>HELP</strong> to any message or contact us at{' '}
-              <a href="mailto:support@quote-box.com" className="text-indigo-600 hover:underline">support@quote-box.com</a>.
+              <a href="mailto:support@quote-box.com" className="text-brand-600 hover:underline">support@quote-box.com</a>.
             </p>
             <p>
               <strong>We do not sell, rent, or share phone numbers with third parties for their own marketing purposes.</strong>{' '}
               Phone numbers are only used to deliver messages on behalf of the business you contacted.
               SMS delivery is powered by Twilio, which operates under its own{' '}
-              <a href="https://www.twilio.com/en-us/legal/privacy" className="text-indigo-600 hover:underline" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
+              <a href="https://www.twilio.com/en-us/legal/privacy" className="text-brand-600 hover:underline" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
             </p>
           </section>
 
@@ -149,11 +149,11 @@ export default function PrivacyPage() {
             </p>
             <p>
               Email:{' '}
-              <a href="mailto:support@quote-box.com" className="text-indigo-600 hover:underline">
+              <a href="mailto:support@quote-box.com" className="text-brand-600 hover:underline">
                 support@quote-box.com
               </a>
               <br />
-              Website: <a href="https://quote-box.com" className="text-indigo-600 hover:underline">quote-box.com</a>
+              Website: <a href="https://quote-box.com" className="text-brand-600 hover:underline">quote-box.com</a>
             </p>
           </section>
 
