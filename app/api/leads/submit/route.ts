@@ -106,11 +106,11 @@ export async function POST(request: NextRequest) {
         // Find the most recently automated lead with the same email
         const { data: automatedLeads } = await supabaseAdmin
           .from('automation_steps')
-          .select('lead_id, account_id, step, sent_at')
+          .select('lead_id, account_id, step, sent_at, status')
           .eq('account_id', body.account_id)
-          .eq('status', 'sent')
-          .order('sent_at', { ascending: false })
-          .limit(20)
+          .in('status', ['sent', 'pending'])
+          .order('created_at', { ascending: false })
+          .limit(50)
 
         if (!automatedLeads?.length) return
 

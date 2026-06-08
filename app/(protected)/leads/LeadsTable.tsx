@@ -179,6 +179,12 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
   const [agreementStatus, setAgreementStatus] = useState<string | null>(null)
   const [agreementError, setAgreementError] = useState<string | null>(null)
 
+  const [automationActivity, setAutomationActivity] = useState<{
+    steps: { step: string; status: string; scheduled_at: string; sent_at: string | null; events: { step: string; event_type: string; created_at: string }[] }[]
+    converted: boolean
+    convertedAt: string | null
+  } | null>(null)
+
   const isSuperLeadSelected = selectedGroup.length > 1
 
   function openLead(row: DisplayRow) {
@@ -196,9 +202,14 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
     setInvoiceDescription(lead.form_type ? `${lead.form_type} quote` : 'Service quote')
     setAgreementStatus(null)
     setAgreementError(null)
+    setAutomationActivity(null)
     fetch(`/api/agreements/status?leadId=${lead.id}`)
       .then((r) => r.json())
       .then((d) => { if (d.agreement) setAgreementStatus(d.agreement.status) })
+      .catch(() => {})
+    fetch(`/api/automations/lead-activity?lead_id=${lead.id}`)
+      .then((r) => r.json())
+      .then((d) => { if (d && d.steps) setAutomationActivity(d) })
       .catch(() => {})
   }
 
@@ -801,6 +812,74 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                   </div>
                 )}
               </section>
+
+              {/* Automation Activity */}
+              {automationActivity && (
+                <section>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Automation</h3>
+                    {automationActivity.converted && (
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">Converted</span>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <div className="absolute left-3 top-0 bottom-0 w-px bg-gray-200" />
+                    <div className="space-y-3">
+                      {automationActivity.steps.map((s) => {
+                        const STEP_ICONS: Record<string, string> = { initial_contact: '⚡', day1_followup: '🔔', discount_offer: '🎁', mark_lost: '🚫' }
+                        const STEP_LABELS: Record<string, string> = { initial_contact: 'Instant Contact', day1_followup: 'Day 1 Follow-up', discount_offer: 'Discount Offer', mark_lost: 'Mark as Lost' }
+                        const EVENT_META: Record<string, { icon: string; label: string }> = { email_open: { icon: '👁', label: 'Opened' }, link_click: { icon: '🔗', label: 'Clicked' }, form_submit: { icon: '✅', label: 'Submitted' } }
+                        return (
+                          <div key={s.step} className="relative pl-8">
+                            <div className={`absolute left-0 w-6 h-6 rounded-full flex items-center justify-center text-xs border-2 bg-white ${s.status === 'sent' ? 'border-indigo-400' : s.status === 'skipped' ? 'border-gray-200' : 'border-gray-300'}`}>
+                              {STEP_ICONS[s.step] ?? '•'}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-medium text-gray-900">{STEP_LABELS[s.step] ?? s.step}</span>
+                                <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${s.status === 'sent' ? 'bg-green-100 text-green-700' : s.status === 'skipped' ? 'bg-gray-100 text-gray-500' : 'bg-yellow-100 text-yellow-700'}`}>
+                                  {s.status}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-400">
+                                {s.sent_at
+                                  ? new Date(s.sent_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                                  : s.scheduled_at
+                                  ? `Scheduled ${new Date(s.scheduled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                                  : ''}
+                              </p>
+                              {s.events.length > 0 && (
+                                <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-gray-100">
+                                  {s.events.map((ev, i) => {
+                                    const meta = EVENT_META[ev.event_type]
+                                    if (!meta) return null
+                                    return (
+                                      <div key={i} className="flex items-center gap-1 text-xs text-gray-500">
+                                        <span>{meta.icon}</span>
+                                        <span>{meta.label}</span>
+                                        <span className="text-gray-400">{new Date(ev.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                      {automationActivity.converted && automationActivity.convertedAt && (
+                        <div className="relative pl-8">
+                          <div className="absolute left-0 w-6 h-6 rounded-full flex items-center justify-center text-xs border-2 border-green-400 bg-green-50">✅</div>
+                          <div>
+                            <span className="text-xs font-medium text-green-700">Form submitted</span>
+                            <p className="text-xs text-gray-400">{new Date(automationActivity.convertedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </section>
+              )}
             </div>
           </div>
         </>

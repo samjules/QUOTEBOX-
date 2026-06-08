@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 async function getAccountId(): Promise<string | null> {
   const supabase = createClient()
@@ -11,9 +11,12 @@ async function getAccountId(): Promise<string | null> {
   return data?.id ?? null
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const accountId = await getAccountId()
   if (!accountId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const leadId = request.nextUrl.searchParams.get('lead_id')
+  if (leadId) return getLeadActivity(accountId, leadId)
 
   const admin = createAdminClient()
 
@@ -74,4 +77,49 @@ export async function GET() {
   })
 
   return NextResponse.json(result)
+}
+
+async function getLeadActivity(accountId: string, leadId: string) {
+  const admin = createAdminClient()
+
+  const stepOrder = ['initial_contact', 'day1_followup', 'discount_offer', 'mark_lost']
+
+  const [{ data: steps }, { data: events }] = await Promise.all([
+    admin
+      .from('automation_steps')
+      .select('step, status, scheduled_at, sent_at')
+      .eq('account_id', accountId)
+      .eq('lead_id', leadId)
+      .order('scheduled_at', { ascending: true }),
+    admin
+      .from('automation_events')
+      .select('step, event_type, created_at')
+      .eq('account_id', accountId)
+      .eq('lead_id', leadId)
+      .order('created_at', { ascending: true }),
+  ])
+
+  if (!steps?.length) return NextResponse.json(null)
+
+  const stepsWithEvents = stepOrder
+    .map((stepKey) => {
+      const s = (steps ?? []).find((ls) => ls.step === stepKey)
+      if (!s) return null
+      return {
+        step: stepKey,
+        status: s.status,
+        scheduled_at: s.scheduled_at,
+        sent_at: s.sent_at,
+        events: (events ?? []).filter((e) => e.step === stepKey),
+      }
+    })
+    .filter(Boolean)
+
+  const formSubmitEvents = (events ?? []).filter((e) => e.event_type === 'form_submit')
+
+  return NextResponse.json({
+    steps: stepsWithEvents,
+    converted: formSubmitEvents.length > 0,
+    convertedAt: formSubmitEvents[0]?.created_at ?? null,
+  })
 }
