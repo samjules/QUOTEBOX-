@@ -15,9 +15,8 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 )
 
-const PLAN_MAP: Record<string, 'starter' | 'growth'> = {
-  starter: 'starter',
-  growth: 'growth',
+const PLAN_MAP: Record<string, 'pro'> = {
+  pro: 'pro',
 }
 
 const corsHeaders = {

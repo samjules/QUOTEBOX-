@@ -119,7 +119,7 @@ export interface Billing {
   account_id: string
   credit_balance: number
   total_spent: number
-  plan: 'starter' | 'growth' | 'fully_managed' | 'pay_per_lead' | null
+  plan: 'pro' | 'starter' | 'growth' | 'fully_managed' | 'pay_per_lead' | null
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
   trial_ends_at: string | null

@@ -15,15 +15,10 @@ const corsHeaders = {
 }
 
 const PLANS = {
-  starter: {
-    name: 'Starter Plan',
-    amount: 2000, // $20.00 in cents
-    description: '1 quote form, 10 leads/month, 1 VSL',
-  },
-  growth: {
-    name: 'Growth Plan',
-    amount: 3000, // $30.00 in cents
-    description: '3 quote forms, 50 leads/month, priority support',
+  pro: {
+    name: 'Pro Plan',
+    amount: 35000, // $350.00 in cents
+    description: 'Unlimited quote forms, unlimited leads, full platform access',
   },
 }
 
@@ -46,11 +41,8 @@ serve(async (req) => {
 
     const origin = req.headers.get('origin') || 'https://quote-box.com'
 
-    // trialDays override (e.g. 14 for the bro deal), else default 7-day trial for starter
     const resolvedTrialDays: number | undefined =
-      typeof trialDays === 'number' ? trialDays
-      : plan === 'starter' ? 7
-      : undefined
+      typeof trialDays === 'number' ? trialDays : undefined
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
