@@ -134,11 +134,12 @@ function buildEmailHtml(p: EmailPayload): string {
           <!-- Footer -->
           <tr>
             <td style="padding:24px 0 8px;text-align:center;">
-              <p style="margin:0;font-size:12px;color:#94a3b8;">
+              <p style="margin:0 0 4px;font-size:12px;color:#94a3b8;">
                 ${p.businessName ? `Sent by <strong style="color:#94a3b8;">${esc(p.businessName)}</strong> via ` : 'Sent via '}
                 <a href="https://quote-box.com" style="color:#94a3b8;text-decoration:none;">Quote.Box</a>
                 &nbsp;&middot;&nbsp; This is an automated quote summary
               </p>
+              <p style="margin:0;font-size:11px;color:#cbd5e1;">This is an automated message — please do not reply to this email.</p>
             </td>
           </tr>
 

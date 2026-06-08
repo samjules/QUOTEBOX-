@@ -28,7 +28,7 @@ export function buildAutomationEmail(params: {
     ? `<div style="text-align:center;margin:28px 0;">
         <a href="${esc(ctaUrl)}" style="${btnStyle}">Get My Free Estimate →</a>
        </div>`
-    : `<p style="color:#475569;font-size:14px;">Reply to this email and we'll get you sorted out right away.</p>`
+    : `<p style="color:#475569;font-size:14px;">Get in touch with ${esc(businessName)} directly to get sorted out right away.</p>`
 
   const heroBlock = heroImageUrl
     ? `<tr><td style="padding:0;"><img src="${esc(heroImageUrl)}" alt="" width="520" style="width:100%;max-width:520px;display:block;border-radius:0;" /></td></tr>`
@@ -49,7 +49,7 @@ export function buildAutomationEmail(params: {
       subject: `Still need a quote? We're here, ${name}`,
       heading: `Just checking in!`,
       body: `We noticed you haven't had a chance to get your estimate from <strong>${esc(businessName)}</strong> yet — no worries, life gets busy! Whenever you're ready, your free estimate is just a click away.`,
-      outro: `Questions? Just reply to this email — we're happy to help.`,
+      outro: `Questions? Contact ${businessName} directly — we're happy to help.`,
     },
     discount_offer: {
       subject: `${discountPercent}% off just for you, ${name}`,
@@ -95,10 +95,11 @@ export function buildAutomationEmail(params: {
           </tr>
           <tr>
             <td style="padding:20px 0 8px;text-align:center;">
-              <p style="margin:0;font-size:12px;color:#94a3b8;">
+              <p style="margin:0 0 4px;font-size:12px;color:#94a3b8;">
                 Sent by <strong style="color:#94a3b8;">${esc(businessName)}</strong> via
                 <a href="https://quote-box.com" style="color:#94a3b8;text-decoration:none;">Quote.Box</a>
               </p>
+              <p style="margin:0;font-size:11px;color:#cbd5e1;">This is an automated message — please do not reply to this email.</p>
             </td>
           </tr>
         </table>
