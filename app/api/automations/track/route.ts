@@ -16,12 +16,12 @@ export async function GET(request: NextRequest) {
     const eventType = event === 'o' ? 'email_open' : event === 'c' ? 'link_click' : null
     if (eventType) {
       const admin = createAdminClient()
-      admin.from('automation_events').insert({
+      void Promise.resolve(admin.from('automation_events').insert({
         account_id: accountId,
         lead_id: leadId,
         step,
         event_type: eventType,
-      }).then(() => {}).catch(() => {})
+      }))
     }
   }
 

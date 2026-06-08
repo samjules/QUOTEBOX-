@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
         if (!automatedLeads?.length) return
 
         // Find the lead among them that matches this email
-        const leadIds = [...new Set(automatedLeads.map((s) => s.lead_id))]
+        const leadIds = Array.from(new Set(automatedLeads.map((s) => s.lead_id)))
         const { data: matchedLeads } = await supabaseAdmin
           .from('leads')
           .select('id')

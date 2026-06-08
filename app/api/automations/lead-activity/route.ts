@@ -26,7 +26,7 @@ export async function GET() {
 
   if (!steps?.length) return NextResponse.json([])
 
-  const leadIds = [...new Set(steps.map((s) => s.lead_id))]
+  const leadIds = Array.from(new Set(steps.map((s) => s.lead_id)))
 
   const [{ data: leads }, { data: events }] = await Promise.all([
     admin
