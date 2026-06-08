@@ -77,12 +77,6 @@ interface CampaignWithInsights {
   }
 }
 
-interface Suggestions {
-  suggestions: string[]
-  topPerformer: string
-  actionItems: string[]
-}
-
 interface TargetCity {
   key: string
   name: string
@@ -198,14 +192,6 @@ function CityTargetingMap({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const searchTimer = useRef<any>(null)
 
-  // AI city suggest state
-  const [showAiPanel, setShowAiPanel] = useState(false)
-  const [aiDescription, setAiDescription] = useState('')
-  const [aiLoading, setAiLoading] = useState(false)
-  const [aiResults, setAiResults] = useState<string[]>([])
-  const [aiError, setAiError] = useState('')
-  const [aiResolving, setAiResolving] = useState(false)
-
   useEffect(() => {
     if (!mapContainerRef.current || !MAPBOX_TOKEN) return
     let cancelled = false
@@ -298,53 +284,6 @@ function CityTargetingMap({
     geocodeCity(result.name, result.region, result.key)
   }
 
-  async function handleAiSuggest() {
-    if (!aiDescription.trim()) return
-    setAiLoading(true)
-    setAiError('')
-    setAiResults([])
-    try {
-      const res = await fetch('/api/meta/city-suggest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description: aiDescription }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        setAiError(data.error || 'Failed to find cities')
-      } else {
-        setAiResults(data.cities || [])
-      }
-    } catch {
-      setAiError('Failed to reach AI service')
-    }
-    setAiLoading(false)
-  }
-
-  async function resolveAndAddCity(cityName: string) {
-    try {
-      const res = await fetch(`/api/meta/city-search?q=${encodeURIComponent(cityName)}&country=US`)
-      const data = await res.json()
-      const match = data.cities?.[0]
-      if (match && !targetCities.some((c) => c.key === match.key)) {
-        const city: TargetCity = { key: match.key, name: match.name, region: match.region, radius: 25 }
-        onAdd(city)
-        geocodeCity(match.name, match.region, match.key)
-      }
-    } catch { /* skip unresolvable cities */ }
-  }
-
-  async function addAllAiResults() {
-    setAiResolving(true)
-    for (const cityName of aiResults) {
-      await resolveAndAddCity(cityName)
-    }
-    setAiResolving(false)
-    setShowAiPanel(false)
-    setAiDescription('')
-    setAiResults([])
-  }
-
   return (
     <div>
       <div className="flex gap-2 mb-3">
@@ -382,107 +321,7 @@ function CityTargetingMap({
             </div>
           )}
         </div>
-        {/* AI Suggest button */}
-        <button
-          onClick={() => { setShowAiPanel((v) => !v); setAiResults([]); setAiError(''); setAiDescription('') }}
-          title="Describe your service area and let Robert find cities"
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition ${
-            showAiPanel
-              ? 'bg-violet-600 border-violet-600 text-white'
-              : 'bg-white border-gray-200 text-violet-600 hover:border-violet-400 hover:bg-violet-50'
-          }`}
-        >
-          <img src="/icons/logo-1772578089154.jpg" alt="Robert" className="w-5 h-5 rounded-full object-cover" />
-          Robert
-        </button>
       </div>
-
-      {/* AI Service Area Panel */}
-      {showAiPanel && (
-        <div className="mb-3 rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-brand-50 p-4 shadow-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <img src="/icons/logo-1772578089154.jpg" alt="Robert" className="w-9 h-9 rounded-full object-cover border-2 border-violet-300" />
-            <div>
-              <p className="text-sm font-semibold text-violet-900">Robert — City Targeting</p>
-              <p className="text-xs text-violet-600">Describe your service area in plain English</p>
-            </div>
-          </div>
-          <textarea
-            value={aiDescription}
-            onChange={(e) => setAiDescription(e.target.value)}
-            placeholder="e.g. Within 25 miles of Austin, TX — or — All of Orange County, California — or — Downtown Chicago and surrounding suburbs"
-            rows={3}
-            className="w-full border border-violet-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white resize-none mb-3"
-          />
-          <div className="flex gap-2">
-            <button
-              onClick={handleAiSuggest}
-              disabled={aiLoading || aiResolving || !aiDescription.trim()}
-              className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
-            >
-              {aiLoading ? (
-                <>
-                  <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-                  </svg>
-                  Finding Cities…
-                </>
-              ) : (
-                <>
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2l2.09 6.26L20 10l-5.91 1.74L12 18l-2.09-6.26L4 10l5.91-1.74L12 2z"/>
-                  </svg>
-                  Find Cities
-                </>
-              )}
-            </button>
-            <button
-              onClick={() => setShowAiPanel(false)}
-              className="text-sm text-gray-500 hover:text-gray-700 px-3 py-2 rounded-lg hover:bg-white transition"
-            >
-              Cancel
-            </button>
-          </div>
-
-          {aiError && (
-            <p className="mt-2 text-xs text-red-600">{aiError}</p>
-          )}
-
-          {aiResults.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-violet-200">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-semibold text-violet-800">Robert found {aiResults.length} cities</p>
-                <button
-                  onClick={addAllAiResults}
-                  disabled={aiResolving}
-                  className="text-xs bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-medium px-3 py-1.5 rounded-lg transition"
-                >
-                  {aiResolving ? 'Resolving…' : 'Add All to Targeting'}
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
-                {aiResults.map((cityName) => (
-                  <span
-                    key={cityName}
-                    className="inline-flex items-center gap-1 bg-white text-violet-700 text-xs font-medium px-2 py-0.5 rounded-full border border-violet-200"
-                  >
-                    {cityName}
-                    <button
-                      onClick={() => {
-                        resolveAndAddCity(cityName)
-                        setAiResults((prev) => prev.filter((c) => c !== cityName))
-                      }}
-                      className="hover:text-violet-900 leading-none ml-0.5 text-violet-400 hover:text-violet-700"
-                      title="Add this city"
-                    >+</button>
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
       {targetCities.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-3">
@@ -690,18 +529,6 @@ export default function LeadMachinePage() {
   const [campaigns, setCampaigns] = useState<CampaignWithInsights[]>([])
   const [campaignsLoading, setCampaignsLoading] = useState(false)
   const [dateRange, setDateRange] = useState(30)
-  const [suggestions, setSuggestions] = useState<Suggestions | null>(null)
-  const [suggestionsLoading, setSuggestionsLoading] = useState(false)
-  const [suggestionsOpen, setSuggestionsOpen] = useState(true)
-
-  // Robert chat state
-  const [chatOpen, setChatOpen] = useState(false)
-  const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
-    { role: 'assistant', content: "Hey! I'm Robert. Ask me anything about your Meta campaigns — budgets, targeting, ad copy, you name it." }
-  ])
-  const [chatInput, setChatInput] = useState('')
-  const [chatLoading, setChatLoading] = useState(false)
-  const chatEndRef = useRef<HTMLDivElement>(null)
 
   const [questionnaire, setQuestionnaire] = useState<Questionnaire>({
     objective: 'OUTCOME_LEADS',
@@ -738,19 +565,6 @@ export default function LeadMachinePage() {
       const data = await res.json()
       if (res.ok) {
         setCampaigns(data.campaigns || [])
-        // Auto-fetch AI suggestions after campaigns load
-        if (data.campaigns?.length >= 0) {
-          setSuggestionsLoading(true)
-          fetch('/api/meta/suggestions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ campaigns: data.campaigns }),
-          })
-            .then((r) => r.json())
-            .then((s) => { if (s.suggestions) setSuggestions(s) })
-            .catch(() => {})
-            .finally(() => setSuggestionsLoading(false))
-        }
       }
     } catch { /* non-fatal */ }
     setCampaignsLoading(false)
@@ -1128,30 +942,6 @@ export default function LeadMachinePage() {
     setCreatingConversion(false)
   }
 
-  async function handleChat(e?: React.FormEvent) {
-    e?.preventDefault()
-    const text = chatInput.trim()
-    if (!text || chatLoading) return
-    const userMsg = { role: 'user' as const, content: text }
-    const nextMessages = [...chatMessages, userMsg]
-    setChatMessages(nextMessages)
-    setChatInput('')
-    setChatLoading(true)
-    try {
-      const res = await fetch('/api/meta/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: nextMessages }),
-      })
-      const data = await res.json()
-      setChatMessages((prev) => [...prev, { role: 'assistant', content: data.reply || 'Something went wrong.' }])
-    } catch {
-      setChatMessages((prev) => [...prev, { role: 'assistant', content: 'Oops, something went wrong. Try again.' }])
-    }
-    setChatLoading(false)
-    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
-  }
-
   function handleReset() {
     setPageState('questionnaire')
     setStep(1)
@@ -1201,54 +991,64 @@ export default function LeadMachinePage() {
 
   if (pageState === 'disconnected') {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-12">
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-4">
-            <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-            </svg>
+      <div className="min-h-full" style={{ background: '#f4f4f6' }}>
+        <div className="max-w-2xl mx-auto px-4 py-12">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-4">
+              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+              </svg>
+            </div>
+            <h1
+              className="text-3xl font-bold text-gray-900 mb-2"
+              style={{ fontFamily: "'Instrument Sans', sans-serif", letterSpacing: '-0.02em' }}
+            >
+              Campaigns
+            </h1>
+            <p className="text-gray-500 text-lg">Connect your Meta Ads account to create campaigns, view live analytics, and get smart suggestions.</p>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Lead Machine</h1>
-          <p className="text-gray-500 text-lg">Connect your Meta Ads account and let Robert create campaigns, view live analytics, and get smart suggestions.</p>
+
+          <div
+            className="bg-white rounded-2xl p-8 mb-6"
+            style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.06)' }}
+          >
+            <h2 className="font-semibold text-gray-900 mb-4">What you get:</h2>
+            <ul className="space-y-3">
+              {[
+                'Live analytics — spend, leads, CPL across all campaigns',
+                'AI generates headlines, body copy, and targeting in seconds',
+                'Auto split test — 3 ad variants created automatically',
+                'AI insights to optimize your campaigns',
+                'Campaign starts PAUSED — no spend until you activate it',
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-3">
+                  <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-gray-600">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="bg-blue-50 rounded-xl p-4 mb-6 text-sm text-blue-700">
+            <strong>Permissions required:</strong> ads_management, ads_read, pages_read_engagement
+          </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 text-sm text-red-700">{error}</div>
+          )}
+
+          <button
+            onClick={handleConnectMeta}
+            className="w-full flex items-center justify-center gap-3 bg-[#1877F2] hover:bg-[#1568d3] text-white font-semibold py-3.5 px-6 rounded-xl transition text-base"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+            </svg>
+            Connect Meta Account
+          </button>
         </div>
-
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-6">
-          <h2 className="font-semibold text-gray-900 mb-4">What you get:</h2>
-          <ul className="space-y-3">
-            {[
-              'Live analytics — spend, leads, CPL across all campaigns',
-              'Robert creates headlines, body copy, and targeting in seconds',
-              'Auto split test — 3 ad variants created automatically',
-              "Robert's suggestions to optimize your campaigns",
-              'Campaign starts PAUSED — no spend until you activate it',
-            ].map((item) => (
-              <li key={item} className="flex items-start gap-3">
-                <svg className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-600">{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="bg-blue-50 rounded-xl p-4 mb-6 text-sm text-blue-700">
-          <strong>Permissions required:</strong> ads_management, ads_read, pages_read_engagement
-        </div>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 text-sm text-red-700">{error}</div>
-        )}
-
-        <button
-          onClick={handleConnectMeta}
-          className="w-full flex items-center justify-center gap-3 bg-[#1877F2] hover:bg-[#1568d3] text-white font-semibold py-3.5 px-6 rounded-xl transition text-base"
-        >
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-          </svg>
-          Connect Meta Account
-        </button>
       </div>
     )
   }
@@ -1257,40 +1057,50 @@ export default function LeadMachinePage() {
 
   if (pageState === 'pick-account') {
     return (
-      <div className="max-w-xl mx-auto px-4 py-12">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Select Ad Account</h1>
-        <p className="text-gray-500 mb-8">Choose which Meta Ad account to use for creating campaigns.</p>
+      <div className="min-h-full" style={{ background: '#f4f4f6' }}>
+        <div className="max-w-xl mx-auto px-4 py-12">
+          <h1
+            className="text-2xl font-bold text-gray-900 mb-2"
+            style={{ fontFamily: "'Instrument Sans', sans-serif", letterSpacing: '-0.02em' }}
+          >
+            Select Ad Account
+          </h1>
+          <p className="text-gray-500 mb-8">Choose which Meta Ad account to use for creating campaigns.</p>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          {adAccounts.length === 0 ? (
-            <p className="text-gray-500 text-sm">No ad accounts found. Make sure you have an active Meta Ad account.</p>
-          ) : (
-            <>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Ad Account</label>
-              <select
-                value={selectedAdAccount}
-                onChange={(e) => setSelectedAdAccount(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 mb-4"
-              >
-                <option value="">Select an ad account...</option>
-                {adAccounts.map((acc) => (
-                  <option key={acc.id} value={acc.account_id}>
-                    {acc.name} ({acc.account_id})
-                  </option>
-                ))}
-              </select>
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-sm text-red-700">{error}</div>
-              )}
-              <button
-                onClick={handleSaveAdAccount}
-                disabled={!selectedAdAccount || savingAccount}
-                className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-lg transition text-sm"
-              >
-                {savingAccount ? 'Saving...' : 'Continue'}
-              </button>
-            </>
-          )}
+          <div
+            className="bg-white rounded-2xl p-6"
+            style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.06)' }}
+          >
+            {adAccounts.length === 0 ? (
+              <p className="text-gray-500 text-sm">No ad accounts found. Make sure you have an active Meta Ad account.</p>
+            ) : (
+              <>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Ad Account</label>
+                <select
+                  value={selectedAdAccount}
+                  onChange={(e) => setSelectedAdAccount(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 mb-4"
+                >
+                  <option value="">Select an ad account...</option>
+                  {adAccounts.map((acc) => (
+                    <option key={acc.id} value={acc.account_id}>
+                      {acc.name} ({acc.account_id})
+                    </option>
+                  ))}
+                </select>
+                {error && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-sm text-red-700">{error}</div>
+                )}
+                <button
+                  onClick={handleSaveAdAccount}
+                  disabled={!selectedAdAccount || savingAccount}
+                  className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-lg transition text-sm"
+                >
+                  {savingAccount ? 'Saving...' : 'Continue'}
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     )
@@ -1307,1143 +1117,1018 @@ export default function LeadMachinePage() {
   const stepTitles = ['Conversion Tracking', 'Campaign Objective', 'Target Audience', 'Business Info', 'Budget & Schedule', 'AI Preview & Split Test']
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Lead Machine</h1>
-        <p className="text-sm text-gray-400 mt-0.5">Powered by Meta Ads + AI</p>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-8">
-        {([
-          { id: 'analytics', label: 'Analytics' },
-          { id: 'campaigns', label: 'Campaigns' },
-          { id: 'create', label: 'Create Campaign' },
-        ] as { id: ActiveTab; label: string }[]).map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
-              activeTab === tab.id
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
+    <div className="min-h-full" style={{ background: '#f4f4f6' }}>
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-6">
+          <h1
+            className="text-2xl font-bold text-gray-900"
+            style={{ fontFamily: "'Instrument Sans', sans-serif", letterSpacing: '-0.02em' }}
           >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Analytics Tab ── */}
-      {activeTab === 'analytics' && (
-        <div className="space-y-6">
-          {/* Date range + refresh */}
-          <div className="flex items-center justify-between">
-            <div className="flex gap-2">
-              {[7, 14, 30].map((d) => (
-                <button
-                  key={d}
-                  onClick={() => setDateRange(d)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
-                    dateRange === d
-                      ? 'bg-brand-600 text-white'
-                      : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
-                  }`}
-                >
-                  {d}d
-                </button>
-              ))}
-            </div>
-            {campaignsLoading && (
-              <div className="flex items-center gap-2 text-xs text-gray-400">
-                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-brand-500" />
-                Loading…
-              </div>
-            )}
-          </div>
-
-          {/* Metric cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { label: 'Total Spend', value: `$${totalSpend.toFixed(2)}`, icon: '💰' },
-              { label: 'Total Leads', value: totalLeads.toFixed(0), icon: '👥' },
-              { label: 'Avg CPL', value: avgCpl > 0 ? `$${avgCpl.toFixed(2)}` : '—', icon: '📊' },
-              { label: 'Active Campaigns', value: String(activeCampaigns), icon: '🚀' },
-            ].map((m) => (
-              <div key={m.label} className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
-                <div className="text-xl mb-1">{m.icon}</div>
-                <div className="text-2xl font-bold text-gray-900">{m.value}</div>
-                <div className="text-xs text-gray-400 mt-0.5">{m.label}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Campaign table */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100">
-              <h2 className="font-semibold text-gray-900 text-sm">Campaign Performance</h2>
-            </div>
-            {campaigns.length === 0 ? (
-              <div className="px-4 py-10 text-center text-gray-400 text-sm">
-                {campaignsLoading ? 'Loading campaigns…' : 'No campaigns found for this period.'}
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-100 text-xs text-gray-400 uppercase tracking-wider">
-                      <th className="text-left px-4 py-3 font-medium">Campaign</th>
-                      <th className="text-left px-4 py-3 font-medium">Status</th>
-                      <th className="text-right px-4 py-3 font-medium">Impressions</th>
-                      <th className="text-right px-4 py-3 font-medium">Clicks</th>
-                      <th className="text-right px-4 py-3 font-medium">Spend</th>
-                      <th className="text-right px-4 py-3 font-medium">Leads</th>
-                      <th className="text-right px-4 py-3 font-medium">CPL</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {campaigns.map((c) => (
-                      <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50 transition">
-                        <td className="px-4 py-3 font-medium text-gray-900 max-w-[200px] truncate">{c.name}</td>
-                        <td className="px-4 py-3"><StatusBadge status={c.status} /></td>
-                        <td className="px-4 py-3 text-right text-gray-600">{c.insights.impressions.toLocaleString()}</td>
-                        <td className="px-4 py-3 text-right text-gray-600">{c.insights.clicks.toLocaleString()}</td>
-                        <td className="px-4 py-3 text-right text-gray-600">${c.insights.spend.toFixed(2)}</td>
-                        <td className="px-4 py-3 text-right text-gray-600">{c.insights.leads.toFixed(0)}</td>
-                        <td className="px-4 py-3 text-right text-gray-600">
-                          {c.insights.cpl > 0 ? `$${c.insights.cpl.toFixed(2)}` : '—'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            {campaigns.length > 0 && metaAdAccountId && (
-              <div className="px-4 py-3 border-t border-gray-100">
-                <a
-                  href={`https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=${metaAdAccountId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-brand-600 hover:underline"
-                >
-                  Open in Meta Ads Manager →
-                </a>
-              </div>
-            )}
-          </div>
-
-          {/* AI Suggestions panel */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-            <button
-              onClick={() => setSuggestionsOpen((o) => !o)}
-              className="w-full flex items-center justify-between px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition"
-            >
-              <div className="flex items-center gap-2">
-                <img src="/icons/logo-1772578089154.jpg" alt="Robert" className="w-6 h-6 rounded-full object-cover" />
-                <span className="text-sm font-semibold text-gray-900">Robert&apos;s Suggestions</span>
-                {suggestionsLoading && (
-                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-brand-500" />
-                )}
-                {suggestions && !suggestionsLoading && (
-                  <span className="text-xs bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full font-medium">
-                    {suggestions.actionItems.length} actions
-                  </span>
-                )}
-              </div>
-              <svg
-                className={`w-4 h-4 text-gray-400 transition-transform ${suggestionsOpen ? 'rotate-180' : ''}`}
-                fill="none" stroke="currentColor" viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            {suggestionsOpen && (
-              <div className="px-4 py-4">
-                {suggestionsLoading && !suggestions && (
-                  <p className="text-sm text-gray-400 text-center py-4">Robert is analyzing your campaigns…</p>
-                )}
-                {!suggestionsLoading && !suggestions && (
-                  <p className="text-sm text-gray-400 text-center py-4">No suggestions available yet.</p>
-                )}
-                {suggestions && (
-                  <div className="space-y-5">
-                    {suggestions.topPerformer && (
-                      <div className="bg-green-50 border border-green-100 rounded-lg px-3 py-2.5">
-                        <p className="text-xs font-medium text-green-700 uppercase tracking-wider mb-0.5">Top Performer</p>
-                        <p className="text-sm text-green-900 font-medium">{suggestions.topPerformer}</p>
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Insights</p>
-                      <ul className="space-y-2">
-                        {suggestions.suggestions.map((s, i) => (
-                          <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                            <span className="mt-1 w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
-                            {s}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Action Items</p>
-                      <ul className="space-y-2">
-                        {suggestions.actionItems.map((a, i) => (
-                          <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand-600 text-white text-xs flex items-center justify-center font-bold">{i + 1}</span>
-                            {a}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+            Campaigns
+          </h1>
+          <p className="text-sm text-gray-400 mt-0.5">Powered by Meta Ads + AI</p>
         </div>
-      )}
 
-      {/* ── Campaigns Tab ── */}
-      {activeTab === 'campaigns' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="font-semibold text-gray-900">All Campaigns</h2>
+        {/* Tabs — pill style */}
+        <div className="flex gap-1 bg-white rounded-2xl p-1 mb-8" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.06)' }}>
+          {([
+            { id: 'analytics', label: 'Analytics' },
+            { id: 'campaigns', label: 'Campaigns' },
+            { id: 'create', label: 'Create Campaign' },
+          ] as { id: ActiveTab; label: string }[]).map((tab) => (
             <button
-              onClick={() => setActiveTab('create')}
-              className="text-sm text-brand-600 hover:text-brand-700 font-medium"
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className="flex-1 py-2 text-sm font-medium transition"
+              style={
+                activeTab === tab.id
+                  ? { background: '#5b5bd6', color: 'white', borderRadius: 12 }
+                  : { color: '#6b7280', borderRadius: 12 }
+              }
             >
-              + Create Campaign
+              {tab.label}
             </button>
-          </div>
-
-          {campaignsLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-600" />
-            </div>
-          ) : campaigns.length === 0 ? (
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-12 text-center">
-              <div className="text-4xl mb-3">📢</div>
-              <p className="font-medium text-gray-900 mb-1">No campaigns yet</p>
-              <p className="text-sm text-gray-400 mb-4">Create your first campaign to start generating leads.</p>
-              <button
-                onClick={() => setActiveTab('create')}
-                className="bg-brand-600 hover:bg-brand-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition"
-              >
-                Create Campaign
-              </button>
-            </div>
-          ) : (
-            <div className="grid gap-4">
-              {campaigns.map((c) => (
-                <div key={c.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <p className="font-semibold text-gray-900 truncate">{c.name}</p>
-                        <StatusBadge status={c.status} />
-                      </div>
-                      <p className="text-xs text-gray-400 mb-3">
-                        {c.objective.replace('OUTCOME_', '')} · Budget: ${(parseInt(c.daily_budget || '0') / 100).toFixed(0)}/day ·
-                        Created {new Date(c.created_time).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
-                      </p>
-                      <div className="flex gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-400 text-xs">Spend</span>
-                          <p className="font-medium text-gray-900">${c.insights.spend.toFixed(2)}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-400 text-xs">Leads</span>
-                          <p className="font-medium text-gray-900">{c.insights.leads.toFixed(0)}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-400 text-xs">CPL</span>
-                          <p className="font-medium text-gray-900">{c.insights.cpl > 0 ? `$${c.insights.cpl.toFixed(2)}` : '—'}</p>
-                        </div>
-                      </div>
-                    </div>
-                    {metaAdAccountId && (
-                      <a
-                        href={`https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=${metaAdAccountId}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-shrink-0 text-xs text-[#1877F2] hover:underline font-medium"
-                      >
-                        Open in Ads Manager →
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          ))}
         </div>
-      )}
 
-      {/* ── Create Campaign Tab ── */}
-      {activeTab === 'create' && (
-        <div>
-          {/* Success screen */}
-          {pageState === 'created' && createdCampaign && (
-            <div className="max-w-xl mx-auto">
-              <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-1">Split Test Launched!</h2>
-                <p className="text-gray-500">
-                  {createdCampaign.adIds.length} ad variants created in Meta Ads Manager (PAUSED). Review and activate when ready.
-                </p>
-              </div>
-
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6 space-y-4">
-                <div>
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Campaign Name</p>
-                  <p className="font-semibold text-gray-900">{createdCampaign.campaignName}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Status</p>
-                  <StatusBadge status="PAUSED" />
-                </div>
-                {createdCampaign.adIds.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Ad IDs (Split Test Variants)</p>
-                    <div className="space-y-1.5">
-                      {createdCampaign.adIds.map((adId, i) => (
-                        <div key={adId} className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-brand-600 bg-brand-50 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">
-                            {String.fromCharCode(65 + i)}
-                          </span>
-                          <span className="font-mono text-xs text-gray-600 truncate">{adId}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <a
-                href={createdCampaign.adsManagerUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2 bg-[#1877F2] hover:bg-[#1568d3] text-white font-semibold py-3 px-6 rounded-xl transition mb-3"
-              >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                </svg>
-                Open in Meta Ads Manager
-              </a>
-
-              <button
-                onClick={handleReset}
-                className="w-full text-gray-600 hover:text-gray-900 font-medium py-3 px-6 rounded-xl border border-gray-200 hover:border-gray-300 transition text-sm"
-              >
-                Create Another Campaign
-              </button>
-            </div>
-          )}
-
-          {/* Wizard */}
-          {pageState === 'questionnaire' && (
-            <div className="max-w-2xl mx-auto">
-              {/* Header */}
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-2">
-                  <h2 className="text-xl font-bold text-gray-900">Create Campaign</h2>
-                  <span className="text-sm text-gray-400">Step {step} of 6</span>
-                </div>
-                <div className="w-full bg-gray-100 rounded-full h-2">
-                  <div
-                    className="bg-brand-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${(step / 6) * 100}%` }}
-                  />
-                </div>
-                <p className="text-sm text-gray-500 mt-2">{stepTitles[step - 1]}</p>
-              </div>
-
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 text-sm text-red-700">
-                  <p>{error}</p>
-                  {tokenExpired && (
-                    <button
-                      onClick={handleConnectMeta}
-                      className="mt-3 inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition"
-                    >
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                      </svg>
-                      Reconnect Meta Account
-                    </button>
-                  )}
-                </div>
-              )}
-
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-
-                {/* Step 1: Conversion Tracking */}
-                {step === 1 && (() => {
-                  const selectedForm = hostedForms.find((f) => f.id === questionnaire.selectedFormId)
-                  const formUrl = questionnaire.destinationUrl || (selectedForm?.slug ? `https://quote-box.com/${selectedForm.slug}` : '')
-                  const hasPixel = !!questionnaire.pixelId
-                  const activeConversion = customConversions.find((c) => c.id === questionnaire.customConversionId)
-                  return (
-                  <div className="space-y-4">
-                    <h2 className="font-semibold text-gray-900 mb-1">Conversion Tracking</h2>
-                    <p className="text-sm text-gray-500">Select your Meta Pixel, then pick or create a conversion for this form.</p>
-
-                    {/* Pixel selector */}
-                    <div>
-                      <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Meta Pixel</label>
-                      {pixelsLoading ? (
-                        <div className="flex items-center gap-2 py-2 text-sm text-gray-400">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-500" />
-                          Loading pixels…
-                        </div>
-                      ) : metaPixels.length === 0 ? (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-                          <p className="text-sm font-medium text-yellow-800 mb-1">No Meta Pixels found</p>
-                          <p className="text-xs text-yellow-700 mb-3">You need a pixel to track conversions. Create one now or add one in Meta Events Manager.</p>
-                          <button
-                            disabled={creatingPixel}
-                            onClick={async () => {
-                              setCreatingPixel(true)
-                              try {
-                                const res = await fetch('/api/meta/pixels', {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ name: 'QuoteBox Pixel' }),
-                                })
-                                const data = await res.json()
-                                if (data.pixel) {
-                                  setMetaPixels([data.pixel])
-                                  setQuestionnaire((q) => ({ ...q, pixelId: data.pixel.id }))
-                                  savePixelToForm(data.pixel.id)
-                                } else {
-                                  alert(data.error || 'Failed to create pixel')
-                                }
-                              } catch {
-                                alert('Failed to create pixel')
-                              }
-                              setCreatingPixel(false)
-                            }}
-                            className="px-4 py-2 text-sm font-semibold rounded-lg bg-yellow-600 text-white hover:bg-yellow-700 transition disabled:opacity-50"
-                          >
-                            {creatingPixel ? 'Creating…' : 'Create QuoteBox Pixel'}
-                          </button>
-                        </div>
-                      ) : (
-                        <select
-                          value={questionnaire.pixelId ?? ''}
-                          onChange={(e) => {
-                            const pid = e.target.value || null
-                            setQuestionnaire((q) => ({ ...q, pixelId: pid, customConversionId: null }))
-                            savePixelToForm(pid)
-                          }}
-                          className="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
-                        >
-                          <option value="">— Select a pixel —</option>
-                          {metaPixels.map((px) => (
-                            <option key={px.id} value={px.id}>{px.name} ({px.id})</option>
-                          ))}
-                        </select>
-                      )}
-                    </div>
-
-                    {/* Existing conversions list — always shown */}
-                    {conversionsLoading ? (
-                      <div className="flex items-center gap-2 py-3 text-sm text-gray-400">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-500" />
-                        Loading conversions…
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Custom Conversion</label>
-                        <button
-                          onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: null }))}
-                          className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 text-sm transition ${
-                            !questionnaire.customConversionId ? 'border-brand-600 bg-brand-50' : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                        >
-                          <span className={!questionnaire.customConversionId ? 'text-brand-700 font-medium' : 'text-gray-500'}>
-                            None — skip conversion tracking
-                          </span>
-                        </button>
-                        {customConversions.map((cv) => (
-                          <div key={cv.id} className="flex items-stretch gap-1.5">
-                            <button
-                              onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: cv.id, pixelId: cv.pixel_id || q.pixelId }))}
-                              className={`flex-1 text-left px-3.5 py-2.5 rounded-xl border-2 transition ${
-                                questionnaire.customConversionId === cv.id ? 'border-brand-600 bg-brand-50' : 'border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              <p className={`font-medium text-sm ${questionnaire.customConversionId === cv.id ? 'text-brand-700' : 'text-gray-900'}`}>
-                                {cv.name}
-                              </p>
-                              <p className="text-xs text-gray-400 mt-0.5">Event: {cv.custom_event_type}</p>
-                            </button>
-                            <button
-                              onClick={() => handleDeleteConversion(cv.id)}
-                              className="px-2.5 rounded-xl border-2 border-gray-200 hover:border-red-200 hover:bg-red-50 text-gray-400 hover:text-red-500 transition text-sm"
-                              title="Delete conversion"
-                            >
-                              🗑
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Create new conversion */}
-                    {!conversionsLoading && hasPixel && (
-                      <div className="border-t border-gray-100 pt-4">
-                        <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Create new</p>
-                        {formUrl && (
-                          <p className="text-xs text-gray-500 mb-3 font-mono bg-gray-50 rounded-lg px-3 py-2 break-all">
-                            {selectedForm?.slug ? `quote-box.com/${selectedForm.slug}/thank-you` : 'quote-box.com'}
-                          </p>
-                        )}
-                        <button
-                          onClick={() => questionnaire.pixelId && handleCreateQuoteBoxConversion(questionnaire.pixelId, selectedForm?.slug ?? undefined)}
-                          disabled={creatingConversion}
-                          className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition"
-                        >
-                          {creatingConversion ? 'Creating…' : `Create conversion for ${selectedForm?.slug ?? 'this form'}`}
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Test panel */}
-                    {activeConversion && formUrl && (
-                      <div className="border border-blue-200 bg-blue-50 rounded-xl p-4">
-                        <p className="font-medium text-blue-900 text-sm mb-1">Test: {activeConversion.name}</p>
-                        <p className="text-xs text-blue-700 mb-3">Submit a test entry to confirm the pixel fires correctly.</p>
-                        <a
-                          href={`${formUrl}${formUrl.includes('?') ? '&' : '?'}pixel_test=1`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={() => setConversionTestOpened(true)}
-                          className="inline-flex items-center gap-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg transition"
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                          Open form to test
-                        </a>
-                        {conversionTestOpened && (
-                          <p className="mt-2 text-xs text-blue-600 font-medium">Form opened — submit a test entry, then continue.</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  )
-                })()}
-
-                {/* Step 2: Campaign Objective */}
-                {step === 2 && (
-                  <div className="space-y-6">
-                    <div>
-                      <h2 className="font-semibold text-gray-900 mb-4">What is your campaign goal?</h2>
-                      <div className="space-y-3">
-                        {OBJECTIVES.map((obj) => (
-                          <button
-                            key={obj.value}
-                            onClick={() => setQuestionnaire((q) => ({ ...q, objective: obj.value }))}
-                            className={`w-full text-left px-4 py-3.5 rounded-xl border-2 transition ${
-                              questionnaire.objective === obj.value
-                                ? 'border-brand-600 bg-brand-50'
-                                : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                          >
-                            <p className={`font-medium ${questionnaire.objective === obj.value ? 'text-brand-700' : 'text-gray-900'}`}>
-                              {obj.label}
-                            </p>
-                            <p className="text-sm text-gray-500 mt-0.5">{obj.desc}</p>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="border-t border-gray-100 pt-5">
-                      <label className="block text-sm font-medium text-gray-700 mb-3">Where should the ad send people?</label>
-                      <div className="flex gap-3 mb-3">
-                        <button
-                          onClick={() => setQuestionnaire((q) => ({ ...q, destinationType: 'form' }))}
-                          className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition ${
-                            questionnaire.destinationType === 'form'
-                              ? 'border-brand-600 bg-brand-50 text-brand-700'
-                              : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                          }`}
-                        >
-                          QuoteBox Form
-                        </button>
-                        <button
-                          onClick={() => setQuestionnaire((q) => ({ ...q, destinationType: 'custom' }))}
-                          className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition ${
-                            questionnaire.destinationType === 'custom'
-                              ? 'border-brand-600 bg-brand-50 text-brand-700'
-                              : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                          }`}
-                        >
-                          Custom URL
-                        </button>
-                      </div>
-
-                      {questionnaire.destinationType === 'form' ? (
-                        hostedForms.length === 0 ? (
-                          <div className="text-sm text-gray-400 bg-gray-50 rounded-lg px-3 py-2.5 flex items-center gap-2">
-                            No active forms found.{' '}
-                            <Link href="/hosted-forms" className="text-brand-600 hover:underline font-medium">Create one</Link>
-                          </div>
-                        ) : (
-                          <select
-                            value={questionnaire.selectedFormId || ''}
-                            onChange={(e) => {
-                              const form = hostedForms.find((f) => f.id === e.target.value)
-                              const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
-                              setQuestionnaire((q) => ({
-                                ...q,
-                                selectedFormId: form?.id || null,
-                                destinationUrl: form ? `${siteUrl}/${form.slug}` : '',
-                              }))
-                            }}
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                          >
-                            <option value="">Select a form...</option>
-                            {hostedForms.map((f) => (
-                              <option key={f.id} value={f.id}>{f.form_name}</option>
-                            ))}
-                          </select>
-                        )
-                      ) : (
-                        <input
-                          type="url"
-                          placeholder="https://yourwebsite.com/landing-page"
-                          value={questionnaire.destinationType === 'custom' ? questionnaire.destinationUrl : ''}
-                          onChange={(e) => setQuestionnaire((q) => ({ ...q, destinationUrl: e.target.value }))}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                        />
-                      )}
-                      {questionnaire.destinationUrl && (
-                        <p className="text-xs text-brand-600 mt-1.5 truncate">↗ {questionnaire.destinationUrl}</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 3: Target Audience */}
-                {step === 3 && (
-                  <div>
-                    <h2 className="font-semibold text-gray-900 mb-4">Who should see your ads?</h2>
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Min Age</label>
-                          <input type="number" min={18} max={65} value={questionnaire.ageMin}
-                            onChange={(e) => setQuestionnaire((q) => ({ ...q, ageMin: Number(e.target.value) }))}
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Max Age</label>
-                          <input type="number" min={18} max={65} value={questionnaire.ageMax}
-                            onChange={(e) => setQuestionnaire((q) => ({ ...q, ageMax: Number(e.target.value) }))}
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                        <select value={questionnaire.gender}
-                          onChange={(e) => setQuestionnaire((q) => ({ ...q, gender: e.target.value }))}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                        >
-                          <option value="all">All Genders</option>
-                          <option value="male">Male</option>
-                          <option value="female">Female</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Location Targeting</label>
-                        <div className="flex gap-2 mb-3">
-                          <button
-                            onClick={() => setQuestionnaire((q) => ({ ...q, locationType: 'cities' }))}
-                            className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition ${
-                              questionnaire.locationType === 'cities'
-                                ? 'border-brand-600 bg-brand-50 text-brand-700'
-                                : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                            }`}
-                          >
-                            📍 Cities
-                          </button>
-                          <button
-                            onClick={() => setQuestionnaire((q) => ({ ...q, locationType: 'country' }))}
-                            className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition ${
-                              questionnaire.locationType === 'country'
-                                ? 'border-brand-600 bg-brand-50 text-brand-700'
-                                : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                            }`}
-                          >
-                            🌐 Country
-                          </button>
-                        </div>
-
-                        {questionnaire.locationType === 'country' ? (
-                          <select value={questionnaire.location}
-                            onChange={(e) => setQuestionnaire((q) => ({ ...q, location: e.target.value }))}
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                          >
-                            {COUNTRIES.map((c) => (
-                              <option key={c.code} value={c.code}>{c.name} ({c.code})</option>
-                            ))}
-                          </select>
-                        ) : (
-                          <CityTargetingMap
-                            targetCities={questionnaire.targetCities}
-                            onAdd={(city) => setQuestionnaire((q) => ({ ...q, targetCities: [...q.targetCities, city] }))}
-                            onRemove={(key) => setQuestionnaire((q) => ({ ...q, targetCities: q.targetCities.filter((c) => c.key !== key) }))}
-                            onRadiusChange={(key, radius) => setQuestionnaire((q) => ({ ...q, targetCities: q.targetCities.map((c) => c.key === key ? { ...c, radius } : c) }))}
-                          />
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Interests (optional)</label>
-                        <input type="text" placeholder="e.g. home improvement, real estate, DIY"
-                          value={questionnaire.interests}
-                          onChange={(e) => setQuestionnaire((q) => ({ ...q, interests: e.target.value }))}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 4: Business Info */}
-                {step === 4 && (
-                  <div>
-                    <h2 className="font-semibold text-gray-900 mb-4">Tell us about your business</h2>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">What do you offer?</label>
-                        <textarea rows={3} placeholder="e.g. We provide local moving services for residential customers in the Dallas area."
-                          value={questionnaire.businessOffer}
-                          onChange={(e) => setQuestionnaire((q) => ({ ...q, businessOffer: e.target.value }))}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Key selling points</label>
-                        <textarea rows={3} placeholder="e.g. Licensed & insured, same-day quotes, no hidden fees, 5-star rated"
-                          value={questionnaire.sellingPoints}
-                          onChange={(e) => setQuestionnaire((q) => ({ ...q, sellingPoints: e.target.value }))}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Ad Tone</label>
-                        <div className="grid grid-cols-2 gap-2">
-                          {TONES.map((tone) => (
-                            <button key={tone.value}
-                              onClick={() => setQuestionnaire((q) => ({ ...q, tone: tone.value }))}
-                              className={`py-2.5 px-3 rounded-lg border-2 text-sm font-medium transition ${
-                                questionnaire.tone === tone.value
-                                  ? 'border-brand-600 bg-brand-50 text-brand-700'
-                                  : 'border-gray-200 text-gray-700 hover:border-gray-300'
-                              }`}
-                            >
-                              {tone.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="border-t border-gray-100 pt-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Attach Ad Creative <span className="text-gray-400 font-normal">(optional)</span>
-                        </label>
-                        {creatives.length === 0 ? (
-                          <div className="flex items-center gap-2 text-sm text-gray-400 bg-gray-50 rounded-lg px-3 py-2.5">
-                            No creatives uploaded yet.{' '}
-                            <Link href="/vsls" className="text-brand-600 hover:underline font-medium">Upload in Media Library</Link>
-                          </div>
-                        ) : (
-                          <select
-                            value={questionnaire.vslId || ''}
-                            onChange={(e) => {
-                              const selected = creatives.find((c) => c.id === e.target.value) || null
-                              setQuestionnaire((q) => ({
-                                ...q,
-                                vslId: selected?.id || null,
-                                vslUrl: selected?.url || null,
-                                vslTitle: selected?.name || null,
-                              }))
-                            }}
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                          >
-                            <option value="">No creative (skip)</option>
-                            {creatives.map((c) => (
-                              <option key={c.id} value={c.id}>{c.isImage ? '🖼 ' : '🎬 '}{c.name}</option>
-                            ))}
-                          </select>
-                        )}
-                        {questionnaire.vslUrl && (
-                          <p className="text-xs text-brand-600 mt-1.5 truncate">Selected: {questionnaire.vslTitle}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 5: Budget & Schedule */}
-                {step === 5 && (
-                  <div>
-                    <h2 className="font-semibold text-gray-900 mb-4">Budget & Schedule</h2>
-                    <div className="space-y-5">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Daily Budget (USD)</label>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">$</span>
-                          <input type="number" min={1} step={1} value={questionnaire.dailyBudget}
-                            onChange={(e) => setQuestionnaire((q) => ({ ...q, dailyBudget: Number(e.target.value) }))}
-                            className="w-full border border-gray-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                          />
-                        </div>
-                        <p className="text-xs text-gray-400 mt-1">Meta minimum is $1/day</p>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Campaign Duration</label>
-                        <div className="space-y-2">
-                          {DURATIONS.map((dur) => (
-                            <button key={String(dur.value)}
-                              onClick={() => setQuestionnaire((q) => ({ ...q, duration: dur.value }))}
-                              className={`w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-medium transition ${
-                                questionnaire.duration === dur.value
-                                  ? 'border-brand-600 bg-brand-50 text-brand-700'
-                                  : 'border-gray-200 text-gray-700 hover:border-gray-300'
-                              }`}
-                            >
-                              {dur.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 6: AI Preview + Split Test */}
-                {step === 6 && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <img src="/icons/logo-1772578089154.jpg" alt="Robert" className="w-6 h-6 rounded-full object-cover" />
-                      <h2 className="font-semibold text-gray-900">Robert&apos;s Split Test</h2>
-                    </div>
-                    <p className="text-sm text-gray-500 mb-4">3 ad variants will be created automatically — let Meta find the winner.</p>
-
-                    {!generatedCopy && !generating && (
-                      <button onClick={handleGenerate}
-                        className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-medium py-3 px-4 rounded-xl transition"
-                      >
-                        <img src="/icons/logo-1772578089154.jpg" alt="Robert" className="w-5 h-5 rounded-full object-cover" />
-                        Generate with Robert
-                      </button>
-                    )}
-
-                    {generating && (
-                      <div className="flex flex-col items-center justify-center py-12 gap-3">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600" />
-                        <p className="text-sm text-gray-500">Generating your split test variants…</p>
-                      </div>
-                    )}
-
-                    {generatedCopy && !generating && (
-                      <div className="space-y-6">
-                        {/* Strategy */}
-                        <details className="group">
-                          <summary className="flex items-center justify-between cursor-pointer text-xs font-medium text-gray-400 uppercase tracking-wider select-none list-none">
-                            <span>Robert&apos;s Strategy</span>
-                            <svg className="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </summary>
-                          <p className="mt-2 text-sm text-gray-600 leading-relaxed bg-gray-50 rounded-lg p-3">{generatedCopy.summary}</p>
-                        </details>
-
-                        {/* Ad Image URL */}
-                        <div>
-                          <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Ad Image URL <span className="normal-case text-gray-400 font-normal">(required — must be publicly accessible)</span></label>
-                          <input
-                            type="url"
-                            value={questionnaire.adImageUrl}
-                            onChange={(e) => setQuestionnaire((q) => ({ ...q, adImageUrl: e.target.value }))}
-                            placeholder="https://your-site.com/ad-image.jpg"
-                            className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                          />
-                          <p className="text-xs text-gray-400 mt-1">Min 600×315px. Must be reachable by Meta — no redirects, no robots.txt blocks.</p>
-                        </div>
-
-                        {/* Split Test Variants A/B/C */}
-                        <div>
-                          <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">Split Test Variants</p>
-                          <div className="space-y-4">
-                            {generatedCopy.headlines.map((headline, i) => (
-                              <div key={i} className="border-2 border-gray-100 rounded-xl overflow-hidden">
-                                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border-b border-gray-100">
-                                  <span className="w-6 h-6 rounded-full bg-brand-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
-                                    {String.fromCharCode(65 + i)}
-                                  </span>
-                                  <span className="text-xs font-semibold text-gray-600">Variant {String.fromCharCode(65 + i)}</span>
-                                </div>
-                                <div className="p-3">
-                                  <FacebookAdPreview
-                                    pageName={pages.find((p) => p.id === questionnaire.pageId)?.name ?? ''}
-                                    bodyText={generatedCopy.bodyTexts[i] || ''}
-                                    headline={headline}
-                                    destinationUrl={questionnaire.destinationUrl}
-                                    vslUrl={questionnaire.vslUrl}
-                                    isImage={creatives.find((c) => c.id === questionnaire.vslId)?.isImage ?? false}
-                                    cta={generatedCopy.cta}
-                                  />
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Targeting keywords */}
-                        <div>
-                          <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Suggested Targeting Keywords</p>
-                          <div className="flex flex-wrap gap-2">
-                            {generatedCopy.targetingKeywords.map((kw) => (
-                              <span key={kw} className="bg-brand-50 text-brand-700 text-xs font-medium px-2.5 py-1 rounded-full border border-brand-100">{kw}</span>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Conversion tracking summary */}
-                        <div className="border border-gray-200 rounded-xl overflow-hidden">
-                          <div className="px-3 py-2 bg-gray-50 border-b border-gray-100">
-                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Conversion Tracking</p>
-                          </div>
-                          <div className="px-3 py-3 space-y-2 text-xs">
-                            {questionnaire.pixelId ? (
-                              <div className="flex items-center gap-2">
-                                <span className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
-                                  <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>
-                                </span>
-                                <span className="text-gray-700">Pixel <span className="font-mono text-gray-900">{questionnaire.pixelId}</span> attached</span>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <span className="w-4 h-4 rounded-full bg-yellow-400 flex items-center justify-center flex-shrink-0 text-white font-bold text-[9px]">!</span>
-                                <span className="text-yellow-700">No pixel — go back to Step 1 to set up conversion tracking</span>
-                              </div>
-                            )}
-                            {questionnaire.customConversionId ? (
-                              <div className="flex items-center gap-2">
-                                <span className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
-                                  <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>
-                                </span>
-                                <span className="text-gray-700">
-                                  Custom conversion: <span className="font-medium text-gray-900">
-                                    {customConversions.find(c => c.id === questionnaire.customConversionId)?.name ?? questionnaire.customConversionId}
-                                  </span>
-                                </span>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <span className="w-4 h-4 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0 text-white font-bold text-[9px]">–</span>
-                                <span className="text-gray-400">No custom conversion selected</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Facebook page selector */}
-                        {pages.length > 1 && (
-                          <div>
-                            <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Facebook Page</label>
-                            <select value={questionnaire.pageId}
-                              onChange={(e) => {
-                                const pid = e.target.value
-                                setQuestionnaire((q) => ({ ...q, pageId: pid }))
-                                if (pid) {
-                                  fetch('/api/meta/save-page', {
-                                    method: 'PATCH',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ pageId: pid }),
-                                  }).catch(() => {})
-                                }
-                              }}
-                              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                            >
-                              <option value="">Select a page...</option>
-                              {pages.map((p) => (
-                                <option key={p.id} value={p.id}>{p.name}</option>
-                              ))}
-                            </select>
-                          </div>
-                        )}
-
-                        {pages.length === 0 && (
-                          <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2.5 text-xs text-yellow-700">
-                            No Facebook Pages found on your account. You need a Page to create ads.
-                          </div>
-                        )}
-
-                        {/* Actions */}
-                        <div className="flex gap-3 pt-1">
-                          <button
-                            onClick={() => { setGeneratedCopy(null) }}
-                            className="flex-1 text-gray-600 font-medium py-2.5 px-4 rounded-xl border border-gray-200 hover:border-gray-300 transition text-sm"
-                          >
-                            Regenerate
-                          </button>
-                          <button
-                            onClick={handleCreateCampaign}
-                            disabled={creating || !questionnaire.pageId || !questionnaire.destinationUrl || !questionnaire.adImageUrl}
-                            className="flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl transition text-sm"
-                          >
-                            {creating ? 'Creating...' : 'Launch Split Test'}
-                          </button>
-                        </div>
-                        {!questionnaire.pageId && (
-                          <p className="text-xs text-gray-400 text-center -mt-2">Select a Facebook Page above to continue</p>
-                        )}
-                        {questionnaire.pageId && !questionnaire.adImageUrl && (
-                          <p className="text-xs text-yellow-600 text-center -mt-2">Add an Ad Image URL above to continue</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Navigation */}
-                {step < 6 && (
-                  <div className="flex gap-3 mt-6">
-                    {step > 1 && (
-                      <button onClick={() => setStep((s) => (s - 1) as Step)}
-                        className="flex-1 text-gray-600 font-medium py-2.5 px-4 rounded-xl border border-gray-200 hover:border-gray-300 transition text-sm"
-                      >
-                        Back
-                      </button>
-                    )}
-                    <button
-                      onClick={() => { setError(''); setStep((s) => (s + 1) as Step) }}
-                      className="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-medium py-2.5 px-4 rounded-xl transition text-sm"
-                    >
-                      {step === 5 ? 'Preview' : 'Next'}
-                    </button>
-                  </div>
-                )}
-
-                {step === 6 && !generatedCopy && !generating && (
-                  <button onClick={() => setStep(5)}
-                    className="w-full mt-4 text-gray-600 font-medium py-2.5 px-4 rounded-xl border border-gray-200 hover:border-gray-300 transition text-sm"
+        {/* ── Analytics Tab ── */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-6">
+            {/* Date range + refresh */}
+            <div className="flex items-center justify-between">
+              <div className="flex gap-2">
+                {[7, 14, 30].map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => setDateRange(d)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                      dateRange === d
+                        ? 'bg-brand-600 text-white'
+                        : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
+                    }`}
                   >
-                    Back
+                    {d}d
                   </button>
-                )}
+                ))}
               </div>
-
-              {metaAdAccountId && (
-                <p className="text-xs text-gray-400 text-center mt-4">Using ad account: {metaAdAccountId}</p>
+              {campaignsLoading && (
+                <div className="flex items-center gap-2 text-xs text-gray-400">
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-brand-500" />
+                  Loading…
+                </div>
               )}
             </div>
-          )}
-        </div>
-      )}
 
-      {/* ── Robert Chat Widget ── */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
-
-        {/* Chat panel */}
-        {chatOpen && (
-          <div className="w-[340px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden"
-            style={{ height: 480 }}>
-            {/* Header */}
-            <div className="flex items-center gap-3 px-4 py-3 bg-violet-600 text-white flex-shrink-0">
-              <img src="/icons/logo-1772578089154.jpg" alt="Robert" className="w-9 h-9 rounded-full object-cover border-2 border-white/40" />
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm leading-none">Robert</p>
-                <p className="text-xs text-violet-200 mt-0.5">Meta Ads Expert</p>
-              </div>
-              <button onClick={() => setChatOpen(false)} className="text-white/70 hover:text-white transition">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-              {chatMessages.map((msg, i) => (
-                <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                  {msg.role === 'assistant' && (
-                    <img src="/icons/logo-1772578089154.jpg" alt="Robert" className="w-7 h-7 rounded-full object-cover flex-shrink-0 mt-0.5" />
-                  )}
-                  <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
-                    msg.role === 'user'
-                      ? 'bg-violet-600 text-white rounded-tr-sm'
-                      : 'bg-gray-100 text-gray-800 rounded-tl-sm'
-                  }`}>
-                    {msg.content}
-                  </div>
+            {/* Metric cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: 'TOTAL SPEND', value: `$${totalSpend.toFixed(2)}`, icon: '💰' },
+                { label: 'TOTAL LEADS', value: totalLeads.toFixed(0), icon: '👥' },
+                { label: 'AVG CPL', value: avgCpl > 0 ? `$${avgCpl.toFixed(2)}` : '—', icon: '📊' },
+                { label: 'ACTIVE CAMPAIGNS', value: String(activeCampaigns), icon: '🚀' },
+              ].map((m) => (
+                <div
+                  key={m.label}
+                  className="bg-white rounded-2xl p-4"
+                  style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.06)' }}
+                >
+                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{m.label}</div>
+                  <div className="text-2xl font-bold text-gray-900">{m.value}</div>
                 </div>
               ))}
-              {chatLoading && (
-                <div className="flex gap-2">
-                  <img src="/icons/logo-1772578089154.jpg" alt="Robert" className="w-7 h-7 rounded-full object-cover flex-shrink-0 mt-0.5" />
-                  <div className="bg-gray-100 rounded-2xl rounded-tl-sm px-3 py-2 flex gap-1 items-center">
-                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                  </div>
-                </div>
-              )}
-              <div ref={chatEndRef} />
             </div>
 
-            {/* Input */}
-            <form onSubmit={handleChat} className="flex items-center gap-2 px-3 py-3 border-t border-gray-100 flex-shrink-0">
-              <input
-                type="text"
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Ask Robert anything…"
-                disabled={chatLoading}
-                className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:opacity-50"
-              />
-              <button
-                type="submit"
-                disabled={chatLoading || !chatInput.trim()}
-                className="w-9 h-9 flex-shrink-0 bg-violet-600 hover:bg-violet-700 disabled:opacity-40 text-white rounded-xl flex items-center justify-center transition"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
-              </button>
-            </form>
+            {/* Campaign table */}
+            <div
+              className="bg-white rounded-2xl overflow-hidden"
+              style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.06)' }}
+            >
+              <div className="px-4 py-3 border-b border-gray-100">
+                <h2 className="font-semibold text-gray-900 text-sm">Campaign Performance</h2>
+              </div>
+              {campaigns.length === 0 ? (
+                <div className="px-4 py-10 text-center text-gray-400 text-sm">
+                  {campaignsLoading ? 'Loading campaigns…' : 'No campaigns found for this period.'}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-100 text-xs text-gray-400 uppercase tracking-wider">
+                        <th className="text-left px-4 py-3 font-medium">Campaign</th>
+                        <th className="text-left px-4 py-3 font-medium">Status</th>
+                        <th className="text-right px-4 py-3 font-medium">Impressions</th>
+                        <th className="text-right px-4 py-3 font-medium">Clicks</th>
+                        <th className="text-right px-4 py-3 font-medium">Spend</th>
+                        <th className="text-right px-4 py-3 font-medium">Leads</th>
+                        <th className="text-right px-4 py-3 font-medium">CPL</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {campaigns.map((c) => (
+                        <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50 transition">
+                          <td className="px-4 py-3 font-medium text-gray-900 max-w-[200px] truncate">{c.name}</td>
+                          <td className="px-4 py-3"><StatusBadge status={c.status} /></td>
+                          <td className="px-4 py-3 text-right text-gray-600">{c.insights.impressions.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-right text-gray-600">{c.insights.clicks.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-right text-gray-600">${c.insights.spend.toFixed(2)}</td>
+                          <td className="px-4 py-3 text-right text-gray-600">{c.insights.leads.toFixed(0)}</td>
+                          <td className="px-4 py-3 text-right text-gray-600">
+                            {c.insights.cpl > 0 ? `$${c.insights.cpl.toFixed(2)}` : '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {campaigns.length > 0 && metaAdAccountId && (
+                <div className="px-4 py-3 border-t border-gray-100">
+                  <a
+                    href={`https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=${metaAdAccountId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-brand-600 hover:underline"
+                  >
+                    Open in Meta Ads Manager →
+                  </a>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
-        {/* Toggle button */}
-        <button
-          onClick={() => setChatOpen((o) => !o)}
-          className="w-14 h-14 rounded-full shadow-lg overflow-hidden border-2 border-violet-400 hover:scale-105 transition-transform"
-          title="Chat with Robert"
-        >
-          <img src="/icons/logo-1772578089154.jpg" alt="Robert" className="w-full h-full object-cover" />
-        </button>
+        {/* ── Campaigns Tab ── */}
+        {activeTab === 'campaigns' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="font-semibold text-gray-900">All Campaigns</h2>
+              <button
+                onClick={() => setActiveTab('create')}
+                className="text-sm text-brand-600 hover:text-brand-700 font-medium"
+              >
+                + Create Campaign
+              </button>
+            </div>
+
+            {campaignsLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-600" />
+              </div>
+            ) : campaigns.length === 0 ? (
+              <div
+                className="bg-white rounded-2xl p-12 text-center"
+                style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.06)' }}
+              >
+                <div className="text-4xl mb-3">📢</div>
+                <p className="font-medium text-gray-900 mb-1">No campaigns yet</p>
+                <p className="text-sm text-gray-400 mb-4">Create your first campaign to start generating leads.</p>
+                <button
+                  onClick={() => setActiveTab('create')}
+                  className="bg-brand-600 hover:bg-brand-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition"
+                >
+                  Create Campaign
+                </button>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {campaigns.map((c) => (
+                  <div
+                    key={c.id}
+                    className="bg-white rounded-2xl p-4"
+                    style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.06)' }}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <p className="font-semibold text-gray-900 truncate">{c.name}</p>
+                          <StatusBadge status={c.status} />
+                        </div>
+                        <p className="text-xs text-gray-400 mb-3">
+                          {c.objective.replace('OUTCOME_', '')} · Budget: ${(parseInt(c.daily_budget || '0') / 100).toFixed(0)}/day ·
+                          Created {new Date(c.created_time).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
+                        </p>
+                        <div className="flex gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-400 text-xs">Spend</span>
+                            <p className="font-medium text-gray-900">${c.insights.spend.toFixed(2)}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-400 text-xs">Leads</span>
+                            <p className="font-medium text-gray-900">{c.insights.leads.toFixed(0)}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-400 text-xs">CPL</span>
+                            <p className="font-medium text-gray-900">{c.insights.cpl > 0 ? `$${c.insights.cpl.toFixed(2)}` : '—'}</p>
+                          </div>
+                        </div>
+                      </div>
+                      {metaAdAccountId && (
+                        <a
+                          href={`https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=${metaAdAccountId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-shrink-0 text-xs text-[#1877F2] hover:underline font-medium"
+                        >
+                          Open in Ads Manager →
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Create Campaign Tab ── */}
+        {activeTab === 'create' && (
+          <div>
+            {/* Success screen */}
+            {pageState === 'created' && createdCampaign && (
+              <div className="max-w-xl mx-auto">
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
+                    <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-1">Split Test Launched!</h2>
+                  <p className="text-gray-500">
+                    {createdCampaign.adIds.length} ad variants created in Meta Ads Manager (PAUSED). Review and activate when ready.
+                  </p>
+                </div>
+
+                <div
+                  className="bg-white rounded-2xl p-6 mb-6 space-y-4"
+                  style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.06)' }}
+                >
+                  <div>
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Campaign Name</p>
+                    <p className="font-semibold text-gray-900">{createdCampaign.campaignName}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Status</p>
+                    <StatusBadge status="PAUSED" />
+                  </div>
+                  {createdCampaign.adIds.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Ad IDs (Split Test Variants)</p>
+                      <div className="space-y-1.5">
+                        {createdCampaign.adIds.map((adId, i) => (
+                          <div key={adId} className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-brand-600 bg-brand-50 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0">
+                              {String.fromCharCode(65 + i)}
+                            </span>
+                            <span className="font-mono text-xs text-gray-600 truncate">{adId}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <a
+                  href={createdCampaign.adsManagerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center gap-2 bg-[#1877F2] hover:bg-[#1568d3] text-white font-semibold py-3 px-6 rounded-xl transition mb-3"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                  </svg>
+                  Open in Meta Ads Manager
+                </a>
+
+                <button
+                  onClick={handleReset}
+                  className="w-full text-gray-600 hover:text-gray-900 font-medium py-3 px-6 rounded-xl border border-gray-200 hover:border-gray-300 transition text-sm"
+                >
+                  Create Another Campaign
+                </button>
+              </div>
+            )}
+
+            {/* Wizard */}
+            {pageState === 'questionnaire' && (
+              <div className="max-w-2xl mx-auto">
+                {/* Header */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="text-xl font-bold text-gray-900">Create Campaign</h2>
+                    <span className="text-sm text-gray-400">Step {step} of 6</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2">
+                    <div
+                      className="bg-brand-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${(step / 6) * 100}%` }}
+                    />
+                  </div>
+                  <p className="text-sm text-gray-500 mt-2">{stepTitles[step - 1]}</p>
+                </div>
+
+                {error && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 text-sm text-red-700">
+                    <p>{error}</p>
+                    {tokenExpired && (
+                      <button
+                        onClick={handleConnectMeta}
+                        className="mt-3 inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+                      >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                        </svg>
+                        Reconnect Meta Account
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                <div
+                  className="bg-white rounded-2xl p-6"
+                  style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.06)' }}
+                >
+
+                  {/* Step 1: Conversion Tracking */}
+                  {step === 1 && (() => {
+                    const selectedForm = hostedForms.find((f) => f.id === questionnaire.selectedFormId)
+                    const formUrl = questionnaire.destinationUrl || (selectedForm?.slug ? `https://quote-box.com/${selectedForm.slug}` : '')
+                    const hasPixel = !!questionnaire.pixelId
+                    const activeConversion = customConversions.find((c) => c.id === questionnaire.customConversionId)
+                    return (
+                    <div className="space-y-4">
+                      <h2 className="font-semibold text-gray-900 mb-1">Conversion Tracking</h2>
+                      <p className="text-sm text-gray-500">Select your Meta Pixel, then pick or create a conversion for this form.</p>
+
+                      {/* Pixel selector */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Meta Pixel</label>
+                        {pixelsLoading ? (
+                          <div className="flex items-center gap-2 py-2 text-sm text-gray-400">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-500" />
+                            Loading pixels…
+                          </div>
+                        ) : metaPixels.length === 0 ? (
+                          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                            <p className="text-sm font-medium text-yellow-800 mb-1">No Meta Pixels found</p>
+                            <p className="text-xs text-yellow-700 mb-3">You need a pixel to track conversions. Create one now or add one in Meta Events Manager.</p>
+                            <button
+                              disabled={creatingPixel}
+                              onClick={async () => {
+                                setCreatingPixel(true)
+                                try {
+                                  const res = await fetch('/api/meta/pixels', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ name: 'QuoteBox Pixel' }),
+                                  })
+                                  const data = await res.json()
+                                  if (data.pixel) {
+                                    setMetaPixels([data.pixel])
+                                    setQuestionnaire((q) => ({ ...q, pixelId: data.pixel.id }))
+                                    savePixelToForm(data.pixel.id)
+                                  } else {
+                                    alert(data.error || 'Failed to create pixel')
+                                  }
+                                } catch {
+                                  alert('Failed to create pixel')
+                                }
+                                setCreatingPixel(false)
+                              }}
+                              className="px-4 py-2 text-sm font-semibold rounded-lg bg-yellow-600 text-white hover:bg-yellow-700 transition disabled:opacity-50"
+                            >
+                              {creatingPixel ? 'Creating…' : 'Create QuoteBox Pixel'}
+                            </button>
+                          </div>
+                        ) : (
+                          <select
+                            value={questionnaire.pixelId ?? ''}
+                            onChange={(e) => {
+                              const pid = e.target.value || null
+                              setQuestionnaire((q) => ({ ...q, pixelId: pid, customConversionId: null }))
+                              savePixelToForm(pid)
+                            }}
+                            className="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                          >
+                            <option value="">— Select a pixel —</option>
+                            {metaPixels.map((px) => (
+                              <option key={px.id} value={px.id}>{px.name} ({px.id})</option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+
+                      {/* Existing conversions list — always shown */}
+                      {conversionsLoading ? (
+                        <div className="flex items-center gap-2 py-3 text-sm text-gray-400">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-500" />
+                          Loading conversions…
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Custom Conversion</label>
+                          <button
+                            onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: null }))}
+                            className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 text-sm transition ${
+                              !questionnaire.customConversionId ? 'border-brand-600 bg-brand-50' : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                          >
+                            <span className={!questionnaire.customConversionId ? 'text-brand-700 font-medium' : 'text-gray-500'}>
+                              None — skip conversion tracking
+                            </span>
+                          </button>
+                          {customConversions.map((cv) => (
+                            <div key={cv.id} className="flex items-stretch gap-1.5">
+                              <button
+                                onClick={() => setQuestionnaire((q) => ({ ...q, customConversionId: cv.id, pixelId: cv.pixel_id || q.pixelId }))}
+                                className={`flex-1 text-left px-3.5 py-2.5 rounded-xl border-2 transition ${
+                                  questionnaire.customConversionId === cv.id ? 'border-brand-600 bg-brand-50' : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                              >
+                                <p className={`font-medium text-sm ${questionnaire.customConversionId === cv.id ? 'text-brand-700' : 'text-gray-900'}`}>
+                                  {cv.name}
+                                </p>
+                                <p className="text-xs text-gray-400 mt-0.5">Event: {cv.custom_event_type}</p>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteConversion(cv.id)}
+                                className="px-2.5 rounded-xl border-2 border-gray-200 hover:border-red-200 hover:bg-red-50 text-gray-400 hover:text-red-500 transition text-sm"
+                                title="Delete conversion"
+                              >
+                                🗑
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Create new conversion */}
+                      {!conversionsLoading && hasPixel && (
+                        <div className="border-t border-gray-100 pt-4">
+                          <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Create new</p>
+                          {formUrl && (
+                            <p className="text-xs text-gray-500 mb-3 font-mono bg-gray-50 rounded-lg px-3 py-2 break-all">
+                              {selectedForm?.slug ? `quote-box.com/${selectedForm.slug}/thank-you` : 'quote-box.com'}
+                            </p>
+                          )}
+                          <button
+                            onClick={() => questionnaire.pixelId && handleCreateQuoteBoxConversion(questionnaire.pixelId, selectedForm?.slug ?? undefined)}
+                            disabled={creatingConversion}
+                            className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition"
+                          >
+                            {creatingConversion ? 'Creating…' : `Create conversion for ${selectedForm?.slug ?? 'this form'}`}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Test panel */}
+                      {activeConversion && formUrl && (
+                        <div className="border border-blue-200 bg-blue-50 rounded-xl p-4">
+                          <p className="font-medium text-blue-900 text-sm mb-1">Test: {activeConversion.name}</p>
+                          <p className="text-xs text-blue-700 mb-3">Submit a test entry to confirm the pixel fires correctly.</p>
+                          <a
+                            href={`${formUrl}${formUrl.includes('?') ? '&' : '?'}pixel_test=1`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => setConversionTestOpened(true)}
+                            className="inline-flex items-center gap-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg transition"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                            Open form to test
+                          </a>
+                          {conversionTestOpened && (
+                            <p className="mt-2 text-xs text-blue-600 font-medium">Form opened — submit a test entry, then continue.</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    )
+                  })()}
+
+                  {/* Step 2: Campaign Objective */}
+                  {step === 2 && (
+                    <div className="space-y-6">
+                      <div>
+                        <h2 className="font-semibold text-gray-900 mb-4">What is your campaign goal?</h2>
+                        <div className="space-y-3">
+                          {OBJECTIVES.map((obj) => (
+                            <button
+                              key={obj.value}
+                              onClick={() => setQuestionnaire((q) => ({ ...q, objective: obj.value }))}
+                              className={`w-full text-left px-4 py-3.5 rounded-xl border-2 transition ${
+                                questionnaire.objective === obj.value
+                                  ? 'border-brand-600 bg-brand-50'
+                                  : 'border-gray-200 hover:border-gray-300'
+                              }`}
+                            >
+                              <p className={`font-medium ${questionnaire.objective === obj.value ? 'text-brand-700' : 'text-gray-900'}`}>
+                                {obj.label}
+                              </p>
+                              <p className="text-sm text-gray-500 mt-0.5">{obj.desc}</p>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="border-t border-gray-100 pt-5">
+                        <label className="block text-sm font-medium text-gray-700 mb-3">Where should the ad send people?</label>
+                        <div className="flex gap-3 mb-3">
+                          <button
+                            onClick={() => setQuestionnaire((q) => ({ ...q, destinationType: 'form' }))}
+                            className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition ${
+                              questionnaire.destinationType === 'form'
+                                ? 'border-brand-600 bg-brand-50 text-brand-700'
+                                : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                            }`}
+                          >
+                            QuoteBox Form
+                          </button>
+                          <button
+                            onClick={() => setQuestionnaire((q) => ({ ...q, destinationType: 'custom' }))}
+                            className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition ${
+                              questionnaire.destinationType === 'custom'
+                                ? 'border-brand-600 bg-brand-50 text-brand-700'
+                                : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                            }`}
+                          >
+                            Custom URL
+                          </button>
+                        </div>
+
+                        {questionnaire.destinationType === 'form' ? (
+                          hostedForms.length === 0 ? (
+                            <div className="text-sm text-gray-400 bg-gray-50 rounded-lg px-3 py-2.5 flex items-center gap-2">
+                              No active forms found.{' '}
+                              <Link href="/hosted-forms" className="text-brand-600 hover:underline font-medium">Create one</Link>
+                            </div>
+                          ) : (
+                            <select
+                              value={questionnaire.selectedFormId || ''}
+                              onChange={(e) => {
+                                const form = hostedForms.find((f) => f.id === e.target.value)
+                                const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+                                setQuestionnaire((q) => ({
+                                  ...q,
+                                  selectedFormId: form?.id || null,
+                                  destinationUrl: form ? `${siteUrl}/${form.slug}` : '',
+                                }))
+                              }}
+                              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                            >
+                              <option value="">Select a form...</option>
+                              {hostedForms.map((f) => (
+                                <option key={f.id} value={f.id}>{f.form_name}</option>
+                              ))}
+                            </select>
+                          )
+                        ) : (
+                          <input
+                            type="url"
+                            placeholder="https://yourwebsite.com/landing-page"
+                            value={questionnaire.destinationType === 'custom' ? questionnaire.destinationUrl : ''}
+                            onChange={(e) => setQuestionnaire((q) => ({ ...q, destinationUrl: e.target.value }))}
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                          />
+                        )}
+                        {questionnaire.destinationUrl && (
+                          <p className="text-xs text-brand-600 mt-1.5 truncate">↗ {questionnaire.destinationUrl}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 3: Target Audience */}
+                  {step === 3 && (
+                    <div>
+                      <h2 className="font-semibold text-gray-900 mb-4">Who should see your ads?</h2>
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Min Age</label>
+                            <input type="number" min={18} max={65} value={questionnaire.ageMin}
+                              onChange={(e) => setQuestionnaire((q) => ({ ...q, ageMin: Number(e.target.value) }))}
+                              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Max Age</label>
+                            <input type="number" min={18} max={65} value={questionnaire.ageMax}
+                              onChange={(e) => setQuestionnaire((q) => ({ ...q, ageMax: Number(e.target.value) }))}
+                              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                          <select value={questionnaire.gender}
+                            onChange={(e) => setQuestionnaire((q) => ({ ...q, gender: e.target.value }))}
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                          >
+                            <option value="all">All Genders</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Location Targeting</label>
+                          <div className="flex gap-2 mb-3">
+                            <button
+                              onClick={() => setQuestionnaire((q) => ({ ...q, locationType: 'cities' }))}
+                              className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition ${
+                                questionnaire.locationType === 'cities'
+                                  ? 'border-brand-600 bg-brand-50 text-brand-700'
+                                  : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                              }`}
+                            >
+                              📍 Cities
+                            </button>
+                            <button
+                              onClick={() => setQuestionnaire((q) => ({ ...q, locationType: 'country' }))}
+                              className={`flex-1 py-2 rounded-lg border-2 text-sm font-medium transition ${
+                                questionnaire.locationType === 'country'
+                                  ? 'border-brand-600 bg-brand-50 text-brand-700'
+                                  : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                              }`}
+                            >
+                              🌐 Country
+                            </button>
+                          </div>
+
+                          {questionnaire.locationType === 'country' ? (
+                            <select value={questionnaire.location}
+                              onChange={(e) => setQuestionnaire((q) => ({ ...q, location: e.target.value }))}
+                              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                            >
+                              {COUNTRIES.map((c) => (
+                                <option key={c.code} value={c.code}>{c.name} ({c.code})</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <CityTargetingMap
+                              targetCities={questionnaire.targetCities}
+                              onAdd={(city) => setQuestionnaire((q) => ({ ...q, targetCities: [...q.targetCities, city] }))}
+                              onRemove={(key) => setQuestionnaire((q) => ({ ...q, targetCities: q.targetCities.filter((c) => c.key !== key) }))}
+                              onRadiusChange={(key, radius) => setQuestionnaire((q) => ({ ...q, targetCities: q.targetCities.map((c) => c.key === key ? { ...c, radius } : c) }))}
+                            />
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Interests (optional)</label>
+                          <input type="text" placeholder="e.g. home improvement, real estate, DIY"
+                            value={questionnaire.interests}
+                            onChange={(e) => setQuestionnaire((q) => ({ ...q, interests: e.target.value }))}
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 4: Business Info */}
+                  {step === 4 && (
+                    <div>
+                      <h2 className="font-semibold text-gray-900 mb-4">Tell us about your business</h2>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">What do you offer?</label>
+                          <textarea rows={3} placeholder="e.g. We provide local moving services for residential customers in the Dallas area."
+                            value={questionnaire.businessOffer}
+                            onChange={(e) => setQuestionnaire((q) => ({ ...q, businessOffer: e.target.value }))}
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Key selling points</label>
+                          <textarea rows={3} placeholder="e.g. Licensed & insured, same-day quotes, no hidden fees, 5-star rated"
+                            value={questionnaire.sellingPoints}
+                            onChange={(e) => setQuestionnaire((q) => ({ ...q, sellingPoints: e.target.value }))}
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Ad Tone</label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {TONES.map((tone) => (
+                              <button key={tone.value}
+                                onClick={() => setQuestionnaire((q) => ({ ...q, tone: tone.value }))}
+                                className={`py-2.5 px-3 rounded-lg border-2 text-sm font-medium transition ${
+                                  questionnaire.tone === tone.value
+                                    ? 'border-brand-600 bg-brand-50 text-brand-700'
+                                    : 'border-gray-200 text-gray-700 hover:border-gray-300'
+                                }`}
+                              >
+                                {tone.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="border-t border-gray-100 pt-4">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Attach Ad Creative <span className="text-gray-400 font-normal">(optional)</span>
+                          </label>
+                          {creatives.length === 0 ? (
+                            <div className="flex items-center gap-2 text-sm text-gray-400 bg-gray-50 rounded-lg px-3 py-2.5">
+                              No creatives uploaded yet.{' '}
+                              <Link href="/vsls" className="text-brand-600 hover:underline font-medium">Upload in Media Library</Link>
+                            </div>
+                          ) : (
+                            <select
+                              value={questionnaire.vslId || ''}
+                              onChange={(e) => {
+                                const selected = creatives.find((c) => c.id === e.target.value) || null
+                                setQuestionnaire((q) => ({
+                                  ...q,
+                                  vslId: selected?.id || null,
+                                  vslUrl: selected?.url || null,
+                                  vslTitle: selected?.name || null,
+                                }))
+                              }}
+                              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                            >
+                              <option value="">No creative (skip)</option>
+                              {creatives.map((c) => (
+                                <option key={c.id} value={c.id}>{c.isImage ? '🖼 ' : '🎬 '}{c.name}</option>
+                              ))}
+                            </select>
+                          )}
+                          {questionnaire.vslUrl && (
+                            <p className="text-xs text-brand-600 mt-1.5 truncate">Selected: {questionnaire.vslTitle}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 5: Budget & Schedule */}
+                  {step === 5 && (
+                    <div>
+                      <h2 className="font-semibold text-gray-900 mb-4">Budget & Schedule</h2>
+                      <div className="space-y-5">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Daily Budget (USD)</label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">$</span>
+                            <input type="number" min={1} step={1} value={questionnaire.dailyBudget}
+                              onChange={(e) => setQuestionnaire((q) => ({ ...q, dailyBudget: Number(e.target.value) }))}
+                              className="w-full border border-gray-200 rounded-lg pl-7 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                            />
+                          </div>
+                          <p className="text-xs text-gray-400 mt-1">Meta minimum is $1/day</p>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Campaign Duration</label>
+                          <div className="space-y-2">
+                            {DURATIONS.map((dur) => (
+                              <button key={String(dur.value)}
+                                onClick={() => setQuestionnaire((q) => ({ ...q, duration: dur.value }))}
+                                className={`w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-medium transition ${
+                                  questionnaire.duration === dur.value
+                                    ? 'border-brand-600 bg-brand-50 text-brand-700'
+                                    : 'border-gray-200 text-gray-700 hover:border-gray-300'
+                                }`}
+                              >
+                                {dur.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 6: AI Preview + Split Test */}
+                  {step === 6 && (
+                    <div>
+                      <div className="mb-1">
+                        <h2 className="font-semibold text-gray-900">AI Split Test</h2>
+                      </div>
+                      <p className="text-sm text-gray-500 mb-4">3 ad variants will be created automatically — let Meta find the winner.</p>
+
+                      {!generatedCopy && !generating && (
+                        <button onClick={handleGenerate}
+                          className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-medium py-3 px-4 rounded-xl transition"
+                        >
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2l2.09 6.26L20 10l-5.91 1.74L12 18l-2.09-6.26L4 10l5.91-1.74L12 2z"/>
+                          </svg>
+                          Generate Ad Copy
+                        </button>
+                      )}
+
+                      {generating && (
+                        <div className="flex flex-col items-center justify-center py-12 gap-3">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600" />
+                          <p className="text-sm text-gray-500">Generating your split test variants…</p>
+                        </div>
+                      )}
+
+                      {generatedCopy && !generating && (
+                        <div className="space-y-6">
+                          {/* Strategy */}
+                          <details className="group">
+                            <summary className="flex items-center justify-between cursor-pointer text-xs font-medium text-gray-400 uppercase tracking-wider select-none list-none">
+                              <span>AI Strategy</span>
+                              <svg className="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </summary>
+                            <p className="mt-2 text-sm text-gray-600 leading-relaxed bg-gray-50 rounded-lg p-3">{generatedCopy.summary}</p>
+                          </details>
+
+                          {/* Ad Image URL */}
+                          <div>
+                            <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Ad Image URL <span className="normal-case text-gray-400 font-normal">(required — must be publicly accessible)</span></label>
+                            <input
+                              type="url"
+                              value={questionnaire.adImageUrl}
+                              onChange={(e) => setQuestionnaire((q) => ({ ...q, adImageUrl: e.target.value }))}
+                              placeholder="https://your-site.com/ad-image.jpg"
+                              className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                            />
+                            <p className="text-xs text-gray-400 mt-1">Min 600×315px. Must be reachable by Meta — no redirects, no robots.txt blocks.</p>
+                          </div>
+
+                          {/* Split Test Variants A/B/C */}
+                          <div>
+                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">Split Test Variants</p>
+                            <div className="space-y-4">
+                              {generatedCopy.headlines.map((headline, i) => (
+                                <div key={i} className="border-2 border-gray-100 rounded-xl overflow-hidden">
+                                  <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border-b border-gray-100">
+                                    <span className="w-6 h-6 rounded-full bg-brand-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                                      {String.fromCharCode(65 + i)}
+                                    </span>
+                                    <span className="text-xs font-semibold text-gray-600">Variant {String.fromCharCode(65 + i)}</span>
+                                  </div>
+                                  <div className="p-3">
+                                    <FacebookAdPreview
+                                      pageName={pages.find((p) => p.id === questionnaire.pageId)?.name ?? ''}
+                                      bodyText={generatedCopy.bodyTexts[i] || ''}
+                                      headline={headline}
+                                      destinationUrl={questionnaire.destinationUrl}
+                                      vslUrl={questionnaire.vslUrl}
+                                      isImage={creatives.find((c) => c.id === questionnaire.vslId)?.isImage ?? false}
+                                      cta={generatedCopy.cta}
+                                    />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Targeting keywords */}
+                          <div>
+                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Suggested Targeting Keywords</p>
+                            <div className="flex flex-wrap gap-2">
+                              {generatedCopy.targetingKeywords.map((kw) => (
+                                <span key={kw} className="bg-brand-50 text-brand-700 text-xs font-medium px-2.5 py-1 rounded-full border border-brand-100">{kw}</span>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Conversion tracking summary */}
+                          <div className="border border-gray-200 rounded-xl overflow-hidden">
+                            <div className="px-3 py-2 bg-gray-50 border-b border-gray-100">
+                              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Conversion Tracking</p>
+                            </div>
+                            <div className="px-3 py-3 space-y-2 text-xs">
+                              {questionnaire.pixelId ? (
+                                <div className="flex items-center gap-2">
+                                  <span className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                                    <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>
+                                  </span>
+                                  <span className="text-gray-700">Pixel <span className="font-mono text-gray-900">{questionnaire.pixelId}</span> attached</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <span className="w-4 h-4 rounded-full bg-yellow-400 flex items-center justify-center flex-shrink-0 text-white font-bold text-[9px]">!</span>
+                                  <span className="text-yellow-700">No pixel — go back to Step 1 to set up conversion tracking</span>
+                                </div>
+                              )}
+                              {questionnaire.customConversionId ? (
+                                <div className="flex items-center gap-2">
+                                  <span className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                                    <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>
+                                  </span>
+                                  <span className="text-gray-700">
+                                    Custom conversion: <span className="font-medium text-gray-900">
+                                      {customConversions.find(c => c.id === questionnaire.customConversionId)?.name ?? questionnaire.customConversionId}
+                                    </span>
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <span className="w-4 h-4 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0 text-white font-bold text-[9px]">–</span>
+                                  <span className="text-gray-400">No custom conversion selected</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Facebook page selector */}
+                          {pages.length > 1 && (
+                            <div>
+                              <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Facebook Page</label>
+                              <select value={questionnaire.pageId}
+                                onChange={(e) => {
+                                  const pid = e.target.value
+                                  setQuestionnaire((q) => ({ ...q, pageId: pid }))
+                                  if (pid) {
+                                    fetch('/api/meta/save-page', {
+                                      method: 'PATCH',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ pageId: pid }),
+                                    }).catch(() => {})
+                                  }
+                                }}
+                                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                              >
+                                <option value="">Select a page...</option>
+                                {pages.map((p) => (
+                                  <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+
+                          {pages.length === 0 && (
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2.5 text-xs text-yellow-700">
+                              No Facebook Pages found on your account. You need a Page to create ads.
+                            </div>
+                          )}
+
+                          {/* Actions */}
+                          <div className="flex gap-3 pt-1">
+                            <button
+                              onClick={() => { setGeneratedCopy(null) }}
+                              className="flex-1 text-gray-600 font-medium py-2.5 px-4 rounded-xl border border-gray-200 hover:border-gray-300 transition text-sm"
+                            >
+                              Regenerate
+                            </button>
+                            <button
+                              onClick={handleCreateCampaign}
+                              disabled={creating || !questionnaire.pageId || !questionnaire.destinationUrl || !questionnaire.adImageUrl}
+                              className="flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl transition text-sm"
+                            >
+                              {creating ? 'Creating...' : 'Launch Split Test'}
+                            </button>
+                          </div>
+                          {!questionnaire.pageId && (
+                            <p className="text-xs text-gray-400 text-center -mt-2">Select a Facebook Page above to continue</p>
+                          )}
+                          {questionnaire.pageId && !questionnaire.adImageUrl && (
+                            <p className="text-xs text-yellow-600 text-center -mt-2">Add an Ad Image URL above to continue</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Navigation */}
+                  {step < 6 && (
+                    <div className="flex gap-3 mt-6">
+                      {step > 1 && (
+                        <button onClick={() => setStep((s) => (s - 1) as Step)}
+                          className="flex-1 text-gray-600 font-medium py-2.5 px-4 rounded-xl border border-gray-200 hover:border-gray-300 transition text-sm"
+                        >
+                          Back
+                        </button>
+                      )}
+                      <button
+                        onClick={() => { setError(''); setStep((s) => (s + 1) as Step) }}
+                        className="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-medium py-2.5 px-4 rounded-xl transition text-sm"
+                      >
+                        {step === 5 ? 'Preview' : 'Next'}
+                      </button>
+                    </div>
+                  )}
+
+                  {step === 6 && !generatedCopy && !generating && (
+                    <button onClick={() => setStep(5)}
+                      className="w-full mt-4 text-gray-600 font-medium py-2.5 px-4 rounded-xl border border-gray-200 hover:border-gray-300 transition text-sm"
+                    >
+                      Back
+                    </button>
+                  )}
+                </div>
+
+                {metaAdAccountId && (
+                  <p className="text-xs text-gray-400 text-center mt-4">Using ad account: {metaAdAccountId}</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

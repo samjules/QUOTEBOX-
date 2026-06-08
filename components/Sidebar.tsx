@@ -115,7 +115,7 @@ const navItems: NavItem[] = [
   },
   {
     href: '/lead-machine',
-    label: 'Lead Machine',
+    label: 'Campaigns',
     ownerOnly: true,
     icon: (
       <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
