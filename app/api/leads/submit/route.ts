@@ -166,7 +166,6 @@ export async function POST(request: NextRequest) {
         const slug = (formData?.form_config as { slug?: string } | null)?.slug
         const formUrl = slug ? `${siteUrl}/${slug}` : null
 
-        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://quote-box.com'
         const heroImageUrl = automationConfig.hero_image_url
           ? `${siteUrl}${automationConfig.hero_image_url}`
           : null
