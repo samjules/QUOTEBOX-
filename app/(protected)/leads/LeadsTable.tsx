@@ -233,6 +233,8 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
     convertedAt: string | null
   } | null>(null)
 
+  const [panelTab, setPanelTab] = useState<'overview' | 'details' | 'actions' | 'automation'>('overview')
+
   const isSuperLeadSelected = selectedGroup.length > 1
 
   function openLead(row: DisplayRow) {
@@ -251,6 +253,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
     setAgreementStatus(null)
     setAgreementError(null)
     setAutomationActivity(null)
+    setPanelTab('overview')
     const existingCustom = lead.form_data?._custom_quote_total
     setCustomQuoteAmount(typeof existingCustom === 'number' && existingCustom > 0 ? String(existingCustom) : '')
     setCustomQuoteCurrency((lead.form_data?._custom_quote_currency as string) ?? (lead.form_data?._quote_currency as string) ?? '$')
@@ -500,7 +503,7 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
           />
 
           {/* Slide-in panel */}
-          <div className="fixed top-0 right-0 h-full w-full max-w-md bg-white z-40 flex flex-col overflow-hidden animate-slide-in-right" style={{ boxShadow: '-8px 0 48px rgba(0,0,0,0.16)' }}>
+          <div className="fixed top-0 right-0 h-full w-full max-w-lg bg-white z-40 flex flex-col overflow-hidden animate-slide-in-right" style={{ boxShadow: '-8px 0 48px rgba(0,0,0,0.16)' }}>
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white">
               <div>
@@ -542,14 +545,14 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                     <button
                       onClick={handleDeleteLead}
                       disabled={isDeleting}
-                      className="text-xs font-semibold text-white bg-red-600 hover:bg-red-700 px-2.5 py-1 rounded-md disabled:opacity-50"
+                      className="text-xs font-semibold text-white bg-red-600 hover:bg-red-700 px-2.5 py-1 rounded-xl active:scale-95 transition disabled:opacity-50"
                     >
                       {isDeleting ? 'Deleting…' : 'Yes, delete'}
                     </button>
                     <button
                       onClick={() => setConfirmDelete(false)}
                       disabled={isDeleting}
-                      className="text-xs font-semibold text-gray-600 hover:text-gray-800 px-2.5 py-1 rounded-md border border-gray-300 disabled:opacity-50"
+                      className="text-xs font-semibold text-gray-600 hover:text-gray-800 px-2.5 py-1 rounded-xl border border-gray-300 active:scale-95 transition disabled:opacity-50"
                     >
                       Cancel
                     </button>
@@ -567,444 +570,498 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
               </div>
             </div>
 
+            {/* Tab bar */}
+            <div className="flex border-b border-gray-100 bg-white px-2">
+              {(['overview', 'details', 'actions', 'automation'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setPanelTab(tab)}
+                  className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px capitalize ${
+                    panelTab === tab
+                      ? 'border-brand-500 text-brand-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            {/* Tab content */}
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
-              {/* Contact info */}
-              <section>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Contact</h3>
-                  <ContactBubbles
-                    count={contactCounts[selected.id] ?? 0}
-                    onChange={(n) => handleContactCount(selected.id, n)}
-                  />
-                </div>
-                <dl className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <dt className="text-gray-500">Name</dt>
-                    <dd className="text-gray-900 font-medium">{selected.name || '-'}</dd>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <dt className="text-gray-500">Email</dt>
-                    <dd className="text-gray-900 font-medium">
-                      {selected.email
-                        ? <a href={`mailto:${selected.email}`} className="text-brand-600 hover:underline">{selected.email}</a>
-                        : '-'}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <dt className="text-gray-500">Phone</dt>
-                    <dd className="text-gray-900 font-medium">
-                      {selectedPhone ? (
-                        <span className="flex items-center gap-1.5">
-                          <span>{phoneFlag(selectedPhone)}</span>
-                          <a href={`tel:${formatPhone(selectedPhone)}`} className="text-brand-600 hover:underline">{formatPhone(selectedPhone)}</a>
-                        </span>
-                      ) : '-'}
-                    </dd>
-                  </div>
-                </dl>
-              </section>
 
-              {/* Quote total */}
-              {(() => {
-                const originalQuote = selected ? getOriginalQuote(selected) : null
-                const hasAnyQuote = originalQuote || customQuoteAmount
-                if (!hasAnyQuote && !originalQuote) return null
-                return (
-                  <section>
-                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Quote</h3>
-
-                    {/* Original form quote */}
-                    {originalQuote && (
-                      <div className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-3 flex items-center justify-between mb-3">
-                        <span className="flex items-center gap-1.5 text-sm text-gray-500">
-                          <span>📋</span> Form quote
-                        </span>
-                        <span className="text-lg font-semibold text-gray-700">
-                          {originalQuote.currency}{originalQuote.total.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
-                        </span>
+              {/* ── OVERVIEW TAB ── */}
+              {panelTab === 'overview' && (
+                <>
+                  {/* Contact info */}
+                  <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                    <section>
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Contact</h3>
+                        <ContactBubbles
+                          count={contactCounts[selected.id] ?? 0}
+                          onChange={(n) => handleContactCount(selected.id, n)}
+                        />
                       </div>
-                    )}
+                      <dl className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <dt className="text-gray-500">Name</dt>
+                          <dd className="text-gray-900 font-medium">{selected.name || '-'}</dd>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <dt className="text-gray-500">Email</dt>
+                          <dd className="text-gray-900 font-medium">
+                            {selected.email
+                              ? <a href={`mailto:${selected.email}`} className="text-brand-600 hover:underline">{selected.email}</a>
+                              : '-'}
+                          </dd>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <dt className="text-gray-500">Phone</dt>
+                          <dd className="text-gray-900 font-medium">
+                            {selectedPhone ? (
+                              <span className="flex items-center gap-1.5">
+                                <span>{phoneFlag(selectedPhone)}</span>
+                                <a href={`tel:${formatPhone(selectedPhone)}`} className="text-brand-600 hover:underline">{formatPhone(selectedPhone)}</a>
+                              </span>
+                            ) : '-'}
+                          </dd>
+                        </div>
+                      </dl>
+                    </section>
+                  </div>
 
-                    {/* Editable custom quote */}
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                        <span>✏️</span> Edited quote
-                      </div>
-                      <div className="flex gap-2">
+                  {/* Status */}
+                  <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                    <section>
+                      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Status</h3>
+                      <div className="flex items-center gap-3">
                         <select
-                          value={customQuoteCurrency}
-                          onChange={(e) => { setCustomQuoteCurrency(e.target.value); setCustomQuoteSaved(false) }}
-                          className="rounded-md border border-gray-300 bg-white px-2 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 w-16"
+                          value={localStatus}
+                          onChange={(e) => setLocalStatus(e.target.value)}
+                          className="flex-1 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
                         >
-                          {['$', '€', '£', 'CA$', 'A$', 'NZ$', 'R', '¥'].map((s) => (
-                            <option key={s} value={s}>{s}</option>
+                          {STATUS_OPTIONS.map((s) => (
+                            <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
                           ))}
                         </select>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={customQuoteAmount}
-                          onChange={(e) => { setCustomQuoteAmount(e.target.value); setCustomQuoteSaved(false) }}
-                          placeholder="0.00"
-                          className="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                        />
                         <button
-                          onClick={() => {
-                            if (!selected) return
-                            const total = customQuoteAmount ? parseFloat(customQuoteAmount) : null
-                            startCustomQuoteTransition(async () => {
-                              await saveCustomQuote(selected.id, total, customQuoteCurrency)
-                              setCustomQuoteSaved(true)
-                            })
-                          }}
-                          disabled={isPendingCustomQuote}
-                          className="px-3 py-2 bg-brand-600 text-white text-sm font-medium rounded-md hover:bg-brand-700 disabled:opacity-50"
+                          onClick={handleStatusSave}
+                          disabled={isPending || localStatus === (savedStatus[selected.id] ?? selected.status)}
+                          className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {isPendingCustomQuote ? '…' : 'Save'}
+                          {isPending ? 'Saving…' : 'Save'}
                         </button>
                       </div>
-                      {customQuoteSaved && <p className="text-xs text-green-600 font-medium">Saved</p>}
-                    </div>
-                  </section>
-                )
-              })()}
+                    </section>
+                  </div>
 
-              {/* Sources — super lead breakdown */}
-              {isSuperLeadSelected && (
-                <section>
-                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Sources</h3>
-                  <div className="space-y-3">
-                    {selectedGroup.map((l) => {
-                      const entries = l.form_data
-                        ? Object.entries(l.form_data).filter(([key]) => !INTERNAL_KEYS.includes(key))
-                        : []
-                      const lQuote = getQuote(l)
-                      return (
-                        <div key={l.id} className="rounded-lg border border-gray-200 p-3 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <SourceBadge formType={l.form_type} />
-                            <span className="text-xs text-gray-400">
-                              {new Date(l.created_at).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
-                            </span>
-                          </div>
-                          {lQuote && (
-                            <div className="flex justify-between text-xs pt-1">
-                              <span className="text-gray-500">Quote</span>
-                              <span className="font-semibold text-green-700">
-                                {lQuote.currency}{lQuote.total.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                  {/* Notes */}
+                  <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                    <section>
+                      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Notes</h3>
+                      <textarea
+                        value={noteText}
+                        onChange={(e) => { setNoteText(e.target.value); setNoteSaved(false) }}
+                        rows={4}
+                        placeholder="Add a note about this lead…"
+                        className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 resize-none"
+                      />
+                      <div className="mt-2 flex items-center gap-3">
+                        <button
+                          onClick={handleNoteSave}
+                          disabled={isPendingNote}
+                          className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isPendingNote ? 'Saving…' : 'Save Note'}
+                        </button>
+                        {noteSaved && <span className="text-xs text-green-600 font-medium">Saved</span>}
+                      </div>
+                    </section>
+                  </div>
+                </>
+              )}
+
+              {/* ── DETAILS TAB ── */}
+              {panelTab === 'details' && (
+                <>
+                  {/* Quote total */}
+                  {(() => {
+                    const originalQuote = selected ? getOriginalQuote(selected) : null
+                    const hasAnyQuote = originalQuote || customQuoteAmount
+                    if (!hasAnyQuote && !originalQuote) return null
+                    return (
+                      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                        <section>
+                          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Quote</h3>
+
+                          {/* Original form quote */}
+                          {originalQuote && (
+                            <div className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-3 flex items-center justify-between mb-3">
+                              <span className="flex items-center gap-1.5 text-sm text-gray-500">
+                                <span>📋</span> Form quote
+                              </span>
+                              <span className="text-lg font-semibold text-gray-700">
+                                {originalQuote.currency}{originalQuote.total.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                               </span>
                             </div>
                           )}
-                          {entries.length > 0 && (
-                            <dl className="space-y-1 pt-2 border-t border-gray-100">
-                              {entries.map(([key, value]) => (
-                                <div key={key} className="flex justify-between text-xs">
-                                  <dt className="text-gray-500">{resolveLabel(key, fieldMap)}</dt>
-                                  <dd className="text-gray-900 font-medium text-right max-w-[60%]">
-                                    {resolveValue(key, value, fieldMap)}
+
+                          {/* Editable custom quote */}
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                              <span>✏️</span> Edited quote
+                            </div>
+                            <div className="flex gap-2">
+                              <select
+                                value={customQuoteCurrency}
+                                onChange={(e) => { setCustomQuoteCurrency(e.target.value); setCustomQuoteSaved(false) }}
+                                className="rounded-xl border border-gray-300 bg-white px-2 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 w-16"
+                              >
+                                {['$', '€', '£', 'CA$', 'A$', 'NZ$', 'R', '¥'].map((s) => (
+                                  <option key={s} value={s}>{s}</option>
+                                ))}
+                              </select>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={customQuoteAmount}
+                                onChange={(e) => { setCustomQuoteAmount(e.target.value); setCustomQuoteSaved(false) }}
+                                placeholder="0.00"
+                                className="flex-1 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                              />
+                              <button
+                                onClick={() => {
+                                  if (!selected) return
+                                  const total = customQuoteAmount ? parseFloat(customQuoteAmount) : null
+                                  startCustomQuoteTransition(async () => {
+                                    await saveCustomQuote(selected.id, total, customQuoteCurrency)
+                                    setCustomQuoteSaved(true)
+                                  })
+                                }}
+                                disabled={isPendingCustomQuote}
+                                className="px-3 py-2 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 active:scale-95 transition disabled:opacity-50"
+                              >
+                                {isPendingCustomQuote ? '…' : 'Save'}
+                              </button>
+                            </div>
+                            {customQuoteSaved && <p className="text-xs text-green-600 font-medium">Saved</p>}
+                          </div>
+                        </section>
+                      </div>
+                    )
+                  })()}
+
+                  {/* Sources — super lead breakdown */}
+                  {isSuperLeadSelected && (
+                    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                      <section>
+                        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Sources</h3>
+                        <div className="space-y-3">
+                          {selectedGroup.map((l) => {
+                            const entries = l.form_data
+                              ? Object.entries(l.form_data).filter(([key]) => !INTERNAL_KEYS.includes(key))
+                              : []
+                            const lQuote = getQuote(l)
+                            return (
+                              <div key={l.id} className="rounded-lg border border-gray-200 p-3 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <SourceBadge formType={l.form_type} />
+                                  <span className="text-xs text-gray-400">
+                                    {new Date(l.created_at).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
+                                  </span>
+                                </div>
+                                {lQuote && (
+                                  <div className="flex justify-between text-xs pt-1">
+                                    <span className="text-gray-500">Quote</span>
+                                    <span className="font-semibold text-green-700">
+                                      {lQuote.currency}{lQuote.total.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                                    </span>
+                                  </div>
+                                )}
+                                {entries.length > 0 && (
+                                  <dl className="space-y-1 pt-2 border-t border-gray-100">
+                                    {entries.map(([key, value]) => (
+                                      <div key={key} className="flex justify-between text-xs">
+                                        <dt className="text-gray-500">{resolveLabel(key, fieldMap)}</dt>
+                                        <dd className="text-gray-900 font-medium text-right max-w-[60%]">
+                                          {resolveValue(key, value, fieldMap)}
+                                        </dd>
+                                      </div>
+                                    ))}
+                                  </dl>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </section>
+                    </div>
+                  )}
+
+                  {/* Form data — single lead */}
+                  {formDataEntries.length > 0 && (
+                    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                      <section>
+                        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Form Details</h3>
+                        <dl className="space-y-3">
+                          {formDataEntries.map(([key, value]) => {
+                            const label = resolveLabel(key, fieldMap)
+
+                            if (isRouteValue(value)) {
+                              const route = value as RouteValue
+                              return (
+                                <div key={key}>
+                                  <dt className="text-xs font-medium text-gray-500 mb-1.5">{label}</dt>
+                                  <dd>
+                                    <div className="rounded-lg bg-gray-50 border border-gray-200 p-3 space-y-2 text-sm">
+                                      {route.startAddress && (
+                                        <div className="flex gap-3 items-start">
+                                          <span className="shrink-0 text-xs font-semibold text-gray-400 w-6 mt-0.5">From</span>
+                                          <span className="text-gray-900">{route.startAddress}</span>
+                                        </div>
+                                      )}
+                                      {route.endAddress && (
+                                        <div className="flex gap-3 items-start">
+                                          <span className="shrink-0 text-xs font-semibold text-gray-400 w-6 mt-0.5">To</span>
+                                          <span className="text-gray-900">{route.endAddress}</span>
+                                        </div>
+                                      )}
+                                      {(route.distanceMiles != null || route.durationMinutes != null) && (
+                                        <div className="flex gap-4 pt-2 border-t border-gray-200 text-xs text-gray-500">
+                                          {route.distanceMiles != null && (
+                                            <span className="font-medium text-gray-700">{route.distanceMiles.toFixed(1)} mi</span>
+                                          )}
+                                          {route.durationMinutes != null && (
+                                            <span className="font-medium text-gray-700">{Math.round(route.durationMinutes)} min drive</span>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
                                   </dd>
                                 </div>
-                              ))}
-                            </dl>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </section>
+                              )
+                            }
+
+                            return (
+                              <div key={key} className="flex justify-between text-sm">
+                                <dt className="text-gray-500">{label}</dt>
+                                <dd className="text-gray-900 font-medium text-right max-w-[60%]">
+                                  {resolveValue(key, value, fieldMap)}
+                                </dd>
+                              </div>
+                            )
+                          })}
+                        </dl>
+                      </section>
+                    </div>
+                  )}
+                </>
               )}
 
-              {/* Form data — single lead */}
-              {formDataEntries.length > 0 && (
-                <section>
-                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Form Details</h3>
-                  <dl className="space-y-3">
-                    {formDataEntries.map(([key, value]) => {
-                      const label = resolveLabel(key, fieldMap)
-
-                      if (isRouteValue(value)) {
-                        const route = value as RouteValue
-                        return (
-                          <div key={key}>
-                            <dt className="text-xs font-medium text-gray-500 mb-1.5">{label}</dt>
-                            <dd>
-                              <div className="rounded-lg bg-gray-50 border border-gray-200 p-3 space-y-2 text-sm">
-                                {route.startAddress && (
-                                  <div className="flex gap-3 items-start">
-                                    <span className="shrink-0 text-xs font-semibold text-gray-400 w-6 mt-0.5">From</span>
-                                    <span className="text-gray-900">{route.startAddress}</span>
-                                  </div>
-                                )}
-                                {route.endAddress && (
-                                  <div className="flex gap-3 items-start">
-                                    <span className="shrink-0 text-xs font-semibold text-gray-400 w-6 mt-0.5">To</span>
-                                    <span className="text-gray-900">{route.endAddress}</span>
-                                  </div>
-                                )}
-                                {(route.distanceMiles != null || route.durationMinutes != null) && (
-                                  <div className="flex gap-4 pt-2 border-t border-gray-200 text-xs text-gray-500">
-                                    {route.distanceMiles != null && (
-                                      <span className="font-medium text-gray-700">{route.distanceMiles.toFixed(1)} mi</span>
-                                    )}
-                                    {route.durationMinutes != null && (
-                                      <span className="font-medium text-gray-700">{Math.round(route.durationMinutes)} min drive</span>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </dd>
-                          </div>
-                        )
-                      }
-
-                      return (
-                        <div key={key} className="flex justify-between text-sm">
-                          <dt className="text-gray-500">{label}</dt>
-                          <dd className="text-gray-900 font-medium text-right max-w-[60%]">
-                            {resolveValue(key, value, fieldMap)}
-                          </dd>
-                        </div>
-                      )
-                    })}
-                  </dl>
-                </section>
-              )}
-
-              {/* Status */}
-              <section>
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Status</h3>
-                <div className="flex items-center gap-3">
-                  <select
-                    value={localStatus}
-                    onChange={(e) => setLocalStatus(e.target.value)}
-                    className="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                  >
-                    {STATUS_OPTIONS.map((s) => (
-                      <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={handleStatusSave}
-                    disabled={isPending || localStatus === (savedStatus[selected.id] ?? selected.status)}
-                    className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-md hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isPending ? 'Saving…' : 'Save'}
-                  </button>
-                </div>
-                <div className="mt-2">
-                  <span className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColor(localStatus)}`}>
-                    {localStatus}
-                  </span>
-                </div>
-              </section>
-
-              {/* Notes */}
-              <section>
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Notes</h3>
-                <textarea
-                  value={noteText}
-                  onChange={(e) => { setNoteText(e.target.value); setNoteSaved(false) }}
-                  rows={4}
-                  placeholder="Add a note about this lead…"
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 resize-none"
-                />
-                <div className="mt-2 flex items-center gap-3">
-                  <button
-                    onClick={handleNoteSave}
-                    disabled={isPendingNote}
-                    className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-md hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isPendingNote ? 'Saving…' : 'Save Note'}
-                  </button>
-                  {noteSaved && <span className="text-xs text-green-600 font-medium">Saved</span>}
-                </div>
-              </section>
-
-              {/* Send Invoice */}
-              <section>
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Send Invoice</h3>
-                {!stripeConnectAccountId ? (
-                  <p className="text-sm text-gray-500">
-                    <a href="/settings" className="text-brand-600 hover:underline font-medium">Connect Stripe in Settings</a> to send invoices to your leads.
-                  </p>
-                ) : !selected?.email ? (
-                  <p className="text-sm text-gray-500">No email address on file for this lead.</p>
-                ) : invoiceSent ? (
-                  <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3 flex items-center gap-2">
-                    <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <div>
-                      <p className="text-sm text-green-800 font-medium">Invoice sent!</p>
-                      <p className="text-xs text-green-700 mt-0.5">
-                        {invoiceSent === 'email+sms'
-                          ? `Email → ${selected.email} · SMS → ${selectedPhone}`
-                          : `Email → ${selected.email}`}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1">Amount (USD)</label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-                        <input
-                          type="number"
-                          min="0.50"
-                          step="0.01"
-                          value={invoiceAmount}
-                          onChange={(e) => setInvoiceAmount(e.target.value)}
-                          placeholder="0.00"
-                          className="w-full rounded-md border border-gray-300 bg-white pl-7 pr-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1">Description</label>
-                      <input
-                        type="text"
-                        value={invoiceDescription}
-                        onChange={(e) => setInvoiceDescription(e.target.value)}
-                        placeholder="Service quote"
-                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                      />
-                    </div>
-                    {invoiceError && (
-                      <p className="text-xs text-red-600">{invoiceError}</p>
-                    )}
-                    <button
-                      onClick={handleSendInvoice}
-                      disabled={invoiceSending || !invoiceAmount}
-                      className="w-full px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-md hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {invoiceSending ? 'Sending…' : 'Send Invoice'}
-                    </button>
-                    <p className="text-xs text-gray-400">
-                      Email → {selected.email}{selectedPhone ? ` · SMS → ${selectedPhone}` : ''} · due in 7 days
-                    </p>
-                  </div>
-                )}
-              </section>
-
-              {/* Send Agreement */}
-              <section>
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Send Agreement</h3>
-                {!selected?.email ? (
-                  <p className="text-sm text-gray-500">No email address on file for this lead.</p>
-                ) : agreementStatus === 'signed' ? (
-                  <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3 flex items-center gap-2">
-                    <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <div>
-                      <p className="text-sm text-green-800 font-medium">Agreement signed!</p>
-                    </div>
-                  </div>
-                ) : agreementStatus === 'sent' || agreementStatus === 'viewed' ? (
-                  <div className="rounded-lg bg-blue-50 border border-blue-200 px-4 py-3 flex items-center gap-2">
-                    <svg className="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div>
-                      <p className="text-sm text-blue-800 font-medium">
-                        Agreement {agreementStatus === 'viewed' ? 'viewed' : 'sent'}
-                      </p>
-                      <p className="text-xs text-blue-700 mt-0.5">Waiting for signature from {selected.email}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {!agreementTemplateUrl && (
-                      <p className="text-xs text-amber-600">
-                        <a href="/settings" className="underline font-medium">Upload an agreement template in Settings</a> for a better experience.
-                      </p>
-                    )}
-                    {agreementError && (
-                      <p className="text-xs text-red-600">{agreementError}</p>
-                    )}
-                    <button
-                      onClick={handleSendAgreement}
-                      disabled={agreementSending}
-                      className="w-full px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-md hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {agreementSending ? 'Sending…' : 'Send Agreement'}
-                    </button>
-                    <p className="text-xs text-gray-400">
-                      Sends a signing link to {selected.email}
-                    </p>
-                  </div>
-                )}
-              </section>
-
-              {/* Automation Activity */}
-              {automationActivity && (
-                <section>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Automation</h3>
-                    {automationActivity.converted && (
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">Converted</span>
-                    )}
-                  </div>
-                  <div className="relative">
-                    <div className="absolute left-3 top-0 bottom-0 w-px bg-gray-200" />
-                    <div className="space-y-3">
-                      {automationActivity.steps.map((s) => {
-                        const STEP_ICONS: Record<string, string> = { initial_contact: '⚡', day1_followup: '🔔', discount_offer: '🎁', mark_lost: '🚫' }
-                        const STEP_LABELS: Record<string, string> = { initial_contact: 'Instant Contact', day1_followup: 'Day 1 Follow-up', discount_offer: 'Discount Offer', mark_lost: 'Mark as Lost' }
-                        const EVENT_META: Record<string, { icon: string; label: string }> = { email_open: { icon: '👁', label: 'Opened' }, link_click: { icon: '🔗', label: 'Clicked' }, form_view: { icon: '📋', label: 'Viewed form' }, form_submit: { icon: '✅', label: 'Submitted' } }
-                        return (
-                          <div key={s.step} className="relative pl-8">
-                            <div className={`absolute left-0 w-6 h-6 rounded-full flex items-center justify-center text-xs border-2 bg-white ${s.status === 'sent' ? 'border-brand-400' : s.status === 'skipped' ? 'border-gray-200' : 'border-gray-300'}`}>
-                              {STEP_ICONS[s.step] ?? '•'}
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-medium text-gray-900">{STEP_LABELS[s.step] ?? s.step}</span>
-                                <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${s.status === 'sent' ? 'bg-green-100 text-green-700' : s.status === 'skipped' ? 'bg-gray-100 text-gray-500' : 'bg-yellow-100 text-yellow-700'}`}>
-                                  {s.status}
-                                </span>
-                              </div>
-                              <p className="text-xs text-gray-400">
-                                {s.sent_at
-                                  ? new Date(s.sent_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-                                  : s.scheduled_at
-                                  ? `Scheduled ${new Date(s.scheduled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
-                                  : ''}
-                              </p>
-                              {s.events.length > 0 && (
-                                <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-gray-100">
-                                  {s.events.map((ev, i) => {
-                                    const meta = EVENT_META[ev.event_type]
-                                    if (!meta) return null
-                                    return (
-                                      <div key={i} className="flex items-center gap-1 text-xs text-gray-500">
-                                        <span>{meta.icon}</span>
-                                        <span>{meta.label}</span>
-                                        <span className="text-gray-400">{new Date(ev.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                                      </div>
-                                    )
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )
-                      })}
-                      {automationActivity.converted && automationActivity.convertedAt && (
-                        <div className="relative pl-8">
-                          <div className="absolute left-0 w-6 h-6 rounded-full flex items-center justify-center text-xs border-2 border-green-400 bg-green-50">✅</div>
+              {/* ── ACTIONS TAB ── */}
+              {panelTab === 'actions' && (
+                <>
+                  {/* Send Invoice */}
+                  <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                    <section>
+                      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Send Invoice</h3>
+                      {!stripeConnectAccountId ? (
+                        <p className="text-sm text-gray-500">
+                          <a href="/settings" className="text-brand-600 hover:underline font-medium">Connect Stripe in Settings</a> to send invoices to your leads.
+                        </p>
+                      ) : !selected?.email ? (
+                        <p className="text-sm text-gray-500">No email address on file for this lead.</p>
+                      ) : invoiceSent ? (
+                        <div className="rounded-xl bg-green-50 border border-green-200 px-4 py-3 flex items-center gap-2">
+                          <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
                           <div>
-                            <span className="text-xs font-medium text-green-700">Form submitted</span>
-                            <p className="text-xs text-gray-400">{new Date(automationActivity.convertedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                            <p className="text-sm text-green-800 font-medium">Invoice sent!</p>
+                            <p className="text-xs text-green-700 mt-0.5">
+                              {invoiceSent === 'email+sms'
+                                ? `Email → ${selected.email} · SMS → ${selectedPhone}`
+                                : `Email → ${selected.email}`}
+                            </p>
                           </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Amount (USD)</label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                              <input
+                                type="number"
+                                min="0.50"
+                                step="0.01"
+                                value={invoiceAmount}
+                                onChange={(e) => setInvoiceAmount(e.target.value)}
+                                placeholder="0.00"
+                                className="w-full rounded-xl border border-gray-300 bg-white pl-7 pr-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Description</label>
+                            <input
+                              type="text"
+                              value={invoiceDescription}
+                              onChange={(e) => setInvoiceDescription(e.target.value)}
+                              placeholder="Service quote"
+                              className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                            />
+                          </div>
+                          {invoiceError && (
+                            <p className="text-xs text-red-600">{invoiceError}</p>
+                          )}
+                          <button
+                            onClick={handleSendInvoice}
+                            disabled={invoiceSending || !invoiceAmount}
+                            className="w-full px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {invoiceSending ? 'Sending…' : 'Send Invoice'}
+                          </button>
+                          <p className="text-xs text-gray-400">
+                            Email → {selected.email}{selectedPhone ? ` · SMS → ${selectedPhone}` : ''} · due in 7 days
+                          </p>
                         </div>
                       )}
-                    </div>
+                    </section>
                   </div>
-                </section>
+
+                  {/* Send Agreement */}
+                  <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                    <section>
+                      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Send Agreement</h3>
+                      {!selected?.email ? (
+                        <p className="text-sm text-gray-500">No email address on file for this lead.</p>
+                      ) : agreementStatus === 'signed' ? (
+                        <div className="rounded-xl bg-green-50 border border-green-200 px-4 py-3 flex items-center gap-2">
+                          <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          <div>
+                            <p className="text-sm text-green-800 font-medium">Agreement signed!</p>
+                          </div>
+                        </div>
+                      ) : agreementStatus === 'sent' || agreementStatus === 'viewed' ? (
+                        <div className="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3 flex items-center gap-2">
+                          <svg className="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <div>
+                            <p className="text-sm text-blue-800 font-medium">
+                              Agreement {agreementStatus === 'viewed' ? 'viewed' : 'sent'}
+                            </p>
+                            <p className="text-xs text-blue-700 mt-0.5">Waiting for signature from {selected.email}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {!agreementTemplateUrl && (
+                            <p className="text-xs text-amber-600">
+                              <a href="/settings" className="underline font-medium">Upload an agreement template in Settings</a> for a better experience.
+                            </p>
+                          )}
+                          {agreementError && (
+                            <p className="text-xs text-red-600">{agreementError}</p>
+                          )}
+                          <button
+                            onClick={handleSendAgreement}
+                            disabled={agreementSending}
+                            className="w-full px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-xl hover:bg-brand-700 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {agreementSending ? 'Sending…' : 'Send Agreement'}
+                          </button>
+                          <p className="text-xs text-gray-400">
+                            Sends a signing link to {selected.email}
+                          </p>
+                        </div>
+                      )}
+                    </section>
+                  </div>
+                </>
               )}
+
+              {/* ── AUTOMATION TAB ── */}
+              {panelTab === 'automation' && (
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                  <section>
+                    {automationActivity === null ? (
+                      <p className="text-sm text-gray-400 text-center py-8">Loading automation activity…</p>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Automation</h3>
+                          {automationActivity.converted && (
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">Converted</span>
+                          )}
+                        </div>
+                        <div className="relative">
+                          <div className="absolute left-3 top-0 bottom-0 w-px bg-gray-200" />
+                          <div className="space-y-3">
+                            {automationActivity.steps.map((s) => {
+                              const STEP_ICONS: Record<string, string> = { initial_contact: '⚡', day1_followup: '🔔', discount_offer: '🎁', mark_lost: '🚫' }
+                              const STEP_LABELS: Record<string, string> = { initial_contact: 'Instant Contact', day1_followup: 'Day 1 Follow-up', discount_offer: 'Discount Offer', mark_lost: 'Mark as Lost' }
+                              const EVENT_META: Record<string, { icon: string; label: string }> = { email_open: { icon: '👁', label: 'Opened' }, link_click: { icon: '🔗', label: 'Clicked' }, form_view: { icon: '📋', label: 'Viewed form' }, form_submit: { icon: '✅', label: 'Submitted' } }
+                              return (
+                                <div key={s.step} className="relative pl-8">
+                                  <div className={`absolute left-0 w-6 h-6 rounded-full flex items-center justify-center text-xs border-2 bg-white ${s.status === 'sent' ? 'border-brand-400' : s.status === 'skipped' ? 'border-gray-200' : 'border-gray-300'}`}>
+                                    {STEP_ICONS[s.step] ?? '•'}
+                                  </div>
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-xs font-medium text-gray-900">{STEP_LABELS[s.step] ?? s.step}</span>
+                                      <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${s.status === 'sent' ? 'bg-green-100 text-green-700' : s.status === 'skipped' ? 'bg-gray-100 text-gray-500' : 'bg-yellow-100 text-yellow-700'}`}>
+                                        {s.status}
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-gray-400">
+                                      {s.sent_at
+                                        ? new Date(s.sent_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                                        : s.scheduled_at
+                                        ? `Scheduled ${new Date(s.scheduled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                                        : ''}
+                                    </p>
+                                    {s.events.length > 0 && (
+                                      <div className="mt-1 space-y-0.5 pl-2 border-l-2 border-gray-100">
+                                        {s.events.map((ev, i) => {
+                                          const meta = EVENT_META[ev.event_type]
+                                          if (!meta) return null
+                                          return (
+                                            <div key={i} className="flex items-center gap-1 text-xs text-gray-500">
+                                              <span>{meta.icon}</span>
+                                              <span>{meta.label}</span>
+                                              <span className="text-gray-400">{new Date(ev.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                                            </div>
+                                          )
+                                        })}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )
+                            })}
+                            {automationActivity.converted && automationActivity.convertedAt && (
+                              <div className="relative pl-8">
+                                <div className="absolute left-0 w-6 h-6 rounded-full flex items-center justify-center text-xs border-2 border-green-400 bg-green-50">✅</div>
+                                <div>
+                                  <span className="text-xs font-medium text-green-700">Form submitted</span>
+                                  <p className="text-xs text-gray-400">{new Date(automationActivity.convertedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </section>
+                </div>
+              )}
+
             </div>
           </div>
         </>
