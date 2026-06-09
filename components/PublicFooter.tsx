@@ -1,11 +1,11 @@
 import Link from 'next/link'
 
 const tradeLinks = [
-  { label: 'Contractor Leads', href: '/contractor-leads' },
-  { label: 'Roofing Leads', href: '/roofing-leads' },
-  { label: 'HVAC Leads', href: '/hvac-leads' },
-  { label: 'Plumbing Leads', href: '/plumbing-leads' },
-  { label: 'Electrician Leads', href: '/electrician-leads' },
+  { label: 'Moving & Junk Removal Leads', href: '/contractor-leads' },
+  { label: 'Moving Company Leads', href: '/electrician-leads' },
+  { label: 'Junk Removal Leads', href: '/hvac-leads' },
+  { label: 'Local Moving Leads', href: '/plumbing-leads' },
+  { label: 'Estate Cleanout Leads', href: '/roofing-leads' },
 ]
 
 const compareLinks = [
@@ -52,13 +52,13 @@ export default function PublicFooter() {
               A product of Arctic Reach LLC
             </div>
             <p style={{ fontSize: '0.83rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, maxWidth: 220, margin: 0 }}>
-              Exclusive contractor leads from Facebook & Instagram ads. Pay $15 per lead — no monthly fees, no contracts.
+              Exclusive moving and junk removal leads from Facebook & Instagram ads. $350/month flat — no per-lead fees, no contracts.
             </p>
           </div>
 
-          {/* Leads by Trade */}
+          {/* Leads by Service */}
           <div>
-            <div style={colTitle}>Leads by Trade</div>
+            <div style={colTitle}>Leads by Service</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {tradeLinks.map(({ label, href }) => (
                 <Link key={href} href={href} style={linkStyle}>{label}</Link>
@@ -76,7 +76,7 @@ export default function PublicFooter() {
             </div>
             <div style={{ ...colTitle, marginTop: 28 }}>Resources</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <Link href="/contractor-leads#faq" style={linkStyle}>Contractor Lead FAQ</Link>
+              <Link href="/contractor-leads#faq" style={linkStyle}>Moving & Junk Removal FAQ</Link>
               <Link href="/vs-thumbtack#compare" style={linkStyle}>Thumbtack vs Quote Box</Link>
               <Link href="/vs-angies-list#compare" style={linkStyle}>Angi vs Quote Box</Link>
             </div>
