@@ -4,37 +4,37 @@ import PublicNav from '@/components/PublicNav'
 import PublicFooter from '@/components/PublicFooter'
 
 export const metadata: Metadata = {
-  title: 'Exclusive HVAC Leads — $15 Per Lead | Quote Box',
-  description: 'Buy exclusive HVAC leads from Facebook & Instagram ads. Every AC repair, heating, and HVAC installation lead goes only to you — not shared with competitors. $15/lead, no monthly fees.',
-  keywords: ['HVAC leads', 'exclusive HVAC leads', 'buy HVAC leads', 'AC repair leads', 'heating and cooling leads', 'HVAC contractor leads'],
+  title: 'Exclusive Junk Removal Leads — $15 Per Lead | Quote Box',
+  description: 'Buy exclusive junk removal leads from Facebook & Instagram ads. Every cleanout, hauling, and junk removal job lead goes only to you — not shared with competitors. $15/lead, no monthly fees.',
+  keywords: ['junk removal leads', 'exclusive junk removal leads', 'buy junk removal leads', 'hauling leads', 'cleanout leads', 'junk hauling leads'],
   alternates: { canonical: 'https://quote-box.com/hvac-leads' },
   openGraph: {
-    title: 'Exclusive HVAC Leads — $15 Per Lead | Quote Box',
-    description: 'Stop sharing HVAC leads with 5 competitors. $15/lead, exclusive, instant delivery, no monthly fees.',
+    title: 'Exclusive Junk Removal Leads — $15 Per Lead | Quote Box',
+    description: 'Stop sharing junk removal leads with 5 competitors. $15/lead, exclusive, instant delivery, no monthly fees.',
     url: 'https://quote-box.com/hvac-leads',
   },
 }
 
 const faqs = [
   {
-    q: 'How much do HVAC leads cost on Quote Box?',
-    a: 'Every HVAC lead is $15 flat. No monthly fee, no subscription, no bidding. Buy credits when you need them and pause when you don\'t.',
+    q: 'How much do junk removal leads cost on Quote Box?',
+    a: "Every junk removal lead is $15 flat. No monthly fee, no subscription, no bidding. Buy credits when you need them and pause when you don't.",
   },
   {
-    q: 'Are the HVAC leads exclusive?',
-    a: 'Yes — 100% exclusive. When a homeowner submits your HVAC quote form, you are the only HVAC company that receives their information. No sharing.',
+    q: 'Are the junk removal leads exclusive?',
+    a: 'Yes — 100% exclusive. When a customer submits your junk removal quote form, you are the only company that receives their information. No sharing.',
   },
   {
-    q: 'What types of HVAC jobs can I get leads for?',
-    a: 'Your quote form can cover any HVAC service — AC installation, AC repair, furnace replacement, duct cleaning, heat pump installation, tune-ups, and more. You build the form to match your services.',
+    q: 'What types of junk removal jobs can I get leads for?',
+    a: 'Your quote form can cover any junk removal service — full home cleanouts, estate cleanouts, garage cleanouts, appliance removal, furniture haul-away, yard waste, construction debris, and more. You build the form to match your services.',
   },
   {
-    q: 'How quickly do HVAC leads arrive?',
-    a: 'Instantly. When a homeowner fills out your quote form you get a real-time notification and their details appear in your dashboard immediately — name, number, service type, and urgency.',
+    q: 'How quickly do junk removal leads arrive?',
+    a: 'Instantly. When a customer fills out your quote form you get a real-time notification and their details appear in your dashboard immediately — name, number, service type, and job size.',
   },
   {
-    q: 'Can I get leads only during peak season?',
-    a: 'Yes. There\'s no contract or minimum commitment. Ramp up your credits heading into summer or winter and pause between seasons — you\'re in complete control.',
+    q: 'Can I scale up during spring cleaning season?',
+    a: "Yes. There's no contract or minimum commitment. Ramp up your credits during spring and summer when demand peaks, and pull back in slower months — you're in complete control.",
   },
 ]
 
@@ -63,32 +63,32 @@ export default function HvacLeadsPage() {
             fontSize: '0.73rem', fontWeight: 700, letterSpacing: '0.08em',
             textTransform: 'uppercase', padding: '5px 14px', borderRadius: 99, marginBottom: 28,
           }}>
-            ❄️ Exclusive HVAC leads
+            🗑️ Exclusive junk removal leads
           </div>
           <h1 style={{
             fontFamily: "'Oswald', sans-serif",
             fontSize: 'clamp(2.4rem, 5vw, 3.8rem)',
             fontWeight: 800, lineHeight: 1.08, marginBottom: 24,
           }}>
-            HVAC Leads Delivered<br />
+            Junk Removal Leads Delivered<br />
             <span style={{ color: '#FFE500' }}>Exclusively to You.</span>
           </h1>
           <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.75, marginBottom: 40, maxWidth: 580, margin: '0 auto 40px' }}>
-            AC repair, heating installs, tune-ups — your branded HVAC quote form captures homeowners from Facebook & Instagram and delivers them only to you. $15 per lead, zero monthly fees.
+            Estate cleanouts, garage haul-aways, appliance removal — your branded junk removal quote form captures customers from Facebook & Instagram and delivers them only to you. $15 per lead, zero monthly fees.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/signup" style={{
               background: '#FFE500', color: '#1a1a2e', fontWeight: 700,
               padding: '14px 32px', borderRadius: 10, textDecoration: 'none', fontSize: '1rem',
             }}>
-              Get HVAC leads — free to start
+              Get junk removal leads — free to start
             </Link>
             <Link href="/contractor-leads" style={{
               background: 'rgba(255,255,255,0.1)', color: 'white', fontWeight: 600,
               padding: '14px 32px', borderRadius: 10, textDecoration: 'none', fontSize: '1rem',
               border: '1px solid rgba(255,255,255,0.2)',
             }}>
-              See all trades →
+              See all services →
             </Link>
           </div>
         </div>
@@ -98,16 +98,16 @@ export default function HvacLeadsPage() {
       <section style={{ padding: '72px 24px', background: '#fff' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.8rem, 3.5vw, 2.6rem)', fontWeight: 700, textAlign: 'center', marginBottom: 48 }}>
-            Built for HVAC contractors
+            Built for junk removal companies
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 24 }}>
             {[
-              { icon: '🔒', title: 'Exclusive leads — always', body: 'No other HVAC company on the platform receives the same lead. The homeowner is yours from the moment they submit.' },
-              { icon: '📅', title: 'Scale with the seasons', body: 'Buy more credits before summer and winter rush, slow down in shoulder months. No minimums, no contracts.' },
-              { icon: '📍', title: 'Your service area only', body: 'Ads run in the exact zip codes and cities where your HVAC trucks can reach — not random leads from across the state.' },
-              { icon: '⚡', title: 'Instant dashboard delivery', body: 'Name, phone, service type, and urgency — all in your dashboard the second they hit Submit.' },
-              { icon: '🏷️', title: 'Branded to your company', body: 'Homeowners see your logo and name — not a marketplace. Better first impression, higher close rate.' },
-              { icon: '💰', title: '$15 flat, no surprises', body: 'No hidden per-bid fees, no monthly subscription. The only thing you pay for is real leads from real homeowners.' },
+              { icon: '🔒', title: 'Exclusive leads — always', body: 'No other junk removal company on the platform receives the same lead. The customer is yours from the moment they submit.' },
+              { icon: '📅', title: 'Scale with demand', body: 'Buy more credits during spring cleaning season and summer moves, slow down in quieter months. No minimums, no contracts.' },
+              { icon: '📍', title: 'Your service area only', body: 'Ads run in the exact zip codes and cities where your trucks can reach — not random leads from across the state.' },
+              { icon: '⚡', title: 'Instant dashboard delivery', body: 'Name, phone, job type, and estimated volume — all in your dashboard the second they hit Submit.' },
+              { icon: '🏷️', title: 'Branded to your company', body: 'Customers see your logo and name — not a marketplace. Better first impression, higher close rate.' },
+              { icon: '💰', title: '$15 flat, no surprises', body: 'No hidden per-bid fees, no monthly subscription. The only thing you pay for is real leads from real customers.' },
             ].map(({ icon, title, body }) => (
               <div key={title} style={{ background: '#f9fafb', borderRadius: 12, padding: '24px 20px', border: '1px solid #e5e7eb' }}>
                 <div style={{ fontSize: '1.6rem', marginBottom: 10 }}>{icon}</div>
@@ -123,7 +123,7 @@ export default function HvacLeadsPage() {
       <section style={{ padding: '72px 24px', background: '#f9fafb' }}>
         <div style={{ maxWidth: 700, margin: '0 auto' }}>
           <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.7rem, 3vw, 2.2rem)', fontWeight: 700, marginBottom: 32, textAlign: 'center' }}>
-            HVAC Lead FAQ
+            Junk Removal Lead FAQ
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {faqs.map(({ q, a }, i) => (
@@ -140,13 +140,13 @@ export default function HvacLeadsPage() {
 
       <section style={{ padding: '48px 24px', background: '#fff' }}>
         <div style={{ maxWidth: 700, margin: '0 auto', textAlign: 'center' }}>
-          <p style={{ color: '#9ca3af', fontSize: '0.88rem', marginBottom: 16 }}>Also looking for leads in another trade?</p>
+          <p style={{ color: '#9ca3af', fontSize: '0.88rem', marginBottom: 16 }}>Also looking for leads in another service?</p>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
             {[
-              { label: 'Roofing Leads', href: '/roofing-leads' },
-              { label: 'Plumbing Leads', href: '/plumbing-leads' },
-              { label: 'Electrician Leads', href: '/electrician-leads' },
-              { label: 'All Contractor Leads', href: '/contractor-leads' },
+              { label: 'Moving Leads', href: '/electrician-leads' },
+              { label: 'Local Moving Leads', href: '/plumbing-leads' },
+              { label: 'Estate Cleanout Leads', href: '/roofing-leads' },
+              { label: 'All Moving & Junk Leads', href: '/contractor-leads' },
             ].map(({ label, href }) => (
               <Link key={href} href={href} style={{
                 padding: '8px 18px', borderRadius: 99, border: '1px solid #e5e7eb',
@@ -161,10 +161,10 @@ export default function HvacLeadsPage() {
       <section style={{ padding: '72px 24px', background: '#FFE500' }}>
         <div style={{ maxWidth: 580, margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 800, color: '#1a1a2e', marginBottom: 16 }}>
-            Fill your HVAC schedule
+            Fill your junk removal schedule
           </h2>
           <p style={{ color: '#1a1a2e', opacity: 0.7, marginBottom: 32, fontSize: '1rem', lineHeight: 1.65 }}>
-            Build your branded HVAC quote form in 5 minutes. $15 per exclusive lead. Free to sign up.
+            Build your branded junk removal quote form in 5 minutes. $15 per exclusive lead. Free to sign up.
           </p>
           <Link href="/signup" style={{
             display: 'inline-block', background: '#1a1a2e', color: '#FFE500',

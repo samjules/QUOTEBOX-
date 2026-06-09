@@ -4,37 +4,37 @@ import PublicNav from '@/components/PublicNav'
 import PublicFooter from '@/components/PublicFooter'
 
 export const metadata: Metadata = {
-  title: 'Exclusive Electrician Leads — $15 Per Lead | Quote Box',
-  description: 'Buy exclusive electrician leads from Facebook & Instagram ads. Panel upgrades, EV charger installs, rewiring — every lead goes only to your electrical company. $15/lead, no monthly fees.',
-  keywords: ['electrician leads', 'exclusive electrician leads', 'buy electrician leads', 'electrical contractor leads', 'electrical leads', 'panel upgrade leads'],
+  title: 'Exclusive Moving Company Leads — $15 Per Lead | Quote Box',
+  description: 'Buy exclusive moving leads from Facebook & Instagram ads. Local moves, long-distance moves, and apartment moves — every lead goes only to your moving company. $15/lead, no monthly fees.',
+  keywords: ['moving leads', 'exclusive moving leads', 'buy moving leads', 'moving company leads', 'local moving leads', 'long distance moving leads'],
   alternates: { canonical: 'https://quote-box.com/electrician-leads' },
   openGraph: {
-    title: 'Exclusive Electrician Leads — $15 Per Lead | Quote Box',
-    description: 'Stop sharing electrician leads with competitors. $15/lead, exclusive, instant delivery, no monthly fees.',
+    title: 'Exclusive Moving Company Leads — $15 Per Lead | Quote Box',
+    description: 'Stop sharing moving leads with competitors. $15/lead, exclusive, instant delivery, no monthly fees.',
     url: 'https://quote-box.com/electrician-leads',
   },
 }
 
 const faqs = [
   {
-    q: 'How much do electrician leads cost?',
-    a: 'Every electrician lead on Quote Box is $15 flat. No monthly fee, no per-bid charges, no subscription. Only pay when a real customer contacts you.',
+    q: 'How much do moving leads cost?',
+    a: 'Every moving lead on Quote Box is $15 flat. No monthly fee, no per-bid charges, no subscription. Only pay when a real customer contacts you.',
   },
   {
-    q: 'Are the electrician leads exclusive?',
-    a: 'Yes — 100% exclusive. When a homeowner fills out your electrical quote form, you are the only electrical contractor who receives their information.',
+    q: 'Are the moving leads exclusive?',
+    a: 'Yes — 100% exclusive. When a customer fills out your moving quote form, you are the only moving company who receives their information.',
   },
   {
-    q: 'What electrical jobs can I get leads for?',
-    a: 'Panel upgrades, EV charger installation, whole-home rewiring, outlet and switch replacement, ceiling fan installation, generator hookups, and more. You customize your form to show exactly the services you offer.',
+    q: 'What types of moves can I get leads for?',
+    a: 'Local residential moves, long-distance moves, apartment moves, office and commercial moves, senior moves, and specialty moves like pianos or safes. You customize your form to show exactly the services you offer.',
   },
   {
-    q: 'Are EV charger installation leads available?',
-    a: 'Yes. EV charger installation is one of the fastest-growing electrical jobs. You can set up a dedicated quote form for EV charger installs and capture homeowners actively shopping for this service.',
+    q: 'Can I get leads for long-distance moves?',
+    a: 'Yes. Long-distance moving is one of the highest-value lead types. You can set up a dedicated quote form for long-distance moves and capture customers actively planning an interstate or cross-country relocation.',
   },
   {
-    q: 'How does Quote Box compare to Thumbtack for electricians?',
-    a: 'Thumbtack charges you to send each quote, and sends your lead to up to five competing electricians. Quote Box: you pay $15 only when a real customer submits your form — and no other electrician gets that lead.',
+    q: 'How does Quote Box compare to Thumbtack for movers?',
+    a: 'Thumbtack charges you to send each quote, and sends your lead to up to five competing movers. Quote Box: you pay $15 only when a real customer submits your form — and no other moving company gets that lead.',
   },
 ]
 
@@ -63,32 +63,32 @@ export default function ElectricianLeadsPage() {
             fontSize: '0.73rem', fontWeight: 700, letterSpacing: '0.08em',
             textTransform: 'uppercase', padding: '5px 14px', borderRadius: 99, marginBottom: 28,
           }}>
-            ⚡ Exclusive electrician leads
+            🚚 Exclusive moving leads
           </div>
           <h1 style={{
             fontFamily: "'Oswald', sans-serif",
             fontSize: 'clamp(2.4rem, 5vw, 3.8rem)',
             fontWeight: 800, lineHeight: 1.08, marginBottom: 24,
           }}>
-            Electrician Leads Wired<br />
+            Moving Leads Delivered<br />
             <span style={{ color: '#FFE500' }}>Directly to You.</span>
           </h1>
           <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.75, marginBottom: 40, maxWidth: 580, margin: '0 auto 40px' }}>
-            Panel upgrades, EV chargers, rewiring — your branded electrical quote form captures homeowners from Facebook & Instagram and delivers each lead exclusively to you. $15 per lead, no monthly fee.
+            Local moves, long-distance, apartment moves — your branded moving quote form captures customers from Facebook & Instagram and delivers each lead exclusively to you. $15 per lead, no monthly fee.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/signup" style={{
               background: '#FFE500', color: '#1a1a2e', fontWeight: 700,
               padding: '14px 32px', borderRadius: 10, textDecoration: 'none', fontSize: '1rem',
             }}>
-              Get electrician leads — free to start
+              Get moving leads — free to start
             </Link>
             <Link href="/contractor-leads" style={{
               background: 'rgba(255,255,255,0.1)', color: 'white', fontWeight: 600,
               padding: '14px 32px', borderRadius: 10, textDecoration: 'none', fontSize: '1rem',
               border: '1px solid rgba(255,255,255,0.2)',
             }}>
-              See all trades →
+              See all services →
             </Link>
           </div>
         </div>
@@ -98,16 +98,16 @@ export default function ElectricianLeadsPage() {
       <section style={{ padding: '72px 24px', background: '#fff' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.8rem, 3.5vw, 2.6rem)', fontWeight: 700, textAlign: 'center', marginBottom: 48 }}>
-            Why electricians choose Quote Box
+            Why moving companies choose Quote Box
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 24 }}>
             {[
-              { icon: '🔒', title: '100% exclusive leads', body: 'No other electrical contractor on the platform receives the same lead. Full stop.' },
-              { icon: '⚡', title: 'EV charger lead generation', body: 'Capture the fast-growing EV charger installation market with a dedicated quote form targeting EV owners in your area.' },
-              { icon: '📍', title: 'Hyper-local targeting', body: 'Your ads only run in the zip codes and neighborhoods your crew can service — no wasted spend.' },
-              { icon: '💰', title: '$15 per lead, zero monthly fee', body: 'Pay only when a real homeowner contacts you. No monthly subscription, no bid fees, no contracts.' },
-              { icon: '🏷️', title: 'Your branded quote form', body: 'Homeowners see your company name and logo — not a marketplace. Build trust before you even call back.' },
-              { icon: '📱', title: 'Meta ads — we handle it', body: 'We run Facebook and Instagram campaigns in your service area. You focus on the work, we send you the customers.' },
+              { icon: '🔒', title: '100% exclusive leads', body: 'No other moving company on the platform receives the same lead. Full stop.' },
+              { icon: '📏', title: 'Capture long-distance moves', body: 'Target customers planning cross-state or cross-country moves — the highest-value jobs in the moving industry.' },
+              { icon: '📍', title: 'Hyper-local targeting', body: 'Your ads only run in the cities and zip codes your crews can service — no wasted spend on leads too far away.' },
+              { icon: '💰', title: '$15 per lead, zero monthly fee', body: 'Pay only when a real customer contacts you. No monthly subscription, no bid fees, no contracts.' },
+              { icon: '🏷️', title: 'Your branded quote form', body: 'Customers see your company name and logo — not a marketplace. Build trust before you even call back.' },
+              { icon: '📱', title: 'Meta ads — we handle it', body: 'We run Facebook and Instagram campaigns in your service area. You focus on the moves, we send you the customers.' },
             ].map(({ icon, title, body }) => (
               <div key={title} style={{ background: '#f9fafb', borderRadius: 12, padding: '24px 20px', border: '1px solid #e5e7eb' }}>
                 <div style={{ fontSize: '1.6rem', marginBottom: 10 }}>{icon}</div>
@@ -123,7 +123,7 @@ export default function ElectricianLeadsPage() {
       <section style={{ padding: '72px 24px', background: '#f9fafb' }}>
         <div style={{ maxWidth: 700, margin: '0 auto' }}>
           <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.7rem, 3vw, 2.2rem)', fontWeight: 700, marginBottom: 32, textAlign: 'center' }}>
-            Electrician Lead FAQ
+            Moving Lead FAQ
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {faqs.map(({ q, a }, i) => (
@@ -140,13 +140,13 @@ export default function ElectricianLeadsPage() {
 
       <section style={{ padding: '48px 24px', background: '#fff' }}>
         <div style={{ maxWidth: 700, margin: '0 auto', textAlign: 'center' }}>
-          <p style={{ color: '#9ca3af', fontSize: '0.88rem', marginBottom: 16 }}>Also looking for leads in another trade?</p>
+          <p style={{ color: '#9ca3af', fontSize: '0.88rem', marginBottom: 16 }}>Also looking for leads in another service?</p>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
             {[
-              { label: 'Roofing Leads', href: '/roofing-leads' },
-              { label: 'HVAC Leads', href: '/hvac-leads' },
-              { label: 'Plumbing Leads', href: '/plumbing-leads' },
-              { label: 'All Contractor Leads', href: '/contractor-leads' },
+              { label: 'Junk Removal Leads', href: '/hvac-leads' },
+              { label: 'Local Moving Leads', href: '/plumbing-leads' },
+              { label: 'Estate Cleanout Leads', href: '/roofing-leads' },
+              { label: 'All Moving & Junk Leads', href: '/contractor-leads' },
             ].map(({ label, href }) => (
               <Link key={href} href={href} style={{
                 padding: '8px 18px', borderRadius: 99, border: '1px solid #e5e7eb',
@@ -161,10 +161,10 @@ export default function ElectricianLeadsPage() {
       <section style={{ padding: '72px 24px', background: '#FFE500' }}>
         <div style={{ maxWidth: 580, margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 800, color: '#1a1a2e', marginBottom: 16 }}>
-            Wire up more jobs
+            Book more moves
           </h2>
           <p style={{ color: '#1a1a2e', opacity: 0.7, marginBottom: 32, fontSize: '1rem', lineHeight: 1.65 }}>
-            Build your branded electrical quote form in 5 minutes. $15 per exclusive lead. Free to sign up.
+            Build your branded moving quote form in 5 minutes. $15 per exclusive lead. Free to sign up.
           </p>
           <Link href="/signup" style={{
             display: 'inline-block', background: '#1a1a2e', color: '#FFE500',

@@ -4,36 +4,36 @@ import PublicNav from '@/components/PublicNav'
 import PublicFooter from '@/components/PublicFooter'
 
 export const metadata: Metadata = {
-  title: 'Exclusive Contractor Leads — $15 Per Lead, No Monthly Fees',
-  description: 'Buy exclusive contractor leads from Facebook & Instagram ads. Unlike Thumbtack and Angi, you get every lead exclusively — not shared with 5 competitors. Pay $15 per lead, no subscription required.',
+  title: 'Exclusive Moving & Junk Removal Leads — $15 Per Lead, No Monthly Fees',
+  description: 'Buy exclusive moving and junk removal leads from Facebook & Instagram ads. Unlike Thumbtack and Angi, you get every lead exclusively — not shared with 5 competitors. Pay $15 per lead, no subscription required.',
   alternates: { canonical: 'https://quote-box.com/contractor-leads' },
   openGraph: {
-    title: 'Exclusive Contractor Leads — $15 Per Lead | Quote Box',
-    description: 'Stop bidding against competitors. Get exclusive contractor leads from Facebook & Instagram. $15/lead, no monthly fees.',
+    title: 'Exclusive Moving & Junk Removal Leads — $15 Per Lead | Quote Box',
+    description: 'Stop bidding against competitors. Get exclusive moving and junk removal leads from Facebook & Instagram. $15/lead, no monthly fees.',
     url: 'https://quote-box.com/contractor-leads',
   },
 }
 
 const faqs = [
   {
-    q: 'How much do contractor leads cost?',
+    q: 'How much do moving and junk removal leads cost?',
     a: 'Every lead is $15 — flat rate, no exceptions. There are no monthly fees, no subscriptions, and no hidden charges. Buy credits when you need them, stop whenever you want.',
   },
   {
     q: 'Are the leads exclusive to me?',
-    a: 'Yes. When someone fills out your Quote Box form, you are the only contractor who receives that lead. Unlike Thumbtack, which sends the same lead to up to five contractors, your Quote Box leads are 100% exclusive.',
+    a: 'Yes. When someone fills out your Quote Box form, you are the only company who receives that lead. Unlike Thumbtack, which sends the same lead to up to five movers or junk haulers, your Quote Box leads are 100% exclusive.',
   },
   {
     q: 'How does Quote Box compare to Thumbtack?',
-    a: 'On Thumbtack you pay a bid fee just to send a quote — and five other contractors are doing the same. On Quote Box you have your own branded form, you pay only when you actually receive a lead, and no competitor ever sees that customer.',
+    a: 'On Thumbtack you pay a bid fee just to send a quote — and five other moving companies are doing the same. On Quote Box you have your own branded form, you pay only when you actually receive a lead, and no competitor ever sees that customer.',
   },
   {
-    q: 'How does Quote Box compare to Angi (Angie\'s List)?',
+    q: "How does Quote Box compare to Angi (Angie's List)?",
     a: "Angi charges $40–$100+ per month plus separate lead fees, and those leads are still shared. Quote Box costs nothing monthly and charges a flat $15 per exclusive lead. You're not on a marketplace — it's your form, your brand, your customers.",
   },
   {
-    q: 'What types of contractors use Quote Box?',
-    a: 'Roofers, HVAC technicians, plumbers, electricians, painters, landscapers, cleaners, movers, and any other trade that quotes customers before starting work.',
+    q: 'What types of companies use Quote Box?',
+    a: 'Local movers, long-distance moving companies, junk removal and hauling companies, estate cleanout services, storage companies, and any business that quotes customers before the job.',
   },
   {
     q: 'How fast do I get leads?',
@@ -53,15 +53,15 @@ const faqs = [
   },
 ]
 
-const trades = [
-  { label: 'Roofing', href: '/roofing-leads', icon: '🏠' },
-  { label: 'HVAC', href: '/hvac-leads', icon: '❄️' },
-  { label: 'Plumbing', href: '/plumbing-leads', icon: '🔧' },
-  { label: 'Electrical', href: '/electrician-leads', icon: '⚡' },
-  { label: 'Painting', href: '/contractor-leads', icon: '🎨' },
-  { label: 'Landscaping', href: '/contractor-leads', icon: '🌿' },
-  { label: 'Cleaning', href: '/contractor-leads', icon: '🧹' },
-  { label: 'Moving', href: '/contractor-leads', icon: '📦' },
+const services = [
+  { label: 'Moving Leads', href: '/electrician-leads', icon: '🚚' },
+  { label: 'Junk Removal Leads', href: '/hvac-leads', icon: '🗑️' },
+  { label: 'Local Moving', href: '/plumbing-leads', icon: '📦' },
+  { label: 'Estate Cleanout', href: '/roofing-leads', icon: '🏠' },
+  { label: 'Storage Leads', href: '/contractor-leads', icon: '🏢' },
+  { label: 'Hauling Leads', href: '/contractor-leads', icon: '🛻' },
+  { label: 'Hoarding Cleanup', href: '/contractor-leads', icon: '🧹' },
+  { label: 'Donation Pickup', href: '/contractor-leads', icon: '❤️' },
 ]
 
 export default function ContractorLeadsPage() {
@@ -96,11 +96,11 @@ export default function ContractorLeadsPage() {
             fontSize: 'clamp(2.4rem, 5vw, 3.8rem)',
             fontWeight: 800, lineHeight: 1.08, marginBottom: 24,
           }}>
-            Contractor Leads That<br />
-            <span style={{ color: '#FFE500' }}>Only Go to You.</span>
+            Moving & Junk Removal Leads<br />
+            <span style={{ color: '#FFE500' }}>That Only Go to You.</span>
           </h1>
           <p style={{ fontSize: '1.1rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.75, marginBottom: 40, maxWidth: 600, margin: '0 auto 40px' }}>
-            Pay $15 per lead from Facebook & Instagram ads. No monthly fees. No bidding against five other roofers or plumbers. You get the customer — exclusively.
+            Pay $15 per lead from Facebook & Instagram ads. No monthly fees. No bidding against five other movers or junk haulers. You get the customer — exclusively.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/signup" style={{
@@ -127,17 +127,17 @@ export default function ContractorLeadsPage() {
             fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.8rem, 3.5vw, 2.6rem)',
             fontWeight: 700, textAlign: 'center', marginBottom: 12,
           }}>
-            Why contractors are ditching Thumbtack & Angi
+            Why movers and junk haulers are ditching Thumbtack & Angi
           </h2>
           <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: 52, fontSize: '1rem' }}>
-            The same lead sent to 5 contractors is not a lead — it&apos;s a race to the bottom.
+            The same lead sent to 5 companies is not a lead — it&apos;s a race to the bottom.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
             {[
               {
                 icon: '🔒',
                 title: 'Exclusive leads, every time',
-                body: 'When a customer fills out your form, you are the only contractor who gets their info. No auctions. No bidding wars.',
+                body: 'When a customer fills out your form, you are the only company who gets their info. No auctions. No bidding wars.',
               },
               {
                 icon: '💰',
@@ -152,7 +152,7 @@ export default function ContractorLeadsPage() {
               {
                 icon: '📱',
                 title: 'Facebook & Instagram targeting',
-                body: 'We run Meta ads in your exact service area so you reach homeowners before they ever open Thumbtack.',
+                body: 'We run Meta ads in your exact service area so you reach customers before they ever open Thumbtack.',
               },
               {
                 icon: '⚡',
@@ -189,8 +189,8 @@ export default function ContractorLeadsPage() {
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 32 }}>
             {[
-              { step: '1', title: 'Build your form', body: 'Answer a few questions about your trade and our AI builds a branded quote form in under 60 seconds.' },
-              { step: '2', title: 'We run the ads', body: 'We launch Facebook & Instagram ads targeting homeowners in your service area — automatically.' },
+              { step: '1', title: 'Build your form', body: 'Answer a few questions about your business and our AI builds a branded quote form in under 60 seconds.' },
+              { step: '2', title: 'We run the ads', body: 'We launch Facebook & Instagram ads targeting customers in your service area — automatically.' },
               { step: '3', title: 'You get the lead', body: 'Every customer who fills out your form lands exclusively in your dashboard. Pay $15. Follow up. Win the job.' },
             ].map(({ step, title, body }) => (
               <div key={step} style={{ textAlign: 'center' }}>
@@ -211,20 +211,20 @@ export default function ContractorLeadsPage() {
         </div>
       </section>
 
-      {/* ── Trades we serve ── */}
+      {/* ── Services we serve ── */}
       <section style={{ padding: '72px 24px', background: '#fff' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <h2 style={{
             fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.8rem, 3.5vw, 2.4rem)',
             fontWeight: 700, textAlign: 'center', marginBottom: 12,
           }}>
-            Leads for every trade
+            Leads for every service
           </h2>
           <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: 40, fontSize: '1rem' }}>
             If you quote before you work, Quote Box works for you.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
-            {trades.map(({ label, href, icon }) => (
+            {services.map(({ label, href, icon }) => (
               <Link key={label} href={href} style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
                 background: '#f9fafb', borderRadius: 12, padding: '20px 12px',
@@ -263,10 +263,10 @@ export default function ContractorLeadsPage() {
         <div style={{ maxWidth: 700, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 52 }}>
             <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.8rem, 3vw, 2.4rem)', fontWeight: 700, marginBottom: 12 }}>
-              Contractor Lead FAQ
+              Moving & Junk Removal Lead FAQ
             </h2>
             <p style={{ color: '#6b7280', fontSize: '1rem', margin: 0 }}>
-              Everything contractors ask before switching from Thumbtack or Angi.
+              Everything movers and junk haulers ask before switching from Thumbtack or Angi.
             </p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -299,10 +299,10 @@ export default function ContractorLeadsPage() {
             fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(2rem, 4vw, 3rem)',
             fontWeight: 800, color: '#1a1a2e', marginBottom: 16,
           }}>
-            Stop bidding. Start winning.
+            Stop bidding. Start booking.
           </h2>
           <p style={{ color: '#1a1a2e', opacity: 0.7, marginBottom: 32, fontSize: '1.05rem', lineHeight: 1.65 }}>
-            Sign up free, build your quote form in 5 minutes, and get your first exclusive contractor lead for $15.
+            Sign up free, build your quote form in 5 minutes, and get your first exclusive moving or junk removal lead for $15.
           </p>
           <Link href="/signup" style={{
             display: 'inline-block', background: '#1a1a2e', color: '#FFE500',

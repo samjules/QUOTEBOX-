@@ -4,8 +4,8 @@ import PublicNav from '@/components/PublicNav'
 import PublicFooter from '@/components/PublicFooter'
 
 export const metadata: Metadata = {
-  title: 'Quote Box vs Thumbtack — Exclusive Contractor Leads Without the Bidding War',
-  description: 'Thumbtack sends your lead to 5 contractors and charges you to bid. Quote Box gives you exclusive leads for $15 flat — no bidding, no sharing, no monthly fees. See the full comparison.',
+  title: 'Quote Box vs Thumbtack — Exclusive Moving & Junk Removal Leads Without the Bidding War',
+  description: 'Thumbtack sends your lead to 5 movers and charges you to bid. Quote Box gives you exclusive moving and junk removal leads for $15 flat — no bidding, no sharing, no monthly fees. See the full comparison.',
   alternates: { canonical: 'https://quote-box.com/vs-thumbtack' },
   openGraph: {
     title: 'Quote Box vs Thumbtack | Quote Box',
@@ -16,12 +16,12 @@ export const metadata: Metadata = {
 
 const faqs = [
   {
-    q: 'Does Thumbtack share leads with multiple contractors?',
-    a: 'Yes. Thumbtack sends the same lead to up to five contractors simultaneously. You are competing against four other businesses the moment you receive that lead.',
+    q: 'Does Thumbtack share moving leads with multiple companies?',
+    a: 'Yes. Thumbtack sends the same lead to up to five moving or junk removal companies simultaneously. You are competing against four other businesses the moment you receive that lead.',
   },
   {
-    q: 'How much does Thumbtack charge per lead?',
-    a: 'Thumbtack charges a "bid fee" of $3–$75+ per quote you send — and you pay that fee whether you win the job or not. Lead prices vary by market and trade and are not transparent upfront.',
+    q: 'How much does Thumbtack charge per moving lead?',
+    a: 'Thumbtack charges a "bid fee" of $3–$75+ per quote you send — and you pay that fee whether you win the job or not. Lead prices vary by market and service type and are not transparent upfront.',
   },
   {
     q: 'Does Thumbtack have a monthly fee?',
@@ -29,7 +29,7 @@ const faqs = [
   },
   {
     q: 'Are Quote Box leads exclusive?',
-    a: 'Yes. When a customer fills out your Quote Box form they see only your company. No other contractor on earth receives that same lead.',
+    a: 'Yes. When a customer fills out your Quote Box form they see only your company. No other mover or junk hauler on earth receives that same lead.',
   },
   {
     q: "What happens to my Thumbtack customers when I switch?",
@@ -38,7 +38,7 @@ const faqs = [
 ]
 
 const rows = [
-  { feature: 'Lead exclusivity', qb: 'Exclusive — only you', tt: 'Shared with up to 5 contractors', qbWin: true },
+  { feature: 'Lead exclusivity', qb: 'Exclusive — only you', tt: 'Shared with up to 5 companies', qbWin: true },
   { feature: 'Cost per lead', qb: '$15 flat', tt: '$3–$75+ bid fee (win or lose)', qbWin: true },
   { feature: 'Monthly subscription', qb: '$0', tt: '$0–$200+ (Promote plan)', qbWin: true },
   { feature: 'Pay only when you get the lead', qb: 'Yes', tt: 'No — pay to bid', qbWin: true },
@@ -82,7 +82,7 @@ export default function VsThumbthackPage() {
             fontSize: 'clamp(2.2rem, 5vw, 3.6rem)',
             fontWeight: 800, lineHeight: 1.08, marginBottom: 24,
           }}>
-            Why Contractors Are<br />
+            Why Movers & Junk Haulers Are<br />
             <span style={{ color: '#FFE500' }}>Ditching Thumbtack</span>
           </h1>
           <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.75, marginBottom: 40, maxWidth: 580, margin: '0 auto 40px' }}>
@@ -139,10 +139,10 @@ export default function VsThumbthackPage() {
             fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.7rem, 3vw, 2.4rem)',
             fontWeight: 700, marginBottom: 32,
           }}>
-            The real cost of Thumbtack
+            The real cost of Thumbtack for movers
           </h2>
           <p style={{ color: '#4b5563', lineHeight: 1.75, fontSize: '1rem', marginBottom: 20 }}>
-            Say you&apos;re a roofer looking for 10 jobs a month. On Thumbtack you might pay $20–$50 per bid — and if five other roofers are also bidding, you&apos;re winning roughly one in five. That means you could spend $400–$1,000 in bid fees to land 10 jobs.
+            Say you&apos;re a moving company looking for 10 jobs a month. On Thumbtack you might pay $20–$50 per bid — and if five other movers are also bidding, you&apos;re winning roughly one in five. That means you could spend $400–$1,000 in bid fees to land 10 jobs.
           </p>
           <p style={{ color: '#4b5563', lineHeight: 1.75, fontSize: '1rem', marginBottom: 20 }}>
             On Quote Box those same 10 leads cost <strong>$150 total</strong>. Every single one is yours — no bidding, no competition, no fees for leads you don&apos;t win.
@@ -180,7 +180,7 @@ export default function VsThumbthackPage() {
             Ready to stop bidding?
           </h2>
           <p style={{ color: '#1a1a2e', opacity: 0.7, marginBottom: 32, fontSize: '1.05rem', lineHeight: 1.65 }}>
-            Sign up free and get exclusive contractor leads for $15 each — without ever competing against five other contractors for the same job.
+            Sign up free and get exclusive moving and junk removal leads for $15 each — without ever competing against five other companies for the same job.
           </p>
           <Link href="/signup" style={{
             display: 'inline-block', background: '#1a1a2e', color: '#FFE500',

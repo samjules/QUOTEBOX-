@@ -4,24 +4,24 @@ import PublicNav from '@/components/PublicNav'
 import PublicFooter from '@/components/PublicFooter'
 
 export const metadata: Metadata = {
-  title: 'Quote Box vs Angi (Angie\'s List) — Better Contractor Leads for Less',
-  description: "Angi charges $40–$100/month plus shared lead fees. Quote Box is $15 per exclusive lead, no monthly subscription. See the full comparison of Angi vs Quote Box for contractors.",
+  title: "Quote Box vs Angi (Angie's List) — Better Moving & Junk Removal Leads for Less",
+  description: "Angi charges $40–$100/month plus shared lead fees. Quote Box is $15 per exclusive moving or junk removal lead, no monthly subscription. See the full comparison of Angi vs Quote Box.",
   alternates: { canonical: 'https://quote-box.com/vs-angies-list' },
   openGraph: {
     title: "Quote Box vs Angi Leads | Quote Box",
-    description: "Angi = monthly fees + shared leads. Quote Box = $15/lead, exclusive, no subscription. The better Angi alternative for contractors.",
+    description: "Angi = monthly fees + shared leads. Quote Box = $15/lead, exclusive, no subscription. The better Angi alternative for movers and junk removal companies.",
     url: 'https://quote-box.com/vs-angies-list',
   },
 }
 
 const faqs = [
   {
-    q: "How much does Angi (Angie's List) charge contractors?",
-    a: "Angi charges contractors a monthly membership fee of $40–$100+ per month, plus separate lead fees of $15–$85 per lead — and those leads are still shared with competing contractors.",
+    q: "How much does Angi (Angie's List) charge moving and junk removal companies?",
+    a: "Angi charges a monthly membership fee of $40–$100+ per month, plus separate lead fees of $15–$85 per lead — and those leads are still shared with competing companies.",
   },
   {
-    q: "Are Angi leads exclusive?",
-    a: "No. Angi sends the same lead to multiple contractors. You are competing against other businesses every time you receive a lead through Angi.",
+    q: "Are Angi moving and junk removal leads exclusive?",
+    a: "No. Angi sends the same lead to multiple companies. You are competing against other movers or junk haulers every time you receive a lead through Angi.",
   },
   {
     q: "Does Quote Box have a monthly fee?",
@@ -29,10 +29,10 @@ const faqs = [
   },
   {
     q: "Can I cancel Angi easily?",
-    a: "Angi contracts are notoriously difficult to cancel and many contractors report being billed for months after attempting to cancel. Quote Box has no contract — stop buying credits at any time with no penalty.",
+    a: "Angi contracts are notoriously difficult to cancel and many businesses report being billed for months after attempting to cancel. Quote Box has no contract — stop buying credits at any time with no penalty.",
   },
   {
-    q: "What is a better alternative to Angi for contractors?",
+    q: "What is a better alternative to Angi for movers and junk removal companies?",
     a: "Quote Box. You get a branded quote form, Facebook & Instagram ad campaigns targeting your exact service area, exclusive leads delivered instantly, and you pay only $15 per lead — no monthly fees.",
   },
 ]
@@ -86,7 +86,7 @@ export default function VsAngiesListPage() {
             <span style={{ color: '#FFE500' }}>Every Month for Shared Leads</span>
           </h1>
           <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.75, marginBottom: 40, maxWidth: 580, margin: '0 auto 40px' }}>
-            Angi charges a monthly subscription <em>and</em> per-lead fees for leads shared with competing contractors. Quote Box is $15 flat per exclusive lead — no monthly fee, no sharing, no contracts.
+            Angi charges a monthly subscription <em>and</em> per-lead fees for leads shared with competing movers and junk haulers. Quote Box is $15 flat per exclusive lead — no monthly fee, no sharing, no contracts.
           </p>
           <Link href="/signup" style={{
             background: '#FFE500', color: '#1a1a2e', fontWeight: 700,
@@ -128,10 +128,10 @@ export default function VsAngiesListPage() {
       <section style={{ padding: '72px 24px', background: '#fff' }}>
         <div style={{ maxWidth: 760, margin: '0 auto' }}>
           <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.7rem, 3vw, 2.4rem)', fontWeight: 700, marginBottom: 32 }}>
-            What Angi really costs you per month
+            What Angi really costs movers per month
           </h2>
           <p style={{ color: '#4b5563', lineHeight: 1.75, fontSize: '1rem', marginBottom: 20 }}>
-            A typical contractor on Angi pays $60/month in subscription fees plus $30–$50 per lead — and shares those leads with two or three competitors. If you receive 15 leads in a month, that&apos;s <strong>$60 + $675 = $735</strong> minimum, and you&apos;re still racing other contractors to follow up first.
+            A typical moving company on Angi pays $60/month in subscription fees plus $30–$50 per lead — and shares those leads with two or three competitors. If you receive 15 leads in a month, that&apos;s <strong>$60 + $675 = $735</strong> minimum, and you&apos;re still racing other movers to follow up first.
           </p>
           <p style={{ color: '#4b5563', lineHeight: 1.75, fontSize: '1rem', marginBottom: 20 }}>
             On Quote Box those same 15 leads cost <strong>$225 total</strong> — and every single one is exclusively yours. No monthly fee, no bidding war.
@@ -169,7 +169,7 @@ export default function VsAngiesListPage() {
             Cancel Angi. Keep the leads.
           </h2>
           <p style={{ color: '#1a1a2e', opacity: 0.7, marginBottom: 32, fontSize: '1.05rem', lineHeight: 1.65 }}>
-            Sign up free, build your form in 5 minutes, and replace your Angi spend with $15 exclusive leads.
+            Sign up free, build your form in 5 minutes, and replace your Angi spend with $15 exclusive moving and junk removal leads.
           </p>
           <Link href="/signup" style={{
             display: 'inline-block', background: '#1a1a2e', color: '#FFE500',
