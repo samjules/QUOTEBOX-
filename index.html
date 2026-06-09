@@ -3,351 +3,382 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Get your own instant quote landing page and qualified leads delivered. No website needed. We host your page and run Meta ads to drive local traffic directly to you.">
-    <title>QuoteFlow - Instant Quote Pages + Quality Leads for Service Businesses</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="description" content="Get exclusive moving and junk removal leads from Facebook & Instagram ads. Quote Box builds your branded quote form and runs your ads. $350/month, 7-day free trial.">
+    <title>Quote Box — Exclusive Moving & Junk Removal Leads | $350/month</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        
-        body {
-            font-family: 'Inter', sans-serif;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; color: #1a1a2e; background: #fff; }
+        a { text-decoration: none; }
+        .oswald { font-family: 'Oswald', sans-serif; }
+
+        nav {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 32px; height: 60px; border-bottom: 1px solid #f0f0f0;
+            position: sticky; top: 0; background: white; z-index: 50;
         }
-        
-        .hero-gradient {
-            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+        .logo { font-family: 'Oswald', sans-serif; font-size: 1.35rem; font-weight: 700; letter-spacing: 0.01em; }
+        .logo span { color: #FFE500; -webkit-text-stroke: 1px #1a1a2e; }
+        .nav-links { display: flex; gap: 12px; align-items: center; }
+        .nav-link { font-size: 0.88rem; font-weight: 500; color: #555; }
+        .btn-nav { font-size: 0.88rem; font-weight: 600; padding: 8px 18px; background: #1a1a2e; color: #FFE500; border-radius: 8px; }
+
+        .hero { background: #1a1a2e; color: white; padding: 80px 24px 72px; text-align: center; }
+        .badge {
+            display: inline-block; background: #FFE500; color: #1a1a2e;
+            font-size: 0.73rem; font-weight: 700; letter-spacing: 0.08em;
+            text-transform: uppercase; padding: 5px 14px; border-radius: 99px; margin-bottom: 28px;
         }
-        
-        .feature-icon {
-            transition: transform 0.3s ease;
+        .hero h1 {
+            font-family: 'Oswald', sans-serif;
+            font-size: clamp(2.4rem, 5vw, 3.8rem);
+            font-weight: 800; line-height: 1.08; margin-bottom: 24px;
         }
-        
-        .feature-card:hover .feature-icon {
-            transform: scale(1.1);
+        .hero h1 span { color: #FFE500; }
+        .hero p { font-size: 1.1rem; color: rgba(255,255,255,0.7); line-height: 1.75; margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto; }
+        .btn-primary {
+            display: inline-block; background: #FFE500; color: #1a1a2e;
+            font-weight: 700; padding: 15px 36px; border-radius: 10px; font-size: 1rem;
+            font-family: 'Oswald', sans-serif; letter-spacing: 0.02em;
         }
-        
-        .step-number {
-            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+        .btn-secondary {
+            display: inline-block; background: rgba(255,255,255,0.1); color: white;
+            font-weight: 600; padding: 15px 32px; border-radius: 10px; font-size: 1rem;
+            border: 1px solid rgba(255,255,255,0.2);
         }
-        
-        .testimonial-quote::before {
-            content: '"';
-            position: absolute;
-            top: -10px;
-            left: 10px;
-            font-size: 4rem;
-            color: #e0e7ff;
-            font-family: Georgia, serif;
-            line-height: 1;
+        .cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+        .strip { background: #FFE500; padding: 14px 24px; text-align: center; font-size: 0.88rem; font-weight: 600; color: #1a1a2e; }
+
+        section { padding: 72px 24px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .container-sm { max-width: 700px; margin: 0 auto; }
+        .section-label {
+            display: inline-block; background: #FFE500; color: #1a1a2e;
+            font-size: 0.72rem; font-weight: 800; letter-spacing: 0.1em;
+            text-transform: uppercase; padding: 5px 14px; border-radius: 99px; margin-bottom: 20px;
         }
-        
-        .pricing-popular {
-            border: 3px solid #10b981;
-            position: relative;
+        h2.section-title {
+            font-family: 'Oswald', sans-serif; font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+            font-weight: 700; margin-bottom: 12px;
         }
-        
-        .fade-in {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 0.6s ease, transform 0.6s ease;
+        .section-sub { color: #6b7280; font-size: 1rem; margin-bottom: 48px; }
+
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 24px; }
+
+        .card { background: #f9fafb; border-radius: 12px; padding: 28px 24px; border: 1px solid #e5e7eb; }
+        .card-icon { font-size: 1.8rem; margin-bottom: 12px; }
+        .card h3 { font-weight: 700; font-size: 1.05rem; margin-bottom: 8px; }
+        .card p { color: #6b7280; line-height: 1.65; font-size: 0.92rem; }
+
+        .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 32px; text-align: center; }
+        .step-num {
+            width: 56px; height: 56px; border-radius: 50%; background: #1a1a2e; color: #FFE500;
+            font-family: 'Oswald', sans-serif; font-size: 1.6rem; font-weight: 700;
+            display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;
         }
-        
-        .fade-in.visible {
-            opacity: 1;
-            transform: translateY(0);
+        .step h3 { font-weight: 700; font-size: 1.05rem; margin-bottom: 8px; }
+        .step p { color: #6b7280; line-height: 1.65; font-size: 0.92rem; }
+
+        .stats-bar { background: #1a1a2e; color: white; padding: 56px 24px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 32px; max-width: 800px; margin: 0 auto; text-align: center; }
+        .stat-num { font-family: 'Oswald', sans-serif; font-size: 2.8rem; font-weight: 700; color: #FFE500; line-height: 1; }
+        .stat-label { font-size: 0.88rem; color: rgba(255,255,255,0.6); margin-top: 8px; line-height: 1.4; }
+
+        .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+        .testimonial { background: white; border-radius: 12px; padding: 28px; border: 1px solid #e5e7eb; }
+        .testimonial p { color: #4b5563; line-height: 1.7; font-style: italic; margin-bottom: 20px; }
+        .testimonial strong { display: block; font-weight: 700; color: #1a1a2e; }
+        .testimonial span { font-size: 0.85rem; color: #6b7280; }
+
+        /* Pricing */
+        .pricing-card {
+            background: #1a1a2e; border-radius: 20px; padding: 40px;
+            border: 2px solid #FFE500; max-width: 480px; margin: 0 auto; position: relative;
+        }
+        .pricing-badge-top {
+            position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+            background: #FFE500; color: #1a1a2e;
+            font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em;
+            text-transform: uppercase; padding: 5px 20px; border-radius: 99px; white-space: nowrap;
+        }
+        .pricing-label {
+            display: inline-block; background: rgba(255,229,0,0.15); color: #FFE500;
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em;
+            text-transform: uppercase; padding: 4px 12px; border-radius: 99px; margin-bottom: 20px;
+        }
+        .price-row { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 4px; }
+        .price-num { font-family: 'Oswald', sans-serif; font-size: 3.6rem; font-weight: 800; color: #FFE500; line-height: 1; }
+        .price-period { color: rgba(255,255,255,0.45); font-size: 1rem; margin-bottom: 8px; }
+        .trial-badge {
+            display: inline-block; background: rgba(16,185,129,0.15); color: #10b981;
+            font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 99px; margin-bottom: 24px;
+        }
+        .pricing-desc { color: rgba(255,255,255,0.65); font-size: 0.92rem; line-height: 1.65; margin-bottom: 24px; }
+        .pricing-features { list-style: none; margin-bottom: 32px; display: flex; flex-direction: column; gap: 11px; }
+        .pricing-features li { display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,0.85); font-size: 0.92rem; }
+        .pricing-features li span.check { color: #FFE500; font-weight: 700; flex-shrink: 0; }
+        .btn-pricing {
+            display: block; text-align: center; padding: 14px 24px;
+            background: #FFE500; color: #1a1a2e;
+            font-weight: 700; font-size: 1rem; border-radius: 10px;
+            font-family: 'Oswald', sans-serif; letter-spacing: 0.02em;
+        }
+        .pricing-fine { text-align: center; color: rgba(255,255,255,0.3); font-size: 0.75rem; margin-top: 14px; }
+
+        /* FAQ */
+        .faq-list { display: flex; flex-direction: column; gap: 2px; }
+        details { background: white; border-radius: 10px; overflow: hidden; border: 1px solid #e5e7eb; }
+        summary {
+            padding: 18px 22px; font-weight: 600; cursor: pointer; font-size: 0.97rem;
+            list-style: none; display: flex; justify-content: space-between; align-items: center;
+        }
+        summary::-webkit-details-marker { display: none; }
+        summary .plus { font-size: 1.1rem; color: #9ca3af; flex-shrink: 0; margin-left: 12px; }
+        details div { padding: 0 22px 18px; color: #4b5563; line-height: 1.7; font-size: 0.93rem; }
+
+        /* CTA banner */
+        .cta-banner { background: #FFE500; padding: 80px 24px; text-align: center; }
+        .cta-banner h2 { font-family: 'Oswald', sans-serif; font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; color: #1a1a2e; margin-bottom: 16px; }
+        .cta-banner p { color: #1a1a2e; opacity: 0.7; margin-bottom: 32px; font-size: 1.05rem; line-height: 1.65; max-width: 560px; margin-left: auto; margin-right: auto; margin-bottom: 32px; }
+        .btn-cta {
+            display: inline-block; background: #1a1a2e; color: #FFE500;
+            font-weight: 700; padding: 16px 40px; border-radius: 10px; font-size: 1.05rem;
+            font-family: 'Oswald', sans-serif; letter-spacing: 0.02em;
+        }
+
+        footer { background: #1a1a2e; color: rgba(255,255,255,0.5); padding: 40px 24px; text-align: center; font-size: 0.85rem; }
+        footer a { color: rgba(255,255,255,0.5); text-decoration: underline; }
+        footer a:hover { color: rgba(255,255,255,0.8); }
+
+        @media (max-width: 600px) {
+            nav { padding: 0 16px; }
+            section { padding: 56px 16px; }
         }
     </style>
 </head>
-<body class="bg-gray-50">
-    <nav class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center">
-                    <span class="text-2xl font-bold text-indigo-600">QuoteFlow</span>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="login.html" class="text-gray-700 hover:text-indigo-600 font-medium">Login</a>
-                    <a href="signup.html" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">Sign Up</a>
-                </div>
-            </div>
+<body>
+
+    <nav>
+        <span class="logo">Quote<span>.</span>Box</span>
+        <div class="nav-links">
+            <a href="/contractor-leads" class="nav-link">Moving & Junk Removal</a>
+            <a href="/login" class="nav-link">Log in</a>
+            <a href="/signup" class="btn-nav">Get started free</a>
         </div>
     </nav>
 
-    <div class="hero-gradient text-white py-20 relative overflow-hidden">
-        <div class="absolute inset-0 opacity-10">
-            <div class="absolute inset-0" style="background-image: radial-gradient(circle, white 1px, transparent 1px); background-size: 30px 30px;"></div>
+    <!-- Hero -->
+    <div class="hero">
+        <div class="badge">Moving companies & junk removal</div>
+        <h1>Exclusive Moving & Junk<br>Removal Leads — <span>$350/Month.</span></h1>
+        <p>Quote Box builds your branded quote form, runs your Facebook & Instagram ads, and delivers exclusive moving and junk removal leads straight to your dashboard. No per-lead fees. No sharing with competitors.</p>
+        <div class="cta-row">
+            <a href="/signup" class="btn-primary">Start free trial — 7 days free</a>
+            <a href="/vs-thumbtack" class="btn-secondary">vs Thumbtack →</a>
         </div>
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="text-center mb-12 fade-in">
-                <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-6 leading-tight">
-                    Your Own Instant Quote Page + Quality Leads — No Website Needed
-                </h1>
-                <p class="text-xl md:text-2xl mb-8 opacity-95 max-w-4xl mx-auto">
-                    We build and host your mobile-optimized quote landing page, run targeted Meta ads to drive local traffic, and deliver ready-to-close leads straight to your phone. Setup in 48 hours.
-                </p>
-            </div>
+        <p style="margin-top:20px;font-size:0.78rem;color:rgba(255,255,255,0.35);">No credit card required to start</p>
+    </div>
 
-            <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl p-8 fade-in">
-                <h3 class="text-2xl font-bold text-gray-900 mb-6">Get Started Today — Free Setup Call</h3>
-                <form id="heroForm" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Your Name *</label>
-                        <input type="text" required class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Business Email *</label>
-                        <input type="email" required class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Business Name *</label>
-                        <input type="text" required class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Service Type *</label>
-                        <select required class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition">
-                            <option value="">Select your service...</option>
-                            <option value="plumbing">Plumbing</option>
-                            <option value="roofing">Roofing</option>
-                            <option value="electrical">Electrical</option>
-                            <option value="cleaning">Cleaning</option>
-                            <option value="landscaping">Landscaping</option>
-                            <option value="hvac">HVAC</option>
-                            <option value="pest-control">Pest Control</option>
-                            <option value="auto-repair">Auto Repair</option>
-                            <option value="consulting">Consulting</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Phone Number (Optional)</label>
-                        <input type="tel" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition">
-                    </div>
-                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition">
-                        Book My Free Setup Call
-                    </button>
-                </form>
+    <div class="strip">Built exclusively for moving companies and junk removal businesses — every lead goes only to you, never shared with competitors</div>
+
+    <!-- How it works -->
+    <section style="background:#f9fafb;">
+        <div class="container" style="text-align:center;">
+            <h2 class="section-title oswald">Live in minutes. Leads in hours.</h2>
+            <p class="section-sub">Three steps. No tech skills required.</p>
+            <div class="steps-grid">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <h3>Build your quote form</h3>
+                    <p>Answer a few questions about your moving or junk removal business and our AI builds your branded quote form in under 60 seconds.</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <h3>We run your Meta ads</h3>
+                    <p>We launch Facebook & Instagram ads targeting customers in your service area — automatically, no ad agency needed.</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <h3>You get exclusive leads</h3>
+                    <p>Every customer who fills out your form lands exclusively in your dashboard. All included in your $350/month plan.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Quote Box -->
+    <section style="background:#fff;">
+        <div class="container">
+            <h2 class="section-title oswald" style="text-align:center;">Why movers and junk haulers choose Quote Box</h2>
+            <p class="section-sub" style="text-align:center;">Thumbtack and Angi send your lead to 5 competitors. We don't.</p>
+            <div class="grid-3">
+                <div class="card">
+                    <div class="card-icon">🔒</div>
+                    <h3>100% exclusive leads</h3>
+                    <p>When a customer fills out your form, you are the only company who gets their info. No auctions, no bidding wars, no sharing.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">💸</div>
+                    <h3>$350/month flat</h3>
+                    <p>One price. Unlimited leads. No per-lead fees, no hidden charges, no contracts. Cancel anytime.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🏷️</div>
+                    <h3>Your brand, not ours</h3>
+                    <p>Customers see your company name and logo, not a marketplace. You build trust and repeat business that Thumbtack can't take from you.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">📱</div>
+                    <h3>Facebook & Instagram ads</h3>
+                    <p>We run Meta ads in your exact service area so you reach customers before they ever open Thumbtack or Angi.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">⚡</div>
+                    <h3>Instant lead delivery</h3>
+                    <p>The second someone submits the form you get their name, number, and job details in your dashboard — no delays.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🚫</div>
+                    <h3>No contracts. Ever.</h3>
+                    <p>Month-to-month. Pause when business slows down, scale up when you're ready. No lock-in, no cancellation fee.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <div class="stats-bar">
+        <div class="stats-grid">
+            <div>
+                <div class="stat-num">$350</div>
+                <div class="stat-label">Flat monthly rate — everything included</div>
+            </div>
+            <div>
+                <div class="stat-num">0</div>
+                <div class="stat-label">Per-lead fees or hidden charges</div>
+            </div>
+            <div>
+                <div class="stat-num">100%</div>
+                <div class="stat-label">Leads exclusive to you</div>
+            </div>
+            <div>
+                <div class="stat-num">5 min</div>
+                <div class="stat-label">To launch your first form</div>
             </div>
         </div>
     </div>
 
-    <div class="py-20 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl font-extrabold text-gray-900 mb-4 fade-in">Everything You Need to Convert Visitors into Customers</h2>
-                <p class="text-xl text-gray-600 fade-in">Stop paying for bad leads. Get a system that actually works.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <div class="feature-card bg-gray-50 rounded-xl p-8 hover:shadow-xl transition fade-in">
-                    <div class="feature-icon text-6xl mb-6">🌐</div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">No Website Required</h3>
-                    <p class="text-gray-600">We host your professional quote page at quotebox.com/yourname. No developer, no hosting headaches, no maintenance.</p>
+    <!-- Testimonials -->
+    <section style="background:#f9fafb;">
+        <div class="container">
+            <h2 class="section-title oswald" style="text-align:center;margin-bottom:40px;">Real movers. Real results.</h2>
+            <div class="testimonials-grid">
+                <div class="testimonial">
+                    <p>"Quote Box replaced my $800/month Thumbtack spend. Now I get better leads for less, and every single one is exclusively mine. The instant quote form alone doubled my close rate."</p>
+                    <strong>Mike R.</strong>
+                    <span>Local moving company · Tampa, FL</span>
                 </div>
-
-                <div class="feature-card bg-gray-50 rounded-xl p-8 hover:shadow-xl transition fade-in">
-                    <div class="feature-icon text-6xl mb-6">⚡</div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">Instant Quote Calculator</h3>
-                    <p class="text-gray-600">Customers see their price instantly based on their inputs. Higher commitment, faster conversions, less tire-kicking.</p>
+                <div class="testimonial">
+                    <p>"I was drowning in shared Angi leads that never converted. Quote Box brings me people who actually want junk removal and can see pricing upfront. Best investment I've made this year."</p>
+                    <strong>Jessica C.</strong>
+                    <span>Junk removal & hauling · Austin, TX</span>
                 </div>
-
-                <div class="feature-card bg-gray-50 rounded-xl p-8 hover:shadow-xl transition fade-in">
-                    <div class="feature-icon text-6xl mb-6">🎯</div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">We Drive the Traffic</h3>
-                    <p class="text-gray-600">Our team runs and manages targeted Meta ads to bring high-intent, local customers directly to your quote page.</p>
-                </div>
-
-                <div class="feature-card bg-gray-50 rounded-xl p-8 hover:shadow-xl transition fade-in">
-                    <div class="feature-icon text-6xl mb-6">🔔</div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">Real-Time Lead Alerts</h3>
-                    <p class="text-gray-600">Get instant notifications when someone requests a quote. Simple dashboard shows all your leads in one place.</p>
+                <div class="testimonial">
+                    <p>"Setup took one quick call and my page was live in two days. Leads come straight to my phone, and I'm booking 3–4 new moves a week without lifting a finger on marketing."</p>
+                    <strong>Carlos M.</strong>
+                    <span>Long-distance movers · Phoenix, AZ</span>
                 </div>
             </div>
         </div>
+    </section>
+
+    <!-- Pricing -->
+    <section style="background:#fff;" id="pricing">
+        <div class="container-sm" style="text-align:center;">
+            <h2 class="section-title oswald">Simple, honest pricing</h2>
+            <p class="section-sub">One plan. Everything included. No surprises.</p>
+            <div class="pricing-card">
+                <div class="pricing-badge-top">Pro Plan</div>
+                <div class="pricing-label">Everything included</div>
+                <div class="price-row">
+                    <div class="price-num">$350</div>
+                    <div class="price-period">/month</div>
+                </div>
+                <div class="trial-badge">7-day free trial</div>
+                <p class="pricing-desc">We build your form, run your Meta ads, and deliver unlimited exclusive moving and junk removal leads to your dashboard. You just close the jobs.</p>
+                <ul class="pricing-features">
+                    <li><span class="check">✓</span> Branded moving or junk removal quote form</li>
+                    <li><span class="check">✓</span> Facebook & Instagram ads — fully managed</li>
+                    <li><span class="check">✓</span> Unlimited exclusive leads</li>
+                    <li><span class="check">✓</span> Built-in CRM lead dashboard</li>
+                    <li><span class="check">✓</span> Real-time lead notifications</li>
+                    <li><span class="check">✓</span> No per-lead fees. Ever.</li>
+                </ul>
+                <a href="/signup" class="btn-pricing">Start free trial — 7 days free</a>
+                <p class="pricing-fine">No credit card required. Cancel anytime.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section style="background:#f9fafb;" id="faq">
+        <div class="container-sm">
+            <h2 class="section-title oswald" style="text-align:center;margin-bottom:40px;">Frequently asked questions</h2>
+            <div class="faq-list">
+                <details>
+                    <summary>How much does Quote Box cost? <span class="plus">+</span></summary>
+                    <div>Quote Box is $350/month with a 7-day free trial. No per-lead fees, no hidden charges. Everything — your quote form, Meta ads, and unlimited leads — is included in one flat monthly rate.</div>
+                </details>
+                <details>
+                    <summary>Are the leads exclusive to me? <span class="plus">+</span></summary>
+                    <div>Yes, 100%. When a customer fills out your Quote Box form, you are the only company who receives their information. Unlike Thumbtack, which sends the same lead to up to five movers or junk haulers, your Quote Box leads are never shared.</div>
+                </details>
+                <details>
+                    <summary>What types of businesses use Quote Box? <span class="plus">+</span></summary>
+                    <div>Moving companies and junk removal businesses — local movers, long-distance movers, junk haulers, estate cleanout companies, and any business in the moving or hauling space that quotes customers before the job.</div>
+                </details>
+                <details>
+                    <summary>Do I need a website or tech skills? <span class="plus">+</span></summary>
+                    <div>Not at all. You can build a fully working quote form in under five minutes using our AI form builder. We then run Meta ads that send customers directly to your form — no website, no agency, no tech skills required.</div>
+                </details>
+                <details>
+                    <summary>How fast do I get leads? <span class="plus">+</span></summary>
+                    <div>Instantly. The moment someone submits your form you get a notification and their details appear in your dashboard. There is no delay and no middleman.</div>
+                </details>
+                <details>
+                    <summary>What areas can I target? <span class="plus">+</span></summary>
+                    <div>Any city, zip code, or radius you choose. You control the geographic targeting of your ads, so you only get leads from the areas you actually serve.</div>
+                </details>
+                <details>
+                    <summary>Is there a contract or minimum commitment? <span class="plus">+</span></summary>
+                    <div>None. Month-to-month, cancel anytime. There is no lock-in, no minimum spend, and no cancellation fee.</div>
+                </details>
+                <details>
+                    <summary>How does this compare to Thumbtack or Angi? <span class="plus">+</span></summary>
+                    <div>Thumbtack sends your lead to five competitors and charges you to bid whether you win or not. Angi charges $40–$100/month plus per-lead fees for leads that are still shared. Quote Box is $350/month flat — every lead is exclusively yours, and there are no per-lead fees.</div>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <div class="cta-banner">
+        <h2>Ready to fill your moving or junk removal schedule?</h2>
+        <p>Build your quote form in minutes. We'll run your Meta ads. Start receiving exclusive customers today — $350/month, 7-day free trial.</p>
+        <a href="/signup" class="btn-cta">Create your free account</a>
+        <p style="margin-top:16px;font-size:0.82rem;color:rgba(26,26,46,0.5);">No credit card required · Cancel anytime</p>
     </div>
 
-    <div class="py-20 bg-gray-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl font-extrabold text-gray-900 mb-4 fade-in">How It Works</h2>
-                <p class="text-xl text-gray-600 fade-in">From setup to your first lead in 3 simple steps</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
-                <div class="text-center fade-in">
-                    <div class="step-number w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">1</div>
-                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Quick Setup Call</h3>
-                    <p class="text-gray-600 text-lg">Book a 15-minute call with our team. We'll discuss your services, pricing structure, and target area. No tech knowledge required on your end.</p>
-                </div>
-
-                <div class="text-center fade-in">
-                    <div class="step-number w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">2</div>
-                    <h3 class="text-2xl font-bold text-gray-900 mb-4">We Build & Launch</h3>
-                    <p class="text-gray-600 text-lg">Within 48 hours, we create your custom quote page, configure your lead notifications, and launch targeted Meta ads to your local market.</p>
-                </div>
-
-                <div class="text-center fade-in">
-                    <div class="step-number w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">3</div>
-                    <h3 class="text-2xl font-bold text-gray-900 mb-4">You Get Quality Leads</h3>
-                    <p class="text-gray-600 text-lg">Qualified prospects submit quotes directly from your page. You receive instant alerts with their details and requested service info. Book jobs faster.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="py-20 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl font-extrabold text-gray-900 mb-4 fade-in">Real Business Owners, Real Results</h2>
-                <p class="text-xl text-gray-600 fade-in">See what service pros are saying about QuoteFlow</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="bg-gray-50 rounded-xl p-8 relative fade-in">
-                    <div class="testimonial-quote relative z-10">
-                        <p class="text-gray-700 italic text-lg mb-6">QuoteFlow replaced my $800/month Google Ads nightmare. Now I get better leads for way less, and I don't waste hours managing campaigns. The instant quote feature alone doubled my conversion rate.</p>
-                        <p class="font-bold text-gray-900">Mike Richardson</p>
-                        <p class="text-indigo-600">Richardson Roofing • Tampa, FL</p>
-                    </div>
-                </div>
-
-                <div class="bg-gray-50 rounded-xl p-8 relative fade-in">
-                    <div class="testimonial-quote relative z-10">
-                        <p class="text-gray-700 italic text-lg mb-6">I was drowning in low-quality Angi leads that never converted. QuoteFlow brings me people who actually want my services and can see pricing upfront. Best investment I've made for my business this year.</p>
-                        <p class="font-bold text-gray-900">Jessica Chen</p>
-                        <p class="text-indigo-600">Sparkle Clean Services • Austin, TX</p>
-                    </div>
-                </div>
-
-                <div class="bg-gray-50 rounded-xl p-8 relative fade-in">
-                    <div class="testimonial-quote relative z-10">
-                        <p class="text-gray-700 italic text-lg mb-6">Setup took one quick call and my page was live in two days. The leads come straight to my phone, and the dashboard is super simple. I'm booking 3-4 new jobs a week now without lifting a finger on marketing.</p>
-                        <p class="font-bold text-gray-900">Carlos Martinez</p>
-                        <p class="text-indigo-600">Premier HVAC Solutions • Phoenix, AZ</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="py-20 bg-gray-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl font-extrabold text-gray-900 mb-4 fade-in">Simple, Transparent Pricing</h2>
-                <p class="text-xl text-gray-600 fade-in">Month-to-month plans. Cancel anytime. No long-term contracts.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                <div class="bg-white rounded-xl p-8 shadow-lg hover:shadow-2xl transition fade-in">
-                    <h3 class="text-2xl font-bold text-gray-900 mb-2">DIY</h3>
-                    <div class="text-5xl font-extrabold text-indigo-600 mb-2">$97</div>
-                    <p class="text-gray-600 mb-6">per month</p>
-                    <ul class="space-y-3 mb-8">
-                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Custom quote landing page</span></li>
-                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Mobile-optimized design</span></li>
-                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Instant quote calculator</span></li>
-                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Real-time lead notifications</span></li>
-                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Basic dashboard & reporting</span></li>
-                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Email support</span></li>
-                    </ul>
-                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 text-sm">
-                        <strong>Perfect for:</strong> Business owners who want to run their own ads or already have marketing in place.
-                    </div>
-                    <a href="signup.html" class="block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg text-center transition">Get Started</a>
-                </div>
-
-                <div class="pricing-popular bg-white rounded-xl p-8 shadow-2xl transform scale-105 fade-in">
-                    <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-1 rounded-full text-sm font-bold">MOST POPULAR</div>
-                    <h3 class="text-2xl font-bold text-gray-900 mb-2 mt-2">Done-For-You</h3>
-                    <div class="text-5xl font-extrabold text-indigo-600 mb-2">$497</div>
-                    <p class="text-gray-600 mb-6">per month + ad spend</p>
-                    <ul class="space-y-3 mb-8">
-                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Everything in DIY, plus:</span></li>
-                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700 font-bold">Full Meta ad management</span></li>
-                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Ad creative & copywriting</span></li>
-                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Audience targeting & optimization</span></li>
-                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">A/B testing campaigns</span></li>
-                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Weekly performance reports</span></li>
-                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Priority phone & chat support</span></li>
-                    </ul>
-                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 text-sm">
-                        <strong>Recommended ad spend:</strong> $500-$1,500/month depending on market and goals. Ad spend billed directly by Meta.
-                    </div>
-                    <a href="signup.html" class="block w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-center transition">Get Started</a>
-                </div>
-
-                <div class="bg-white rounded-xl p-8 shadow-lg hover:shadow-2xl transition fade-in">
-                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Enterprise</h3>
-                    <div class="text-4xl font-extrabold text-indigo-600 mb-2">Custom</div>
-                    <p class="text-gray-600 mb-6">let's talk</p>
-                    <ul class="space-y-3 mb-8">
-                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Everything in Done-For-You, plus:</span></li>
-                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Multiple locations/territories</span></li>
-                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Multiple quote pages</span></li>
-                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Custom CRM integrations</span></li>
-                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Dedicated account manager</span></li>
-                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">White-label options</span></li>
-                        <li class="flex items-start"><span class="text-green-500 mr-2">✓</span><span class="text-gray-700">Advanced analytics & API access</span></li>
-                    </ul>
-                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 text-sm">
-                        <strong>Perfect for:</strong> Multi-location businesses, franchises, or agencies managing multiple clients.
-                    </div>
-                    <a href="signup.html" class="block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg text-center transition">Contact Sales</a>
-                </div>
-            </div>
-
-            <div class="mt-12 max-w-4xl mx-auto bg-blue-50 border-l-4 border-indigo-600 p-8 rounded-lg fade-in">
-                <h4 class="text-indigo-700 text-xl font-bold mb-4">💡 Understanding Ad Spend</h4>
-                <p class="text-gray-700 leading-relaxed">
-                    <strong>Ad spend is separate from your QuoteFlow subscription.</strong> This is the budget you invest directly with Meta (Facebook/Instagram) to show your ads to potential customers. We manage the campaigns, but you control the budget. Most successful clients invest <strong>$500-$1,500/month in ad spend</strong> to generate consistent leads. During your setup call, we'll recommend the right budget based on your market, competition, and growth goals. You can adjust spending anytime.
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <div class="hero-gradient text-white py-20">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-4xl md:text-5xl font-extrabold mb-6 fade-in">Ready to Stop Wasting Money on Bad Leads?</h2>
-            <p class="text-xl md:text-2xl mb-8 opacity-95 fade-in">Book your free setup call today. Get your quote page live in 48 hours and start generating quality leads this week.</p>
-            <a href="signup.html" class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-12 rounded-lg text-xl shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 transition fade-in">
-                Get Started Now — It's Free to Start
-            </a>
-            <p class="mt-6 text-sm opacity-90 fade-in">No credit card required • Setup in 48 hours • Cancel anytime</p>
-        </div>
-    </div>
-
-    <footer class="bg-gray-900 text-gray-400 py-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <p>&copy; 2024 QuoteFlow. All rights reserved.</p>
-            <div class="mt-4 space-x-4">
-                <a href="#" class="hover:text-indigo-400">Privacy Policy</a>
-                <span>|</span>
-                <a href="#" class="hover:text-indigo-400">Terms of Service</a>
-            </div>
-            <p class="mt-4">Questions? Email us at <a href="mailto:hello@quoteflow.com" class="text-indigo-400 hover:text-indigo-300">hello@quoteflow.com</a></p>
-        </div>
+    <footer>
+        <p>Quote Box is a product of <strong style="color:rgba(255,255,255,0.8);">Arctic Reach LLC</strong></p>
+        <p style="margin-top:12px;">
+            <a href="/privacy">Privacy Policy</a> &nbsp;·&nbsp;
+            <a href="/terms">Terms of Service</a>
+        </p>
     </footer>
 
-    <script>
-        document.getElementById('heroForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            alert('Thanks! We\'ll contact you soon to schedule your free setup call.');
-        });
-        
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-        
-        const observer = new IntersectionObserver(function(entries) {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
-        }, observerOptions);
-        
-        document.querySelectorAll('.fade-in').forEach(el => {
-            observer.observe(el);
-        });
-    </script>
 </body>
 </html>
