@@ -9,7 +9,7 @@ const faqs = [
   },
   {
     q: 'How much does it cost?',
-    a: 'Nothing upfront. You only pay $15 per lead received. No monthly retainer, no subscription, no hidden fees. Top up credits when you need them and stop whenever you like.',
+    a: 'Quote Box is $350/month with a 7-day free trial. No per-lead fees, no hidden charges. Everything — your quote form, Meta ads, and unlimited leads — is included in one flat monthly rate.',
   },
   {
     q: 'Do I need a website or technical skills?',
@@ -25,7 +25,7 @@ const faqs = [
   },
   {
     q: 'What types of businesses use Quote Box?',
-    a: 'Any trade or service business that quotes customers before starting work — cleaners, movers, landscapers, painters, photographers, personal trainers, dog groomers, HVAC technicians, and more.',
+    a: 'Moving companies and junk removal businesses — local movers, long-distance movers, junk haulers, estate cleanout companies, and any business in the moving or hauling space that quotes customers before the job.',
   },
   {
     q: 'Can I customise the form to match my brand?',
@@ -70,7 +70,7 @@ export default function LandingPage() {
         </span>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <Link href="/contractor-leads" style={{ fontSize: '0.88rem', fontWeight: 500, color: '#555', textDecoration: 'none' }}>
-            Contractor Leads
+            Moving & Junk Removal
           </Link>
           <Link href="/agency" style={{ fontSize: '0.88rem', fontWeight: 500, color: '#555', textDecoration: 'none' }}>
             Done for you
@@ -107,7 +107,7 @@ export default function LandingPage() {
               fontSize: '0.73rem', fontWeight: 700, letterSpacing: '0.08em',
               textTransform: 'uppercase', padding: '5px 14px', borderRadius: 99, marginBottom: 28,
             }}>
-              Pay per lead — no monthly fees
+              Moving companies & junk removal
             </div>
             <h1 style={{
               fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(2.6rem, 5.5vw, 4.2rem)',
@@ -116,7 +116,7 @@ export default function LandingPage() {
               Get quality leads.<br />No website needed.
             </h1>
             <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.68)', lineHeight: 1.75, marginBottom: 38, maxWidth: 480 }}>
-              Quote Box deploys a branded instant-quote landing page for your business and runs paid Meta ads on Facebook &amp; Instagram to fill it with customers. Warm leads, real prices, $15 per result.
+              Quote Box deploys a branded instant-quote landing page for your moving or junk removal business and runs paid Meta ads on Facebook &amp; Instagram to fill it with customers. Warm leads, real prices, $350/month.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <Link href="/signup" style={{
@@ -220,7 +220,7 @@ export default function LandingPage() {
         background: '#FFE500', padding: '14px 24px', textAlign: 'center',
         fontSize: '0.88rem', fontWeight: 600, color: '#1a1a2e', letterSpacing: '0.01em',
       }}>
-        Used by cleaners, movers, landscapers, photographers, trades &amp; more — any business that quotes before they start
+        Built for moving companies and junk removal businesses — get exclusive leads from Facebook &amp; Instagram for $350/month
       </div>
 
       {/* ── How it works ── */}
@@ -239,7 +239,7 @@ export default function LandingPage() {
               { n: '1', title: 'Build your quote form', body: 'Pick your fields, set your prices, upload a photo. Done in five minutes. No coding, no designers needed.' },
               { n: '2', title: 'We launch your Meta ads', body: 'We run paid ads on Facebook and Instagram targeting people in your area who are actively searching for your service.' },
               { n: '3', title: 'Customers land on your form', body: 'Ad clicks go straight to your branded quote form. Customers fill it in, see an instant price, and submit their details.' },
-              { n: '4', title: 'You get the lead — pay $15', body: 'Every submission lands in your dashboard with full contact info and quote total. Pay $15 per lead, nothing else.' },
+              { n: '4', title: 'You get the lead — close the job', body: 'Every submission lands in your dashboard with full contact info and quote total. All leads included in your $350/month plan.' },
             ].map(({ n, title, body }) => (
               <div key={n} style={{ background: 'white', borderRadius: 14, padding: '32px 28px', boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
                 <div style={{
@@ -625,7 +625,7 @@ export default function LandingPage() {
               Most small business owners don&apos;t have time to manage Facebook campaigns. Quote Box handles your paid advertising on Meta — targeting the right people in your area on Facebook and Instagram — so customers come to you instead of your competitors.
             </p>
             <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.97rem', lineHeight: 1.75 }}>
-              No agency retainer. No ad account headaches. We do it, and you only pay <strong style={{ color: '#FFE500' }}>$15 per lead</strong> that actually lands in your inbox.
+              No agency retainer. No ad account headaches. We do it, and everything is included in your flat <strong style={{ color: '#FFE500' }}>$350/month</strong> plan.
             </p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -655,20 +655,20 @@ export default function LandingPage() {
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 52 }}>
             <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '2rem', fontWeight: 700, marginBottom: 10 }}>
-              Why small businesses choose Quote Box
+              Why movers and junk haulers choose Quote Box
             </h2>
             <p style={{ color: '#6b7280', fontSize: '1rem', maxWidth: 520, margin: '0 auto' }}>
-              Traditional lead generation costs hundreds a month whether you get leads or not. We flipped the model.
+              Traditional lead platforms share your leads with 5 competitors. We give you every lead exclusively.
             </p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 24 }}>
             {[
-              { icon: '💸', title: 'Pay per lead', body: '$15 flat per lead received. No monthly retainer. No wasted spend.' },
-              { icon: '📣', title: 'Meta ads included', body: 'We run your Facebook & Instagram ads to drive targeted local traffic to your form.' },
-              { icon: '🌐', title: 'No website needed', body: 'Share a link from anywhere. Your form is your storefront.' },
-              { icon: '⚡', title: 'Instant quote estimates', body: 'Customers see a price as they fill in the form. Warmer leads, faster decisions.' },
-              { icon: '🎨', title: 'Your brand, your form', body: 'Custom colours, images, and pricing — looks like you built it yourself.' },
-              { icon: '🔒', title: 'Leads held, never lost', body: "Low on credits? Leads are held safely and unlocked the moment you top up." },
+              { icon: '💸', title: '$350/month flat', body: 'One price. Unlimited leads. No per-lead fees, no hidden charges, no contracts.' },
+              { icon: '📣', title: 'Meta ads included', body: 'We run your Facebook & Instagram ads to drive moving and junk removal customers to your form.' },
+              { icon: '🌐', title: 'No website needed', body: 'Share a link from anywhere. Your branded quote form is your storefront.' },
+              { icon: '⚡', title: 'Instant quote estimates', body: 'Customers see a moving or junk removal price as they fill in the form. Warmer leads, faster decisions.' },
+              { icon: '🎨', title: 'Your brand, your form', body: 'Custom logo, colours, and pricing — looks like you built it yourself.' },
+              { icon: '🔒', title: '100% exclusive leads', body: "Every lead goes only to you. No sharing with other movers or junk haulers." },
             ].map(({ icon, title, body }) => (
               <div key={title} style={{ padding: '24px', border: '1px solid #f0f0f0', borderRadius: 12 }}>
                 <div style={{ fontSize: '1.6rem', marginBottom: 12 }}>{icon}</div>
@@ -682,146 +682,76 @@ export default function LandingPage() {
 
       {/* ── Pricing callout ── */}
       <section id="pricing" style={{ padding: '72px 24px', background: '#f9fafb' }}>
-        <div style={{ maxWidth: 960, margin: '0 auto' }}>
+        <div style={{ maxWidth: 680, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 52 }}>
             <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '2rem', fontWeight: 700, color: '#1a1a2e', marginBottom: 14 }}>
               Simple, honest pricing
             </h2>
             <p style={{ color: '#6b7280', fontSize: '1rem', lineHeight: 1.7, maxWidth: 500, margin: '0 auto' }}>
-              Start free and self-serve, or let us handle everything. Pick the plan that fits.
+              One plan. Everything included. No per-lead fees, no hidden charges.
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24, alignItems: 'start' }}>
-
-            {/* Starter */}
-            <div style={{ background: 'white', borderRadius: 16, padding: '32px 28px', border: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', gap: 0 }}>
-              <div style={{
-                display: 'inline-block', background: '#f3f4f6', color: '#6b7280',
-                fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em',
-                textTransform: 'uppercase', padding: '4px 12px', borderRadius: 99, marginBottom: 20, alignSelf: 'flex-start',
-              }}>
-                Starter
-              </div>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: '2.8rem', fontWeight: 800, color: '#1a1a2e', lineHeight: 1 }}>$20</div>
-              <div style={{ color: '#9ca3af', fontSize: '0.85rem', marginTop: 4, marginBottom: 8 }}>/month</div>
-              <div style={{
-                display: 'inline-block', background: '#dcfce7', color: '#16a34a',
-                fontSize: '0.72rem', fontWeight: 700, padding: '3px 10px', borderRadius: 99, marginBottom: 24, alignSelf: 'flex-start',
-              }}>
-                7-day free trial
-              </div>
-              <p style={{ color: '#6b7280', fontSize: '0.88rem', lineHeight: 1.6, marginBottom: 20 }}>
-                Everything you need to get started with quote generation.
-              </p>
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'flex', flexDirection: 'column', gap: 9 }}>
-                {[
-                  '1 quote form',
-                  '10 leads per month',
-                  '1 media file',
-                  'Form builder & Robert (AI)',
-                  'Lead dashboard',
-                ].map((item) => (
-                  <li key={item} style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#374151', fontSize: '0.88rem' }}>
-                    <span style={{ color: '#10b981', fontWeight: 700, flexShrink: 0 }}>✓</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/signup" style={{
-                display: 'block', textAlign: 'center', padding: '12px 24px',
-                border: '2px solid #1a1a2e', color: '#1a1a2e',
-                fontWeight: 700, fontSize: '0.92rem', borderRadius: 10, textDecoration: 'none',
-                fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
-              }}>
-                Start free trial
-              </Link>
+          {/* Pro plan — single card */}
+          <div style={{
+            background: '#1a1a2e', borderRadius: 20, padding: '40px 40px',
+            border: '2px solid #FFE500', display: 'flex', flexDirection: 'column',
+            gap: 0, position: 'relative', maxWidth: 480, margin: '0 auto',
+          }}>
+            <div style={{
+              position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)',
+              background: '#FFE500', color: '#1a1a2e',
+              fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.08em',
+              textTransform: 'uppercase', padding: '5px 20px', borderRadius: 99, whiteSpace: 'nowrap',
+            }}>
+              Pro Plan
             </div>
-
-            {/* Growth — featured */}
-            <div style={{ background: '#1a1a2e', borderRadius: 16, padding: '32px 28px', border: '2px solid #FFE500', display: 'flex', flexDirection: 'column', gap: 0, position: 'relative' }}>
-              <div style={{
-                position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)',
-                background: '#FFE500', color: '#1a1a2e',
-                fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.08em',
-                textTransform: 'uppercase', padding: '5px 16px', borderRadius: 99, whiteSpace: 'nowrap',
-              }}>
-                Most popular
-              </div>
-              <div style={{
-                display: 'inline-block', background: 'rgba(255,229,0,0.15)', color: '#FFE500',
-                fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em',
-                textTransform: 'uppercase', padding: '4px 12px', borderRadius: 99, marginBottom: 20, alignSelf: 'flex-start',
-              }}>
-                Growth
-              </div>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: '2.8rem', fontWeight: 800, color: '#FFE500', lineHeight: 1 }}>$30</div>
-              <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', marginTop: 4, marginBottom: 32 }}>/month</div>
-              <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.88rem', lineHeight: 1.6, marginBottom: 20 }}>
-                Scale your lead generation across multiple forms and services.
-              </p>
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'flex', flexDirection: 'column', gap: 9 }}>
-                {[
-                  '3 quote forms',
-                  '50 leads per month',
-                  'Priority support',
-                  'Form builder & Robert (AI)',
-                  'Full lead dashboard',
-                ].map((item) => (
-                  <li key={item} style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'rgba(255,255,255,0.85)', fontSize: '0.88rem' }}>
-                    <span style={{ color: '#FFE500', fontWeight: 700, flexShrink: 0 }}>✓</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/signup" style={{
-                display: 'block', textAlign: 'center', padding: '12px 24px',
-                background: '#FFE500', color: '#1a1a2e',
-                fontWeight: 700, fontSize: '0.92rem', borderRadius: 10, textDecoration: 'none',
-                fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
-              }}>
-                Get started
-              </Link>
+            <div style={{
+              display: 'inline-block', background: 'rgba(255,229,0,0.15)', color: '#FFE500',
+              fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em',
+              textTransform: 'uppercase', padding: '4px 12px', borderRadius: 99, marginBottom: 20, alignSelf: 'flex-start',
+            }}>
+              Everything included
             </div>
-
-            {/* Fully Managed */}
-            <div style={{ background: 'white', borderRadius: 16, padding: '32px 28px', border: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', gap: 0 }}>
-              <div style={{
-                display: 'inline-block', background: '#1a1a2e', color: '#FFE500',
-                fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em',
-                textTransform: 'uppercase', padding: '4px 12px', borderRadius: 99, marginBottom: 20, alignSelf: 'flex-start',
-              }}>
-                Fully Managed
-              </div>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: '2.8rem', fontWeight: 800, color: '#1a1a2e', lineHeight: 1 }}>$15</div>
-              <div style={{ color: '#9ca3af', fontSize: '0.85rem', marginTop: 4, marginBottom: 32 }}>/lead received</div>
-              <p style={{ color: '#6b7280', fontSize: '0.88rem', lineHeight: 1.6, marginBottom: 20 }}>
-                We build your form, run your ads, and deliver leads. You just close the jobs.
-              </p>
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'flex', flexDirection: 'column', gap: 9 }}>
-                {[
-                  'Form built for you',
-                  'Meta ads managed for you',
-                  'Exclusive leads',
-                  'Dedicated account manager',
-                  'Pay only for results',
-                ].map((item) => (
-                  <li key={item} style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#374151', fontSize: '0.88rem' }}>
-                    <span style={{ color: '#10b981', fontWeight: 700, flexShrink: 0 }}>✓</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/agency" style={{
-                display: 'block', textAlign: 'center', padding: '12px 24px',
-                background: '#1a1a2e', color: '#FFE500',
-                fontWeight: 700, fontSize: '0.92rem', borderRadius: 10, textDecoration: 'none',
-                fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
-              }}>
-                Learn more
-              </Link>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginBottom: 4 }}>
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: '3.6rem', fontWeight: 800, color: '#FFE500', lineHeight: 1 }}>$350</div>
+              <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '1rem', marginBottom: 8 }}>/month</div>
             </div>
-
+            <div style={{
+              display: 'inline-block', background: 'rgba(16,185,129,0.15)', color: '#10b981',
+              fontSize: '0.72rem', fontWeight: 700, padding: '3px 10px', borderRadius: 99, marginBottom: 28, alignSelf: 'flex-start',
+            }}>
+              7-day free trial
+            </div>
+            <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.92rem', lineHeight: 1.65, marginBottom: 24 }}>
+              We build your form, run your Meta ads, and deliver unlimited exclusive leads to your dashboard. You just close the jobs.
+            </p>
+            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px', display: 'flex', flexDirection: 'column', gap: 11 }}>
+              {[
+                'Branded moving or junk removal quote form',
+                'Facebook & Instagram ads — fully managed',
+                'Unlimited exclusive leads',
+                'Built-in CRM lead dashboard',
+                'Real-time lead notifications',
+                'No per-lead fees. Ever.',
+              ].map((item) => (
+                <li key={item} style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'rgba(255,255,255,0.85)', fontSize: '0.92rem' }}>
+                  <span style={{ color: '#FFE500', fontWeight: 700, flexShrink: 0 }}>✓</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <Link href="/signup" style={{
+              display: 'block', textAlign: 'center', padding: '14px 24px',
+              background: '#FFE500', color: '#1a1a2e',
+              fontWeight: 700, fontSize: '1rem', borderRadius: 10, textDecoration: 'none',
+              fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
+            }}>
+              Start free trial — 7 days free
+            </Link>
+            <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', marginTop: 14 }}>
+              No credit card required to start. Cancel anytime.
+            </p>
           </div>
         </div>
       </section>
@@ -864,10 +794,10 @@ export default function LandingPage() {
       <section style={{ padding: '80px 24px', background: '#FFE500', textAlign: 'center' }}>
         <div style={{ maxWidth: 600, margin: '0 auto' }}>
           <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '2.2rem', fontWeight: 800, color: '#1a1a2e', marginBottom: 14 }}>
-            Ready to get your first lead?
+            Ready to fill your moving or junk removal schedule?
           </h2>
           <p style={{ fontSize: '1rem', color: 'rgba(26,26,46,0.7)', lineHeight: 1.7, marginBottom: 36 }}>
-            Build your quote form in minutes. We&apos;ll run your Meta ads. Start receiving customers today — without a website, without a retainer.
+            Build your quote form in minutes. We&apos;ll run your Meta ads. Start receiving exclusive customers today — $350/month, 7-day free trial.
           </p>
           <Link href="/signup" style={{
             display: 'inline-block', padding: '16px 40px', background: '#1a1a2e',
@@ -1064,9 +994,9 @@ export default function LandingPage() {
                 {/* Lead cards */}
                 <div style={{ padding: '4px 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {[
-                    { name: 'Sarah M.', type: 'Moving', quote: '$320', status: 'New', dot: '#f59e0b' },
-                    { name: 'James K.', type: 'Cleaning', quote: '$180', status: 'Booked', dot: '#10b981' },
-                    { name: 'Lisa R.', type: 'Landscaping', quote: '$450', status: 'Contacted', dot: '#3b82f6' },
+                    { name: 'Sarah M.', type: 'Local Move', quote: '$320', status: 'New', dot: '#f59e0b' },
+                    { name: 'James K.', type: 'Junk Removal', quote: '$180', status: 'Booked', dot: '#10b981' },
+                    { name: 'Lisa R.', type: 'Long Distance', quote: '$1,450', status: 'Contacted', dot: '#3b82f6' },
                   ].map(({ name, type, quote, status, dot }) => (
                     <div key={name} style={{
                       background: 'white',
@@ -1220,9 +1150,9 @@ export default function LandingPage() {
                 {/* Lead cards */}
                 <div style={{ padding: '4px 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {[
-                    { name: 'Mike T.', type: 'Roofing', quote: '$2,400', status: 'New', dot: '#f59e0b' },
-                    { name: 'Amy W.', type: 'Plumbing', quote: '$280', status: 'Booked', dot: '#10b981' },
-                    { name: 'Carlos D.', type: 'HVAC', quote: '$550', status: 'Contacted', dot: '#3b82f6' },
+                    { name: 'Mike T.', type: 'Estate Cleanout', quote: '$2,400', status: 'New', dot: '#f59e0b' },
+                    { name: 'Amy W.', type: 'Apartment Move', quote: '$280', status: 'Booked', dot: '#10b981' },
+                    { name: 'Carlos D.', type: 'Junk Hauling', quote: '$550', status: 'Contacted', dot: '#3b82f6' },
                   ].map(({ name, type, quote, status, dot }) => (
                     <div key={name} style={{
                       background: 'white',
