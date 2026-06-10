@@ -1156,6 +1156,134 @@ function CanvasPreview({
   )
 }
 
+// ── Haversine straight-line distance ─────────────────────────
+function haversineMiles(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 3958.8
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2
+  return R * 2 * Math.asin(Math.sqrt(a))
+}
+
+async function geocodeOne(query: string): Promise<[number, number] | null> {
+  if (!MAPBOX_TOKEN || query.trim().length < 3) return null
+  try {
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&limit=1&types=address,place,locality,neighborhood`
+    const res = await fetch(url)
+    const data = await res.json()
+    const coords = data.features?.[0]?.center
+    return coords ? [coords[1], coords[0]] : null // [lat, lon]
+  } catch { return null }
+}
+
+// Per-route field state
+interface RouteTestState {
+  addrA: string
+  addrB: string
+  distMiles: number | null
+  driveDistMiles: number | null // from Mapbox Directions (display only)
+  loading: boolean
+  error: string | null
+}
+
+function RouteTestInput({ field, value, onChange }: {
+  field: FormField
+  value: RouteTestState
+  onChange: (v: RouteTestState) => void
+}) {
+  const isSingle = field.locationMode === 'single'
+
+  async function resolve() {
+    if (!value.addrA.trim()) return
+    if (!isSingle && !value.addrB.trim()) return
+    onChange({ ...value, loading: true, error: null, distMiles: null, driveDistMiles: null })
+
+    const baseAddr = field.baseAddress?.trim() || null
+    const originQuery = isSingle ? (baseAddr ?? value.addrA) : value.addrA
+    const destQuery = isSingle ? value.addrA : value.addrB
+
+    const [origin, dest] = await Promise.all([geocodeOne(originQuery), geocodeOne(destQuery)])
+    if (!origin || !dest) {
+      onChange({ ...value, loading: false, error: 'Could not geocode one or both addresses.' })
+      return
+    }
+    const straight = haversineMiles(origin[0], origin[1], dest[0], dest[1])
+
+    // Also fetch drive distance for display
+    let driveDistMiles: number | null = null
+    try {
+      const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${origin[1]},${origin[0]};${dest[1]},${dest[0]}?steps=false&geometries=geojson&overview=false&access_token=${MAPBOX_TOKEN}`
+      const res = await fetch(url)
+      const data = await res.json()
+      const route = data.routes?.[0]
+      if (route) driveDistMiles = route.distance / 1609.344
+    } catch { /* ignore */ }
+
+    onChange({ ...value, loading: false, distMiles: straight, driveDistMiles, error: null })
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '6px 9px', borderRadius: 6,
+    border: '1px solid var(--border)', fontSize: '0.78rem',
+    background: 'var(--bg)', color: 'var(--text)', boxSizing: 'border-box',
+  }
+
+  const sorted = [...(field.radiusTiers ?? [])].sort((a, b) => a.maxMiles === null ? 1 : b.maxMiles === null ? -1 : a.maxMiles - b.maxMiles)
+  const matchedTier = value.distMiles != null ? sorted.find((t) => t.maxMiles === null || value.distMiles! <= t.maxMiles) : null
+  const tierIdx = matchedTier ? sorted.indexOf(matchedTier) : -1
+  const prevMax = tierIdx <= 0 ? 0 : (sorted[tierIdx - 1].maxMiles ?? 0)
+  const tierRange = matchedTier?.maxMiles ? `${prevMax}–${matchedTier.maxMiles}mi` : `${prevMax}mi+`
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+      {!isSingle && (
+        <input
+          style={inputStyle}
+          placeholder="Origin address"
+          value={value.addrA}
+          onChange={(e) => onChange({ ...value, addrA: e.target.value, distMiles: null, driveDistMiles: null })}
+          onKeyDown={(e) => e.key === 'Enter' && resolve()}
+        />
+      )}
+      <input
+        style={inputStyle}
+        placeholder={isSingle ? 'Customer address' : 'Destination address'}
+        value={isSingle ? value.addrA : value.addrB}
+        onChange={(e) => {
+          const next = isSingle ? { ...value, addrA: e.target.value } : { ...value, addrB: e.target.value }
+          onChange({ ...next, distMiles: null, driveDistMiles: null })
+        }}
+        onKeyDown={(e) => e.key === 'Enter' && resolve()}
+      />
+      <button
+        onClick={resolve}
+        disabled={value.loading}
+        style={{ padding: '5px 0', borderRadius: 6, border: '1px solid var(--accent)', background: 'var(--accent)', color: '#fff', fontSize: '0.75rem', fontWeight: 700, cursor: value.loading ? 'default' : 'pointer', opacity: value.loading ? 0.6 : 1 }}
+      >
+        {value.loading ? 'Calculating…' : 'Calculate Distance'}
+      </button>
+      {value.error && <div style={{ fontSize: '0.68rem', color: '#ef4444' }}>{value.error}</div>}
+      {value.distMiles != null && (
+        <div style={{ background: 'rgba(26,26,46,0.06)', borderRadius: 6, padding: '6px 9px', display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <div style={{ fontSize: '0.7rem', color: 'var(--text)', fontFamily: "'DM Mono', monospace" }}>
+            <span style={{ color: 'var(--muted)' }}>straight-line: </span><strong>{value.distMiles.toFixed(1)} mi</strong>
+          </div>
+          {value.driveDistMiles != null && (
+            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', fontFamily: "'DM Mono', monospace" }}>
+              drive distance: {value.driveDistMiles.toFixed(1)} mi
+            </div>
+          )}
+          {matchedTier && (
+            <div style={{ fontSize: '0.7rem', color: 'var(--accent)', fontFamily: "'DM Mono', monospace", marginTop: 1 }}>
+              → tier: {tierRange} · ×{matchedTier.multiplier ?? 1}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Quote Tester ─────────────────────────────────────────────
 function TestPanel({ fields, currency, minQuote, onClose }: {
   fields: FormField[]
@@ -1164,13 +1292,13 @@ function TestPanel({ fields, currency, minQuote, onClose }: {
   onClose: () => void
 }) {
   const [answers, setAnswers] = useState<Record<string, unknown>>({})
-  const [distances, setDistances] = useState<Record<string, string>>({})
+  const [routeStates, setRouteStates] = useState<Record<string, RouteTestState>>({})
 
   const routeData: Record<string, { distanceMiles: number; durationMinutes: number } | null> = {}
   for (const f of fields) {
     if (f.type === 'route') {
-      const mi = parseFloat(distances[f.id] ?? '')
-      routeData[f.id] = isNaN(mi) ? null : { distanceMiles: mi, durationMinutes: mi * 1.5 }
+      const rs = routeStates[f.id]
+      routeData[f.id] = rs?.distMiles != null ? { distanceMiles: rs.distMiles, durationMinutes: rs.distMiles * 1.5 } : null
     }
   }
 
@@ -1183,15 +1311,15 @@ function TestPanel({ fields, currency, minQuote, onClose }: {
     const cur = (answers[id] as string[]) ?? []
     setAnswer(id, cur.includes(optId) ? cur.filter((x) => x !== optId) : [...cur, optId])
   }
+  const setRouteState = (id: string, val: RouteTestState) => setRouteStates((p) => ({ ...p, [id]: val }))
+  const getRouteState = (id: string): RouteTestState =>
+    routeStates[id] ?? { addrA: '', addrB: '', distMiles: null, driveDistMiles: null, loading: false, error: null }
 
   const panelStyle: React.CSSProperties = {
     width: 268, flexShrink: 0, display: 'flex', flexDirection: 'column',
-    borderLeft: '1px solid var(--border)', background: 'var(--surface)',
-    overflowY: 'auto', height: '100%',
+    borderLeft: '1px solid var(--border)', background: 'var(--surface)', height: '100%',
   }
-  const sectionStyle: React.CSSProperties = {
-    padding: '10px 14px', borderBottom: '1px solid var(--border)',
-  }
+  const sectionStyle: React.CSSProperties = { padding: '10px 14px', borderBottom: '1px solid var(--border)' }
   const labelStyle: React.CSSProperties = {
     fontSize: '0.62rem', fontWeight: 700, color: 'var(--muted)',
     letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 5,
@@ -1199,7 +1327,6 @@ function TestPanel({ fields, currency, minQuote, onClose }: {
 
   return (
     <aside style={panelStyle}>
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px 10px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
         <div>
           <div style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '0.88rem', fontWeight: 700, color: 'var(--text)' }}>Quote Tester</div>
@@ -1208,15 +1335,12 @@ function TestPanel({ fields, currency, minQuote, onClose }: {
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1rem', padding: 4, lineHeight: 1 }}>✕</button>
       </div>
 
-      {/* Fields */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {fields.map((f) => {
           if (f.type === 'textarea' || f.type === 'image' || f.type === 'booking') return null
-
           const isBaseRateSource = fields.some(
             (rf) => rf.type === 'route' && rf.routeChargeType === 'radius_tiers' && rf.baseRateFieldId === f.id
           )
-
           return (
             <div key={f.id} style={sectionStyle}>
               <div style={labelStyle}>{f.label}{isBaseRateSource ? ' (base rate)' : ''}</div>
@@ -1259,47 +1383,21 @@ function TestPanel({ fields, currency, minQuote, onClose }: {
               )}
 
               {f.type === 'route' && (
-                <div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginBottom: 6, lineHeight: 1.4 }}>
-                    Distance comes from Mapbox Directions API using addresses the customer enters.
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <input
-                      type="number" min={0} step={0.1}
-                      value={distances[f.id] ?? ''}
-                      placeholder="e.g. 12"
-                      onChange={(e) => setDistances((p) => ({ ...p, [f.id]: e.target.value }))}
-                      style={{ flex: 1, padding: '6px 9px', borderRadius: 6, border: '1px solid var(--border)', fontSize: '0.82rem', background: 'var(--bg)', color: 'var(--text)' }}
-                    />
-                    <span style={{ fontSize: '0.75rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>mi</span>
-                  </div>
-                  {f.routeChargeType === 'radius_tiers' && (f.radiusTiers ?? []).length > 0 && (() => {
-                    const mi = parseFloat(distances[f.id] ?? '')
-                    if (isNaN(mi)) return null
-                    const sorted = [...(f.radiusTiers ?? [])].sort((a, b) => a.maxMiles === null ? 1 : b.maxMiles === null ? -1 : a.maxMiles - b.maxMiles)
-                    const match = sorted.find((t) => t.maxMiles === null || mi <= t.maxMiles)
-                    if (!match) return null
-                    const tierIdx = sorted.indexOf(match)
-                    const prevMax = tierIdx === 0 ? 0 : (sorted[tierIdx - 1].maxMiles ?? 0)
-                    const tierRange = match.maxMiles ? `${prevMax}–${match.maxMiles}mi` : `${prevMax}mi+`
-                    return (
-                      <div style={{ marginTop: 5, padding: '4px 8px', background: 'rgba(26,26,46,0.06)', borderRadius: 5, fontSize: '0.7rem', color: 'var(--accent)', fontFamily: "'DM Mono', monospace" }}>
-                        → tier: {tierRange} · ×{match.multiplier ?? 1}
-                      </div>
-                    )
-                  })()}
-                </div>
+                <RouteTestInput
+                  field={f}
+                  value={getRouteState(f.id)}
+                  onChange={(v) => setRouteState(f.id, v)}
+                />
               )}
 
               {f.type === 'draw_area' && (
-                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', lineHeight: 1.4 }}>Draw area can't be tested here — uses map polygon on the live form.</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', lineHeight: 1.4 }}>Draw area uses a map polygon — not testable here.</div>
               )}
             </div>
           )
         })}
       </div>
 
-      {/* Breakdown & Total */}
       <div style={{ flexShrink: 0, borderTop: '1px solid var(--border)', background: 'var(--bg)' }}>
         {breakdown.length > 0 && (
           <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)' }}>
@@ -1320,20 +1418,18 @@ function TestPanel({ fields, currency, minQuote, onClose }: {
         <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Estimated Total</span>
           <span style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--accent)', fontFamily: "'Instrument Sans', sans-serif" }}>
-            {breakdown.length === 0 && Object.values(distances).every((v) => !v) && Object.keys(answers).length === 0
-              ? '—'
-              : `${currency}${total.toFixed(2)}`}
+            {breakdown.length === 0 ? '—' : `${currency}${total.toFixed(2)}`}
           </span>
         </div>
         {minQuote && rawTotal > 0 && rawTotal < minQuote && (
-          <div style={{ padding: '0 14px 10px', fontSize: '0.68rem', color: 'var(--muted)', lineHeight: 1.4 }}>
+          <div style={{ padding: '0 14px 8px', fontSize: '0.68rem', color: 'var(--muted)', lineHeight: 1.4 }}>
             Min quote floor applied ({currency}{minQuote})
           </div>
         )}
-        <div style={{ padding: '0 14px 10px', display: 'flex', gap: 8 }}>
+        <div style={{ padding: '0 14px 10px' }}>
           <button
-            onClick={() => { setAnswers({}); setDistances({}) }}
-            style={{ flex: 1, padding: '6px 0', borderRadius: 6, border: '1px solid var(--border)', background: 'none', fontSize: '0.75rem', color: 'var(--muted)', cursor: 'pointer', fontWeight: 600 }}
+            onClick={() => { setAnswers({}); setRouteStates({}) }}
+            style={{ width: '100%', padding: '6px 0', borderRadius: 6, border: '1px solid var(--border)', background: 'none', fontSize: '0.75rem', color: 'var(--muted)', cursor: 'pointer', fontWeight: 600 }}
           >
             Reset
           </button>
