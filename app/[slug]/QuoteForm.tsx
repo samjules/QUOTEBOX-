@@ -791,14 +791,15 @@ function RouteField({
     })
   }, [mapLoaded, baseCoords, startCoords, endCoords, routeGeometry, baseGeometry, accentColor])
 
-  const priceContribution = routeInfo
+  const { priceContribution, isOverMaxMiles } = routeInfo
     ? (() => {
         const tiers = field.radiusTiers ?? []
         const sorted = [...tiers].sort((a, b) => a.maxMiles === null ? 1 : b.maxMiles === null ? -1 : a.maxMiles - b.maxMiles)
         const match = sorted.find((t) => t.maxMiles === null || routeInfo.distanceMiles <= t.maxMiles)
-        return match?.driveCharge ?? 0
+        const overMax = tiers.length > 0 && !match
+        return { priceContribution: match?.driveCharge ?? 0, isOverMaxMiles: overMax }
       })()
-    : 0
+    : { priceContribution: 0, isOverMaxMiles: false }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -940,6 +941,25 @@ function RouteField({
         </>
       )}
 
+      {/* Over-max-miles banner */}
+      {subStep === 2 && isOverMaxMiles && (
+        <div style={{
+          padding: '16px 18px', borderRadius: 12,
+          background: '#fff7ed', border: '2px solid #fed7aa',
+          display: 'flex', flexDirection: 'column', gap: 6,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: '1.2rem' }}>📞</span>
+            <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#9a3412' }}>
+              Your distance is outside our online quote range
+            </span>
+          </div>
+          <div style={{ fontSize: '0.83rem', color: '#c2410c', lineHeight: 1.5 }}>
+            Please call us for a custom quote on this move.
+          </div>
+        </div>
+      )}
+
       {/* Map container — single element, always in DOM for stable Mapbox ref */}
       <div style={{
         display: subStep === 2 ? 'block' : 'none',
@@ -1069,6 +1089,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [smsOptIn, setSmsOptIn] = useState(false)
+  const [disclaimerAcknowledged, setDisclaimerAcknowledged] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
 
@@ -1162,7 +1183,16 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
         return !f.required || !!(routeCoords[f.id]?.start)
       }
       if (currentRouteSubStep === 1) return !f.required || !!(routeCoords[f.id]?.end)
-      return !f.required || !!routeData[f.id]
+      // Sub-step 2: block if over max miles (no matching tier, no catch-all)
+      if (!routeData[f.id]) return !f.required
+      const rd2 = routeData[f.id]!
+      const tiers2 = f.radiusTiers ?? []
+      if (tiers2.length > 0) {
+        const sorted2 = [...tiers2].sort((a, b) => a.maxMiles === null ? 1 : b.maxMiles === null ? -1 : a.maxMiles - b.maxMiles)
+        const match2 = sorted2.find((t) => t.maxMiles === null || rd2.distanceMiles <= t.maxMiles)
+        if (!match2) return false
+      }
+      return true
     }
     if (!f.required) return true
     if (f.type === 'radio' || f.type === 'dropdown') return !!answers[f.id]
@@ -1799,6 +1829,33 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
                 </label>
               </div>
 
+              {/* Estimate disclaimer — always required before submit */}
+              <div style={{
+                marginTop: 6,
+                padding: '14px 16px',
+                borderRadius: 12,
+                background: '#fffbeb',
+                border: '2px solid #fbbf24',
+              }}>
+                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#92400e', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  ⚠️ Important — Please Read
+                </div>
+                <div style={{ fontSize: '0.82rem', color: '#78350f', lineHeight: 1.6, marginBottom: 12 }}>
+                  {config.disclaimer_text || 'This quote is an estimate only. Your final price will be confirmed over the phone before any work begins. Actual costs may vary based on job conditions.'}
+                </div>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={disclaimerAcknowledged}
+                    onChange={(e) => setDisclaimerAcknowledged(e.target.checked)}
+                    style={{ marginTop: 2, flexShrink: 0, width: 16, height: 16, accentColor: '#d97706' }}
+                  />
+                  <span style={{ fontSize: '0.8rem', color: '#92400e', fontWeight: 600, lineHeight: 1.5 }}>
+                    I understand this is an estimate — final price confirmed over the phone.
+                  </span>
+                </label>
+              </div>
+
               {/* Quote total preview — only in live mode (after_submit reveals on confirm page) */}
               {hasPricing && !hidePrices && displayTotal > 0 && (
                 <div style={{
@@ -1825,8 +1882,8 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
 
               <button
                 onClick={handleSubmit}
-                disabled={isSubmitting}
-                style={{ ...continueBtn, opacity: isSubmitting ? 0.6 : 1 }}
+                disabled={isSubmitting || !disclaimerAcknowledged}
+                style={{ ...continueBtn, opacity: (isSubmitting || !disclaimerAcknowledged) ? 0.5 : 1, cursor: !disclaimerAcknowledged ? 'not-allowed' : 'pointer' }}
               >
                 {isSubmitting ? 'Submitting…' : (config.submit_label ?? 'Get My Quote →')}
               </button>
