@@ -167,6 +167,11 @@ function computeTotal(
   let total = 0
   for (const f of fields) {
     if (f.type === 'radio' || f.type === 'dropdown') {
+      // Skip fields used as base rate source for a radius_tiers route — their price feeds the tier multiplier
+      const isBaseRateSource = fields.some(
+        (rf) => rf.type === 'route' && rf.routeChargeType === 'radius_tiers' && rf.baseRateFieldId === f.id
+      )
+      if (isBaseRateSource) continue
       const opt = f.options?.find((o) => o.id === (answers[f.id] as string))
       if (opt) total += opt.hours ? opt.price * opt.hours : opt.price
     } else if (f.type === 'checkbox') {
@@ -191,19 +196,16 @@ function computeTotal(
           })
           const match = sorted.find((t) => t.maxMiles === null || rd.distanceMiles <= t.maxMiles)
           if (match) {
-            let tierMultiplier = 1
-            for (const f2 of fields) {
-              if (f2.type === 'radio' || f2.type === 'dropdown') {
-                const opt = f2.options?.find((o) => o.id === (answers[f2.id] as string))
-                if (opt?.multiplier !== undefined) tierMultiplier *= opt.multiplier
-              } else if (f2.type === 'checkbox') {
-                for (const oid of (answers[f2.id] as string[]) ?? []) {
-                  const opt = f2.options?.find((o) => o.id === oid)
-                  if (opt?.multiplier !== undefined) tierMultiplier *= opt.multiplier
-                }
+            // Get base rate from the linked home-size field's selected option price
+            let baseRate = 0
+            if (f.baseRateFieldId) {
+              const baseField = fields.find((f2) => f2.id === f.baseRateFieldId)
+              if (baseField) {
+                const selOpt = baseField.options?.find((o) => o.id === (answers[baseField.id] as string))
+                if (selOpt) baseRate = selOpt.price
               }
             }
-            total += match.price * tierMultiplier
+            total += baseRate * (match.multiplier ?? 1)
           }
         } else {
           const routeOvr = activeRouteOverrides[f.id]

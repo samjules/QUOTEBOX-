@@ -21,7 +21,6 @@ export interface FieldOption {
   label: string
   price: number
   hours?: number                                                      // optional hours — total = price × hours
-  multiplier?: number                                                 // scales the matching radius tier base rate (e.g. 1.3 for 2BR)
   // Per-option rate overrides applied to other fields when this option is selected
   rateOverrides?: Record<string, number>                              // fieldId → ratePerUnit (number fields)
   routeOverrides?: Record<string, { mile?: number; min?: number }>   // fieldId → route rates
@@ -42,7 +41,7 @@ export interface ConditionalRule {
 export interface RadiusTier {
   id: string
   maxMiles: number | null  // null = unlimited / catch-all tier
-  price: number
+  multiplier: number       // applied to the base rate from the linked home-size field
 }
 
 export interface FormField {
@@ -62,7 +61,8 @@ export interface FormField {
   freeMiles?: number         // don't charge mileage until this many miles
   freeMinutes?: number       // don't charge drive time until this many minutes (stored as minutes; UI shows hours)
   baseAddress?: string       // optional fixed start location (business base)
-  radiusTiers?: RadiusTier[] // flat prices per distance tier (radius_tiers charge type)
+  radiusTiers?: RadiusTier[] // distance tiers — each multiplies the base rate from baseRateFieldId
+  baseRateFieldId?: string   // radius_tiers: which radio/dropdown field's option price is the base rate
   imageUrl?: string
   conditionalRules?: ConditionalRule[]
   // Draw Area field
