@@ -59,10 +59,10 @@ function makeField(type: FormField['type']): FormField {
       label: 'Home Size',
       required: true,
       options: [
-        { id: uid(), label: 'Studio / 1 Bed', price: 0, multiplier: 1.0 },
-        { id: uid(), label: '2 Bedrooms', price: 0, multiplier: 1.3 },
-        { id: uid(), label: '3 Bedrooms', price: 0, multiplier: 1.6 },
-        { id: uid(), label: '4+ Bedrooms', price: 0, multiplier: 2.0 },
+        { id: uid(), label: 'Studio / 1 Bed', price: 120 },
+        { id: uid(), label: '2 Bedrooms', price: 150 },
+        { id: uid(), label: '3 Bedrooms', price: 180 },
+        { id: uid(), label: '4+ Bedrooms', price: 220 },
       ],
     },
     dropdown: {
@@ -97,10 +97,9 @@ function makeField(type: FormField['type']): FormField {
       required: true,
       routeChargeType: 'radius_tiers',
       radiusTiers: [
-        { id: 'tier1', maxMiles: 10, price: 200 },
-        { id: 'tier2', maxMiles: 25, price: 300 },
-        { id: 'tier3', maxMiles: 50, price: 450 },
-        { id: 'tier4', maxMiles: null, price: 600 },
+        { id: 'tier1', maxMiles: 15, multiplier: 1.0 },
+        { id: 'tier2', maxMiles: 30, multiplier: 1.5 },
+        { id: 'tier3', maxMiles: null, multiplier: 2.0 },
       ],
     },
     image: {
@@ -146,16 +145,15 @@ const TEMPLATES: TemplateConfig[] = [
     submitLabel: 'Get My Quote →',
     fields: [
       { type: 'radio', label: 'Home Size', required: true, options: [
-        { id: 'sz1', label: 'Studio / 1 Bed', price: 0, multiplier: 1.0 },
-        { id: 'sz2', label: '2 Bedrooms',     price: 0, multiplier: 1.3 },
-        { id: 'sz3', label: '3 Bedrooms',     price: 0, multiplier: 1.6 },
-        { id: 'sz4', label: '4+ Bedrooms',    price: 0, multiplier: 2.0 },
+        { id: 'sz1', label: 'Studio / 1 Bed', price: 120 },
+        { id: 'sz2', label: '2 Bedrooms',     price: 150 },
+        { id: 'sz3', label: '3 Bedrooms',     price: 180 },
+        { id: 'sz4', label: '4+ Bedrooms',    price: 220 },
       ]},
-      { type: 'route', label: 'Moving Route', required: true, routeChargeType: 'radius_tiers', radiusTiers: [
-        { id: 't1', maxMiles: 10,   price: 200 },
-        { id: 't2', maxMiles: 25,   price: 300 },
-        { id: 't3', maxMiles: 50,   price: 450 },
-        { id: 't4', maxMiles: null, price: 600 },
+      { type: 'route', label: 'Moving Route', required: true, routeChargeType: 'radius_tiers', baseRateFieldId: '__idx:0__', radiusTiers: [
+        { id: 't1', maxMiles: 15,   multiplier: 1.0 },
+        { id: 't2', maxMiles: 30,   multiplier: 1.5 },
+        { id: 't3', maxMiles: null, multiplier: 2.0 },
       ]},
       { type: 'checkbox', label: 'Add-ons', required: false, options: [
         { id: 'a1', label: 'Packing & Unpacking', price: 150 },
@@ -177,16 +175,15 @@ const TEMPLATES: TemplateConfig[] = [
     submitLabel: 'Get My Quote →',
     fields: [
       { type: 'radio', label: 'Load Size', required: true, options: [
-        { id: 'j1', label: 'Small Load (¼ truck)',  price: 0, multiplier: 0.6 },
-        { id: 'j2', label: 'Half Truck',            price: 0, multiplier: 0.8 },
-        { id: 'j3', label: 'Full Truck',            price: 0, multiplier: 1.0 },
-        { id: 'j4', label: 'Two+ Trucks',           price: 0, multiplier: 1.6 },
+        { id: 'j1', label: 'Small Load (¼ truck)',  price: 150 },
+        { id: 'j2', label: 'Half Truck',            price: 200 },
+        { id: 'j3', label: 'Full Truck',            price: 300 },
+        { id: 'j4', label: 'Two+ Trucks',           price: 450 },
       ]},
-      { type: 'route', label: 'Pickup Location', required: true, locationMode: 'single', routeChargeType: 'radius_tiers', radiusTiers: [
-        { id: 't1', maxMiles: 10,   price: 150 },
-        { id: 't2', maxMiles: 25,   price: 200 },
-        { id: 't3', maxMiles: 50,   price: 275 },
-        { id: 't4', maxMiles: null, price: 350 },
+      { type: 'route', label: 'Pickup Location', required: true, locationMode: 'single', routeChargeType: 'radius_tiers', baseRateFieldId: '__idx:0__', radiusTiers: [
+        { id: 't1', maxMiles: 15,   multiplier: 1.0 },
+        { id: 't2', maxMiles: 30,   multiplier: 1.3 },
+        { id: 't3', maxMiles: null, multiplier: 1.6 },
       ]},
       { type: 'checkbox', label: 'Add-ons', required: false, options: [
         { id: 'ja1', label: 'Same-day service',    price: 50 },
@@ -898,14 +895,18 @@ function CanvasPreview({
                       {(f.radiusTiers ?? []).length > 0 && (
                         <div style={{ marginTop: 7 }}>
                           <div style={{ fontSize: '0.62rem', fontWeight: 700, color: 'var(--muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>
-                            Base rates (× multiplier from home size)
+                            Distance tiers (base rate × multiplier)
                           </div>
                           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                            {(f.radiusTiers ?? []).slice(0, 4).map((t, i) => (
-                              <span key={i} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 7px', fontSize: '0.68rem', color: 'var(--text)' }}>
-                                {t.maxMiles ? `≤${t.maxMiles}mi` : '∞'} <strong>${t.price}</strong>
-                              </span>
-                            ))}
+                            {(f.radiusTiers ?? []).slice(0, 4).map((t, i, arr) => {
+                              const prevMax = i === 0 ? 0 : (arr[i - 1].maxMiles ?? 0)
+                              const range = t.maxMiles ? `${prevMax}–${t.maxMiles}mi` : `${prevMax}mi+`
+                              return (
+                                <span key={i} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 7px', fontSize: '0.68rem', color: 'var(--text)' }}>
+                                  {range} <strong>×{t.multiplier ?? 1}</strong>
+                                </span>
+                              )
+                            })}
                             {(f.radiusTiers ?? []).length > 4 && (
                               <span style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 7px', fontSize: '0.68rem', color: 'var(--muted)' }}>
                                 +{(f.radiusTiers ?? []).length - 4} more
@@ -1313,72 +1314,107 @@ function PropsPanel({
           </div>
 
           <div className="prop-group">
-              <div className="prop-label" style={{ marginBottom: 8 }}>Distance tiers</div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginBottom: 10, lineHeight: 1.4 }}>
-                Set a base rate per distance band. The first matching tier is used, then multiplied by the home size (or other option) multiplier. E.g. ≤10mi base $200 × 2BR multiplier 1.3 = $260 quote.
-              </div>
-              {(field.radiusTiers ?? []).map((tier, idx) => (
-                <div key={tier.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginBottom: 2 }}>Up to (mi)</div>
-                    <input
-                      className="prop-input"
-                      type="number"
-                      min={0}
-                      step={1}
-                      placeholder="∞"
-                      value={tier.maxMiles ?? ''}
-                      style={{ padding: '5px 7px', fontSize: '0.8rem' }}
-                      onChange={(e) => {
-                        const tiers = [...(field.radiusTiers ?? [])]
-                        tiers[idx] = { ...tier, maxMiles: e.target.value === '' ? null : parseFloat(e.target.value) || 0 }
-                        onSetTiers(field.id, tiers)
-                      }}
-                    />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginBottom: 2 }}>Base rate ($)</div>
-                    <input
-                      className="prop-input"
-                      type="number"
-                      min={0}
-                      step={0.01}
-                      value={tier.price}
-                      style={{ padding: '5px 7px', fontSize: '0.8rem' }}
-                      onChange={(e) => {
-                        const tiers = [...(field.radiusTiers ?? [])]
-                        tiers[idx] = { ...tier, price: parseFloat(e.target.value) || 0 }
-                        onSetTiers(field.id, tiers)
-                      }}
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    title="Remove tier"
-                    style={{
-                      marginTop: 18, width: 24, height: 24, borderRadius: 4, border: '1px solid var(--border)',
-                      background: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: '0.8rem',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                    }}
-                    onClick={() => {
-                      const tiers = (field.radiusTiers ?? []).filter((_, i) => i !== idx)
-                      onSetTiers(field.id, tiers)
-                    }}
-                  >✕</button>
-                </div>
+            <div className="prop-label" style={{ marginBottom: 4 }}>Base rate source</div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginBottom: 8, lineHeight: 1.4 }}>
+              Which field's selected option sets the base rate (e.g. Home Size → 2BR = $150/hr).
+            </div>
+            <select
+              className="prop-input"
+              value={field.baseRateFieldId ?? ''}
+              onChange={(e) => onSetProp(field.id, 'baseRateFieldId', e.target.value)}
+            >
+              <option value="">— not set —</option>
+              {allFields.filter(f => f.id !== field.id && (f.type === 'radio' || f.type === 'dropdown')).map(f => (
+                <option key={f.id} value={f.id}>{f.label}</option>
               ))}
-              <button
-                type="button"
-                style={{
-                  marginTop: 4, width: '100%', padding: '5px 0', borderRadius: 6,
-                  border: '1px dashed var(--border)', background: 'none',
-                  color: 'var(--accent)', fontSize: '0.75rem', cursor: 'pointer',
-                }}
-                onClick={() => {
-                  const newTier: RadiusTier = { id: Math.random().toString(36).slice(2), maxMiles: null, price: 0 }
-                  onSetTiers(field.id, [...(field.radiusTiers ?? []), newTier])
-                }}
-              >+ Add tier</button>
+            </select>
+          </div>
+
+          <div className="prop-group">
+            <div className="prop-label" style={{ marginBottom: 4 }}>Distance tiers</div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginBottom: 10, lineHeight: 1.4 }}>
+              Each tier multiplies the base rate. E.g. 2BR = $150 base × 1.5 (15–30mi) = $225 quote.
+            </div>
+            {(() => {
+              const sorted = [...(field.radiusTiers ?? [])].sort((a, b) => {
+                if (a.maxMiles === null) return 1
+                if (b.maxMiles === null) return -1
+                return a.maxMiles - b.maxMiles
+              })
+              return sorted.map((tier, idx) => {
+                const prevMax = idx === 0 ? 0 : (sorted[idx - 1].maxMiles ?? '∞')
+                const rangeLabel = `${prevMax} – ${tier.maxMiles ?? '∞'} mi`
+                return (
+                  <div key={tier.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 2 }}>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600 }}>Range</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>{prevMax} –</span>
+                        <input
+                          className="prop-input"
+                          type="number"
+                          min={0}
+                          step={1}
+                          placeholder="∞"
+                          value={tier.maxMiles ?? ''}
+                          style={{ padding: '4px 6px', fontSize: '0.8rem', marginBottom: 0 }}
+                          onChange={(e) => {
+                            const tiers = [...(field.radiusTiers ?? [])]
+                            const i = tiers.findIndex(t => t.id === tier.id)
+                            tiers[i] = { ...tier, maxMiles: e.target.value === '' ? null : parseFloat(e.target.value) || 0 }
+                            onSetTiers(field.id, tiers)
+                          }}
+                        />
+                        <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>mi</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600 }}>Multiplier ×</div>
+                      <input
+                        className="prop-input"
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        placeholder="1.0"
+                        value={tier.multiplier}
+                        style={{ padding: '4px 6px', fontSize: '0.8rem', marginBottom: 0 }}
+                        onChange={(e) => {
+                          const tiers = [...(field.radiusTiers ?? [])]
+                          const i = tiers.findIndex(t => t.id === tier.id)
+                          tiers[i] = { ...tier, multiplier: parseFloat(e.target.value) || 0 }
+                          onSetTiers(field.id, tiers)
+                        }}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      title={`Remove ${rangeLabel} tier`}
+                      style={{
+                        marginTop: 16, width: 24, height: 24, borderRadius: 4, border: '1px solid var(--border)',
+                        background: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: '0.8rem',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                      }}
+                      onClick={() => {
+                        const tiers = (field.radiusTiers ?? []).filter((t) => t.id !== tier.id)
+                        onSetTiers(field.id, tiers)
+                      }}
+                    >✕</button>
+                  </div>
+                )
+              })
+            })()}
+            <button
+              type="button"
+              style={{
+                marginTop: 4, width: '100%', padding: '5px 0', borderRadius: 6,
+                border: '1px dashed var(--border)', background: 'none',
+                color: 'var(--accent)', fontSize: '0.75rem', cursor: 'pointer',
+              }}
+              onClick={() => {
+                const newTier: RadiusTier = { id: Math.random().toString(36).slice(2), maxMiles: null, multiplier: 1 }
+                onSetTiers(field.id, [...(field.radiusTiers ?? []), newTier])
+              }}
+            >+ Add tier</button>
           </div>
 
           <div className="prop-group">
@@ -1509,7 +1545,10 @@ function PropsPanel({
         <div className="prop-group">
           <div className="prop-label">Options</div>
           {(() => {
-            const hasTierRoute = allFields.some(f => f.type === 'route' && f.routeChargeType === 'radius_tiers')
+            const isBaseRateSource = allFields.some(
+              f => f.type === 'route' && f.routeChargeType === 'radius_tiers' && f.baseRateFieldId === field.id
+            )
+            const priceLabel = isBaseRateSource ? 'Base rate ($/hr)' : field.type === 'checkbox' ? 'Add-on price ($)' : 'Price ($)'
             return (
               <div className="opts-list">
                 {(field.options ?? []).map((o) => (
@@ -1526,7 +1565,7 @@ function PropsPanel({
                     </div>
                     <div style={{ display: 'flex', gap: 5 }}>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Add-on price ($)</div>
+                        <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{priceLabel}</div>
                         <input
                           className="prop-input"
                           type="number" min={0} step={0.01}
@@ -1535,20 +1574,6 @@ function PropsPanel({
                           onChange={(e) => onSetOpt(field.id, o.id, 'price', parseFloat(e.target.value) || 0)}
                         />
                       </div>
-                      {hasTierRoute && (
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Rate multiplier ×</div>
-                          <input
-                            className="prop-input"
-                            type="number" min={0} step={0.01}
-                            placeholder="1.0"
-                            title="Multiplies the distance tier base rate. e.g. 1.3 = 30% more for this home size."
-                            value={o.multiplier ?? ''}
-                            style={{ marginBottom: 0 }}
-                            onChange={(e) => onSetOpt(field.id, o.id, 'multiplier', parseFloat(e.target.value) || 0)}
-                          />
-                        </div>
-                      )}
                     </div>
                   </div>
                 ))}
@@ -2080,6 +2105,13 @@ export default function FormBuilderPage() {
       id: uid(),
       options: f.options?.map((o) => ({ ...o, id: uid() })),
     }))
+    // Resolve __idx:N__ placeholders in baseRateFieldId
+    fields.forEach((f) => {
+      if (f.baseRateFieldId?.startsWith('__idx:')) {
+        const idx = parseInt(f.baseRateFieldId.replace('__idx:', '').replace('__', ''), 10)
+        f.baseRateFieldId = fields[idx]?.id ?? undefined
+      }
+    })
     setFields(fields)
     setFormName(tpl.formName)
     setFormDesc(tpl.formDesc)
