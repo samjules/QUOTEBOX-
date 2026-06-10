@@ -626,6 +626,7 @@ function CanvasPreview({
   onChangeFieldLabel,
   onChangeOptionLabel,
   onChangeDisclaimerText,
+  onDropField,
 }: {
   fields: FormField[]
   selectedId: string | null
@@ -655,7 +656,9 @@ function CanvasPreview({
   onChangeFieldLabel: (fieldId: string, v: string) => void
   onChangeOptionLabel: (fieldId: string, optId: string, v: string) => void
   onChangeDisclaimerText: (v: string) => void
+  onDropField: (type: FormField['type'], atIdx: number) => void
 }) {
+  const [dropIdx, setDropIdx] = useState<number | null>(null)
   const isDark = isColorDark(brandColor)
   const textPrimary = isDark ? 'white' : '#1a1a2e'
   const textSecondary = isDark ? 'rgba(255,255,255,0.72)' : 'rgba(26,26,46,0.62)'
@@ -754,15 +757,40 @@ function CanvasPreview({
                 Setting up your form…
               </div>
             ) : (
-              fields.map((f, idx) => (
+              <div
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  const type = e.dataTransfer.getData('fieldType') as FormField['type']
+                  if (type && dropIdx !== null) onDropField(type, dropIdx)
+                  setDropIdx(null)
+                }}
+                onDragLeave={(e) => {
+                  if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node)) setDropIdx(null)
+                }}
+              >
+              {fields.map((f, idx) => (
+                <div key={f.id}>
+                  {/* Drop indicator line above this card */}
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDropIdx(idx) }}
+                    style={{
+                      height: dropIdx === idx ? 3 : 6,
+                      background: dropIdx === idx ? 'var(--accent)' : 'transparent',
+                      borderRadius: 2,
+                      margin: dropIdx === idx ? '4px 0' : '0',
+                      transition: 'all 0.1s',
+                      cursor: 'copy',
+                    }}
+                  />
                 <div
-                  key={f.id}
                   onClick={() => onSelectField(f.id)}
+                  onDragOver={(e) => { e.preventDefault(); setDropIdx(idx + 1) }}
                   style={{
                     border: `2px solid ${selectedId === f.id ? 'var(--accent)' : 'var(--border)'}`,
                     borderRadius: 16,
                     padding: '14px 15px',
-                    marginBottom: 10,
+                    marginBottom: 0,
                     cursor: 'pointer',
                     background: selectedId === f.id ? 'rgba(26,26,46,0.03)' : 'white',
                     boxShadow: selectedId === f.id ? '0 0 0 3px rgba(26,26,46,0.08)' : '0 1px 3px rgba(0,0,0,0.04)',
@@ -979,7 +1007,21 @@ function CanvasPreview({
                     </div>
                   )}
                 </div>
-              ))
+                </div>
+              ))}
+              {/* Drop indicator after last card */}
+              <div
+                onDragOver={(e) => { e.preventDefault(); setDropIdx(fields.length) }}
+                style={{
+                  height: dropIdx === fields.length ? 3 : 6,
+                  background: dropIdx === fields.length ? 'var(--accent)' : 'transparent',
+                  borderRadius: 2,
+                  margin: dropIdx === fields.length ? '4px 0' : '0',
+                  transition: 'all 0.1s',
+                  cursor: 'copy',
+                }}
+              />
+              </div>
             )}
 
             {/* Live total */}
@@ -2497,9 +2539,16 @@ export default function FormBuilderPage() {
   }
 
   // ── Field operations ──
-  function addField(type: FormField['type']) {
+  function addField(type: FormField['type'], atIdx?: number) {
     const f = makeField(type)
-    setFields((prev) => [...prev, f])
+    setFields((prev) => {
+      if (atIdx !== undefined) {
+        const next = [...prev]
+        next.splice(atIdx, 0, f)
+        return next
+      }
+      return [...prev, f]
+    })
     setSelectedId(f.id)
   }
 
@@ -2912,7 +2961,7 @@ export default function FormBuilderPage() {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     fields: true,
     settings: true,
-    rates: false,
+    rates: true,
     ui: false,
     hosting: false,
   })
@@ -3068,6 +3117,46 @@ export default function FormBuilderPage() {
                     </button>
                   )
                 })}
+              </div>
+            )}
+          </div>
+
+          {/* ── FIELD BANK ── */}
+          <div className="sidebar-section">
+            <div className="sidebar-cat-header" onClick={() => toggleSection('rates')}>
+              <span className="sidebar-cat-title">Field Bank</span>
+              <span className={`sidebar-cat-chevron${openSections.rates ? ' open' : ''}`}>▼</span>
+            </div>
+            {openSections.rates && (
+              <div className="sidebar-cat-body">
+                <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginBottom: 8, lineHeight: 1.45 }}>
+                  Drag into the form, or click to add at the bottom.
+                </div>
+                {([
+                  { type: 'radio',    icon: '🏠', label: 'Home Size',    hint: 'radio options with rate & hours' },
+                  { type: 'checkbox', icon: '✓',  label: 'Add-ons',      hint: 'checkboxes with flat prices' },
+                  { type: 'route',    icon: '⇌',  label: 'Route',        hint: 'point A → B + distance tiers' },
+                  { type: 'textarea', icon: '≡',  label: 'Notes',        hint: 'free-text customer input' },
+                  { type: 'booking',  icon: '📅', label: 'Booking Date', hint: 'date picker' },
+                  { type: 'number',   icon: '#',  label: 'Number',       hint: 'quantity × rate' },
+                ] as { type: FormField['type']; icon: string; label: string; hint: string }[]).map(({ type, icon, label, hint }) => (
+                  <button
+                    key={type}
+                    className="ftype-btn"
+                    draggable
+                    title={hint}
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('fieldType', type)
+                      e.dataTransfer.effectAllowed = 'copy'
+                    }}
+                    onClick={() => addField(type)}
+                    style={{ cursor: 'grab', userSelect: 'none' }}
+                  >
+                    <span className="icon">{icon}</span>
+                    {label}
+                    <span style={{ marginLeft: 'auto', fontSize: '0.62rem', color: 'var(--muted)', opacity: 0.6 }}>⠿</span>
+                  </button>
+                ))}
               </div>
             )}
           </div>
@@ -3541,6 +3630,7 @@ export default function FormBuilderPage() {
                 onChangeFieldLabel={(fid, v) => setFields((prev) => prev.map((f) => f.id === fid ? { ...f, label: v } : f))}
                 onChangeOptionLabel={(fid, oid, v) => setFields((prev) => prev.map((f) => f.id === fid ? { ...f, options: (f.options ?? []).map((o) => o.id === oid ? { ...o, label: v } : o) } : f))}
                 onChangeDisclaimerText={setDisclaimerText}
+                onDropField={(type, atIdx) => addField(type, atIdx)}
               />
             )}
           </div>
