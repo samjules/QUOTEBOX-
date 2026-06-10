@@ -3,6 +3,7 @@ import type { FormField } from './types'
 export interface RouteResult {
   distanceMiles: number
   durationMinutes: number
+  jobLegMiles?: number
 }
 
 export interface BreakdownLine {
@@ -109,13 +110,14 @@ export function computeBreakdown(
           if (b.maxMiles === null) return -1
           return a.maxMiles - b.maxMiles
         })
-        const match = sorted.find((t) => t.maxMiles === null || rd.distanceMiles <= t.maxMiles)
+        const billableMiles = rd.jobLegMiles ?? rd.distanceMiles
+        const match = sorted.find((t) => t.maxMiles === null || billableMiles <= t.maxMiles)
         if (match) {
           const driveCharge = match.driveCharge ?? 0
           const tierIdx = sorted.indexOf(match)
           const prevMax = tierIdx === 0 ? 0 : (sorted[tierIdx - 1].maxMiles ?? 0)
           const tierRange = match.maxMiles ? `${prevMax}–${match.maxMiles}mi` : `${prevMax}mi+`
-          const detail = `${rd.distanceMiles.toFixed(1)}mi → ${tierRange}`
+          const detail = `${billableMiles.toFixed(1)}mi → ${tierRange}`
           if (driveCharge !== 0) lines.push({ label: f.label, detail, amount: driveCharge })
         }
       } else {

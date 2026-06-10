@@ -514,7 +514,7 @@ function RouteField({
   const [endSuggestions, setEndSuggestions] = useState<GeocodeSuggestion[]>([])
   const [endCoords, setEndCoords] = useState<[number, number] | null>(null)
   const [legInfos, setLegInfos] = useState<LegInfo[] | null>(null)
-  const [routeInfo, setRouteInfo] = useState<{ distanceMiles: number; durationMinutes: number } | null>(null)
+  const [routeInfo, setRouteInfo] = useState<{ distanceMiles: number; durationMinutes: number; jobLegMiles?: number } | null>(null)
   const [routeGeometry, setRouteGeometry] = useState<RouteGeometry | null>(null)
   const [baseGeometry, setBaseGeometry] = useState<RouteGeometry | null>(null)
   const [isLoadingRoute, setIsLoadingRoute] = useState(false)
@@ -795,7 +795,8 @@ function RouteField({
     ? (() => {
         const tiers = field.radiusTiers ?? []
         const sorted = [...tiers].sort((a, b) => a.maxMiles === null ? 1 : b.maxMiles === null ? -1 : a.maxMiles - b.maxMiles)
-        const match = sorted.find((t) => t.maxMiles === null || routeInfo.distanceMiles <= t.maxMiles)
+        const billableMiles = routeInfo.jobLegMiles ?? routeInfo.distanceMiles
+        const match = sorted.find((t) => t.maxMiles === null || billableMiles <= t.maxMiles)
         const overMax = tiers.length > 0 && !match
         return { priceContribution: match?.driveCharge ?? 0, isOverMaxMiles: overMax }
       })()
@@ -1189,7 +1190,8 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
       const tiers2 = f.radiusTiers ?? []
       if (tiers2.length > 0) {
         const sorted2 = [...tiers2].sort((a, b) => a.maxMiles === null ? 1 : b.maxMiles === null ? -1 : a.maxMiles - b.maxMiles)
-        const match2 = sorted2.find((t) => t.maxMiles === null || rd2.distanceMiles <= t.maxMiles)
+        const billable2 = rd2.jobLegMiles ?? rd2.distanceMiles
+        const match2 = sorted2.find((t) => t.maxMiles === null || billable2 <= t.maxMiles)
         if (!match2) return false
       }
       return true
