@@ -98,9 +98,9 @@ function makeField(type: FormField['type']): FormField {
       required: true,
       routeChargeType: 'radius_tiers',
       radiusTiers: [
-        { id: 'tier1', maxMiles: 15, multiplier: 1.0 },
-        { id: 'tier2', maxMiles: 30, multiplier: 1.5 },
-        { id: 'tier3', maxMiles: null, multiplier: 2.0 },
+        { id: 'tier1', maxMiles: 15, driveTimeHours: 0.5 },
+        { id: 'tier2', maxMiles: 30, driveTimeHours: 1.0 },
+        { id: 'tier3', maxMiles: null, driveTimeHours: 2.0 },
       ],
     },
     image: {
@@ -139,7 +139,7 @@ const TEMPLATES: TemplateConfig[] = [
     id: 'moving_local',
     icon: '🚛',
     name: 'Local Move',
-    tagline: 'Radius tiers × home size multiplier',
+    tagline: 'Hourly rate × (job hours + drive time)',
     brandColor: '#F97316',
     formName: 'Moving Quote',
     formDesc: 'Get an instant estimate for your local move.',
@@ -151,10 +151,17 @@ const TEMPLATES: TemplateConfig[] = [
         { id: 'sz3', label: '3 Bedrooms',     price: 180 },
         { id: 'sz4', label: '4+ Bedrooms',    price: 220 },
       ]},
-      { type: 'route', label: 'Moving Route', required: true, routeChargeType: 'radius_tiers', baseRateFieldId: '__idx:0__', radiusTiers: [
-        { id: 't1', maxMiles: 15,   multiplier: 1.0 },
-        { id: 't2', maxMiles: 30,   multiplier: 1.5 },
-        { id: 't3', maxMiles: null, multiplier: 2.0 },
+      { type: 'radio', label: 'Estimated Job Hours', required: true, options: [
+        { id: 'h1', label: '2 hours',  price: 0, hours: 2 },
+        { id: 'h2', label: '3 hours',  price: 0, hours: 3 },
+        { id: 'h3', label: '4 hours',  price: 0, hours: 4 },
+        { id: 'h4', label: '5 hours',  price: 0, hours: 5 },
+        { id: 'h5', label: '6+ hours', price: 0, hours: 6 },
+      ]},
+      { type: 'route', label: 'Moving Route', required: true, routeChargeType: 'radius_tiers', baseRateFieldId: '__idx:0__', jobHoursFieldId: '__idx:1__', radiusTiers: [
+        { id: 't1', maxMiles: 15,   driveTimeHours: 0.5 },
+        { id: 't2', maxMiles: 30,   driveTimeHours: 1.0 },
+        { id: 't3', maxMiles: null, driveTimeHours: 2.0 },
       ]},
       { type: 'checkbox', label: 'Add-ons', required: false, options: [
         { id: 'a1', label: 'Packing & Unpacking', price: 150 },
@@ -169,22 +176,22 @@ const TEMPLATES: TemplateConfig[] = [
     id: 'moving_junk',
     icon: '🗑️',
     name: 'Junk Removal',
-    tagline: 'Radius tiers × load size multiplier',
+    tagline: 'Flat rate + drive time hours × load rate',
     brandColor: '#1a1a2e',
     formName: 'Junk Removal Quote',
     formDesc: 'Get an instant estimate for junk removal.',
     submitLabel: 'Get My Quote →',
     fields: [
       { type: 'radio', label: 'Load Size', required: true, options: [
-        { id: 'j1', label: 'Small Load (¼ truck)',  price: 150 },
-        { id: 'j2', label: 'Half Truck',            price: 200 },
-        { id: 'j3', label: 'Full Truck',            price: 300 },
-        { id: 'j4', label: 'Two+ Trucks',           price: 450 },
+        { id: 'j1', label: 'Small Load (¼ truck)',  price: 100, hours: 1 },
+        { id: 'j2', label: 'Half Truck',            price: 100, hours: 2 },
+        { id: 'j3', label: 'Full Truck',            price: 100, hours: 3 },
+        { id: 'j4', label: 'Two+ Trucks',           price: 100, hours: 5 },
       ]},
       { type: 'route', label: 'Pickup Location', required: true, locationMode: 'single', routeChargeType: 'radius_tiers', baseRateFieldId: '__idx:0__', radiusTiers: [
-        { id: 't1', maxMiles: 15,   multiplier: 1.0 },
-        { id: 't2', maxMiles: 30,   multiplier: 1.3 },
-        { id: 't3', maxMiles: null, multiplier: 1.6 },
+        { id: 't1', maxMiles: 15,   driveTimeHours: 0.5 },
+        { id: 't2', maxMiles: 30,   driveTimeHours: 1.0 },
+        { id: 't3', maxMiles: null, driveTimeHours: 1.5 },
       ]},
       { type: 'checkbox', label: 'Add-ons', required: false, options: [
         { id: 'ja1', label: 'Same-day service',    price: 50 },
@@ -896,7 +903,7 @@ function CanvasPreview({
                       {(f.radiusTiers ?? []).length > 0 && (
                         <div style={{ marginTop: 7 }}>
                           <div style={{ fontSize: '0.62rem', fontWeight: 700, color: 'var(--muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>
-                            Distance tiers (base rate × multiplier)
+                            Distance tiers (drive time added)
                           </div>
                           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                             {(f.radiusTiers ?? []).slice(0, 4).map((t, i, arr) => {
@@ -904,7 +911,7 @@ function CanvasPreview({
                               const range = t.maxMiles ? `${prevMax}–${t.maxMiles}mi` : `${prevMax}mi+`
                               return (
                                 <span key={i} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 7px', fontSize: '0.68rem', color: 'var(--text)' }}>
-                                  {range} <strong>×{t.multiplier ?? 1}</strong>
+                                  {range} <strong>+{t.driveTimeHours ?? 0}hr</strong>
                                 </span>
                               )
                             })}
@@ -1268,7 +1275,7 @@ function RouteTestInput({ field, value, onChange }: {
           </div>
           {matchedTier && (
             <div style={{ fontSize: '0.7rem', color: 'var(--accent)', fontFamily: "'DM Mono', monospace", marginTop: 1 }}>
-              → tier: {tierRange} · ×{matchedTier.multiplier ?? 1}
+              → tier: {tierRange} · +{matchedTier.driveTimeHours ?? 0}hr drive
             </div>
           )}
         </div>
@@ -1591,9 +1598,9 @@ function PropsPanel({
           </div>
 
           <div className="prop-group">
-            <div className="prop-label" style={{ marginBottom: 4 }}>Base rate source</div>
+            <div className="prop-label" style={{ marginBottom: 4 }}>Hourly rate source</div>
             <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginBottom: 8, lineHeight: 1.4 }}>
-              Which field's selected option sets the base rate (e.g. Home Size → 2BR = $150/hr).
+              Which field's selected option price is the hourly rate (e.g. Home Size → 2BR = $150/hr).
             </div>
             <select
               className="prop-input"
@@ -1608,9 +1615,26 @@ function PropsPanel({
           </div>
 
           <div className="prop-group">
+            <div className="prop-label" style={{ marginBottom: 4 }}>Job hours source</div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginBottom: 8, lineHeight: 1.4 }}>
+              Which field's selected option hours are the job hours. Set hours on each option below.
+            </div>
+            <select
+              className="prop-input"
+              value={field.jobHoursFieldId ?? ''}
+              onChange={(e) => onSetProp(field.id, 'jobHoursFieldId', e.target.value || '')}
+            >
+              <option value="">— same as hourly rate field —</option>
+              {allFields.filter(f => f.id !== field.id && (f.type === 'radio' || f.type === 'dropdown')).map(f => (
+                <option key={f.id} value={f.id}>{f.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="prop-group">
             <div className="prop-label" style={{ marginBottom: 4 }}>Distance tiers</div>
             <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginBottom: 10, lineHeight: 1.4 }}>
-              Each tier multiplies the base rate. E.g. 2BR = $150 base × 1.5 (15–30mi) = $225 quote.
+              Each tier adds drive time hours. Total = hourly rate × (job hours + drive time hours).
             </div>
             {(() => {
               const sorted = [...(field.radiusTiers ?? [])].sort((a, b) => {
@@ -1646,19 +1670,19 @@ function PropsPanel({
                       </div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600 }}>Multiplier ×</div>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600 }}>Drive hrs</div>
                       <input
                         className="prop-input"
                         type="number"
                         min={0}
-                        step={0.01}
-                        placeholder="1.0"
-                        value={tier.multiplier}
+                        step={0.25}
+                        placeholder="0.5"
+                        value={tier.driveTimeHours ?? ''}
                         style={{ padding: '4px 6px', fontSize: '0.8rem', marginBottom: 0 }}
                         onChange={(e) => {
                           const tiers = [...(field.radiusTiers ?? [])]
                           const i = tiers.findIndex(t => t.id === tier.id)
-                          tiers[i] = { ...tier, multiplier: parseFloat(e.target.value) || 0 }
+                          tiers[i] = { ...tier, driveTimeHours: parseFloat(e.target.value) || 0 }
                           onSetTiers(field.id, tiers)
                         }}
                       />
@@ -1688,7 +1712,7 @@ function PropsPanel({
                 color: 'var(--accent)', fontSize: '0.75rem', cursor: 'pointer',
               }}
               onClick={() => {
-                const newTier: RadiusTier = { id: Math.random().toString(36).slice(2), maxMiles: null, multiplier: 1 }
+                const newTier: RadiusTier = { id: Math.random().toString(36).slice(2), maxMiles: null, driveTimeHours: 1 }
                 onSetTiers(field.id, [...(field.radiusTiers ?? []), newTier])
               }}
             >+ Add tier</button>
@@ -1822,10 +1846,13 @@ function PropsPanel({
         <div className="prop-group">
           <div className="prop-label">Options</div>
           {(() => {
-            const isBaseRateSource = allFields.some(
+            const isRateSource = allFields.some(
               f => f.type === 'route' && f.routeChargeType === 'radius_tiers' && f.baseRateFieldId === field.id
             )
-            const priceLabel = isBaseRateSource ? 'Base rate ($/hr)' : field.type === 'checkbox' ? 'Add-on price ($)' : 'Price ($)'
+            const isHoursSource = allFields.some(
+              f => f.type === 'route' && f.routeChargeType === 'radius_tiers' && f.jobHoursFieldId === field.id
+            )
+            const priceLabel = isRateSource ? 'Hourly rate ($/hr)' : field.type === 'checkbox' ? 'Add-on price ($)' : 'Price ($)'
             return (
               <div className="opts-list">
                 {(field.options ?? []).map((o) => (
@@ -1841,16 +1868,31 @@ function PropsPanel({
                       <button className="rm-btn" onClick={() => onRemoveOpt(field.id, o.id)}>✕</button>
                     </div>
                     <div style={{ display: 'flex', gap: 5 }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{priceLabel}</div>
-                        <input
-                          className="prop-input"
-                          type="number" min={0} step={0.01}
-                          value={o.price}
-                          style={{ marginBottom: 0 }}
-                          onChange={(e) => onSetOpt(field.id, o.id, 'price', parseFloat(e.target.value) || 0)}
-                        />
-                      </div>
+                      {!isHoursSource && (
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{priceLabel}</div>
+                          <input
+                            className="prop-input"
+                            type="number" min={0} step={0.01}
+                            value={o.price}
+                            style={{ marginBottom: 0 }}
+                            onChange={(e) => onSetOpt(field.id, o.id, 'price', parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                      )}
+                      {(isHoursSource || isRateSource) && (
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Job hours</div>
+                          <input
+                            className="prop-input"
+                            type="number" min={0} step={0.5}
+                            value={o.hours ?? ''}
+                            placeholder="e.g. 3"
+                            style={{ marginBottom: 0 }}
+                            onChange={(e) => onSetOpt(field.id, o.id, 'hours', parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -2383,11 +2425,15 @@ export default function FormBuilderPage() {
       id: uid(),
       options: f.options?.map((o) => ({ ...o, id: uid() })),
     }))
-    // Resolve __idx:N__ placeholders in baseRateFieldId
+    // Resolve __idx:N__ placeholders in baseRateFieldId and jobHoursFieldId
     fields.forEach((f) => {
       if (f.baseRateFieldId?.startsWith('__idx:')) {
         const idx = parseInt(f.baseRateFieldId.replace('__idx:', '').replace('__', ''), 10)
         f.baseRateFieldId = fields[idx]?.id ?? undefined
+      }
+      if (f.jobHoursFieldId?.startsWith('__idx:')) {
+        const idx = parseInt(f.jobHoursFieldId.replace('__idx:', '').replace('__', ''), 10)
+        f.jobHoursFieldId = fields[idx]?.id ?? undefined
       }
     })
     setFields(fields)

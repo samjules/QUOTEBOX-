@@ -73,10 +73,14 @@ export function computeBreakdown(
 
   for (const f of fields) {
     if (f.type === 'radio' || f.type === 'dropdown') {
-      const isBaseRateSource = fields.some(
+      // Skip fields consumed by a radius_tiers route as rate or hours source
+      const isRateSource = fields.some(
         (rf) => rf.type === 'route' && rf.routeChargeType === 'radius_tiers' && rf.baseRateFieldId === f.id
       )
-      if (isBaseRateSource) continue
+      const isHoursSource = fields.some(
+        (rf) => rf.type === 'route' && rf.routeChargeType === 'radius_tiers' && rf.jobHoursFieldId === f.id
+      )
+      if (isRateSource || isHoursSource) continue
       const opt = f.options?.find((o) => o.id === (answers[f.id] as string))
       if (opt) {
         const amount = opt.hours ? opt.price * opt.hours : opt.price
@@ -111,23 +115,41 @@ export function computeBreakdown(
         })
         const match = sorted.find((t) => t.maxMiles === null || rd.distanceMiles <= t.maxMiles)
         if (match) {
-          let baseRate = 0
-          let baseLabel = 'base rate'
+          // Hourly rate from base rate field
+          let hourlyRate = 0
+          let rateLabel = 'rate'
           if (f.baseRateFieldId) {
-            const baseField = fields.find((f2) => f2.id === f.baseRateFieldId)
-            if (baseField) {
-              const selOpt = baseField.options?.find((o) => o.id === (answers[baseField.id] as string))
-              if (selOpt) { baseRate = selOpt.price; baseLabel = selOpt.label }
+            const rateField = fields.find((f2) => f2.id === f.baseRateFieldId)
+            if (rateField) {
+              const selOpt = rateField.options?.find((o) => o.id === (answers[rateField.id] as string))
+              if (selOpt) { hourlyRate = selOpt.price; rateLabel = selOpt.label }
             }
           }
-          const multiplier = match.multiplier ?? 1
+          // Job hours from job hours field (or fall back to base rate field's option.hours)
+          let jobHours = 0
+          if (f.jobHoursFieldId) {
+            const hoursField = fields.find((f2) => f2.id === f.jobHoursFieldId)
+            if (hoursField) {
+              const selOpt = hoursField.options?.find((o) => o.id === (answers[hoursField.id] as string))
+              if (selOpt?.hours != null) jobHours = selOpt.hours
+            }
+          } else if (f.baseRateFieldId) {
+            // fall back: job hours on the rate field's selected option
+            const rateField = fields.find((f2) => f2.id === f.baseRateFieldId)
+            if (rateField) {
+              const selOpt = rateField.options?.find((o) => o.id === (answers[rateField.id] as string))
+              if (selOpt?.hours != null) jobHours = selOpt.hours
+            }
+          }
+          const driveHrs = match.driveTimeHours ?? 0
+          const totalHours = jobHours + driveHrs
+          const amount = hourlyRate * totalHours
           const tierIdx = sorted.indexOf(match)
           const prevMax = tierIdx === 0 ? 0 : (sorted[tierIdx - 1].maxMiles ?? 0)
           const tierRange = match.maxMiles ? `${prevMax}–${match.maxMiles}mi` : `${prevMax}mi+`
-          const amount = baseRate * multiplier
           lines.push({
             label: f.label,
-            detail: `${rd.distanceMiles.toFixed(1)}mi → tier ${tierRange} · $${baseRate} (${baseLabel}) × ${multiplier}`,
+            detail: `${rd.distanceMiles.toFixed(1)}mi → ${tierRange} (${driveHrs}hr drive) · $${hourlyRate}/hr (${rateLabel}) × ${totalHours}hr total`,
             amount,
           })
         }

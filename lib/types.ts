@@ -41,7 +41,7 @@ export interface ConditionalRule {
 export interface RadiusTier {
   id: string
   maxMiles: number | null  // null = unlimited / catch-all tier
-  multiplier: number       // applied to the base rate from the linked home-size field
+  driveTimeHours: number   // hours of drive time added for this distance band
 }
 
 export interface FormField {
@@ -61,8 +61,9 @@ export interface FormField {
   freeMiles?: number         // don't charge mileage until this many miles
   freeMinutes?: number       // don't charge drive time until this many minutes (stored as minutes; UI shows hours)
   baseAddress?: string       // optional fixed start location (business base)
-  radiusTiers?: RadiusTier[] // distance tiers — each multiplies the base rate from baseRateFieldId
-  baseRateFieldId?: string   // radius_tiers: which radio/dropdown field's option price is the base rate
+  radiusTiers?: RadiusTier[] // distance tiers — each adds driveTimeHours to the job
+  baseRateFieldId?: string   // radius_tiers: field whose selected option.price is the hourly rate
+  jobHoursFieldId?: string   // radius_tiers: field whose selected option.hours is the job hours
   imageUrl?: string
   conditionalRules?: ConditionalRule[]
   // Draw Area field
