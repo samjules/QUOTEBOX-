@@ -158,7 +158,7 @@ const TEMPLATES: TemplateConfig[] = [
         { id: 'h4', label: '5 hours',  price: 0, hours: 5 },
         { id: 'h5', label: '6+ hours', price: 0, hours: 6 },
       ]},
-      { type: 'route', label: 'Moving Route', required: true, routeChargeType: 'radius_tiers', baseRateFieldId: '__idx:0__', jobHoursFieldId: '__idx:1__', radiusTiers: [
+      { type: 'route', label: 'Moving Route', required: true, routeChargeType: 'radius_tiers', radiusTiers: [
         { id: 't1', maxMiles: 20,   driveCharge: 50 },
         { id: 't2', maxMiles: 40,   driveCharge: 100 },
         { id: 't3', maxMiles: null, driveCharge: 175 },
@@ -188,7 +188,7 @@ const TEMPLATES: TemplateConfig[] = [
         { id: 'j3', label: 'Full Truck',            price: 100, hours: 3 },
         { id: 'j4', label: 'Two+ Trucks',           price: 100, hours: 5 },
       ]},
-      { type: 'route', label: 'Pickup Location', required: true, locationMode: 'single', routeChargeType: 'radius_tiers', baseRateFieldId: '__idx:0__', radiusTiers: [
+      { type: 'route', label: 'Pickup Location', required: true, locationMode: 'single', routeChargeType: 'radius_tiers', radiusTiers: [
         { id: 't1', maxMiles: 20,   driveCharge: 50 },
         { id: 't2', maxMiles: 40,   driveCharge: 100 },
         { id: 't3', maxMiles: null, driveCharge: 150 },
@@ -1382,12 +1382,9 @@ function TestPanel({ fields, currency, minQuote, onClose }: {
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {fields.map((f) => {
           if (f.type === 'textarea' || f.type === 'image' || f.type === 'booking') return null
-          const isBaseRateSource = fields.some(
-            (rf) => rf.type === 'route' && rf.baseRateFieldId === f.id
-          )
           return (
             <div key={f.id} style={sectionStyle}>
-              <div style={labelStyle}>{f.label}{isBaseRateSource ? ' (base rate)' : ''}</div>
+              <div style={labelStyle}>{f.label}</div>
 
               {(f.type === 'radio' || f.type === 'dropdown') && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -1642,40 +1639,6 @@ function PropsPanel({
           </div>
 
           <div className="prop-group">
-            <div className="prop-label" style={{ marginBottom: 4 }}>Hourly rate source</div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginBottom: 8, lineHeight: 1.4 }}>
-              Which field's selected option price is the hourly rate (e.g. Home Size → 2BR = $150/hr).
-            </div>
-            <select
-              className="prop-input"
-              value={field.baseRateFieldId ?? ''}
-              onChange={(e) => onSetProp(field.id, 'baseRateFieldId', e.target.value)}
-            >
-              <option value="">— not set —</option>
-              {allFields.filter(f => f.id !== field.id && (f.type === 'radio' || f.type === 'dropdown')).map(f => (
-                <option key={f.id} value={f.id}>{f.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="prop-group">
-            <div className="prop-label" style={{ marginBottom: 4 }}>Job hours source</div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginBottom: 8, lineHeight: 1.4 }}>
-              Which field's selected option hours are the job hours. Set hours on each option below.
-            </div>
-            <select
-              className="prop-input"
-              value={field.jobHoursFieldId ?? ''}
-              onChange={(e) => onSetProp(field.id, 'jobHoursFieldId', e.target.value || '')}
-            >
-              <option value="">— same as hourly rate field —</option>
-              {allFields.filter(f => f.id !== field.id && (f.type === 'radio' || f.type === 'dropdown')).map(f => (
-                <option key={f.id} value={f.id}>{f.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="prop-group">
             <div className="prop-label" style={{ marginBottom: 4 }}>Distance tiers</div>
             <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginBottom: 10, lineHeight: 1.4 }}>
               Each tier adds a flat drive charge. Estimate = rate × hours + drive charge + extras.
@@ -1893,13 +1856,7 @@ function PropsPanel({
         <div className="prop-group">
           <div className="prop-label">Options</div>
           {(() => {
-            const isRateSource = allFields.some(
-              f => f.type === 'route' && f.baseRateFieldId === field.id
-            )
-            const isHoursSource = allFields.some(
-              f => f.type === 'route' && f.jobHoursFieldId === field.id
-            )
-            const priceLabel = isRateSource ? 'Hourly rate ($/hr)' : field.type === 'checkbox' ? 'Add-on price ($)' : 'Price ($)'
+            const priceLabel = field.type === 'checkbox' ? 'Add-on price ($)' : 'Price ($)'
             return (
               <div className="opts-list">
                 {(field.options ?? []).map((o) => (
@@ -1915,21 +1872,19 @@ function PropsPanel({
                       <button className="rm-btn" onClick={() => onRemoveOpt(field.id, o.id)}>✕</button>
                     </div>
                     <div style={{ display: 'flex', gap: 5 }}>
-                      {!isHoursSource && (
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{priceLabel}</div>
+                        <input
+                          className="prop-input"
+                          type="number" min={0} step={0.01}
+                          value={o.price}
+                          style={{ marginBottom: 0 }}
+                          onChange={(e) => onSetOpt(field.id, o.id, 'price', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      {(field.type === 'radio' || field.type === 'dropdown') && (
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{priceLabel}</div>
-                          <input
-                            className="prop-input"
-                            type="number" min={0} step={0.01}
-                            value={o.price}
-                            style={{ marginBottom: 0 }}
-                            onChange={(e) => onSetOpt(field.id, o.id, 'price', parseFloat(e.target.value) || 0)}
-                          />
-                        </div>
-                      )}
-                      {(isHoursSource || isRateSource) && (
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Job hours</div>
+                          <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Hours</div>
                           <input
                             className="prop-input"
                             type="number" min={0} step={0.5}
@@ -2444,8 +2399,6 @@ export default function FormBuilderPage() {
             label: 'Moving Route',
             required: true,
             routeChargeType: 'radius_tiers',
-            baseRateFieldId: homeSizeId,
-            jobHoursFieldId: homeSizeId,
             radiusTiers: [
               { id: uid(), maxMiles: 20,   driveCharge: 50 },
               { id: uid(), maxMiles: 40,   driveCharge: 100 },
@@ -2518,17 +2471,6 @@ export default function FormBuilderPage() {
       id: uid(),
       options: f.options?.map((o) => ({ ...o, id: uid() })),
     }))
-    // Resolve __idx:N__ placeholders in baseRateFieldId and jobHoursFieldId
-    fields.forEach((f) => {
-      if (f.baseRateFieldId?.startsWith('__idx:')) {
-        const idx = parseInt(f.baseRateFieldId.replace('__idx:', '').replace('__', ''), 10)
-        f.baseRateFieldId = fields[idx]?.id ?? undefined
-      }
-      if (f.jobHoursFieldId?.startsWith('__idx:')) {
-        const idx = parseInt(f.jobHoursFieldId.replace('__idx:', '').replace('__', ''), 10)
-        f.jobHoursFieldId = fields[idx]?.id ?? undefined
-      }
-    })
     setFields(fields)
     setFormName(tpl.formName)
     setFormDesc(tpl.formDesc)
