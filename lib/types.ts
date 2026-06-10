@@ -21,6 +21,7 @@ export interface FieldOption {
   label: string
   price: number
   hours?: number                                                      // optional hours — total = price × hours
+  multiplier?: number                                                 // scales the matching radius tier base rate (e.g. 1.3 for 2BR)
   // Per-option rate overrides applied to other fields when this option is selected
   rateOverrides?: Record<string, number>                              // fieldId → ratePerUnit (number fields)
   routeOverrides?: Record<string, { mile?: number; min?: number }>   // fieldId → route rates

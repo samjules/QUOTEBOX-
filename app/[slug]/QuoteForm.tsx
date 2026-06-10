@@ -190,7 +190,21 @@ function computeTotal(
             return a.maxMiles - b.maxMiles
           })
           const match = sorted.find((t) => t.maxMiles === null || rd.distanceMiles <= t.maxMiles)
-          if (match) total += match.price
+          if (match) {
+            let tierMultiplier = 1
+            for (const f2 of fields) {
+              if (f2.type === 'radio' || f2.type === 'dropdown') {
+                const opt = f2.options?.find((o) => o.id === (answers[f2.id] as string))
+                if (opt?.multiplier !== undefined) tierMultiplier *= opt.multiplier
+              } else if (f2.type === 'checkbox') {
+                for (const oid of (answers[f2.id] as string[]) ?? []) {
+                  const opt = f2.options?.find((o) => o.id === oid)
+                  if (opt?.multiplier !== undefined) tierMultiplier *= opt.multiplier
+                }
+              }
+            }
+            total += match.price * tierMultiplier
+          }
         } else {
           const routeOvr = activeRouteOverrides[f.id]
           const effectiveMileRate = routeOvr?.mile !== undefined

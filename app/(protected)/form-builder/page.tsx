@@ -56,11 +56,13 @@ function isColorDark(hex: string): boolean {
 function makeField(type: FormField['type']): FormField {
   const defaults: Record<FormField['type'], Omit<FormField, 'id' | 'type'>> = {
     radio: {
-      label: 'Choose a Package',
+      label: 'Home Size',
       required: true,
       options: [
-        { id: uid(), label: 'Starter', price: 99 },
-        { id: uid(), label: 'Pro', price: 199 },
+        { id: uid(), label: 'Studio / 1 Bed', price: 0, multiplier: 1.0 },
+        { id: uid(), label: '2 Bedrooms', price: 0, multiplier: 1.3 },
+        { id: uid(), label: '3 Bedrooms', price: 0, multiplier: 1.6 },
+        { id: uid(), label: '4+ Bedrooms', price: 0, multiplier: 2.0 },
       ],
     },
     dropdown: {
@@ -68,36 +70,37 @@ function makeField(type: FormField['type']): FormField {
       required: true,
       options: [
         { id: uid(), label: 'Option A', price: 0 },
-        { id: uid(), label: 'Option B', price: 50 },
+        { id: uid(), label: 'Option B', price: 0 },
       ],
     },
     checkbox: {
-      label: 'Add-ons',
+      label: 'Additional Services',
       required: false,
       options: [
-        { id: uid(), label: 'Extra feature', price: 25 },
-        { id: uid(), label: 'Rush delivery', price: 50 },
+        { id: uid(), label: 'Packing & Unpacking', price: 150 },
+        { id: uid(), label: 'Piano / Heavy Items', price: 100 },
       ],
     },
     number: {
-      label: 'Quantity',
+      label: 'Number of Movers',
       required: false,
-      placeholder: '1',
+      placeholder: '2',
       ratePerUnit: 0,
     },
     textarea: {
-      label: 'Project Details',
+      label: 'Additional Notes',
       required: false,
-      placeholder: 'Tell us more…',
+      placeholder: 'Special instructions, fragile items, stairs…',
     },
     route: {
-      label: 'Service Location',
+      label: 'Moving Route',
       required: true,
       routeChargeType: 'radius_tiers',
       radiusTiers: [
-        { id: 'tier1', maxMiles: 15, price: 99 },
-        { id: 'tier2', maxMiles: 30, price: 149 },
-        { id: 'tier3', maxMiles: null, price: 199 },
+        { id: 'tier1', maxMiles: 10, price: 200 },
+        { id: 'tier2', maxMiles: 25, price: 300 },
+        { id: 'tier3', maxMiles: 50, price: 450 },
+        { id: 'tier4', maxMiles: null, price: 600 },
       ],
     },
     image: {
@@ -133,197 +136,62 @@ interface TemplateConfig {
 
 const TEMPLATES: TemplateConfig[] = [
   {
-    id: 'lawn',
-    icon: '🌿',
-    name: 'Lawn & Garden',
-    tagline: 'Mowing, landscaping, hedging & more',
-    brandColor: '#10B981',
-    formName: 'Lawn & Garden Quote',
-    formDesc: 'Get an instant quote for your lawn care service.',
-    submitLabel: 'Get My Quote →',
-    fields: [
-      { type: 'dropdown', label: 'Service Type', required: true, options: [
-        { id: 'x', label: 'Lawn Mowing', price: 0 },
-        { id: 'x', label: 'Hedge Trimming', price: 0 },
-        { id: 'x', label: 'Full Landscaping', price: 0 },
-        { id: 'x', label: 'Leaf Removal', price: 0 },
-      ]},
-      { type: 'draw_area', label: 'Draw Your Lawn', required: true, ratePerSqFt: 0.05 },
-      { type: 'route', label: 'Service Location', required: true, routeChargeType: 'radius_tiers', radiusTiers: [
-        { id: 'tier1', maxMiles: 15, price: 99 },
-        { id: 'tier2', maxMiles: 30, price: 149 },
-        { id: 'tier3', maxMiles: null, price: 199 },
-      ] },
-    ],
-  },
-  {
-    id: 'cleaning',
-    icon: '🧹',
-    name: 'Cleaning Service',
-    tagline: 'Residential & commercial cleaning',
-    brandColor: '#3B82F6',
-    formName: 'Cleaning Service Quote',
-    formDesc: 'Get an instant quote for your cleaning needs.',
+    id: 'moving_local',
+    icon: '🚛',
+    name: 'Local Move',
+    tagline: 'Radius tiers × home size multiplier',
+    brandColor: '#F97316',
+    formName: 'Moving Quote',
+    formDesc: 'Get an instant estimate for your local move.',
     submitLabel: 'Get My Quote →',
     fields: [
       { type: 'radio', label: 'Home Size', required: true, options: [
-        { id: 'x', label: 'Studio / 1 Bed', price: 89 },
-        { id: 'x', label: '2 Bedrooms', price: 129 },
-        { id: 'x', label: '3 Bedrooms', price: 169 },
-        { id: 'x', label: '4+ Bedrooms', price: 209 },
-      ]},
-      { type: 'checkbox', label: 'Add-ons', required: false, options: [
-        { id: 'x', label: 'Deep Clean', price: 50 },
-        { id: 'x', label: 'Oven & Appliances', price: 30 },
-        { id: 'x', label: 'Window Cleaning', price: 40 },
-        { id: 'x', label: 'Carpet Steam Clean', price: 60 },
-      ]},
-      { type: 'textarea', label: 'Anything else we should know?', required: false, placeholder: 'Special instructions, pets, access details…' },
-    ],
-  },
-  {
-    id: 'moving',
-    icon: '🚛',
-    name: 'Moving Service',
-    tagline: 'Local & long-distance moves',
-    brandColor: '#F97316',
-    formName: 'Moving Service Quote',
-    formDesc: 'Tell us about your move and get an instant estimate.',
-    submitLabel: 'Get My Quote →',
-    fields: [
-      { type: 'radio', label: 'Move Size', required: true, options: [
-        { id: 'x', label: 'Studio / 1 Bed', price: 299 },
-        { id: 'x', label: '2 Bedrooms', price: 449 },
-        { id: 'x', label: '3 Bedrooms', price: 599 },
-        { id: 'x', label: '4+ Bedrooms', price: 799 },
+        { id: 'sz1', label: 'Studio / 1 Bed', price: 0, multiplier: 1.0 },
+        { id: 'sz2', label: '2 Bedrooms',     price: 0, multiplier: 1.3 },
+        { id: 'sz3', label: '3 Bedrooms',     price: 0, multiplier: 1.6 },
+        { id: 'sz4', label: '4+ Bedrooms',    price: 0, multiplier: 2.0 },
       ]},
       { type: 'route', label: 'Moving Route', required: true, routeChargeType: 'radius_tiers', radiusTiers: [
-        { id: 'tier1', maxMiles: 15, price: 99 },
-        { id: 'tier2', maxMiles: 30, price: 149 },
-        { id: 'tier3', maxMiles: null, price: 199 },
-      ] },
-      { type: 'checkbox', label: 'Additional Services', required: false, options: [
-        { id: 'x', label: 'Packing & Unpacking', price: 150 },
-        { id: 'x', label: 'Piano / Heavy Items', price: 100 },
-        { id: 'x', label: 'Storage (1 month)', price: 80 },
+        { id: 't1', maxMiles: 10,   price: 200 },
+        { id: 't2', maxMiles: 25,   price: 300 },
+        { id: 't3', maxMiles: 50,   price: 450 },
+        { id: 't4', maxMiles: null, price: 600 },
       ]},
-    ],
-  },
-  {
-    id: 'photography',
-    icon: '📷',
-    name: 'Photography',
-    tagline: 'Portraits, events & weddings',
-    brandColor: '#8B5CF6',
-    formName: 'Photography Quote',
-    formDesc: 'Tell us about your shoot and get a quote in minutes.',
-    submitLabel: 'Get My Quote →',
-    fields: [
-      { type: 'radio', label: 'Session Type', required: true, options: [
-        { id: 'x', label: 'Portrait / Headshots', price: 199 },
-        { id: 'x', label: 'Family Session', price: 299 },
-        { id: 'x', label: 'Corporate Event', price: 499 },
-        { id: 'x', label: 'Wedding', price: 1499 },
-      ]},
-      { type: 'number', label: 'Extra Hours', required: false, placeholder: '0', ratePerUnit: 150 },
       { type: 'checkbox', label: 'Add-ons', required: false, options: [
-        { id: 'x', label: 'Drone Footage', price: 200 },
-        { id: 'x', label: 'Rush Editing (48 hrs)', price: 100 },
-        { id: 'x', label: 'Printed Album', price: 120 },
+        { id: 'a1', label: 'Packing & Unpacking', price: 150 },
+        { id: 'a2', label: 'Piano / Heavy Items',  price: 100 },
+        { id: 'a3', label: 'Long Carry (>75 ft)',  price: 75  },
+        { id: 'a4', label: 'Storage (1 month)',    price: 80  },
       ]},
+      { type: 'textarea', label: 'Additional Notes', required: false, placeholder: 'Special instructions, fragile items, stairs…' },
     ],
   },
   {
-    id: 'pressure',
-    icon: '💧',
-    name: 'Pressure Washing',
-    tagline: 'Driveways, decks & house exteriors',
-    brandColor: '#06B6D4',
-    formName: 'Pressure Washing Quote',
-    formDesc: 'Get a quick quote for pressure washing services.',
+    id: 'moving_junk',
+    icon: '🗑️',
+    name: 'Junk Removal',
+    tagline: 'Radius tiers × load size multiplier',
+    brandColor: '#1a1a2e',
+    formName: 'Junk Removal Quote',
+    formDesc: 'Get an instant estimate for junk removal.',
     submitLabel: 'Get My Quote →',
     fields: [
-      { type: 'radio', label: 'Surface Type', required: true, options: [
-        { id: 'x', label: 'Driveway', price: 99 },
-        { id: 'x', label: 'Deck / Patio', price: 129 },
-        { id: 'x', label: 'House Exterior', price: 249 },
-        { id: 'x', label: 'Fence', price: 79 },
+      { type: 'radio', label: 'Load Size', required: true, options: [
+        { id: 'j1', label: 'Small Load (¼ truck)',  price: 0, multiplier: 0.6 },
+        { id: 'j2', label: 'Half Truck',            price: 0, multiplier: 0.8 },
+        { id: 'j3', label: 'Full Truck',            price: 0, multiplier: 1.0 },
+        { id: 'j4', label: 'Two+ Trucks',           price: 0, multiplier: 1.6 },
       ]},
-      { type: 'draw_area', label: 'Draw Your Area', required: true, ratePerSqFt: 0.08 },
-      { type: 'route', label: 'Service Address', required: true, routeChargeType: 'radius_tiers', radiusTiers: [
-        { id: 'tier1', maxMiles: 15, price: 99 },
-        { id: 'tier2', maxMiles: 30, price: 149 },
-        { id: 'tier3', maxMiles: null, price: 199 },
-      ] },
-    ],
-  },
-  {
-    id: 'handyman',
-    icon: '🔧',
-    name: 'Handyman',
-    tagline: 'Home repairs & installations',
-    brandColor: '#EF4444',
-    formName: 'Handyman Quote',
-    formDesc: 'Describe the job and get an instant hourly estimate.',
-    submitLabel: 'Get My Quote →',
-    fields: [
-      { type: 'dropdown', label: 'Service Type', required: true, options: [
-        { id: 'x', label: 'Furniture Assembly', price: 0 },
-        { id: 'x', label: 'TV Mounting', price: 0 },
-        { id: 'x', label: 'Shelf / Cabinet Install', price: 0 },
-        { id: 'x', label: 'General Repairs', price: 0 },
-        { id: 'x', label: 'Painting', price: 0 },
+      { type: 'route', label: 'Pickup Location', required: true, locationMode: 'single', routeChargeType: 'radius_tiers', radiusTiers: [
+        { id: 't1', maxMiles: 10,   price: 150 },
+        { id: 't2', maxMiles: 25,   price: 200 },
+        { id: 't3', maxMiles: 50,   price: 275 },
+        { id: 't4', maxMiles: null, price: 350 },
       ]},
-      { type: 'number', label: 'Estimated Hours', required: true, placeholder: '2', ratePerUnit: 85 },
-      { type: 'textarea', label: 'Job Description', required: false, placeholder: 'Tell us more about the work needed…' },
-    ],
-  },
-  {
-    id: 'roofing',
-    icon: '🏠',
-    name: 'Roofing',
-    tagline: 'Repairs, replacement & inspections',
-    brandColor: '#78350F',
-    formName: 'Roofing Quote',
-    formDesc: 'Trace your roof on the map for an instant estimate.',
-    submitLabel: 'Get My Quote →',
-    fields: [
-      { type: 'radio', label: 'Service Type', required: true, options: [
-        { id: 'x', label: 'Roof Inspection', price: 99 },
-        { id: 'x', label: 'Repair / Patching', price: 0 },
-        { id: 'x', label: 'Full Replacement', price: 0 },
-        { id: 'x', label: 'New Installation', price: 0 },
-      ]},
-      { type: 'dropdown', label: 'Roofing Material', required: true, options: [
-        { id: 'x', label: 'Asphalt Shingles', price: 0 },
-        { id: 'x', label: 'Metal Roofing', price: 0 },
-        { id: 'x', label: 'Tile / Slate', price: 0 },
-        { id: 'x', label: 'Flat / TPO', price: 0 },
-      ]},
-      { type: 'draw_area', label: 'Trace Your Roof', required: true, ratePerSqFt: 4.50 },
-    ],
-  },
-  {
-    id: 'painting',
-    icon: '🎨',
-    name: 'Painting',
-    tagline: 'Interior & exterior house painting',
-    brandColor: '#D97706',
-    formName: 'Painting Quote',
-    formDesc: 'Trace the area to be painted for an instant price.',
-    submitLabel: 'Get My Quote →',
-    fields: [
-      { type: 'radio', label: 'Project Type', required: true, options: [
-        { id: 'x', label: 'Interior Walls', price: 0 },
-        { id: 'x', label: 'Exterior Siding', price: 0 },
-        { id: 'x', label: 'Fence / Deck', price: 0 },
-        { id: 'x', label: 'Ceiling', price: 0 },
-      ]},
-      { type: 'draw_area', label: 'Draw the Area', required: true, ratePerSqFt: 2.00 },
       { type: 'checkbox', label: 'Add-ons', required: false, options: [
-        { id: 'x', label: 'Primer Coat', price: 80 },
-        { id: 'x', label: 'Trim & Doors', price: 120 },
-        { id: 'x', label: 'Ceiling Paint', price: 90 },
+        { id: 'ja1', label: 'Same-day service',    price: 50 },
+        { id: 'ja2', label: 'Heavy items (piano)', price: 75 },
+        { id: 'ja3', label: 'Appliance removal',   price: 50 },
       ]},
     ],
   },
@@ -1028,17 +896,22 @@ function CanvasPreview({
                         </span>
                       </div>
                       {(f.radiusTiers ?? []).length > 0 && (
-                        <div style={{ marginTop: 7, fontSize: '0.7rem', color: 'var(--muted)', display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-                          {(f.radiusTiers ?? []).slice(0, 3).map((t, i) => (
-                            <span key={i} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 7px' }}>
-                              {t.maxMiles ? `≤${t.maxMiles}mi` : '∞'} → ${t.price}
-                            </span>
-                          ))}
-                          {(f.radiusTiers ?? []).length > 3 && (
-                            <span style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 7px' }}>
-                              +{(f.radiusTiers ?? []).length - 3} more
-                            </span>
-                          )}
+                        <div style={{ marginTop: 7 }}>
+                          <div style={{ fontSize: '0.62rem', fontWeight: 700, color: 'var(--muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>
+                            Base rates (× multiplier from home size)
+                          </div>
+                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                            {(f.radiusTiers ?? []).slice(0, 4).map((t, i) => (
+                              <span key={i} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 7px', fontSize: '0.68rem', color: 'var(--text)' }}>
+                                {t.maxMiles ? `≤${t.maxMiles}mi` : '∞'} <strong>${t.price}</strong>
+                              </span>
+                            ))}
+                            {(f.radiusTiers ?? []).length > 4 && (
+                              <span style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 7px', fontSize: '0.68rem', color: 'var(--muted)' }}>
+                                +{(f.radiusTiers ?? []).length - 4} more
+                              </span>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1442,7 +1315,7 @@ function PropsPanel({
           <div className="prop-group">
               <div className="prop-label" style={{ marginBottom: 8 }}>Distance tiers</div>
               <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginBottom: 10, lineHeight: 1.4 }}>
-                Set a flat price for each distance band. Tiers are checked in order — the first one where the distance fits is used. The last tier with no max applies to any distance beyond the previous tiers.
+                Set a base rate per distance band. The first matching tier is used, then multiplied by the home size (or other option) multiplier. E.g. ≤10mi base $200 × 2BR multiplier 1.3 = $260 quote.
               </div>
               {(field.radiusTiers ?? []).map((tier, idx) => (
                 <div key={tier.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
@@ -1464,7 +1337,7 @@ function PropsPanel({
                     />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginBottom: 2 }}>Flat price ($)</div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginBottom: 2 }}>Base rate ($)</div>
                     <input
                       className="prop-input"
                       type="number"
@@ -1635,59 +1508,53 @@ function PropsPanel({
       {hasOpts && (
         <div className="prop-group">
           <div className="prop-label">Options</div>
-          <div className="opts-list">
-            {(field.options ?? []).map((o) => (
-              <div key={o.id} className="opt-row" style={{ flexWrap: 'wrap', gap: 5 }}>
-                <input
-                  className="prop-input"
-                  value={o.label}
-                  onChange={(e) =>
-                    onSetOpt(field.id, o.id, 'label', e.target.value)
-                  }
-                />
-                <input
-                  className="prop-input opt-price"
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={o.price}
-                  title="Rate ($)"
-                  onChange={(e) =>
-                    onSetOpt(
-                      field.id,
-                      o.id,
-                      'price',
-                      parseFloat(e.target.value) || 0
-                    )
-                  }
-                />
-                <input
-                  className="prop-input"
-                  type="number"
-                  min={0}
-                  step={0.5}
-                  placeholder="hrs"
-                  title="Hours (optional)"
-                  value={o.hours || ''}
-                  onChange={(e) =>
-                    onSetOpt(
-                      field.id,
-                      o.id,
-                      'hours',
-                      parseFloat(e.target.value) || 0
-                    )
-                  }
-                  style={{ width: 52, flexShrink: 0, fontSize: '0.78rem', textAlign: 'center' }}
-                />
-                <button
-                  className="rm-btn"
-                  onClick={() => onRemoveOpt(field.id, o.id)}
-                >
-                  ✕
-                </button>
+          {(() => {
+            const hasTierRoute = allFields.some(f => f.type === 'route' && f.routeChargeType === 'radius_tiers')
+            return (
+              <div className="opts-list">
+                {(field.options ?? []).map((o) => (
+                  <div key={o.id} style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 6, padding: '7px 9px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <input
+                        className="prop-input"
+                        value={o.label}
+                        placeholder="Option label"
+                        style={{ flex: 1, marginBottom: 0 }}
+                        onChange={(e) => onSetOpt(field.id, o.id, 'label', e.target.value)}
+                      />
+                      <button className="rm-btn" onClick={() => onRemoveOpt(field.id, o.id)}>✕</button>
+                    </div>
+                    <div style={{ display: 'flex', gap: 5 }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Add-on price ($)</div>
+                        <input
+                          className="prop-input"
+                          type="number" min={0} step={0.01}
+                          value={o.price}
+                          style={{ marginBottom: 0 }}
+                          onChange={(e) => onSetOpt(field.id, o.id, 'price', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      {hasTierRoute && (
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Rate multiplier ×</div>
+                          <input
+                            className="prop-input"
+                            type="number" min={0} step={0.01}
+                            placeholder="1.0"
+                            title="Multiplies the distance tier base rate. e.g. 1.3 = 30% more for this home size."
+                            value={o.multiplier ?? ''}
+                            style={{ marginBottom: 0 }}
+                            onChange={(e) => onSetOpt(field.id, o.id, 'multiplier', parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            )
+          })()}
           <button
             className="add-opt-btn"
             onClick={() => onAddOpt(field.id)}
@@ -1702,7 +1569,8 @@ function PropsPanel({
         const rateFields = allFields.filter(
           (f) =>
             f.id !== field.id &&
-            (f.type === 'number' || f.type === 'draw_area' || (f.type === 'route' && f.routeChargeType !== 'none'))
+            (f.type === 'number' || f.type === 'draw_area' ||
+              (f.type === 'route' && f.routeChargeType !== 'none' && f.routeChargeType !== 'radius_tiers'))
         )
         if (rateFields.length === 0) return null
         return (
