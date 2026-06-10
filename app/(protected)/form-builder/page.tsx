@@ -93,9 +93,12 @@ function makeField(type: FormField['type']): FormField {
     route: {
       label: 'Service Location',
       required: true,
-      routeChargeType: 'mileage',
-      ratePerMile: 1.5,
-      ratePerMinute: 0,
+      routeChargeType: 'radius_tiers',
+      radiusTiers: [
+        { id: 'tier1', maxMiles: 15, price: 99 },
+        { id: 'tier2', maxMiles: 30, price: 149 },
+        { id: 'tier3', maxMiles: null, price: 199 },
+      ],
     },
     image: {
       label: 'Image',
@@ -146,7 +149,11 @@ const TEMPLATES: TemplateConfig[] = [
         { id: 'x', label: 'Leaf Removal', price: 0 },
       ]},
       { type: 'draw_area', label: 'Draw Your Lawn', required: true, ratePerSqFt: 0.05 },
-      { type: 'route', label: 'Service Location', required: true, routeChargeType: 'mileage', ratePerMile: 1.5, ratePerMinute: 0 },
+      { type: 'route', label: 'Service Location', required: true, routeChargeType: 'radius_tiers', radiusTiers: [
+        { id: 'tier1', maxMiles: 15, price: 99 },
+        { id: 'tier2', maxMiles: 30, price: 149 },
+        { id: 'tier3', maxMiles: null, price: 199 },
+      ] },
     ],
   },
   {
@@ -190,7 +197,11 @@ const TEMPLATES: TemplateConfig[] = [
         { id: 'x', label: '3 Bedrooms', price: 599 },
         { id: 'x', label: '4+ Bedrooms', price: 799 },
       ]},
-      { type: 'route', label: 'Moving Route', required: true, routeChargeType: 'both', ratePerMile: 2.0, ratePerMinute: 0.5 },
+      { type: 'route', label: 'Moving Route', required: true, routeChargeType: 'radius_tiers', radiusTiers: [
+        { id: 'tier1', maxMiles: 15, price: 99 },
+        { id: 'tier2', maxMiles: 30, price: 149 },
+        { id: 'tier3', maxMiles: null, price: 199 },
+      ] },
       { type: 'checkbox', label: 'Additional Services', required: false, options: [
         { id: 'x', label: 'Packing & Unpacking', price: 150 },
         { id: 'x', label: 'Piano / Heavy Items', price: 100 },
@@ -239,7 +250,11 @@ const TEMPLATES: TemplateConfig[] = [
         { id: 'x', label: 'Fence', price: 79 },
       ]},
       { type: 'draw_area', label: 'Draw Your Area', required: true, ratePerSqFt: 0.08 },
-      { type: 'route', label: 'Service Address', required: true, routeChargeType: 'mileage', ratePerMile: 1.5, ratePerMinute: 0 },
+      { type: 'route', label: 'Service Address', required: true, routeChargeType: 'radius_tiers', radiusTiers: [
+        { id: 'tier1', maxMiles: 15, price: 99 },
+        { id: 'tier2', maxMiles: 30, price: 149 },
+        { id: 'tier3', maxMiles: null, price: 199 },
+      ] },
     ],
   },
   {
@@ -1012,16 +1027,16 @@ function CanvasPreview({
                           12.4 mi · 22 min
                         </span>
                       </div>
-                      {f.routeChargeType !== 'none' && (
-                        <div style={{ marginTop: 7, fontSize: '0.7rem', color: 'var(--muted)', display: 'flex', gap: 7, flexWrap: 'wrap' }}>
-                          {(f.routeChargeType === 'mileage' || f.routeChargeType === 'both') && (
-                            <span style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 7px' }}>
-                              {currency}{f.ratePerMile ?? 0}/mi{f.freeMiles ? ` (after ${f.freeMiles} mi)` : ''}
+                      {(f.radiusTiers ?? []).length > 0 && (
+                        <div style={{ marginTop: 7, fontSize: '0.7rem', color: 'var(--muted)', display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                          {(f.radiusTiers ?? []).slice(0, 3).map((t, i) => (
+                            <span key={i} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 7px' }}>
+                              {t.maxMiles ? `≤${t.maxMiles}mi` : '∞'} → ${t.price}
                             </span>
-                          )}
-                          {(f.routeChargeType === 'drivetime' || f.routeChargeType === 'both') && (
+                          ))}
+                          {(f.radiusTiers ?? []).length > 3 && (
                             <span style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 7px' }}>
-                              {currency}{parseFloat(((f.ratePerMinute ?? 0) * 60).toFixed(2))}/hr{f.freeMinutes ? ` (after ${parseFloat((f.freeMinutes / 60).toFixed(2))}h)` : ''}
+                              +{(f.radiusTiers ?? []).length - 3} more
                             </span>
                           )}
                         </div>
@@ -1324,7 +1339,11 @@ function PropsPanel({
   if (!field) {
     return (
       <aside className="props-panel">
-        <div className="props-title">Properties</div>
+        <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+          <div style={{ fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+            Properties
+          </div>
+        </div>
         <div className="no-sel">
           <span className="icon">☜</span>
           Click a field to edit its properties
@@ -1341,7 +1360,11 @@ function PropsPanel({
 
   return (
     <aside className="props-panel">
-      <div className="props-title">Field Properties</div>
+      <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+        <div style={{ fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+          {field ? `${field.type.replace('_', ' ')} field` : 'Properties'}
+        </div>
+      </div>
 
       <div className="prop-group">
         <div className="prop-label">Label</div>
@@ -1417,115 +1440,6 @@ function PropsPanel({
           </div>
 
           <div className="prop-group">
-            <div className="prop-label">Charge type</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 2 }}>
-              {([
-                ['mileage', '📍 Mileage — charge per mile'],
-                ['drivetime', '⏱ Drive time — charge per minute'],
-                ['both', '⚡ Both — mileage + drive time'],
-                ['radius_tiers', '🎯 Radius tiers — flat price by distance'],
-                ['none', '✕ None — distance info only'],
-              ] as const).map(([val, lbl]) => (
-                <label
-                  key={val}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 7,
-                    fontSize: '0.78rem',
-                    cursor: 'pointer',
-                    color: field.routeChargeType === val ? 'var(--accent)' : 'var(--fg)',
-                    fontWeight: field.routeChargeType === val ? 600 : 400,
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name={`routeCharge_${field.id}`}
-                    value={val}
-                    checked={(field.routeChargeType ?? 'mileage') === val}
-                    onChange={() => onSetProp(field.id, 'routeChargeType', val)}
-                    style={{ accentColor: 'var(--accent)' }}
-                  />
-                  {lbl}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {(field.routeChargeType === 'mileage' || field.routeChargeType === 'both') && (
-            <div className="prop-group">
-              <div className="prop-label">Rate per mile ($)</div>
-              <input
-                className="prop-input"
-                type="number"
-                min={0}
-                step={0.01}
-                value={field.ratePerMile ?? 0}
-                onChange={(e) =>
-                  onSetProp(field.id, 'ratePerMile', parseFloat(e.target.value) || 0)
-                }
-              />
-            </div>
-          )}
-
-          {(field.routeChargeType === 'drivetime' || field.routeChargeType === 'both') && (
-            <div className="prop-group">
-              <div className="prop-label">Rate per hour ($)</div>
-              <input
-                className="prop-input"
-                type="number"
-                min={0}
-                step={0.01}
-                value={parseFloat(((field.ratePerMinute ?? 0) * 60).toFixed(4))}
-                onChange={(e) =>
-                  onSetProp(field.id, 'ratePerMinute', parseFloat(e.target.value) / 60 || 0)
-                }
-              />
-            </div>
-          )}
-
-          {(field.routeChargeType === 'mileage' || field.routeChargeType === 'both') && (
-            <div className="prop-group">
-              <div className="prop-label">Free miles (no charge until)</div>
-              <input
-                className="prop-input"
-                type="number"
-                min={0}
-                step={1}
-                placeholder="0"
-                value={field.freeMiles || ''}
-                onChange={(e) =>
-                  onSetProp(field.id, 'freeMiles', parseFloat(e.target.value) || 0)
-                }
-              />
-              <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: 4, lineHeight: 1.4 }}>
-                Mileage charges only apply after this distance. Leave empty for no free miles.
-              </div>
-            </div>
-          )}
-
-          {(field.routeChargeType === 'drivetime' || field.routeChargeType === 'both') && (
-            <div className="prop-group">
-              <div className="prop-label">Free drive time (no charge until)</div>
-              <input
-                className="prop-input"
-                type="number"
-                min={0}
-                step={0.25}
-                placeholder="0"
-                value={field.freeMinutes ? parseFloat((field.freeMinutes / 60).toFixed(4)) : ''}
-                onChange={(e) =>
-                  onSetProp(field.id, 'freeMinutes', (parseFloat(e.target.value) || 0) * 60)
-                }
-              />
-              <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: 4, lineHeight: 1.4 }}>
-                Hours of drive time before charges kick in. Leave empty for no free time.
-              </div>
-            </div>
-          )}
-
-          {field.routeChargeType === 'radius_tiers' && (
-            <div className="prop-group">
               <div className="prop-label" style={{ marginBottom: 8 }}>Distance tiers</div>
               <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginBottom: 10, lineHeight: 1.4 }}>
                 Set a flat price for each distance band. Tiers are checked in order — the first one where the distance fits is used. The last tier with no max applies to any distance beyond the previous tiers.
@@ -1592,8 +1506,7 @@ function PropsPanel({
                   onSetTiers(field.id, [...(field.radiusTiers ?? []), newTier])
                 }}
               >+ Add tier</button>
-            </div>
-          )}
+          </div>
 
           <div className="prop-group">
             <div className="prop-label">Base address (optional)</div>
@@ -2743,24 +2656,28 @@ export default function FormBuilderPage() {
     <div className="flex-1 overflow-hidden builder-wrap h-full">
       {/* Builder header */}
       <div className="builder-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 160 }}>
           <div className="builder-logo">Form Builder</div>
           {screen === 'builder' && (
-            <button
-              className="bb bb-ghost"
-              style={{ fontSize: '0.78rem', padding: '4px 10px' }}
-              onClick={() => setScreen('picker')}
-            >
+            <button className="bb bb-ghost" style={{ fontSize: '0.78rem', padding: '4px 10px' }} onClick={() => setScreen('picker')}>
               ← {editingFormId ? 'All Forms' : 'Templates'}
             </button>
           )}
         </div>
         {screen === 'builder' && (
-          <div className="builder-actions">
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+            <div style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '0.88rem', fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>
+              {formName || 'Untitled Form'}
+            </div>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '0.68rem', color: 'var(--muted)', marginTop: 2 }}>
+              quote-box.com/{formSlug || '…'}
+            </div>
+          </div>
+        )}
+        {screen === 'builder' && (
+          <div className="builder-actions" style={{ minWidth: 160, justifyContent: 'flex-end' }}>
             <span className="plan-badge">{planBadge}</span>
-            <button className="bb bb-ghost" onClick={copyShareLink}>
-              Copy Link
-            </button>
+            <button className="bb bb-ghost" onClick={copyShareLink}>Copy Link</button>
             <button
               className="bb bb-primary"
               onClick={saveForm}
