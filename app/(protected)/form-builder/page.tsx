@@ -1165,15 +1165,25 @@ function haversineMiles(lat1: number, lon1: number, lat2: number, lon2: number):
   return R * 2 * Math.asin(Math.sqrt(a))
 }
 
+// Returns [lng, lat] — Mapbox convention
 async function geocodeOne(query: string): Promise<[number, number] | null> {
   if (!MAPBOX_TOKEN || query.trim().length < 3) return null
   try {
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&limit=1&types=address,place,locality,neighborhood`
     const res = await fetch(url)
     const data = await res.json()
-    const coords = data.features?.[0]?.center
-    return coords ? [coords[1], coords[0]] : null // [lat, lon]
+    const center = data.features?.[0]?.center as [number, number] | undefined
+    return center ?? null
   } catch { return null }
+}
+
+function haversineMilesBuilder(a: [number, number], b: [number, number]): number {
+  const R = 3958.8
+  const lat1 = a[1] * Math.PI / 180, lat2 = b[1] * Math.PI / 180
+  const dLat = lat2 - lat1
+  const dLon = (b[0] - a[0]) * Math.PI / 180
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2
+  return R * 2 * Math.asin(Math.sqrt(h))
 }
 
 // Per-route field state
@@ -1181,7 +1191,6 @@ interface RouteTestState {
   addrA: string
   addrB: string
   distMiles: number | null
-  driveDistMiles: number | null // from Mapbox Directions (display only)
   loading: boolean
   error: string | null
 }
@@ -1196,7 +1205,7 @@ function RouteTestInput({ field, value, onChange }: {
   async function resolve() {
     if (!value.addrA.trim()) return
     if (!isSingle && !value.addrB.trim()) return
-    onChange({ ...value, loading: true, error: null, distMiles: null, driveDistMiles: null })
+    onChange({ ...value, loading: true, error: null, distMiles: null })
 
     const baseAddr = field.baseAddress?.trim() || null
     const originQuery = isSingle ? (baseAddr ?? value.addrA) : value.addrA
@@ -1207,19 +1216,8 @@ function RouteTestInput({ field, value, onChange }: {
       onChange({ ...value, loading: false, error: 'Could not geocode one or both addresses.' })
       return
     }
-    const straight = haversineMiles(origin[0], origin[1], dest[0], dest[1])
-
-    // Also fetch drive distance for display
-    let driveDistMiles: number | null = null
-    try {
-      const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${origin[1]},${origin[0]};${dest[1]},${dest[0]}?steps=false&geometries=geojson&overview=false&access_token=${MAPBOX_TOKEN}`
-      const res = await fetch(url)
-      const data = await res.json()
-      const route = data.routes?.[0]
-      if (route) driveDistMiles = route.distance / 1609.344
-    } catch { /* ignore */ }
-
-    onChange({ ...value, loading: false, distMiles: straight, driveDistMiles, error: null })
+    const distMiles = haversineMilesBuilder(origin, dest)
+    onChange({ ...value, loading: false, distMiles, error: null })
   }
 
   const inputStyle: React.CSSProperties = {
@@ -1241,7 +1239,7 @@ function RouteTestInput({ field, value, onChange }: {
           style={inputStyle}
           placeholder="Origin address"
           value={value.addrA}
-          onChange={(e) => onChange({ ...value, addrA: e.target.value, distMiles: null, driveDistMiles: null })}
+          onChange={(e) => onChange({ ...value, addrA: e.target.value, distMiles: null })}
           onKeyDown={(e) => e.key === 'Enter' && resolve()}
         />
       )}
@@ -1251,7 +1249,7 @@ function RouteTestInput({ field, value, onChange }: {
         value={isSingle ? value.addrA : value.addrB}
         onChange={(e) => {
           const next = isSingle ? { ...value, addrA: e.target.value } : { ...value, addrB: e.target.value }
-          onChange({ ...next, distMiles: null, driveDistMiles: null })
+          onChange({ ...next, distMiles: null })
         }}
         onKeyDown={(e) => e.key === 'Enter' && resolve()}
       />
@@ -1266,13 +1264,8 @@ function RouteTestInput({ field, value, onChange }: {
       {value.distMiles != null && (
         <div style={{ background: 'rgba(26,26,46,0.06)', borderRadius: 6, padding: '6px 9px', display: 'flex', flexDirection: 'column', gap: 3 }}>
           <div style={{ fontSize: '0.7rem', color: 'var(--text)', fontFamily: "'DM Mono', monospace" }}>
-            <span style={{ color: 'var(--muted)' }}>straight-line: </span><strong>{value.distMiles.toFixed(1)} mi</strong>
+            <strong>{value.distMiles.toFixed(1)} mi</strong> <span style={{ color: 'var(--muted)' }}>(as the crow flies)</span>
           </div>
-          {value.driveDistMiles != null && (
-            <div style={{ fontSize: '0.7rem', color: 'var(--muted)', fontFamily: "'DM Mono', monospace" }}>
-              drive distance: {value.driveDistMiles.toFixed(1)} mi
-            </div>
-          )}
           {matchedTier && (
             <div style={{ fontSize: '0.7rem', color: 'var(--accent)', fontFamily: "'DM Mono', monospace", marginTop: 1 }}>
               → tier: {tierRange} · ×{matchedTier.multiplier ?? 1}
@@ -1313,7 +1306,7 @@ function TestPanel({ fields, currency, minQuote, onClose }: {
   }
   const setRouteState = (id: string, val: RouteTestState) => setRouteStates((p) => ({ ...p, [id]: val }))
   const getRouteState = (id: string): RouteTestState =>
-    routeStates[id] ?? { addrA: '', addrB: '', distMiles: null, driveDistMiles: null, loading: false, error: null }
+    routeStates[id] ?? { addrA: '', addrB: '', distMiles: null, loading: false, error: null }
 
   const panelStyle: React.CSSProperties = {
     width: 268, flexShrink: 0, display: 'flex', flexDirection: 'column',

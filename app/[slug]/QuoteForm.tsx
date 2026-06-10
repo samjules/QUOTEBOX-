@@ -42,6 +42,17 @@ interface RouteGeometry {
   coordinates: number[][]
 }
 
+// ── Straight-line distance ─────────────────────────────────────
+// coords are Mapbox convention: [lng, lat]
+function haversineMiles(a: [number, number], b: [number, number]): number {
+  const R = 3958.8
+  const lat1 = a[1] * Math.PI / 180, lat2 = b[1] * Math.PI / 180
+  const dLat = lat2 - lat1
+  const dLon = (b[0] - a[0]) * Math.PI / 180
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2
+  return R * 2 * Math.asin(Math.sqrt(h))
+}
+
 // ── API helpers ────────────────────────────────────────────────
 async function geocode(query: string): Promise<GeocodeSuggestion[]> {
   if (query.length < 3) return []
@@ -58,6 +69,7 @@ async function geocode(query: string): Promise<GeocodeSuggestion[]> {
   }
 }
 
+// Fetches drive route geometry for map display only. Distance is always haversine.
 async function getDirections(
   start: [number, number],
   end: [number, number]
@@ -69,8 +81,8 @@ async function getDirections(
     const route = data.routes?.[0]
     if (!route) return null
     return {
-      distanceMiles: route.distance / 1609.344,
-      durationMinutes: route.duration / 60,
+      distanceMiles: haversineMiles(start, end),
+      durationMinutes: 0,
       geometry: route.geometry,
     }
   } catch {
@@ -90,15 +102,14 @@ async function getWaypointRoute(
     const data = await res.json()
     const route = data.routes?.[0]
     if (!route) return null
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const legs: LegInfo[] = route.legs.map((leg: any) => ({
-      distanceMiles: leg.distance / 1609.344,
-      durationMinutes: leg.duration / 60,
+    const legs: LegInfo[] = coords.slice(0, -1).map((c, i) => ({
+      distanceMiles: haversineMiles(c, coords[i + 1]),
+      durationMinutes: 0,
     }))
     return {
       legs,
-      totalMiles: route.distance / 1609.344,
-      totalMinutes: route.duration / 60,
+      totalMiles: legs.reduce((s, l) => s + l.distanceMiles, 0),
+      totalMinutes: 0,
       geometry: route.geometry,
     }
   } catch {
@@ -451,8 +462,6 @@ function RouteLeg({ leg, isTravel }: { leg: LegInfo | undefined; isTravel: boole
         color: isTravel ? '#6d28d9' : '#15803d',
       }}>
         <span>{leg.distanceMiles.toFixed(1)} mi</span>
-        <span style={{ opacity: 0.5 }}>·</span>
-        <span>{Math.round(leg.durationMinutes)} min</span>
         {isTravel && <span style={{ opacity: 0.55, fontSize: '0.65rem', fontWeight: 500 }}>travel</span>}
       </div>
     </div>
@@ -574,18 +583,12 @@ function RouteField({
         return
       }
       setIsLoadingRoute(true)
-      // Fetch both directions for round trip: base→customer and customer→base
-      Promise.all([
-        getDirections(baseCoords, endCoords),   // to customer
-        getDirections(endCoords, baseCoords),   // return to base
-      ]).then(([toResult, returnResult]) => {
+      getDirections(baseCoords, endCoords).then((result) => {
         setIsLoadingRoute(false)
-        if (!toResult || !returnResult) return
-        const totalMiles = toResult.distanceMiles + returnResult.distanceMiles
-        const totalMinutes = toResult.durationMinutes + returnResult.durationMinutes
-        setRouteInfo({ distanceMiles: totalMiles, durationMinutes: totalMinutes })
-        // Single mode: show the base→customer line on map
-        setBaseGeometry(toResult.geometry)
+        if (!result) return
+        const distMiles = haversineMiles(baseCoords, endCoords!)
+        setRouteInfo({ distanceMiles: distMiles, durationMinutes: 0 })
+        setBaseGeometry(result.geometry)
         setRouteGeometry(null)
         setLegInfos(null)
         onRouteChangeRef.current({
@@ -593,8 +596,8 @@ function RouteField({
           startCoords: baseCoords,
           endAddress: endQuery,
           endCoords: endCoords!,
-          distanceMiles: totalMiles,
-          durationMinutes: totalMinutes,
+          distanceMiles: distMiles,
+          durationMinutes: 0,
         })
       })
       return
@@ -616,14 +619,13 @@ function RouteField({
       ]).then(([toStartResult, customerResult, returnResult]) => {
         setIsLoadingRoute(false)
         if (!toStartResult || !customerResult || !returnResult) return
-        const leg0 = { distanceMiles: toStartResult.distanceMiles, durationMinutes: toStartResult.durationMinutes }
-        const leg1 = { distanceMiles: customerResult.distanceMiles, durationMinutes: customerResult.durationMinutes }
-        const leg2 = { distanceMiles: returnResult.distanceMiles, durationMinutes: returnResult.durationMinutes }
+        const leg0 = { distanceMiles: toStartResult.distanceMiles, durationMinutes: 0 }
+        const leg1 = { distanceMiles: customerResult.distanceMiles, durationMinutes: 0 }
+        const leg2 = { distanceMiles: returnResult.distanceMiles, durationMinutes: 0 }
         const totalMiles = leg0.distanceMiles + leg1.distanceMiles + leg2.distanceMiles
-        const totalMinutes = leg0.durationMinutes + leg1.durationMinutes + leg2.durationMinutes
-        setRouteInfo({ distanceMiles: totalMiles, durationMinutes: totalMinutes })
-        setBaseGeometry(toStartResult.geometry)       // base leg in gray
-        setRouteGeometry(customerResult.geometry)     // customer route in accent color
+        setRouteInfo({ distanceMiles: totalMiles, durationMinutes: 0 })
+        setBaseGeometry(toStartResult.geometry)
+        setRouteGeometry(customerResult.geometry)
         setLegInfos([leg0, leg1, leg2])
         onRouteChangeRef.current({
           startAddress: startQuery,
@@ -631,16 +633,15 @@ function RouteField({
           endAddress: endQuery,
           endCoords: endCoords!,
           distanceMiles: totalMiles,
-          durationMinutes: totalMinutes,
+          durationMinutes: 0,
           jobLegMiles: leg1.distanceMiles,
-          jobLegMinutes: leg1.durationMinutes,
         })
       })
     } else {
       getDirections(startCoords, endCoords).then((result) => {
         setIsLoadingRoute(false)
         if (!result) return
-        setRouteInfo({ distanceMiles: result.distanceMiles, durationMinutes: result.durationMinutes })
+        setRouteInfo({ distanceMiles: result.distanceMiles, durationMinutes: 0 })
         setBaseGeometry(null)
         setRouteGeometry(result.geometry)
         setLegInfos(null)
@@ -650,7 +651,7 @@ function RouteField({
           endAddress: endQuery,
           endCoords: endCoords!,
           distanceMiles: result.distanceMiles,
-          durationMinutes: result.durationMinutes,
+          durationMinutes: 0,
         })
       })
     }
@@ -904,10 +905,7 @@ function RouteField({
                     </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <span style={{ fontSize: '0.82rem', color: '#334155', fontWeight: 700 }}>
-                        {jobLeg
-                          ? `${jobLeg.distanceMiles.toFixed(1)} mi · ${Math.round(jobLeg.durationMinutes)} min`
-                          : `${routeInfo.distanceMiles.toFixed(1)} mi · ${Math.round(routeInfo.durationMinutes)} min`
-                        }
+                        {(jobLeg ? jobLeg.distanceMiles : routeInfo.distanceMiles).toFixed(1)} mi
                       </span>
                       {!hidePrices && field.routeChargeType !== 'none' && priceContribution > 0 && (
                         <span style={{ fontSize: '0.85rem', color: '#059669', fontWeight: 700 }}>
@@ -935,9 +933,6 @@ function RouteField({
                 }}>
                   <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>
                     📍 {routeInfo.distanceMiles.toFixed(1)} mi
-                  </span>
-                  <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>
-                    ⏱ {Math.round(routeInfo.durationMinutes)} min
                   </span>
                   {!hidePrices && field.routeChargeType !== 'none' && priceContribution > 0 && (
                     <span style={{ marginLeft: 'auto', fontSize: '0.88rem', color: '#059669', fontWeight: 700 }}>
