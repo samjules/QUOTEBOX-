@@ -751,8 +751,7 @@ function CanvasPreview({
           <>
             {fields.length === 0 ? (
               <div className="empty-step">
-                No quote fields yet
-                <p>Add fields from the left panel.</p>
+                Setting up your form…
               </div>
             ) : (
               fields.map((f, idx) => (
@@ -771,7 +770,7 @@ function CanvasPreview({
                     position: 'relative',
                   }}
                 >
-                  {/* Step badge + type badge + remove */}
+                  {/* Step badge + section name */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                     <div style={{
                       fontSize: '0.58rem', fontWeight: 800, letterSpacing: '0.1em',
@@ -781,20 +780,15 @@ function CanvasPreview({
                     }}>
                       Step {idx + 1}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <span style={{
-                        fontSize: '0.58rem', textTransform: 'uppercase', letterSpacing: '0.08em',
-                        color: 'var(--muted)', background: 'var(--border)', borderRadius: 4, padding: '2px 6px',
-                      }}>
-                        {f.type}
-                      </span>
-                      <button
-                        className="bb bb-sm bb-danger"
-                        onClick={(e) => onRemoveField(f.id, e)}
-                      >
-                        ✕
-                      </button>
-                    </div>
+                    <span style={{
+                      fontSize: '0.58rem', textTransform: 'uppercase', letterSpacing: '0.08em',
+                      color: 'var(--muted)', background: 'var(--border)', borderRadius: 4, padding: '2px 6px',
+                    }}>
+                      {f.type === 'radio' || f.type === 'dropdown' ? 'Home Size'
+                        : f.type === 'route' ? 'Route'
+                        : f.type === 'checkbox' ? 'Add-ons'
+                        : f.type}
+                    </span>
                   </div>
 
                   {/* Question label */}
@@ -2173,7 +2167,7 @@ export default function FormBuilderPage() {
   const router = useRouter()
 
   // ── State ──
-  const [screen, setScreen] = useState<'picker' | 'builder'>('picker')
+  const [screen, setScreen] = useState<'picker' | 'builder'>('builder')
   const [fields, setFields] = useState<FormField[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [testMode, setTestMode] = useState(false)
@@ -2376,6 +2370,52 @@ export default function FormBuilderPage() {
       if (editId) {
         await loadExistingForm(editId)
         setScreen('builder')
+      } else {
+        // New form — seed with the 3 moving company sections
+        const homeSizeId = uid()
+        const routeId = uid()
+        const addOnsId = uid()
+        setFields([
+          {
+            id: homeSizeId,
+            type: 'radio',
+            label: 'Home Size',
+            required: true,
+            options: [
+              { id: uid(), label: 'Studio / 1 Bed', price: 120, hours: 2 },
+              { id: uid(), label: '2 Bedrooms',     price: 150, hours: 3 },
+              { id: uid(), label: '3 Bedrooms',     price: 180, hours: 4 },
+              { id: uid(), label: '4+ Bedrooms',    price: 220, hours: 5 },
+            ],
+          },
+          {
+            id: routeId,
+            type: 'route',
+            label: 'Moving Route',
+            required: true,
+            routeChargeType: 'radius_tiers',
+            baseRateFieldId: homeSizeId,
+            jobHoursFieldId: homeSizeId,
+            radiusTiers: [
+              { id: uid(), maxMiles: 20,   driveCharge: 50 },
+              { id: uid(), maxMiles: 40,   driveCharge: 100 },
+              { id: uid(), maxMiles: null, driveCharge: 175 },
+            ],
+          },
+          {
+            id: addOnsId,
+            type: 'checkbox',
+            label: 'Add-ons',
+            required: false,
+            options: [
+              { id: uid(), label: 'Packing & Unpacking', price: 150 },
+              { id: uid(), label: 'Piano / Heavy Items',  price: 100 },
+              { id: uid(), label: 'Long Carry (>75 ft)',  price: 75  },
+              { id: uid(), label: 'Storage (1 month)',    price: 80  },
+            ],
+          },
+        ])
+        setSelectedId(homeSizeId)
       }
     }
     init()
@@ -2885,9 +2925,9 @@ export default function FormBuilderPage() {
       <div className="builder-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 160 }}>
           <div className="builder-logo">Form Builder</div>
-          {screen === 'builder' && (
+          {screen === 'builder' && existingForms.length > 0 && (
             <button className="bb bb-ghost" style={{ fontSize: '0.78rem', padding: '4px 10px' }} onClick={() => setScreen('picker')}>
-              ← {editingFormId ? 'All Forms' : 'Templates'}
+              ← All Forms
             </button>
           )}
         </div>
@@ -2984,56 +3024,42 @@ export default function FormBuilderPage() {
         {/* ── LEFT SIDEBAR ── */}
         <aside className="b-sidebar">
 
-          {/* ── FIELDS ── */}
+          {/* ── QUOTE SECTIONS ── */}
           <div className="sidebar-section">
             <div className="sidebar-cat-header" onClick={() => toggleSection('fields')}>
-              <span className="sidebar-cat-title">Fields</span>
+              <span className="sidebar-cat-title">Quote Sections</span>
               <span className={`sidebar-cat-chevron${openSections.fields ? ' open' : ''}`}>▼</span>
             </div>
             {openSections.fields && (
               <div className="sidebar-cat-body">
-                <button
-                  className="ftype-btn"
-                  onClick={() => setAiModalOpen(true)}
-                  style={{
-                    background: 'linear-gradient(135deg, #1a1a2e 0%, #2a2a3e 100%)',
-                    color: '#fff',
-                    fontWeight: 600,
-                    border: 'none',
-                    marginBottom: 8,
-                    letterSpacing: '0.01em',
-                  }}
-                >
-                  <span className="icon">✨</span> Build with AI
-                </button>
-                <div style={{ height: 1, background: 'var(--border)', margin: '0 0 8px' }} />
-                <button className="ftype-btn" onClick={() => addField('radio')}>
-                  <span className="icon">◉</span> Radio Cards
-                </button>
-                <button className="ftype-btn" onClick={() => addField('dropdown')}>
-                  <span className="icon">▾</span> Dropdown
-                </button>
-                <button className="ftype-btn" onClick={() => addField('checkbox')}>
-                  <span className="icon">☑</span> Checkboxes
-                </button>
-                <button className="ftype-btn" onClick={() => addField('number')}>
-                  <span className="icon">#</span> Qty / Number
-                </button>
-                <button className="ftype-btn" onClick={() => addField('textarea')}>
-                  <span className="icon">≡</span> Long Text
-                </button>
-                <button className="ftype-btn" onClick={() => addField('route')}>
-                  <span className="icon">⇌</span> Route / Distance
-                </button>
-                <button className="ftype-btn" onClick={() => addField('image')}>
-                  <span className="icon">🖼</span> Image
-                </button>
-                <button className="ftype-btn" onClick={() => addField('draw_area')}>
-                  <span className="icon">⬡</span> Draw Area
-                </button>
-                <button className="ftype-btn" onClick={() => addField('booking')}>
-                  <span className="icon">📅</span> Booking Date
-                </button>
+                {fields.map((f) => {
+                  const icon = f.type === 'radio' || f.type === 'dropdown' ? '🏠'
+                    : f.type === 'route' ? '⇌'
+                    : f.type === 'checkbox' ? '✓'
+                    : '◉'
+                  const sectionName = f.type === 'radio' || f.type === 'dropdown' ? 'Home Size'
+                    : f.type === 'route' ? 'Route'
+                    : f.type === 'checkbox' ? 'Add-ons'
+                    : f.label
+                  const isSelected = selectedId === f.id
+                  return (
+                    <button
+                      key={f.id}
+                      className="ftype-btn"
+                      onClick={() => setSelectedId(isSelected ? null : f.id)}
+                      style={isSelected ? {
+                        background: 'var(--accent)',
+                        color: '#fff',
+                        border: '1px solid var(--accent)',
+                        fontWeight: 700,
+                      } : {}}
+                    >
+                      <span className="icon">{icon}</span>
+                      {sectionName}
+                      <span style={{ marginLeft: 'auto', fontSize: '0.65rem', opacity: 0.55 }}>Edit →</span>
+                    </button>
+                  )
+                })}
               </div>
             )}
           </div>
