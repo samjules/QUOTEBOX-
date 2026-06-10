@@ -98,9 +98,9 @@ function makeField(type: FormField['type']): FormField {
       required: true,
       routeChargeType: 'radius_tiers',
       radiusTiers: [
-        { id: 'tier1', maxMiles: 15, driveTimeHours: 0.5 },
-        { id: 'tier2', maxMiles: 30, driveTimeHours: 1.0 },
-        { id: 'tier3', maxMiles: null, driveTimeHours: 2.0 },
+        { id: 'tier1', maxMiles: 20, driveCharge: 50 },
+        { id: 'tier2', maxMiles: 40, driveCharge: 100 },
+        { id: 'tier3', maxMiles: null, driveCharge: 175 },
       ],
     },
     image: {
@@ -159,9 +159,9 @@ const TEMPLATES: TemplateConfig[] = [
         { id: 'h5', label: '6+ hours', price: 0, hours: 6 },
       ]},
       { type: 'route', label: 'Moving Route', required: true, routeChargeType: 'radius_tiers', baseRateFieldId: '__idx:0__', jobHoursFieldId: '__idx:1__', radiusTiers: [
-        { id: 't1', maxMiles: 15,   driveTimeHours: 0.5 },
-        { id: 't2', maxMiles: 30,   driveTimeHours: 1.0 },
-        { id: 't3', maxMiles: null, driveTimeHours: 2.0 },
+        { id: 't1', maxMiles: 20,   driveCharge: 50 },
+        { id: 't2', maxMiles: 40,   driveCharge: 100 },
+        { id: 't3', maxMiles: null, driveCharge: 175 },
       ]},
       { type: 'checkbox', label: 'Add-ons', required: false, options: [
         { id: 'a1', label: 'Packing & Unpacking', price: 150 },
@@ -189,9 +189,9 @@ const TEMPLATES: TemplateConfig[] = [
         { id: 'j4', label: 'Two+ Trucks',           price: 100, hours: 5 },
       ]},
       { type: 'route', label: 'Pickup Location', required: true, locationMode: 'single', routeChargeType: 'radius_tiers', baseRateFieldId: '__idx:0__', radiusTiers: [
-        { id: 't1', maxMiles: 15,   driveTimeHours: 0.5 },
-        { id: 't2', maxMiles: 30,   driveTimeHours: 1.0 },
-        { id: 't3', maxMiles: null, driveTimeHours: 1.5 },
+        { id: 't1', maxMiles: 20,   driveCharge: 50 },
+        { id: 't2', maxMiles: 40,   driveCharge: 100 },
+        { id: 't3', maxMiles: null, driveCharge: 150 },
       ]},
       { type: 'checkbox', label: 'Add-ons', required: false, options: [
         { id: 'ja1', label: 'Same-day service',    price: 50 },
@@ -674,7 +674,7 @@ function CanvasPreview({
     (f) =>
       ['radio', 'dropdown', 'checkbox'].includes(f.type) ||
       (f.type === 'number' && (f.ratePerUnit ?? 0) > 0) ||
-      (f.type === 'route' && f.routeChargeType !== 'none')
+      (f.type === 'route' && (f.radiusTiers ?? []).length > 0)
   )
 
   const totalSteps = fields.length + 2
@@ -903,7 +903,7 @@ function CanvasPreview({
                       {(f.radiusTiers ?? []).length > 0 && (
                         <div style={{ marginTop: 7 }}>
                           <div style={{ fontSize: '0.62rem', fontWeight: 700, color: 'var(--muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>
-                            Distance tiers (drive time added)
+                            Distance tiers
                           </div>
                           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                             {(f.radiusTiers ?? []).slice(0, 4).map((t, i, arr) => {
@@ -911,7 +911,7 @@ function CanvasPreview({
                               const range = t.maxMiles ? `${prevMax}–${t.maxMiles}mi` : `${prevMax}mi+`
                               return (
                                 <span key={i} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 7px', fontSize: '0.68rem', color: 'var(--text)' }}>
-                                  {range} <strong>+{t.driveTimeHours ?? 0}hr</strong>
+                                  {range} <strong>+${t.driveCharge ?? 0}</strong>
                                 </span>
                               )
                             })}
@@ -1275,7 +1275,7 @@ function RouteTestInput({ field, value, onChange }: {
           </div>
           {matchedTier && (
             <div style={{ fontSize: '0.7rem', color: 'var(--accent)', fontFamily: "'DM Mono', monospace", marginTop: 1 }}>
-              → tier: {tierRange} · +{matchedTier.driveTimeHours ?? 0}hr drive
+              → tier: {tierRange} · +${matchedTier.driveCharge ?? 0} drive
             </div>
           )}
         </div>
@@ -1339,7 +1339,7 @@ function TestPanel({ fields, currency, minQuote, onClose }: {
         {fields.map((f) => {
           if (f.type === 'textarea' || f.type === 'image' || f.type === 'booking') return null
           const isBaseRateSource = fields.some(
-            (rf) => rf.type === 'route' && rf.routeChargeType === 'radius_tiers' && rf.baseRateFieldId === f.id
+            (rf) => rf.type === 'route' && rf.baseRateFieldId === f.id
           )
           return (
             <div key={f.id} style={sectionStyle}>
@@ -1634,7 +1634,7 @@ function PropsPanel({
           <div className="prop-group">
             <div className="prop-label" style={{ marginBottom: 4 }}>Distance tiers</div>
             <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginBottom: 10, lineHeight: 1.4 }}>
-              Each tier adds drive time hours. Total = hourly rate × (job hours + drive time hours).
+              Each tier adds a flat drive charge. Estimate = rate × hours + drive charge + extras.
             </div>
             {(() => {
               const sorted = [...(field.radiusTiers ?? [])].sort((a, b) => {
@@ -1670,22 +1670,25 @@ function PropsPanel({
                       </div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600 }}>Drive hrs</div>
-                      <input
-                        className="prop-input"
-                        type="number"
-                        min={0}
-                        step={0.25}
-                        placeholder="0.5"
-                        value={tier.driveTimeHours ?? ''}
-                        style={{ padding: '4px 6px', fontSize: '0.8rem', marginBottom: 0 }}
-                        onChange={(e) => {
-                          const tiers = [...(field.radiusTiers ?? [])]
-                          const i = tiers.findIndex(t => t.id === tier.id)
-                          tiers[i] = { ...tier, driveTimeHours: parseFloat(e.target.value) || 0 }
-                          onSetTiers(field.id, tiers)
-                        }}
-                      />
+                      <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600 }}>Drive $</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>$</span>
+                        <input
+                          className="prop-input"
+                          type="number"
+                          min={0}
+                          step={1}
+                          placeholder="0"
+                          value={tier.driveCharge ?? ''}
+                          style={{ padding: '4px 6px', fontSize: '0.8rem', marginBottom: 0 }}
+                          onChange={(e) => {
+                            const tiers = [...(field.radiusTiers ?? [])]
+                            const i = tiers.findIndex(t => t.id === tier.id)
+                            tiers[i] = { ...tier, driveCharge: parseFloat(e.target.value) || 0 }
+                            onSetTiers(field.id, tiers)
+                          }}
+                        />
+                      </div>
                     </div>
                     <button
                       type="button"
@@ -1712,7 +1715,7 @@ function PropsPanel({
                 color: 'var(--accent)', fontSize: '0.75rem', cursor: 'pointer',
               }}
               onClick={() => {
-                const newTier: RadiusTier = { id: Math.random().toString(36).slice(2), maxMiles: null, driveTimeHours: 1 }
+                const newTier: RadiusTier = { id: Math.random().toString(36).slice(2), maxMiles: null, driveCharge: 0 }
                 onSetTiers(field.id, [...(field.radiusTiers ?? []), newTier])
               }}
             >+ Add tier</button>
@@ -1847,10 +1850,10 @@ function PropsPanel({
           <div className="prop-label">Options</div>
           {(() => {
             const isRateSource = allFields.some(
-              f => f.type === 'route' && f.routeChargeType === 'radius_tiers' && f.baseRateFieldId === field.id
+              f => f.type === 'route' && f.baseRateFieldId === field.id
             )
             const isHoursSource = allFields.some(
-              f => f.type === 'route' && f.routeChargeType === 'radius_tiers' && f.jobHoursFieldId === field.id
+              f => f.type === 'route' && f.jobHoursFieldId === field.id
             )
             const priceLabel = isRateSource ? 'Hourly rate ($/hr)' : field.type === 'checkbox' ? 'Add-on price ($)' : 'Price ($)'
             return (
@@ -1914,7 +1917,7 @@ function PropsPanel({
           (f) =>
             f.id !== field.id &&
             (f.type === 'number' || f.type === 'draw_area' ||
-              (f.type === 'route' && f.routeChargeType !== 'none' && f.routeChargeType !== 'radius_tiers'))
+              false) // route fields use distance tiers only — no per-option rate overrides
         )
         if (rateFields.length === 0) return null
         return (

@@ -106,7 +106,7 @@ export function computeBreakdown(
       const rd = routeData[f.id]
       if (!rd || f.routeChargeType === 'none') continue
 
-      if (f.routeChargeType === 'radius_tiers') {
+      if (f.routeChargeType === 'radius_tiers' || !f.routeChargeType) {
         const tiers = f.radiusTiers ?? []
         const sorted = [...tiers].sort((a, b) => {
           if (a.maxMiles === null) return 1
@@ -134,24 +134,23 @@ export function computeBreakdown(
               if (selOpt?.hours != null) jobHours = selOpt.hours
             }
           } else if (f.baseRateFieldId) {
-            // fall back: job hours on the rate field's selected option
             const rateField = fields.find((f2) => f2.id === f.baseRateFieldId)
             if (rateField) {
               const selOpt = rateField.options?.find((o) => o.id === (answers[rateField.id] as string))
               if (selOpt?.hours != null) jobHours = selOpt.hours
             }
           }
-          const driveHrs = match.driveTimeHours ?? 0
-          const totalHours = jobHours + driveHrs
-          const amount = hourlyRate * totalHours
+          // estimate = rate × hours + driveCharge + extras
+          const laborAmount = hourlyRate * jobHours
+          const driveCharge = match.driveCharge ?? 0
           const tierIdx = sorted.indexOf(match)
           const prevMax = tierIdx === 0 ? 0 : (sorted[tierIdx - 1].maxMiles ?? 0)
           const tierRange = match.maxMiles ? `${prevMax}–${match.maxMiles}mi` : `${prevMax}mi+`
-          lines.push({
-            label: f.label,
-            detail: `${rd.distanceMiles.toFixed(1)}mi → ${tierRange} (${driveHrs}hr drive) · $${hourlyRate}/hr (${rateLabel}) × ${totalHours}hr total`,
-            amount,
-          })
+          const amount = laborAmount + driveCharge
+          const laborPart = hourlyRate > 0 ? `$${hourlyRate}/hr (${rateLabel}) × ${jobHours}hr` : ''
+          const drivePart = driveCharge > 0 ? `+$${driveCharge} drive` : ''
+          const detail = `${rd.distanceMiles.toFixed(1)}mi → ${tierRange} · ${[laborPart, drivePart].filter(Boolean).join(' ')}`
+          if (amount !== 0) lines.push({ label: f.label, detail, amount })
         }
       } else {
         const routeOvr = activeRouteOverrides[f.id]

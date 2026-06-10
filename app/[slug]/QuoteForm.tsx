@@ -793,16 +793,10 @@ function RouteField({
 
   const priceContribution = routeInfo
     ? (() => {
-        let p = 0
-        if (field.routeChargeType === 'mileage' || field.routeChargeType === 'both') {
-          const billableMiles = Math.max(0, routeInfo.distanceMiles - (field.freeMiles ?? 0))
-          p += billableMiles * (field.ratePerMile ?? 0)
-        }
-        if (field.routeChargeType === 'drivetime' || field.routeChargeType === 'both') {
-          const billableMinutes = Math.max(0, routeInfo.durationMinutes - (field.freeMinutes ?? 0))
-          p += billableMinutes * (field.ratePerMinute ?? 0)
-        }
-        return p
+        const tiers = field.radiusTiers ?? []
+        const sorted = [...tiers].sort((a, b) => a.maxMiles === null ? 1 : b.maxMiles === null ? -1 : a.maxMiles - b.maxMiles)
+        const match = sorted.find((t) => t.maxMiles === null || routeInfo.distanceMiles <= t.maxMiles)
+        return match?.driveCharge ?? 0
       })()
     : 0
 
@@ -907,7 +901,7 @@ function RouteField({
                       <span style={{ fontSize: '0.82rem', color: '#334155', fontWeight: 700 }}>
                         {(jobLeg ? jobLeg.distanceMiles : routeInfo.distanceMiles).toFixed(1)} mi
                       </span>
-                      {!hidePrices && field.routeChargeType !== 'none' && priceContribution > 0 && (
+                      {!hidePrices && priceContribution > 0 && (
                         <span style={{ fontSize: '0.85rem', color: '#059669', fontWeight: 700 }}>
                           +{currency}{priceContribution.toFixed(2)}
                         </span>
@@ -934,7 +928,7 @@ function RouteField({
                   <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>
                     📍 {routeInfo.distanceMiles.toFixed(1)} mi
                   </span>
-                  {!hidePrices && field.routeChargeType !== 'none' && priceContribution > 0 && (
+                  {!hidePrices && priceContribution > 0 && (
                     <span style={{ marginLeft: 'auto', fontSize: '0.88rem', color: '#059669', fontWeight: 700 }}>
                       +{currency}{priceContribution.toFixed(2)}
                     </span>
@@ -1107,15 +1101,10 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
       } else if (f.type === 'route') {
         const rd = routeData[f.id]
         if (rd) {
-          let routePrice = 0
-          if (f.routeChargeType === 'mileage' || f.routeChargeType === 'both') {
-            const billable = Math.max(0, rd.distanceMiles - (f.freeMiles ?? 0))
-            routePrice += billable * (f.ratePerMile ?? 0)
-          }
-          if (f.routeChargeType === 'drivetime' || f.routeChargeType === 'both') {
-            const billable = Math.max(0, rd.durationMinutes - (f.freeMinutes ?? 0))
-            routePrice += billable * (f.ratePerMinute ?? 0)
-          }
+          const tiers = f.radiusTiers ?? []
+          const sorted = [...tiers].sort((a, b) => a.maxMiles === null ? 1 : b.maxMiles === null ? -1 : a.maxMiles - b.maxMiles)
+          const match = sorted.find((t) => t.maxMiles === null || rd.distanceMiles <= t.maxMiles)
+          const routePrice = match?.driveCharge ?? 0
           const displayMiles = rd.jobLegMiles ?? rd.distanceMiles
           items.push({
             label: f.label,
@@ -1291,7 +1280,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
     (f) =>
       ['radio', 'dropdown', 'checkbox'].includes(f.type) ||
       (f.type === 'number' && (f.ratePerUnit ?? 0) > 0) ||
-      (f.type === 'route' && f.routeChargeType !== 'none') ||
+      (f.type === 'route' && (f.radiusTiers ?? []).length > 0) ||
       (f.type === 'draw_area' && (f.ratePerSqFt ?? 0) > 0)
   )
   // Hide all inline prices when quote_display is 'after_submit' or 'hidden'

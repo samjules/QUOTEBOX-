@@ -41,7 +41,8 @@ export interface ConditionalRule {
 export interface RadiusTier {
   id: string
   maxMiles: number | null  // null = unlimited / catch-all tier
-  driveTimeHours: number   // hours of drive time added for this distance band
+  driveCharge: number      // flat dollar drive charge for this distance band
+  driveTimeHours?: number  // deprecated — kept only for backward compat with old saved forms
 }
 
 export interface FormField {
@@ -61,7 +62,7 @@ export interface FormField {
   freeMiles?: number         // don't charge mileage until this many miles
   freeMinutes?: number       // don't charge drive time until this many minutes (stored as minutes; UI shows hours)
   baseAddress?: string       // optional fixed start location (business base)
-  radiusTiers?: RadiusTier[] // distance tiers — each adds driveTimeHours to the job
+  radiusTiers?: RadiusTier[] // distance tiers — each adds a flat drive charge
   baseRateFieldId?: string   // radius_tiers: field whose selected option.price is the hourly rate
   jobHoursFieldId?: string   // radius_tiers: field whose selected option.hours is the job hours
   imageUrl?: string
