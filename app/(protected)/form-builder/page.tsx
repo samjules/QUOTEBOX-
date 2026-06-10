@@ -780,15 +780,23 @@ function CanvasPreview({
                     }}>
                       Step {idx + 1}
                     </div>
-                    <span style={{
-                      fontSize: '0.58rem', textTransform: 'uppercase', letterSpacing: '0.08em',
-                      color: 'var(--muted)', background: 'var(--border)', borderRadius: 4, padding: '2px 6px',
-                    }}>
-                      {f.type === 'radio' || f.type === 'dropdown' ? 'Home Size'
-                        : f.type === 'route' ? 'Route'
-                        : f.type === 'checkbox' ? 'Add-ons'
-                        : f.type}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <span style={{
+                        fontSize: '0.58rem', textTransform: 'uppercase', letterSpacing: '0.08em',
+                        color: 'var(--muted)', background: 'var(--border)', borderRadius: 4, padding: '2px 6px',
+                      }}>
+                        {f.type === 'radio' || f.type === 'dropdown' ? 'Home Size'
+                          : f.type === 'route' ? 'Route'
+                          : f.type === 'checkbox' ? 'Add-ons'
+                          : f.type}
+                      </span>
+                      <button
+                        className="bb bb-sm bb-danger"
+                        onClick={(e) => onRemoveField(f.id, e)}
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </div>
 
                   {/* Question label */}
