@@ -623,7 +623,7 @@ function RouteField({
         const leg1 = { distanceMiles: customerResult.distanceMiles, durationMinutes: 0 }
         const leg2 = { distanceMiles: returnResult.distanceMiles, durationMinutes: 0 }
         const totalMiles = leg0.distanceMiles + leg1.distanceMiles + leg2.distanceMiles
-        setRouteInfo({ distanceMiles: totalMiles, durationMinutes: 0 })
+        setRouteInfo({ distanceMiles: totalMiles, durationMinutes: 0, jobLegMiles: leg1.distanceMiles })
         setBaseGeometry(toStartResult.geometry)
         setRouteGeometry(customerResult.geometry)
         setLegInfos([leg0, leg1, leg2])
