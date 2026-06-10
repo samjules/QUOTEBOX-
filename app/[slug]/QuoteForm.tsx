@@ -6,6 +6,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { FormField, HostedForm } from '@/lib/types'
+import { applyConditionalRate, computeTotal } from '@/lib/pricing'
 import area from '@turf/area'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
@@ -105,134 +106,9 @@ async function getWaypointRoute(
   }
 }
 
-// ── Pricing ────────────────────────────────────────────────────
-// Returns the conditional rate if ALL conditions in a rule match (AND logic).
-// First fully-matching rule wins.
-function applyConditionalRate(
-  rules: FormField['conditionalRules'],
-  baseRate: number,
-  fields: FormField[],
-  answers: Record<string, unknown>,
-): number {
-  if (!rules?.length) return baseRate
-  for (const rule of rules) {
-    if (!rule.conditions?.length) continue
-    const allMatch = rule.conditions.every((cond) => {
-      if (!cond.whenFieldId || !cond.whenValue) return false
-      const watchField = fields.find((f) => f.id === cond.whenFieldId)
-      if (!watchField) return false
-      const watchAnswer = answers[cond.whenFieldId]
-      if (watchField.type === 'radio' || watchField.type === 'dropdown') {
-        return watchAnswer === cond.whenValue
-      } else if (watchField.type === 'checkbox') {
-        return ((watchAnswer as string[]) ?? []).includes(cond.whenValue)
-      }
-      return String(watchAnswer ?? '') === cond.whenValue
-    })
-    if (allMatch) return rule.rate
-  }
-  return baseRate
-}
-
 function formatDate(iso: string) {
   const [y, m, d] = iso.split('-')
   return new Date(Number(y), Number(m) - 1, Number(d)).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-}
-
-function computeTotal(
-  fields: FormField[],
-  answers: Record<string, unknown>,
-  routeData: Record<string, RouteResult | null>,
-  drawAreaData: Record<string, number | null> = {},
-): number {
-  // Collect active rate overrides from all selected options
-  const activeRateOverrides: Record<string, number> = {}
-  const activeRouteOverrides: Record<string, { mile?: number; min?: number }> = {}
-
-  for (const f of fields) {
-    if (f.type === 'radio' || f.type === 'dropdown') {
-      const selId = answers[f.id] as string
-      const selOpt = f.options?.find((o) => o.id === selId)
-      if (selOpt?.rateOverrides) Object.assign(activeRateOverrides, selOpt.rateOverrides)
-      if (selOpt?.routeOverrides) Object.assign(activeRouteOverrides, selOpt.routeOverrides)
-    } else if (f.type === 'checkbox') {
-      for (const oid of (answers[f.id] as string[]) ?? []) {
-        const selOpt = f.options?.find((o) => o.id === oid)
-        if (selOpt?.rateOverrides) Object.assign(activeRateOverrides, selOpt.rateOverrides)
-        if (selOpt?.routeOverrides) Object.assign(activeRouteOverrides, selOpt.routeOverrides)
-      }
-    }
-  }
-
-  let total = 0
-  for (const f of fields) {
-    if (f.type === 'radio' || f.type === 'dropdown') {
-      // Skip fields used as base rate source for a radius_tiers route — their price feeds the tier multiplier
-      const isBaseRateSource = fields.some(
-        (rf) => rf.type === 'route' && rf.routeChargeType === 'radius_tiers' && rf.baseRateFieldId === f.id
-      )
-      if (isBaseRateSource) continue
-      const opt = f.options?.find((o) => o.id === (answers[f.id] as string))
-      if (opt) total += opt.hours ? opt.price * opt.hours : opt.price
-    } else if (f.type === 'checkbox') {
-      for (const oid of (answers[f.id] as string[]) ?? []) {
-        const opt = f.options?.find((o) => o.id === oid)
-        if (opt) total += opt.hours ? opt.price * opt.hours : opt.price
-      }
-    } else if (f.type === 'number') {
-      const effectiveRate = activeRateOverrides[f.id] !== undefined
-        ? activeRateOverrides[f.id]
-        : applyConditionalRate(f.conditionalRules, f.ratePerUnit ?? 0, fields, answers)
-      total += (Number(answers[f.id]) || 0) * effectiveRate
-    } else if (f.type === 'route') {
-      const rd = routeData[f.id]
-      if (rd && f.routeChargeType !== 'none') {
-        if (f.routeChargeType === 'radius_tiers') {
-          const tiers = f.radiusTiers ?? []
-          const sorted = [...tiers].sort((a, b) => {
-            if (a.maxMiles === null) return 1
-            if (b.maxMiles === null) return -1
-            return a.maxMiles - b.maxMiles
-          })
-          const match = sorted.find((t) => t.maxMiles === null || rd.distanceMiles <= t.maxMiles)
-          if (match) {
-            // Get base rate from the linked home-size field's selected option price
-            let baseRate = 0
-            if (f.baseRateFieldId) {
-              const baseField = fields.find((f2) => f2.id === f.baseRateFieldId)
-              if (baseField) {
-                const selOpt = baseField.options?.find((o) => o.id === (answers[baseField.id] as string))
-                if (selOpt) baseRate = selOpt.price
-              }
-            }
-            total += baseRate * (match.multiplier ?? 1)
-          }
-        } else {
-          const routeOvr = activeRouteOverrides[f.id]
-          const effectiveMileRate = routeOvr?.mile !== undefined
-            ? routeOvr.mile
-            : applyConditionalRate(f.conditionalRules, f.ratePerMile ?? 0, fields, answers)
-          const effectiveMinRate = routeOvr?.min !== undefined
-            ? routeOvr.min
-            : applyConditionalRate(f.conditionalRules, f.ratePerMinute ?? 0, fields, answers)
-          if (f.routeChargeType === 'mileage' || f.routeChargeType === 'both') {
-            const billableMiles = Math.max(0, rd.distanceMiles - (f.freeMiles ?? 0))
-            total += billableMiles * effectiveMileRate
-          }
-          if (f.routeChargeType === 'drivetime' || f.routeChargeType === 'both') {
-            const billableMinutes = Math.max(0, rd.durationMinutes - (f.freeMinutes ?? 0))
-            total += billableMinutes * effectiveMinRate
-          }
-        }
-      }
-    } else if (f.type === 'draw_area') {
-      const effectiveRate = activeRateOverrides[f.id] !== undefined
-        ? activeRateOverrides[f.id]
-        : (f.ratePerSqFt ?? 0)
-      total += (drawAreaData[f.id] ?? 0) * effectiveRate
-    }
-  }
-  return total
 }
 
 // ── AddressInput — module-level so React never remounts it ─────

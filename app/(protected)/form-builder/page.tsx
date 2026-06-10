@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { FormField, FieldOption, ConditionalRule, RuleCondition, RadiusTier } from '@/lib/types'
+import { computeBreakdown } from '@/lib/pricing'
 import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
 
@@ -1155,6 +1156,193 @@ function CanvasPreview({
   )
 }
 
+// ── Quote Tester ─────────────────────────────────────────────
+function TestPanel({ fields, currency, minQuote, onClose }: {
+  fields: FormField[]
+  currency: string
+  minQuote?: number
+  onClose: () => void
+}) {
+  const [answers, setAnswers] = useState<Record<string, unknown>>({})
+  const [distances, setDistances] = useState<Record<string, string>>({})
+
+  const routeData: Record<string, { distanceMiles: number; durationMinutes: number } | null> = {}
+  for (const f of fields) {
+    if (f.type === 'route') {
+      const mi = parseFloat(distances[f.id] ?? '')
+      routeData[f.id] = isNaN(mi) ? null : { distanceMiles: mi, durationMinutes: mi * 1.5 }
+    }
+  }
+
+  const breakdown = computeBreakdown(fields, answers, routeData)
+  const rawTotal = breakdown.reduce((s, l) => s + l.amount, 0)
+  const total = minQuote ? Math.max(rawTotal, minQuote) : rawTotal
+
+  const setAnswer = (id: string, val: unknown) => setAnswers((p) => ({ ...p, [id]: val }))
+  const toggleCheck = (id: string, optId: string) => {
+    const cur = (answers[id] as string[]) ?? []
+    setAnswer(id, cur.includes(optId) ? cur.filter((x) => x !== optId) : [...cur, optId])
+  }
+
+  const panelStyle: React.CSSProperties = {
+    width: 268, flexShrink: 0, display: 'flex', flexDirection: 'column',
+    borderLeft: '1px solid var(--border)', background: 'var(--surface)',
+    overflowY: 'auto', height: '100%',
+  }
+  const sectionStyle: React.CSSProperties = {
+    padding: '10px 14px', borderBottom: '1px solid var(--border)',
+  }
+  const labelStyle: React.CSSProperties = {
+    fontSize: '0.62rem', fontWeight: 700, color: 'var(--muted)',
+    letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 5,
+  }
+
+  return (
+    <aside style={panelStyle}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px 10px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+        <div>
+          <div style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '0.88rem', fontWeight: 700, color: 'var(--text)' }}>Quote Tester</div>
+          <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginTop: 1 }}>Test pricing without publishing</div>
+        </div>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1rem', padding: 4, lineHeight: 1 }}>✕</button>
+      </div>
+
+      {/* Fields */}
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        {fields.map((f) => {
+          if (f.type === 'textarea' || f.type === 'image' || f.type === 'booking') return null
+
+          const isBaseRateSource = fields.some(
+            (rf) => rf.type === 'route' && rf.routeChargeType === 'radius_tiers' && rf.baseRateFieldId === f.id
+          )
+
+          return (
+            <div key={f.id} style={sectionStyle}>
+              <div style={labelStyle}>{f.label}{isBaseRateSource ? ' (base rate)' : ''}</div>
+
+              {(f.type === 'radio' || f.type === 'dropdown') && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {(f.options ?? []).map((o) => (
+                    <label key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer', padding: '5px 8px', borderRadius: 6, background: answers[f.id] === o.id ? 'rgba(26,26,46,0.07)' : 'transparent', border: `1px solid ${answers[f.id] === o.id ? 'var(--accent)' : 'var(--border)'}`, transition: 'all 0.12s' }}>
+                      <input type="radio" name={`test-${f.id}`} value={o.id} checked={answers[f.id] === o.id} onChange={() => setAnswer(f.id, o.id)} style={{ accentColor: 'var(--accent)' }} />
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text)', flex: 1 }}>{o.label}</span>
+                      {o.price > 0 && <span style={{ fontSize: '0.68rem', color: 'var(--muted)', fontFamily: "'DM Mono', monospace" }}>{currency}{o.price}</span>}
+                    </label>
+                  ))}
+                </div>
+              )}
+
+              {f.type === 'checkbox' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {(f.options ?? []).map((o) => {
+                    const checked = ((answers[f.id] as string[]) ?? []).includes(o.id)
+                    return (
+                      <label key={o.id} style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer', padding: '5px 8px', borderRadius: 6, background: checked ? 'rgba(26,26,46,0.07)' : 'transparent', border: `1px solid ${checked ? 'var(--accent)' : 'var(--border)'}`, transition: 'all 0.12s' }}>
+                        <input type="checkbox" checked={checked} onChange={() => toggleCheck(f.id, o.id)} style={{ accentColor: 'var(--accent)' }} />
+                        <span style={{ fontSize: '0.78rem', color: 'var(--text)', flex: 1 }}>{o.label}</span>
+                        {o.price > 0 && <span style={{ fontSize: '0.68rem', color: 'var(--muted)', fontFamily: "'DM Mono', monospace" }}>+{currency}{o.price}</span>}
+                      </label>
+                    )
+                  })}
+                </div>
+              )}
+
+              {f.type === 'number' && (
+                <input
+                  type="number" min={0} step={1}
+                  value={(answers[f.id] as string) ?? ''}
+                  placeholder={f.placeholder ?? '0'}
+                  onChange={(e) => setAnswer(f.id, e.target.value)}
+                  style={{ width: '100%', padding: '6px 9px', borderRadius: 6, border: '1px solid var(--border)', fontSize: '0.82rem', background: 'var(--bg)', color: 'var(--text)' }}
+                />
+              )}
+
+              {f.type === 'route' && (
+                <div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginBottom: 6, lineHeight: 1.4 }}>
+                    Distance comes from Mapbox Directions API using addresses the customer enters.
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <input
+                      type="number" min={0} step={0.1}
+                      value={distances[f.id] ?? ''}
+                      placeholder="e.g. 12"
+                      onChange={(e) => setDistances((p) => ({ ...p, [f.id]: e.target.value }))}
+                      style={{ flex: 1, padding: '6px 9px', borderRadius: 6, border: '1px solid var(--border)', fontSize: '0.82rem', background: 'var(--bg)', color: 'var(--text)' }}
+                    />
+                    <span style={{ fontSize: '0.75rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>mi</span>
+                  </div>
+                  {f.routeChargeType === 'radius_tiers' && (f.radiusTiers ?? []).length > 0 && (() => {
+                    const mi = parseFloat(distances[f.id] ?? '')
+                    if (isNaN(mi)) return null
+                    const sorted = [...(f.radiusTiers ?? [])].sort((a, b) => a.maxMiles === null ? 1 : b.maxMiles === null ? -1 : a.maxMiles - b.maxMiles)
+                    const match = sorted.find((t) => t.maxMiles === null || mi <= t.maxMiles)
+                    if (!match) return null
+                    const tierIdx = sorted.indexOf(match)
+                    const prevMax = tierIdx === 0 ? 0 : (sorted[tierIdx - 1].maxMiles ?? 0)
+                    const tierRange = match.maxMiles ? `${prevMax}–${match.maxMiles}mi` : `${prevMax}mi+`
+                    return (
+                      <div style={{ marginTop: 5, padding: '4px 8px', background: 'rgba(26,26,46,0.06)', borderRadius: 5, fontSize: '0.7rem', color: 'var(--accent)', fontFamily: "'DM Mono', monospace" }}>
+                        → tier: {tierRange} · ×{match.multiplier ?? 1}
+                      </div>
+                    )
+                  })()}
+                </div>
+              )}
+
+              {f.type === 'draw_area' && (
+                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', lineHeight: 1.4 }}>Draw area can't be tested here — uses map polygon on the live form.</div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Breakdown & Total */}
+      <div style={{ flexShrink: 0, borderTop: '1px solid var(--border)', background: 'var(--bg)' }}>
+        {breakdown.length > 0 && (
+          <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)' }}>
+            <div style={labelStyle}>Breakdown</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              {breakdown.map((line, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '0.76rem', fontWeight: 600, color: 'var(--text)' }}>{line.label}</div>
+                    <div style={{ fontSize: '0.67rem', color: 'var(--muted)', lineHeight: 1.35, fontFamily: "'DM Mono', monospace" }}>{line.detail}</div>
+                  </div>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)', fontFamily: "'DM Mono', monospace", whiteSpace: 'nowrap' }}>{currency}{line.amount.toFixed(2)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Estimated Total</span>
+          <span style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--accent)', fontFamily: "'Instrument Sans', sans-serif" }}>
+            {breakdown.length === 0 && Object.values(distances).every((v) => !v) && Object.keys(answers).length === 0
+              ? '—'
+              : `${currency}${total.toFixed(2)}`}
+          </span>
+        </div>
+        {minQuote && rawTotal > 0 && rawTotal < minQuote && (
+          <div style={{ padding: '0 14px 10px', fontSize: '0.68rem', color: 'var(--muted)', lineHeight: 1.4 }}>
+            Min quote floor applied ({currency}{minQuote})
+          </div>
+        )}
+        <div style={{ padding: '0 14px 10px', display: 'flex', gap: 8 }}>
+          <button
+            onClick={() => { setAnswers({}); setDistances({}) }}
+            style={{ flex: 1, padding: '6px 0', borderRadius: 6, border: '1px solid var(--border)', background: 'none', fontSize: '0.75rem', color: 'var(--muted)', cursor: 'pointer', fontWeight: 600 }}
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+    </aside>
+  )
+}
+
 // ── Props Panel ──────────────────────────────────────────────
 function PropsPanel({
   field,
@@ -1854,6 +2042,7 @@ export default function FormBuilderPage() {
   const [screen, setScreen] = useState<'picker' | 'builder'>('picker')
   const [fields, setFields] = useState<FormField[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [testMode, setTestMode] = useState(false)
   const [brandColor, setBrandColor] = useState<string>('#FFE500')
   const [activeTab, setActiveTab] = useState<0 | 1 | 2 | 3>(0)
   const [formName, setFormName] = useState('My Quote Form')
@@ -2579,6 +2768,14 @@ export default function FormBuilderPage() {
             <span className="plan-badge">{planBadge}</span>
             <button className="bb bb-ghost" onClick={copyShareLink}>Copy Link</button>
             <button
+              className={`bb bb-ghost${testMode ? ' active' : ''}`}
+              onClick={() => setTestMode((v) => !v)}
+              style={testMode ? { background: 'var(--accent)', color: '#fff', borderColor: 'var(--accent)' } : {}}
+              title="Test quote pricing without publishing"
+            >
+              {testMode ? '✕ Close Test' : '▷ Test Quote'}
+            </button>
+            <button
               className="bb bb-primary"
               onClick={saveForm}
               disabled={isSaving}
@@ -3177,26 +3374,35 @@ export default function FormBuilderPage() {
           </div>
         </main>
 
-        {/* ── PROPS PANEL ── */}
-        <PropsPanel
-          field={selectedField}
-          allFields={fields}
-          onSetProp={setProp}
-          onToggleProp={toggleProp}
-          onSetOpt={setOpt}
-          onAddOpt={addOpt}
-          onRemoveOpt={removeOpt}
-          onAddRule={addRule}
-          onRemoveRule={removeRule}
-          onSetRule={setRule}
-          onAddCondition={addCondition}
-          onRemoveCondition={removeCondition}
-          onSetCondition={setCondition}
-          onSetOptRateOverride={setOptRateOverride}
-          onSetOptRouteOverride={setOptRouteOverride}
-          onOpenMediaPicker={(fieldId) => { loadHeroMedia(); setMediaPickerTarget(fieldId) }}
-          onSetTiers={setTiers}
-        />
+        {/* ── RIGHT PANEL: Test or Props ── */}
+        {testMode ? (
+          <TestPanel
+            fields={fields}
+            currency={currency}
+            minQuote={minQuote || undefined}
+            onClose={() => setTestMode(false)}
+          />
+        ) : (
+          <PropsPanel
+            field={selectedField}
+            allFields={fields}
+            onSetProp={setProp}
+            onToggleProp={toggleProp}
+            onSetOpt={setOpt}
+            onAddOpt={addOpt}
+            onRemoveOpt={removeOpt}
+            onAddRule={addRule}
+            onRemoveRule={removeRule}
+            onSetRule={setRule}
+            onAddCondition={addCondition}
+            onRemoveCondition={removeCondition}
+            onSetCondition={setCondition}
+            onSetOptRateOverride={setOptRateOverride}
+            onSetOptRouteOverride={setOptRouteOverride}
+            onOpenMediaPicker={(fieldId) => { loadHeroMedia(); setMediaPickerTarget(fieldId) }}
+            onSetTiers={setTiers}
+          />
+        )}
       </div>
 
       {/* ── Hero Media Picker Lightbox ── */}
