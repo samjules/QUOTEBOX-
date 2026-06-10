@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { FormField, FieldOption, ConditionalRule, RuleCondition } from '@/lib/types'
+import type { FormField, FieldOption, ConditionalRule, RuleCondition, RadiusTier } from '@/lib/types'
 import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
 
@@ -1284,6 +1284,7 @@ function PropsPanel({
   onSetOptRateOverride,
   onSetOptRouteOverride,
   onOpenMediaPicker,
+  onSetTiers,
 }: {
   field: FormField | null
   allFields: FormField[]
@@ -1301,6 +1302,7 @@ function PropsPanel({
   onSetOptRateOverride: (fid: string, oid: string, targetFid: string, rateStr: string) => void
   onSetOptRouteOverride: (fid: string, oid: string, targetFid: string, key: 'mile' | 'min', rateStr: string) => void
   onOpenMediaPicker: (fieldId: string) => void
+  onSetTiers: (fieldId: string, tiers: RadiusTier[]) => void
 }) {
   const [baseAddrSuggestions, setBaseAddrSuggestions] = useState<{ place_name: string }[]>([])
   const [baseAddrOpen, setBaseAddrOpen] = useState(false)
@@ -1421,6 +1423,7 @@ function PropsPanel({
                 ['mileage', '📍 Mileage — charge per mile'],
                 ['drivetime', '⏱ Drive time — charge per minute'],
                 ['both', '⚡ Both — mileage + drive time'],
+                ['radius_tiers', '🎯 Radius tiers — flat price by distance'],
                 ['none', '✕ None — distance info only'],
               ] as const).map(([val, lbl]) => (
                 <label
@@ -1518,6 +1521,77 @@ function PropsPanel({
               <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: 4, lineHeight: 1.4 }}>
                 Hours of drive time before charges kick in. Leave empty for no free time.
               </div>
+            </div>
+          )}
+
+          {field.routeChargeType === 'radius_tiers' && (
+            <div className="prop-group">
+              <div className="prop-label" style={{ marginBottom: 8 }}>Distance tiers</div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginBottom: 10, lineHeight: 1.4 }}>
+                Set a flat price for each distance band. Tiers are checked in order — the first one where the distance fits is used. The last tier with no max applies to any distance beyond the previous tiers.
+              </div>
+              {(field.radiusTiers ?? []).map((tier, idx) => (
+                <div key={tier.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginBottom: 2 }}>Up to (mi)</div>
+                    <input
+                      className="prop-input"
+                      type="number"
+                      min={0}
+                      step={1}
+                      placeholder="∞"
+                      value={tier.maxMiles ?? ''}
+                      style={{ padding: '5px 7px', fontSize: '0.8rem' }}
+                      onChange={(e) => {
+                        const tiers = [...(field.radiusTiers ?? [])]
+                        tiers[idx] = { ...tier, maxMiles: e.target.value === '' ? null : parseFloat(e.target.value) || 0 }
+                        onSetTiers(field.id, tiers)
+                      }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginBottom: 2 }}>Flat price ($)</div>
+                    <input
+                      className="prop-input"
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      value={tier.price}
+                      style={{ padding: '5px 7px', fontSize: '0.8rem' }}
+                      onChange={(e) => {
+                        const tiers = [...(field.radiusTiers ?? [])]
+                        tiers[idx] = { ...tier, price: parseFloat(e.target.value) || 0 }
+                        onSetTiers(field.id, tiers)
+                      }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    title="Remove tier"
+                    style={{
+                      marginTop: 18, width: 24, height: 24, borderRadius: 4, border: '1px solid var(--border)',
+                      background: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: '0.8rem',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                    }}
+                    onClick={() => {
+                      const tiers = (field.radiusTiers ?? []).filter((_, i) => i !== idx)
+                      onSetTiers(field.id, tiers)
+                    }}
+                  >✕</button>
+                </div>
+              ))}
+              <button
+                type="button"
+                style={{
+                  marginTop: 4, width: '100%', padding: '5px 0', borderRadius: 6,
+                  border: '1px dashed var(--border)', background: 'none',
+                  color: 'var(--accent)', fontSize: '0.75rem', cursor: 'pointer',
+                }}
+                onClick={() => {
+                  const newTier: RadiusTier = { id: Math.random().toString(36).slice(2), maxMiles: null, price: 0 }
+                  onSetTiers(field.id, [...(field.radiusTiers ?? []), newTier])
+                }}
+              >+ Add tier</button>
             </div>
           )}
 
@@ -2336,6 +2410,12 @@ export default function FormBuilderPage() {
           ? { ...f, conditionalRules: (f.conditionalRules ?? []).filter((r) => r.id !== ruleId) }
           : f
       )
+    )
+  }
+
+  function setTiers(fieldId: string, tiers: RadiusTier[]) {
+    setFields((prev) =>
+      prev.map((f) => f.id === fieldId ? { ...f, radiusTiers: tiers } : f)
     )
   }
 
@@ -3298,6 +3378,7 @@ export default function FormBuilderPage() {
           onSetOptRateOverride={setOptRateOverride}
           onSetOptRouteOverride={setOptRouteOverride}
           onOpenMediaPicker={(fieldId) => { loadHeroMedia(); setMediaPickerTarget(fieldId) }}
+          onSetTiers={setTiers}
         />
       </div>
 

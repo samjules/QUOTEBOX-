@@ -38,6 +38,12 @@ export interface ConditionalRule {
   rate: number                 // Rate to use when all conditions are met
 }
 
+export interface RadiusTier {
+  id: string
+  maxMiles: number | null  // null = unlimited / catch-all tier
+  price: number
+}
+
 export interface FormField {
   id: string
   type: 'radio' | 'dropdown' | 'checkbox' | 'number' | 'textarea' | 'route' | 'image' | 'draw_area' | 'booking'
@@ -48,13 +54,14 @@ export interface FormField {
   placeholder?: string
   ratePerUnit?: number
   // Route field
-  routeChargeType?: 'mileage' | 'drivetime' | 'both' | 'none'
+  routeChargeType?: 'mileage' | 'drivetime' | 'both' | 'none' | 'radius_tiers'
   locationMode?: 'point_to_point' | 'single'  // single = customer enters one address only
   ratePerMile?: number
   ratePerMinute?: number     // stored as per-minute; UI displays as per-hour
   freeMiles?: number         // don't charge mileage until this many miles
   freeMinutes?: number       // don't charge drive time until this many minutes (stored as minutes; UI shows hours)
   baseAddress?: string       // optional fixed start location (business base)
+  radiusTiers?: RadiusTier[] // flat prices per distance tier (radius_tiers charge type)
   imageUrl?: string
   conditionalRules?: ConditionalRule[]
   // Draw Area field

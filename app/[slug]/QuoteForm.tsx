@@ -182,20 +182,31 @@ function computeTotal(
     } else if (f.type === 'route') {
       const rd = routeData[f.id]
       if (rd && f.routeChargeType !== 'none') {
-        const routeOvr = activeRouteOverrides[f.id]
-        const effectiveMileRate = routeOvr?.mile !== undefined
-          ? routeOvr.mile
-          : applyConditionalRate(f.conditionalRules, f.ratePerMile ?? 0, fields, answers)
-        const effectiveMinRate = routeOvr?.min !== undefined
-          ? routeOvr.min
-          : applyConditionalRate(f.conditionalRules, f.ratePerMinute ?? 0, fields, answers)
-        if (f.routeChargeType === 'mileage' || f.routeChargeType === 'both') {
-          const billableMiles = Math.max(0, rd.distanceMiles - (f.freeMiles ?? 0))
-          total += billableMiles * effectiveMileRate
-        }
-        if (f.routeChargeType === 'drivetime' || f.routeChargeType === 'both') {
-          const billableMinutes = Math.max(0, rd.durationMinutes - (f.freeMinutes ?? 0))
-          total += billableMinutes * effectiveMinRate
+        if (f.routeChargeType === 'radius_tiers') {
+          const tiers = f.radiusTiers ?? []
+          const sorted = [...tiers].sort((a, b) => {
+            if (a.maxMiles === null) return 1
+            if (b.maxMiles === null) return -1
+            return a.maxMiles - b.maxMiles
+          })
+          const match = sorted.find((t) => t.maxMiles === null || rd.distanceMiles <= t.maxMiles)
+          if (match) total += match.price
+        } else {
+          const routeOvr = activeRouteOverrides[f.id]
+          const effectiveMileRate = routeOvr?.mile !== undefined
+            ? routeOvr.mile
+            : applyConditionalRate(f.conditionalRules, f.ratePerMile ?? 0, fields, answers)
+          const effectiveMinRate = routeOvr?.min !== undefined
+            ? routeOvr.min
+            : applyConditionalRate(f.conditionalRules, f.ratePerMinute ?? 0, fields, answers)
+          if (f.routeChargeType === 'mileage' || f.routeChargeType === 'both') {
+            const billableMiles = Math.max(0, rd.distanceMiles - (f.freeMiles ?? 0))
+            total += billableMiles * effectiveMileRate
+          }
+          if (f.routeChargeType === 'drivetime' || f.routeChargeType === 'both') {
+            const billableMinutes = Math.max(0, rd.durationMinutes - (f.freeMinutes ?? 0))
+            total += billableMinutes * effectiveMinRate
+          }
         }
       }
     } else if (f.type === 'draw_area') {
