@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 import { sendSms } from '@/lib/sms'
 
 function esc(s: string) {
@@ -74,7 +74,7 @@ export function buildAutomationEmail(params: {
       <td align="center">
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
           <tr>
-            <td style="background:${accentColor};border-radius:${heroBlock ? '14px 14px 0 0' : '14px 14px 0 0'};padding:24px 28px;">
+            <td style="background:${accentColor};border-radius:14px 14px 0 0;padding:24px 28px;">
               <span style="font-family:Georgia,serif;font-size:18px;font-weight:900;color:#fff;letter-spacing:0.02em;">
                 Quote<span style="color:#FFE500;">.</span>Box
               </span>
@@ -171,19 +171,19 @@ export async function sendAutomationStep(params: {
   }
 
   if (params.email) {
-    const gmailUser = process.env.GMAIL_USER
-    const gmailPass = process.env.GMAIL_APP_PASSWORD
-    if (gmailUser && gmailPass) {
+    const apiKey = process.env.RESEND_API_KEY
+    if (apiKey) {
+      const resend = new Resend(apiKey)
       const { subject, html } = buildAutomationEmail(emailParams)
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user: gmailUser, pass: gmailPass },
-      })
+      const from = process.env.RESEND_FROM_EMAIL || 'Quote.Box <onboarding@resend.dev>'
       try {
-        await transporter.sendMail({ from: `"Quote.Box" <${gmailUser}>`, to: params.email, subject, html })
+        const { error } = await resend.emails.send({ from, to: params.email, subject, html })
+        if (error) console.error('Resend error:', error)
       } catch (err) {
         console.error('Automation email error:', err)
       }
+    } else {
+      console.error('RESEND_API_KEY not set — email not sent')
     }
   }
 

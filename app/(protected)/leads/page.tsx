@@ -6,6 +6,8 @@ import { getAccountForUser } from '@/lib/account'
 import type { Lead } from '@/lib/types'
 import LeadsTable, { type FieldMap } from './LeadsTable'
 import LeadActivityTab from './LeadActivityTab'
+import { enrollPendingLeads } from '@/lib/enroll-lead'
+import { processDueSteps } from '@/lib/process-automations'
 
 export default async function LeadsPage({ searchParams }: { searchParams: { tab?: string } }) {
   const activeTab = searchParams.tab === 'activity' ? 'activity' : 'leads'
@@ -137,6 +139,19 @@ export default async function LeadsPage({ searchParams }: { searchParams: { tab?
   console.log('========== LEADS PAGE DEBUG END ==========')
 
   const leads: Lead[] = allLeads ?? []
+
+  // Auto-enroll any leads with emails that haven't been entered into automation yet,
+  // then immediately fire any steps that are due now (e.g. initial_contact).
+  if (hasAccess) {
+    try {
+      const enrolled = await enrollPendingLeads(account.id)
+      if (enrolled > 0) {
+        await processDueSteps(account.id)
+      }
+    } catch (err) {
+      console.error('Auto-enroll error:', err)
+    }
+  }
 
   // Build field lookup map from all hosted forms — resolves field IDs → labels/options
   const { data: forms } = await admin

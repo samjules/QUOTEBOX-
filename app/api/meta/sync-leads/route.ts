@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { scheduleLeadAutomation } from '@/lib/schedule-automation'
-import { sendAutomationStep } from '@/lib/send-automation-step'
+import { enrollLead } from '@/lib/enroll-lead'
+import { processDueSteps } from '@/lib/process-automations'
 
 export const dynamic = 'force-dynamic'
 
@@ -102,47 +102,17 @@ export async function POST(request: NextRequest) {
           created_at: lead.created_time,
         }).select('id').single()
 
-        // Fire automation for leads created within the last 48 hours
+        // Enroll and immediately fire automation for leads created within the last 48 hours
         const isRecent = (Date.now() - new Date(lead.created_time).getTime()) < 48 * 60 * 60 * 1000
-        if (insertedLead?.id && isRecent) {
-          Promise.resolve().then(async () => {
-            try {
-              const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://quote-box.com'
-              await admin
-                .from('lead_automations')
-                .upsert({ account_id: account.id }, { onConflict: 'account_id', ignoreDuplicates: true })
-              const { data: automationConfig } = await admin
-                .from('lead_automations')
-                .select('is_enabled, discount_percent, hero_image_url')
-                .eq('account_id', account.id)
-                .single()
-              if (!automationConfig?.is_enabled) return
-
-              const [{ data: accountDetails }, { data: form }] = await Promise.all([
-                admin.from('accounts').select('business_name').eq('id', account.id).single(),
-                admin.from('hosted_forms').select('form_config').eq('account_id', account.id).eq('is_active', true).order('created_at', { ascending: true }).limit(1).single(),
-              ])
-              const slug = (form?.form_config as { slug?: string } | null)?.slug
-              const formUrl = slug ? `${siteUrl}/${slug}` : null
-              const heroImageUrl = automationConfig.hero_image_url ? `${siteUrl}${automationConfig.hero_image_url}` : null
-
-              await sendAutomationStep({
-                email,
-                phone,
-                name: name || 'there',
-                businessName: accountDetails?.business_name || 'Your service provider',
-                formUrl,
-                step: 'initial_contact',
-                discountPercent: automationConfig.discount_percent ?? 10,
-                leadId: insertedLead.id,
-                accountId: account.id,
-                heroImageUrl,
-              })
-              await scheduleLeadAutomation(insertedLead.id, account.id)
-            } catch (err) {
-              console.error('Automation error (sync-leads):', err)
+        if (insertedLead?.id && email && isRecent) {
+          try {
+            const enrolled = await enrollLead(insertedLead.id, account.id)
+            if (enrolled) {
+              await processDueSteps(account.id)
             }
-          })
+          } catch (err) {
+            console.error('Automation error (sync-leads):', err)
+          }
         }
 
         imported++

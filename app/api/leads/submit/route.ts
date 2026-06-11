@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
-import { scheduleLeadAutomation } from '@/lib/schedule-automation'
-import { sendAutomationStep } from '@/lib/send-automation-step'
+import { enrollLead } from '@/lib/enroll-lead'
+import { processDueSteps } from '@/lib/process-automations'
 
 export async function POST(request: NextRequest) {
   // Use service role key to bypass RLS — FK constraint check on hosted_form_id
@@ -150,54 +150,16 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  // Fire automation (fire-and-forget — lead is already saved)
+  // Enroll lead in automation sequence and immediately send initial_contact
   if (insertedLead?.id && body.email) {
-    Promise.resolve().then(async () => {
-      try {
-        await supabaseAdmin
-          .from('lead_automations')
-          .upsert({ account_id: body.account_id }, { onConflict: 'account_id', ignoreDuplicates: true })
-
-        const { data: automationConfig } = await supabaseAdmin
-          .from('lead_automations')
-          .select('is_enabled, discount_percent, hero_image_url')
-          .eq('account_id', body.account_id)
-          .single()
-
-        if (!automationConfig?.is_enabled) return
-
-        const [{ data: accountDetails }, { data: formData }] = await Promise.all([
-          supabaseAdmin.from('accounts').select('business_name').eq('id', body.account_id).single(),
-          supabaseAdmin.from('hosted_forms').select('form_config').eq('id', body.hosted_form_id).single(),
-        ])
-
-        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://quote-box.com'
-        const slug = (formData?.form_config as { slug?: string } | null)?.slug
-        const formUrl = slug ? `${siteUrl}/${slug}` : null
-
-        const heroImageUrl = automationConfig.hero_image_url
-          ? `${siteUrl}${automationConfig.hero_image_url}`
-          : null
-
-        await sendAutomationStep({
-          email: body.email,
-          phone: body.phone ?? null,
-          name: body.name || 'there',
-          businessName: accountDetails?.business_name || 'Your service provider',
-          formUrl,
-          step: 'initial_contact',
-          discountPercent: automationConfig.discount_percent ?? 10,
-          leadId: insertedLead.id,
-          accountId: body.account_id,
-          heroImageUrl,
-          smsOptIn: body.form_data?._sms_opt_in === true,
-        })
-
-        await scheduleLeadAutomation(insertedLead.id, body.account_id)
-      } catch (err) {
-        console.error('Automation error (form lead):', err)
+    try {
+      const enrolled = await enrollLead(insertedLead.id, body.account_id)
+      if (enrolled) {
+        await processDueSteps(body.account_id)
       }
-    })
+    } catch (err) {
+      console.error('Automation error (form lead):', err)
+    }
   }
 
   return NextResponse.json({ success: true })

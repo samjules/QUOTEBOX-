@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
-import { scheduleLeadAutomation } from '@/lib/schedule-automation'
-import { sendAutomationStep } from '@/lib/send-automation-step'
+import { enrollLead } from '@/lib/enroll-lead'
+import { processDueSteps } from '@/lib/process-automations'
 
 const supabaseAdmin = () =>
   createClient(
@@ -138,66 +138,16 @@ export async function POST(request: NextRequest) {
           status: 'new',
         }).select('id').single()
 
-        // Fire automation immediately and schedule follow-ups (fire-and-forget)
-        if (insertedLead?.id) {
-          Promise.resolve().then(async () => {
-            try {
-              const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://quote-box.com'
-
-              // Upsert default automation config and check if enabled
-              await admin
-                .from('lead_automations')
-                .upsert({ account_id: account.id }, { onConflict: 'account_id', ignoreDuplicates: true })
-              const { data: automationConfig } = await admin
-                .from('lead_automations')
-                .select('is_enabled, discount_percent, hero_image_url')
-                .eq('account_id', account.id)
-                .single()
-
-              if (!automationConfig?.is_enabled) return
-
-              const { data: accountDetails } = await admin
-                .from('accounts')
-                .select('business_name')
-                .eq('id', account.id)
-                .single()
-
-              const { data: form } = await admin
-                .from('hosted_forms')
-                .select('form_config')
-                .eq('account_id', account.id)
-                .eq('is_active', true)
-                .order('created_at', { ascending: true })
-                .limit(1)
-                .single()
-
-              const slug = (form?.form_config as { slug?: string } | null)?.slug
-              const formUrl = slug ? `${siteUrl}/${slug}` : null
-
-              // Send initial contact immediately
-              const heroImageUrl = automationConfig.hero_image_url
-                ? `${siteUrl}${automationConfig.hero_image_url}`
-                : null
-
-              await sendAutomationStep({
-                email,
-                phone,
-                name: name || 'there',
-                businessName: accountDetails?.business_name || 'Your service provider',
-                formUrl,
-                step: 'initial_contact',
-                discountPercent: automationConfig.discount_percent ?? 10,
-                leadId: insertedLead.id,
-                accountId: account.id,
-                heroImageUrl,
-              })
-
-              // Schedule day 1, discount, and mark-lost follow-ups
-              await scheduleLeadAutomation(insertedLead.id, account.id)
-            } catch (err) {
-              console.error('Automation error:', err)
+        // Enroll lead and immediately fire initial_contact
+        if (insertedLead?.id && email) {
+          try {
+            const enrolled = await enrollLead(insertedLead.id, account.id)
+            if (enrolled) {
+              await processDueSteps(account.id)
             }
-          })
+          } catch (err) {
+            console.error('Automation error (meta lead):', err)
+          }
         }
 
         // Credit deduction (same logic as leads/submit)
