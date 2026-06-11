@@ -782,14 +782,51 @@ export default function LeadsTable({ leads: initialLeads, stripeConnectAccountId
                                 )}
                                 {entries.length > 0 && (
                                   <dl className="space-y-1 pt-2 border-t border-gray-100">
-                                    {entries.map(([key, value]) => (
-                                      <div key={key} className="flex justify-between text-xs">
-                                        <dt className="text-gray-500">{resolveLabel(key, fieldMap)}</dt>
-                                        <dd className="text-gray-900 font-medium text-right max-w-[60%]">
-                                          {resolveValue(key, value, fieldMap)}
-                                        </dd>
-                                      </div>
-                                    ))}
+                                    {entries.map(([key, value]) => {
+                                      const label = resolveLabel(key, fieldMap)
+                                      if (isRouteValue(value)) {
+                                        const route = value as RouteValue
+                                        return (
+                                          <div key={key}>
+                                            <dt className="text-xs text-gray-500 mb-1">{label}</dt>
+                                            <dd>
+                                              <div className="rounded-md bg-gray-50 border border-gray-200 p-2 space-y-1 text-xs">
+                                                {route.startAddress && (
+                                                  <div className="flex gap-2 items-start">
+                                                    <span className="shrink-0 font-semibold text-gray-400 w-5">From</span>
+                                                    <span className="text-gray-900">{route.startAddress}</span>
+                                                  </div>
+                                                )}
+                                                {route.endAddress && (
+                                                  <div className="flex gap-2 items-start">
+                                                    <span className="shrink-0 font-semibold text-gray-400 w-5">To</span>
+                                                    <span className="text-gray-900">{route.endAddress}</span>
+                                                  </div>
+                                                )}
+                                                {(route.distanceMiles != null || route.durationMinutes != null) && (
+                                                  <div className="flex gap-3 pt-1 border-t border-gray-200 text-gray-500">
+                                                    {route.distanceMiles != null && (
+                                                      <span className="font-medium text-gray-700">{route.distanceMiles.toFixed(1)} mi</span>
+                                                    )}
+                                                    {route.durationMinutes != null && (
+                                                      <span className="font-medium text-gray-700">{Math.round(route.durationMinutes)} min drive</span>
+                                                    )}
+                                                  </div>
+                                                )}
+                                              </div>
+                                            </dd>
+                                          </div>
+                                        )
+                                      }
+                                      return (
+                                        <div key={key} className="flex justify-between text-xs">
+                                          <dt className="text-gray-500">{label}</dt>
+                                          <dd className="text-gray-900 font-medium text-right max-w-[60%]">
+                                            {resolveValue(key, value, fieldMap)}
+                                          </dd>
+                                        </div>
+                                      )
+                                    })}
                                   </dl>
                                 )}
                               </div>
