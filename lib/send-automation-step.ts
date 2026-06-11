@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 import { sendSms } from '@/lib/sms'
 
 function esc(s: string) {
@@ -171,21 +171,19 @@ export async function sendAutomationStep(params: {
   }
 
   if (params.email) {
-    const gmailUser = process.env.GMAIL_USER
-    const gmailPass = process.env.GMAIL_APP_PASSWORD?.replace(/\s/g, '')
-    if (gmailUser && gmailPass) {
+    const apiKey = process.env.RESEND_API_KEY
+    if (apiKey) {
+      const resend = new Resend(apiKey)
       const { subject, html } = buildAutomationEmail(emailParams)
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user: gmailUser, pass: gmailPass },
-      })
+      const from = process.env.RESEND_FROM_EMAIL || 'Quote.Box <onboarding@resend.dev>'
       try {
-        await transporter.sendMail({ from: `"Quote.Box" <${gmailUser}>`, to: params.email, subject, html })
+        const { error } = await resend.emails.send({ from, to: params.email, subject, html })
+        if (error) console.error('Resend error:', error)
       } catch (err) {
         console.error('Automation email error:', err)
       }
     } else {
-      console.error('GMAIL_USER or GMAIL_APP_PASSWORD not set — email not sent')
+      console.error('RESEND_API_KEY not set — email not sent')
     }
   }
 
