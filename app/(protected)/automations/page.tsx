@@ -8,16 +8,6 @@ interface AutomationConfig {
   hero_image_url: string | null
 }
 
-const HERO_IMAGES = [
-  { url: '/quotebox-icon.png', label: 'QB Logo' },
-  { url: '/DSCN8733.jpg', label: 'Photo' },
-  { url: '/FW93315_1080x.webp', label: 'Banner' },
-  { url: '/Garden-Supplies-_1600x1000.jpg', label: 'Garden' },
-  { url: '/lead-machine.png', label: 'Lead Machine' },
-  { url: '/leads-proof.png', label: 'Proof' },
-  { url: '/quotebox-share.png', label: 'QuoteBox' },
-]
-
 interface TestLead {
   id: string
   name: string | null
@@ -55,9 +45,13 @@ const STEPS = [
     wait: 'Immediately',
     icon: '⚡',
     accent: 'bg-violet-500',
-    glow: 'shadow-violet-500/10',
-    iconBg: 'bg-violet-500/15 text-violet-400',
-    pill: 'bg-violet-500/10 text-violet-300 border border-violet-500/20',
+    iconBg: 'bg-violet-50 text-violet-600',
+    pill: 'bg-violet-50 text-violet-600 border border-violet-100',
+    avatarBg: 'bg-violet-500',
+    chipRing: 'border-violet-200 bg-violet-50',
+    chipText: 'text-violet-800',
+    barOpen: 'bg-violet-400',
+    barClick: 'bg-violet-600',
     channels: ['Email', 'SMS'],
     description: 'Send a direct link to your quote form the moment the lead arrives.',
   },
@@ -67,9 +61,13 @@ const STEPS = [
     wait: 'Wait 24h',
     icon: '🔔',
     accent: 'bg-blue-500',
-    glow: 'shadow-blue-500/10',
-    iconBg: 'bg-blue-500/15 text-blue-400',
-    pill: 'bg-blue-500/10 text-blue-300 border border-blue-500/20',
+    iconBg: 'bg-blue-50 text-blue-600',
+    pill: 'bg-blue-50 text-blue-600 border border-blue-100',
+    avatarBg: 'bg-blue-500',
+    chipRing: 'border-blue-200 bg-blue-50',
+    chipText: 'text-blue-800',
+    barOpen: 'bg-blue-400',
+    barClick: 'bg-blue-600',
     channels: ['Email', 'SMS'],
     description: "If they haven't submitted a quote, send a friendly reminder.",
   },
@@ -79,9 +77,13 @@ const STEPS = [
     wait: 'Wait 24h',
     icon: '🎁',
     accent: 'bg-amber-500',
-    glow: 'shadow-amber-500/10',
-    iconBg: 'bg-amber-500/15 text-amber-400',
-    pill: 'bg-amber-500/10 text-amber-300 border border-amber-500/20',
+    iconBg: 'bg-amber-50 text-amber-600',
+    pill: 'bg-amber-50 text-amber-600 border border-amber-100',
+    avatarBg: 'bg-amber-500',
+    chipRing: 'border-amber-200 bg-amber-50',
+    chipText: 'text-amber-800',
+    barOpen: 'bg-amber-400',
+    barClick: 'bg-amber-600',
     channels: ['Email', 'SMS'],
     description: 'Sweeten the deal with an exclusive discount to win them over.',
     hasDiscount: true,
@@ -91,10 +93,14 @@ const STEPS = [
     label: 'Mark as Lost',
     wait: 'Wait 24h',
     icon: '🚫',
-    accent: 'bg-slate-600',
-    glow: 'shadow-slate-900/10',
-    iconBg: 'bg-slate-700 text-slate-400',
-    pill: 'bg-slate-700/60 text-slate-400 border border-slate-600/30',
+    accent: 'bg-gray-300',
+    iconBg: 'bg-gray-100 text-gray-500',
+    pill: 'bg-gray-100 text-gray-500 border border-gray-200',
+    avatarBg: 'bg-gray-400',
+    chipRing: 'border-gray-200 bg-gray-50',
+    chipText: 'text-gray-600',
+    barOpen: 'bg-gray-300',
+    barClick: 'bg-gray-400',
     channels: [],
     description: 'No engagement after 72h — lead is automatically marked as lost.',
   },
@@ -120,12 +126,12 @@ function formatScheduled(dateStr: string): string {
   const diffMs = d.getTime() - now.getTime()
   if (diffMs > 0) {
     const h = Math.round(diffMs / 3600000)
-    if (h < 1) return 'sending soon'
+    if (h < 1) return 'soon'
     if (h < 24) return `in ${h}h`
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
   const h = Math.round(-diffMs / 3600000)
-  if (h < 1) return 'just now'
+  if (h < 1) return 'now'
   if (h < 24) return `${h}h ago`
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
@@ -191,7 +197,7 @@ export default function AutomationsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="flex items-center gap-2 text-slate-400 text-sm">
+        <div className="flex items-center gap-2 text-gray-400 text-sm">
           <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
@@ -214,13 +220,15 @@ export default function AutomationsPage() {
   const totalSent = activity.filter(a => a.status === 'sent').length
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-8">
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-7">
+      <div className="flex items-center justify-between mb-10">
         <div>
           <h1 className="text-xl font-semibold text-gray-900 tracking-tight">Automations</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Nurture every lead from first touch to close.</p>
+          <p className="text-sm text-gray-400 mt-0.5">
+            {totalPending > 0 ? `${totalPending} leads active in funnel · ${totalSent} sent total` : 'Nurture every lead from first touch to close.'}
+          </p>
         </div>
         <div className="flex items-center gap-3">
           {saving && (
@@ -246,7 +254,7 @@ export default function AutomationsPage() {
       </div>
 
       {!config.is_enabled && (
-        <div className="mb-6 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-700 flex items-center gap-2">
+        <div className="mb-8 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-700 flex items-center gap-2">
           <svg className="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
@@ -255,204 +263,161 @@ export default function AutomationsPage() {
       )}
 
       {/* Main layout */}
-      <div className="flex gap-5 items-start">
+      <div className="flex gap-8 items-start">
 
-        {/* Canvas */}
-        <div className="flex-1 bg-slate-950 rounded-2xl border border-slate-800/80 overflow-hidden">
+        {/* Flow — full white, no container */}
+        <div className="flex-1 min-w-0">
 
-          {/* Canvas header bar */}
-          <div className="flex items-center justify-between px-6 py-3.5 border-b border-slate-800/80">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Lead Flow</span>
-            <div className="flex items-center gap-5">
-              <span className="flex items-center gap-1.5 text-xs text-slate-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                {totalPending} pending
-              </span>
-              <span className="flex items-center gap-1.5 text-xs text-slate-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                {totalSent} sent
-              </span>
-            </div>
-          </div>
-
-          {/* Flow area */}
-          <div
-            className="p-8 pb-10"
-            style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.035) 1px, transparent 1px)', backgroundSize: '24px 24px' }}
-          >
-
-            {/* Trigger node */}
-            <div className="flex items-start gap-5">
-              <div className="w-72 shrink-0">
-                <div className="bg-gradient-to-br from-brand-600 to-brand-700 rounded-2xl p-4 shadow-xl shadow-brand-500/20">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center text-xl shrink-0">🎯</div>
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-brand-200 leading-none mb-1">Trigger</p>
-                      <p className="font-semibold text-white leading-tight text-sm">Any New Lead</p>
-                      <p className="text-xs text-brand-300 mt-0.5">Meta or hosted form</p>
-                    </div>
+          {/* Trigger node */}
+          <div className="flex items-start gap-10">
+            <div className="w-80 shrink-0">
+              <div className="bg-gradient-to-br from-brand-600 to-brand-700 rounded-2xl p-5 shadow-lg shadow-brand-500/20">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center text-2xl shrink-0">🎯</div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-brand-200 leading-none mb-1">Trigger</p>
+                    <p className="font-semibold text-white leading-tight">Any New Lead</p>
+                    <p className="text-xs text-brand-300 mt-0.5">Meta or hosted form</p>
                   </div>
                 </div>
               </div>
-              <div className="flex-1" />
             </div>
+            <div className="flex-1" />
+          </div>
 
-            {/* Steps */}
-            {STEPS.map((step) => {
-              const pending = pendingByStep[step.key] || []
-              const s: StepStats = stats[step.key] ?? { sent: 0, opens: 0, clicks: 0 }
-              const pct = (n: number) => s.sent > 0 ? Math.round((n / s.sent) * 100) : 0
-              const hasFunnel = s.sent > 0
+          {/* Steps */}
+          {STEPS.map((step) => {
+            const pending = pendingByStep[step.key] || []
+            const s: StepStats = stats[step.key] ?? { sent: 0, opens: 0, clicks: 0 }
+            const pct = (n: number) => s.sent > 0 ? Math.round((n / s.sent) * 100) : 0
+            const hasFunnel = s.sent > 0
 
-              return (
-                <div key={step.key}>
+            return (
+              <div key={step.key}>
 
-                  {/* Connector */}
-                  <div className="flex items-start gap-5">
-                    <div className="w-72 shrink-0 flex flex-col items-center py-1">
-                      <div className="w-px h-5 bg-gradient-to-b from-slate-700 to-slate-800" />
-                      <div className="text-[10px] font-mono text-slate-500 bg-slate-900 border border-slate-700/60 px-2.5 py-1 rounded-full my-1 tracking-wide">
-                        {step.wait}
-                      </div>
-                      <div className="w-px h-4 bg-gradient-to-b from-slate-800 to-slate-700" />
-                      <svg className="w-2 h-2 text-slate-700" viewBox="0 0 8 8" fill="currentColor">
-                        <path d="M4 8L0 2h8L4 8z" />
-                      </svg>
+                {/* Connector */}
+                <div className="flex items-start">
+                  <div className="w-80 shrink-0 flex flex-col items-center py-2">
+                    <div className="w-px h-8 bg-gray-200" />
+                    <div className="text-[11px] text-gray-400 border border-gray-200 bg-white rounded-full px-3 py-1 my-2 shadow-sm font-medium">
+                      {step.wait}
                     </div>
-                    <div className="flex-1" />
+                    <div className="w-px h-6 bg-gray-200" />
+                    <svg className="w-2.5 h-2.5 text-gray-300" viewBox="0 0 10 10" fill="currentColor">
+                      <path d="M5 10L0 3h10z" />
+                    </svg>
                   </div>
+                </div>
 
-                  {/* Node + pending queue row */}
-                  <div className="flex items-start gap-4">
+                {/* Node + lead chips */}
+                <div className="flex items-start gap-10">
 
-                    {/* Step node */}
-                    <div className={`w-72 shrink-0 bg-slate-900 rounded-2xl border border-slate-800 shadow-lg ${step.glow} overflow-hidden ${!config.is_enabled ? 'opacity-40' : ''}`}>
-                      <div className={`h-[3px] ${step.accent}`} />
-                      <div className="p-4">
-                        <div className="flex items-start gap-3">
-                          <div className={`w-10 h-10 rounded-xl ${step.iconBg} flex items-center justify-center text-xl shrink-0`}>
-                            {step.icon}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2 mb-0.5">
-                              <p className="font-semibold text-slate-100 text-sm leading-tight">{step.label}</p>
-                              {pending.length > 0 && (
-                                <span className="text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/25 px-1.5 py-0.5 rounded-full shrink-0">
-                                  {pending.length}
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-slate-500 leading-snug">
-                              {step.hasDiscount
-                                ? step.description.replace('exclusive discount', `${config.discount_percent}% discount`)
-                                : step.description}
-                            </p>
-                            {step.channels.length > 0 && (
-                              <div className="flex gap-1 mt-2.5">
-                                {step.channels.map((ch) => (
-                                  <span key={ch} className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${step.pill}`}>
-                                    {ch}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
+                  {/* Step node */}
+                  <div className={`w-80 shrink-0 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden ${!config.is_enabled ? 'opacity-50' : ''}`}>
+                    <div className={`h-[3px] ${step.accent}`} />
+                    <div className="p-5">
+                      <div className="flex items-start gap-3.5">
+                        <div className={`w-10 h-10 rounded-xl ${step.iconBg} flex items-center justify-center text-xl shrink-0`}>
+                          {step.icon}
                         </div>
-
-                        {/* Funnel */}
-                        {hasFunnel && step.channels.length > 0 && (
-                          <div className="mt-3.5 pt-3 border-t border-slate-800">
-                            <p className="text-[9px] font-bold uppercase tracking-widest text-slate-600 mb-2">Performance</p>
-                            <div className="space-y-1.5">
-                              {[
-                                { label: 'Sent', value: s.sent, bar: 100, color: 'bg-slate-500' },
-                                { label: 'Opened', value: s.opens, bar: pct(s.opens), color: 'bg-violet-500' },
-                                { label: 'Clicked', value: s.clicks, bar: pct(s.clicks), color: 'bg-sky-500' },
-                              ].map((row) => (
-                                <div key={row.label} className="flex items-center gap-2">
-                                  <span className="text-[9px] text-slate-600 w-9 shrink-0 text-right tabular-nums">{row.label}</span>
-                                  <div className="flex-1 bg-slate-800 rounded-full h-[5px] overflow-hidden">
-                                    <div
-                                      className={`h-full rounded-full ${row.color} transition-all duration-500`}
-                                      style={{ width: `${row.bar}%` }}
-                                    />
-                                  </div>
-                                  <span className="text-[10px] text-slate-300 w-5 text-right shrink-0 tabular-nums">{row.value}</span>
-                                  <span className="text-[9px] text-slate-600 w-7 shrink-0 tabular-nums">
-                                    {row.bar < 100 ? `${row.bar}%` : ''}
-                                  </span>
-                                </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 text-sm leading-tight mb-0.5">{step.label}</p>
+                          <p className="text-xs text-gray-500 leading-snug">
+                            {step.hasDiscount
+                              ? step.description.replace('exclusive discount', `${config.discount_percent}% discount`)
+                              : step.description}
+                          </p>
+                          {step.channels.length > 0 && (
+                            <div className="flex gap-1.5 mt-2.5">
+                              {step.channels.map((ch) => (
+                                <span key={ch} className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${step.pill}`}>
+                                  {ch}
+                                </span>
                               ))}
                             </div>
-                          </div>
-                        )}
-
-                        {/* No data yet placeholder */}
-                        {!hasFunnel && step.channels.length > 0 && (
-                          <div className="mt-3.5 pt-3 border-t border-slate-800">
-                            <p className="text-[10px] text-slate-700 italic">No sends yet</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Pending queue — appears only when there are pending leads */}
-                    {pending.length > 0 && (
-                      <div className="flex items-start gap-3 flex-1 min-w-0 pt-1">
-                        <div className="flex items-center">
-                          <div className="w-6 h-px bg-slate-700" />
-                          <svg className="w-1.5 h-1.5 text-slate-600 -mr-px" viewBox="0 0 6 6" fill="currentColor">
-                            <circle cx="3" cy="3" r="3" />
-                          </svg>
+                          )}
                         </div>
-                        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 min-w-0 max-w-[220px]">
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2.5 flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
-                            {pending.length} queued
-                          </p>
+                      </div>
+
+                      {/* Funnel bars */}
+                      {hasFunnel && step.channels.length > 0 && (
+                        <div className="mt-4 pt-4 border-t border-gray-100">
                           <div className="space-y-2">
-                            {pending.slice(0, 4).map((row) => (
-                              <div key={row.id} className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[9px] font-bold text-slate-300 shrink-0">
-                                  {initials(row.leads?.name)}
+                            {[
+                              { label: 'Sent', value: s.sent, bar: 100, color: 'bg-gray-300' },
+                              { label: 'Opened', value: s.opens, bar: pct(s.opens), color: step.barOpen },
+                              { label: 'Clicked', value: s.clicks, bar: pct(s.clicks), color: step.barClick },
+                            ].map((row) => (
+                              <div key={row.label} className="flex items-center gap-2">
+                                <span className="text-[10px] text-gray-400 w-10 shrink-0 text-right tabular-nums">{row.label}</span>
+                                <div className="flex-1 bg-gray-100 rounded-full h-[5px] overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full ${row.color} transition-all duration-700`}
+                                    style={{ width: `${row.bar}%` }}
+                                  />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs text-slate-300 truncate leading-tight">
-                                    {row.leads?.name || 'Unknown'}
-                                  </p>
-                                  <p className="text-[10px] text-slate-600 leading-tight">
-                                    {formatScheduled(row.scheduled_at)}
-                                  </p>
-                                </div>
+                                <span className="text-[11px] text-gray-600 w-6 text-right shrink-0 tabular-nums font-medium">{row.value}</span>
+                                <span className="text-[10px] text-gray-400 w-7 shrink-0 tabular-nums">
+                                  {row.bar < 100 ? `${row.bar}%` : ''}
+                                </span>
                               </div>
                             ))}
-                            {pending.length > 4 && (
-                              <p className="text-[10px] text-slate-600 pl-8">+{pending.length - 4} more</p>
-                            )}
                           </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
+                      {!hasFunnel && step.channels.length > 0 && (
+                        <div className="mt-4 pt-4 border-t border-gray-100">
+                          <p className="text-[11px] text-gray-300">No sends yet</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )
-            })}
 
-            {/* Exit note */}
-            <div className="flex items-start gap-5 mt-5">
-              <div className="w-72 shrink-0 flex justify-center">
-                <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
-                  <svg className="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l4 4 6-6" />
-                  </svg>
-                  Lead submits form → sequence stops
+                  {/* Lead chips — funnel level */}
+                  {pending.length > 0 && (
+                    <div className="flex-1 flex flex-wrap gap-2 items-start pt-4 min-w-0">
+                      {pending.slice(0, 12).map((row) => (
+                        <div
+                          key={row.id}
+                          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-xs font-medium ${step.chipRing} ${step.chipText}`}
+                        >
+                          <div className={`w-5 h-5 rounded-full ${step.avatarBg} text-white flex items-center justify-center text-[9px] font-bold shrink-0`}>
+                            {initials(row.leads?.name)}
+                          </div>
+                          <span className="truncate max-w-[80px]">
+                            {row.leads?.name?.split(' ')[0] || 'Lead'}
+                          </span>
+                          <span className="text-[10px] opacity-50 shrink-0">
+                            {formatScheduled(row.scheduled_at)}
+                          </span>
+                        </div>
+                      ))}
+                      {pending.length > 12 && (
+                        <div className="flex items-center px-2.5 py-1.5 rounded-full border border-gray-200 bg-gray-50 text-xs text-gray-400 font-medium">
+                          +{pending.length - 12} more
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                 </div>
               </div>
-            </div>
+            )
+          })}
 
+          {/* Exit note */}
+          <div className="flex items-start mt-6">
+            <div className="w-80 flex justify-center">
+              <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                <svg className="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l4 4 6-6" />
+                </svg>
+                Lead submits form → sequence stops
+              </div>
+            </div>
           </div>
+
         </div>
 
         {/* Sidebar */}
@@ -476,43 +441,6 @@ export default function AutomationsPage() {
             </div>
           </div>
 
-          {/* Hero image */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-            <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Email Hero Image</h2>
-            <div className="grid grid-cols-3 gap-1.5">
-              <button
-                onClick={() => save({ hero_image_url: null })}
-                className={`aspect-video rounded-lg border-2 flex items-center justify-center text-[10px] font-semibold transition-all ${
-                  !config.hero_image_url
-                    ? 'border-brand-500 bg-brand-50 text-brand-600'
-                    : 'border-gray-200 text-gray-400 hover:border-gray-300'
-                }`}
-              >
-                None
-              </button>
-              {HERO_IMAGES.map((img) => (
-                <button
-                  key={img.url}
-                  onClick={() => save({ hero_image_url: img.url })}
-                  className={`aspect-video rounded-lg border-2 overflow-hidden transition-all ${
-                    config.hero_image_url === img.url
-                      ? 'border-brand-500 ring-2 ring-brand-200'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                  title={img.label}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={img.url} alt={img.label} className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
-            {config.hero_image_url && (
-              <p className="text-[10px] text-gray-400 mt-2 truncate">
-                ✓ {HERO_IMAGES.find((i) => i.url === config.hero_image_url)?.label ?? config.hero_image_url}
-              </p>
-            )}
-          </div>
-
           {/* Test */}
           <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
             <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Send Test</h2>
@@ -534,7 +462,7 @@ export default function AutomationsPage() {
                 <button
                   onClick={sendTest}
                   disabled={testSending}
-                  className="w-full px-3 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
+                  className="w-full px-3 py-2 bg-gray-900 text-white text-xs font-semibold rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
                 >
                   {testSending ? (
                     <>
@@ -566,16 +494,16 @@ export default function AutomationsPage() {
           </div>
 
           {/* How it works */}
-          <div className="rounded-2xl bg-slate-950 border border-slate-800 px-4 py-4">
-            <p className="text-xs font-semibold text-slate-300 mb-2.5">How it works</p>
+          <div className="rounded-2xl bg-gray-50 border border-gray-100 px-4 py-4">
+            <p className="text-xs font-semibold text-gray-600 mb-2.5">How it works</p>
             <ul className="space-y-2">
               {[
                 'Triggered by every new Meta or form lead',
                 'Sequence stops when quote form is submitted',
                 'Requires Twilio env vars for SMS',
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2 text-xs text-slate-500">
-                  <span className="mt-0.5 w-4 h-4 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 text-[9px] font-bold text-slate-400">
+                <li key={i} className="flex items-start gap-2 text-xs text-gray-400">
+                  <span className="mt-0.5 w-4 h-4 rounded-full bg-white border border-gray-200 flex items-center justify-center shrink-0 text-[9px] font-bold text-gray-400 shadow-sm">
                     {i + 1}
                   </span>
                   {item}
