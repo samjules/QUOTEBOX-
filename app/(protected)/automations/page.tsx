@@ -1,6 +1,7 @@
 'use client'
 
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 interface AutomationConfig {
   is_enabled: boolean
@@ -9,6 +10,20 @@ interface AutomationConfig {
   default_lead_value: number | null
   accent_color: string | null
   business_name?: string
+  account_id?: string
+}
+
+interface MediaFile {
+  id: string
+  title: string
+  file_name: string
+  file_url: string
+  created_at: string
+}
+
+function isImageFile(name: string) {
+  const ext = name.split('.').pop()?.toLowerCase() ?? ''
+  return ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'avif'].includes(ext)
 }
 
 interface TestLead {
@@ -428,6 +443,11 @@ export default function AutomationsPage() {
   const [tab, setTab] = useState<'flow' | 'email' | 'settings'>('flow')
   const [config, setConfig] = useState<AutomationConfig>({ is_enabled: true, discount_percent: 10, hero_image_url: null, default_lead_value: null, accent_color: '#5b50d6' })
   const [previewStep, setPreviewStep] = useState<'initial_contact' | 'day1_followup' | 'discount_offer'>('initial_contact')
+  const [showMediaPicker, setShowMediaPicker] = useState(false)
+  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([])
+  const [mediaLoading, setMediaLoading] = useState(false)
+  const [mediaUploading, setMediaUploading] = useState(false)
+  const mediaFileInputRef = useRef<HTMLInputElement>(null)
   const [stats, setStats] = useState<Record<string, StepStats>>({})
   const [leadActivity, setLeadActivity] = useState<LeadActivityRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -482,6 +502,50 @@ export default function AutomationsPage() {
       body: JSON.stringify(next),
     })
     setSaving(false)
+  }
+
+  async function openMediaPicker() {
+    setShowMediaPicker(true)
+    if (mediaFiles.length > 0) return
+    setMediaLoading(true)
+    const supabase = createClient()
+    const { data } = await supabase
+      .from('vsls')
+      .select('id, title, file_name, file_url, created_at')
+      .eq('account_id', config.account_id)
+      .order('created_at', { ascending: false })
+    setMediaFiles((data ?? []).filter((f: MediaFile) => isImageFile(f.file_name)))
+    setMediaLoading(false)
+  }
+
+  async function uploadMediaFile(file: File) {
+    if (!config.account_id) return
+    if (file.size > 5 * 1024 * 1024) { alert('Image must be under 5 MB'); return }
+    setMediaUploading(true)
+    const supabase = createClient()
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+    const storagePath = `${config.account_id}/${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${ext}`
+    const { data: uploaded, error } = await supabase.storage.from('vsls').upload(storagePath, file, { contentType: file.type, upsert: false })
+    if (error || !uploaded) { setMediaUploading(false); alert(`Upload failed: ${error?.message}`); return }
+    const { data: { publicUrl } } = supabase.storage.from('vsls').getPublicUrl(uploaded.path)
+    await supabase.from('vsls').insert({
+      account_id: config.account_id,
+      title: file.name.replace(/\.[^.]+$/, ''),
+      file_name: file.name,
+      file_url: publicUrl,
+      storage_path: storagePath,
+      file_size: file.size,
+    })
+    // Refresh list and immediately select the new image
+    const { data } = await supabase
+      .from('vsls')
+      .select('id, title, file_name, file_url, created_at')
+      .eq('account_id', config.account_id)
+      .order('created_at', { ascending: false })
+    setMediaFiles((data ?? []).filter((f: MediaFile) => isImageFile(f.file_name)))
+    save({ hero_image_url: publicUrl })
+    setShowMediaPicker(false)
+    setMediaUploading(false)
   }
 
   if (loading) {
@@ -768,27 +832,38 @@ export default function AutomationsPage() {
             {/* Header image */}
             <div className="rounded-2xl border border-white/[0.08] p-5" style={{ background: '#161929' }}>
               <p className="text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-3">Header image</p>
-              {config.hero_image_url && (
-                <div className="relative mb-3 rounded-lg overflow-hidden border border-white/10">
+              {config.hero_image_url ? (
+                <div className="relative mb-3 rounded-lg overflow-hidden border border-white/10 group">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={config.hero_image_url} alt="" className="w-full h-20 object-cover" />
-                  <button
-                    onClick={() => save({ hero_image_url: null })}
-                    className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/60 text-white/80 flex items-center justify-center text-[10px] hover:bg-black/80 transition-colors"
-                  >
-                    ✕
-                  </button>
+                  <img src={config.hero_image_url} alt="" className="w-full h-24 object-cover" />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                    <button
+                      onClick={openMediaPicker}
+                      className="px-2.5 py-1 rounded-lg bg-white/90 text-gray-900 text-xs font-semibold"
+                    >
+                      Change
+                    </button>
+                    <button
+                      onClick={() => save({ hero_image_url: null })}
+                      className="px-2.5 py-1 rounded-lg bg-black/70 text-white text-xs font-semibold"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
+              ) : (
+                <button
+                  onClick={openMediaPicker}
+                  className="w-full h-20 rounded-lg border border-dashed border-white/20 flex flex-col items-center justify-center gap-1.5 text-white/30 hover:text-white/50 hover:border-white/30 transition-colors mb-3"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                    <rect x="3" y="3" width="18" height="18" rx="3" /><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" stroke="none" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 15l-5-5L5 21" />
+                  </svg>
+                  <span className="text-[11px] font-medium">Choose from media library</span>
+                </button>
               )}
-              <input
-                type="url"
-                placeholder="https://..."
-                value={config.hero_image_url || ''}
-                onChange={e => setConfig(c => ({ ...c, hero_image_url: e.target.value || null }))}
-                onBlur={() => save({ hero_image_url: config.hero_image_url })}
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-brand-500 placeholder-white/20"
-              />
-              <p className="text-[11px] text-white/25 mt-2">Paste a public image URL. Shown below the header in the email.</p>
+              <p className="text-[11px] text-white/25">Displayed below the header in every automation email.</p>
             </div>
 
           </div>
@@ -910,6 +985,118 @@ export default function AutomationsPage() {
             </ol>
           </div>
 
+        </div>
+      )}
+
+      {/* Hidden file input for media upload */}
+      <input
+        ref={mediaFileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={e => { const f = e.target.files?.[0]; if (f) uploadMediaFile(f); e.target.value = '' }}
+      />
+
+      {/* Media picker modal */}
+      {showMediaPicker && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.75)' }}
+          onClick={e => { if (e.target === e.currentTarget) setShowMediaPicker(false) }}
+        >
+          <div className="w-full max-w-2xl max-h-[80vh] flex flex-col rounded-2xl border border-white/10 overflow-hidden" style={{ background: '#161929' }}>
+
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] shrink-0">
+              <div>
+                <p className="text-sm font-semibold text-white">Media Library</p>
+                <p className="text-[11px] text-white/30 mt-0.5">
+                  {mediaLoading ? 'Loading…' : `${mediaFiles.length} image${mediaFiles.length !== 1 ? 's' : ''} · click to select`}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => mediaFileInputRef.current?.click()}
+                  disabled={mediaUploading}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-600 text-white text-xs font-semibold hover:bg-brand-500 disabled:opacity-40 transition-colors"
+                >
+                  {mediaUploading ? (
+                    <>
+                      <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                      </svg>
+                      Uploading…
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+                      </svg>
+                      Upload new
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => setShowMediaPicker(false)}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-white/40 hover:text-white/70 hover:bg-white/5 transition-colors text-sm"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Grid */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {mediaLoading ? (
+                <div className="flex items-center justify-center py-16 text-white/30 text-sm gap-2">
+                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                  Loading…
+                </div>
+              ) : mediaFiles.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-white/30">
+                  <svg className="w-10 h-10 mb-3 opacity-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                    <rect x="3" y="3" width="18" height="18" rx="3" /><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" stroke="none" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 15l-5-5L5 21" />
+                  </svg>
+                  <p className="text-sm mb-3">No images yet</p>
+                  <button
+                    onClick={() => mediaFileInputRef.current?.click()}
+                    className="px-3 py-1.5 rounded-lg bg-brand-600 text-white text-xs font-semibold hover:bg-brand-500 transition-colors"
+                  >
+                    Upload your first image
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-3">
+                  {mediaFiles.map(f => {
+                    const selected = config.hero_image_url === f.file_url
+                    return (
+                      <button
+                        key={f.id}
+                        onClick={() => { save({ hero_image_url: f.file_url }); setShowMediaPicker(false) }}
+                        className="relative rounded-xl overflow-hidden border-2 transition-all focus:outline-none"
+                        style={{ borderColor: selected ? '#5b50d6' : 'rgba(255,255,255,0.08)' }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={f.file_url} alt={f.title} className="w-full aspect-video object-cover block" />
+                        {selected && (
+                          <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-brand-600 flex items-center justify-center text-white text-[10px] font-bold">✓</div>
+                        )}
+                        <div className="px-2 py-1.5 bg-[#161929]">
+                          <p className="text-[11px] text-white/60 truncate text-left">{f.title || f.file_name}</p>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+          </div>
         </div>
       )}
 
