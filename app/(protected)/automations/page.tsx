@@ -3,12 +3,26 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+interface StepCopy {
+  subject?: string
+  heading?: string
+  body?: string
+  outro?: string
+}
+
+interface EmailCopy {
+  initial_contact?: StepCopy
+  day1_followup?: StepCopy
+  discount_offer?: StepCopy
+}
+
 interface AutomationConfig {
   is_enabled: boolean
   discount_percent: number
   hero_image_url: string | null
   default_lead_value: number | null
   accent_color: string | null
+  email_copy: EmailCopy | null
   business_name?: string
   account_id?: string
 }
@@ -370,15 +384,15 @@ function buildPreviewHtml(params: {
   heroImageUrl: string | null
   step: 'initial_contact' | 'day1_followup' | 'discount_offer'
   discountPercent: number
+  customCopy?: StepCopy | null
 }): string {
-  const { companyName, accentColor, heroImageUrl, step, discountPercent } = params
+  const { companyName, accentColor, heroImageUrl, step, discountPercent, customCopy } = params
   const btnStyle = `display:inline-block;background:${accentColor};color:#fff;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:700;text-decoration:none;`
   const heroBlock = heroImageUrl
     ? `<tr><td style="padding:0;"><img src="${heroImageUrl}" alt="" width="520" style="width:100%;max-width:520px;display:block;" /></td></tr>`
     : ''
-  const configs = {
+  const defaults = {
     initial_contact: {
-      subject: `Hi Alex, get your free estimate from ${companyName}`,
       heading: `We'd love to give you a free quote!`,
       body: `Thanks for reaching out to <strong>${companyName}</strong>! We saw your inquiry and want to make it easy for you to get an instant estimate — no phone calls needed, just answer a few quick questions.`,
       outro: `We'll follow up once you submit. Takes less than 2 minutes!`,
@@ -394,7 +408,12 @@ function buildPreviewHtml(params: {
       outro: `This offer is just for you — grab it before it expires!`,
     },
   }
-  const c = configs[step]
+  const c = {
+    ...defaults[step],
+    ...(customCopy?.heading ? { heading: customCopy.heading } : {}),
+    ...(customCopy?.body    ? { body:    customCopy.body    } : {}),
+    ...(customCopy?.outro   ? { outro:   customCopy.outro   } : {}),
+  }
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f7f6f3;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f7f6f3;padding:32px 16px;">
@@ -441,7 +460,7 @@ const COLOR_PRESETS = [
 
 export default function AutomationsPage() {
   const [tab, setTab] = useState<'flow' | 'email' | 'settings'>('flow')
-  const [config, setConfig] = useState<AutomationConfig>({ is_enabled: true, discount_percent: 10, hero_image_url: null, default_lead_value: null, accent_color: '#5b50d6' })
+  const [config, setConfig] = useState<AutomationConfig>({ is_enabled: true, discount_percent: 10, hero_image_url: null, default_lead_value: null, accent_color: '#5b50d6', email_copy: null })
   const [previewStep, setPreviewStep] = useState<'initial_contact' | 'day1_followup' | 'discount_offer'>('initial_contact')
   const [showMediaPicker, setShowMediaPicker] = useState(false)
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([])
@@ -807,6 +826,50 @@ export default function AutomationsPage() {
               </div>
             </div>
 
+            {/* Email copy editor */}
+            <div className="rounded-2xl border border-white/[0.08] p-5" style={{ background: '#161929' }}>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-3">Email copy</p>
+              <div className="space-y-3">
+                {([
+                  { field: 'subject' as const, label: 'Subject line', multiline: false },
+                  { field: 'heading' as const, label: 'Heading',      multiline: false },
+                  { field: 'body'    as const, label: 'Body',          multiline: true  },
+                  { field: 'outro'   as const, label: 'Outro',         multiline: false },
+                ]).map(({ field, label, multiline }) => {
+                  const val = config.email_copy?.[previewStep]?.[field] ?? ''
+                  const update = (v: string) => setConfig(c => ({
+                    ...c,
+                    email_copy: {
+                      ...c.email_copy,
+                      [previewStep]: { ...c.email_copy?.[previewStep], [field]: v },
+                    },
+                  }))
+                  return (
+                    <div key={field}>
+                      <label className="block text-[10px] text-white/30 mb-1">{label}</label>
+                      {multiline ? (
+                        <textarea
+                          rows={3}
+                          value={val}
+                          onChange={e => update(e.target.value)}
+                          placeholder={`Default ${label.toLowerCase()}…`}
+                          className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white resize-none focus:outline-none focus:ring-1 focus:ring-brand-500 placeholder-white/20"
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          value={val}
+                          onChange={e => update(e.target.value)}
+                          placeholder={`Default ${label.toLowerCase()}…`}
+                          className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-brand-500 placeholder-white/20"
+                        />
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
             {/* Accent color */}
             <div className="rounded-2xl border border-white/[0.08] p-5" style={{ background: '#161929' }}>
               <p className="text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-3">Accent color</p>
@@ -883,7 +946,7 @@ export default function AutomationsPage() {
 
             {/* Save button */}
             <button
-              onClick={() => save({ accent_color: config.accent_color, hero_image_url: config.hero_image_url })}
+              onClick={() => save({ accent_color: config.accent_color, hero_image_url: config.hero_image_url, email_copy: config.email_copy })}
               disabled={saving}
               className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-50 ${
                 saveState === 'saved' ? 'bg-emerald-600 text-white' :
@@ -922,6 +985,7 @@ export default function AutomationsPage() {
                   heroImageUrl: config.hero_image_url,
                   step: previewStep,
                   discountPercent: config.discount_percent,
+                  customCopy: config.email_copy?.[previewStep] ?? null,
                 })}
                 className="w-full border-0"
                 style={{ height: '600px' }}

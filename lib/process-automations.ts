@@ -78,7 +78,7 @@ export async function processDueSteps(accountId?: string): Promise<number> {
 
     const [{ data: account }, { data: automationConfig }] = await Promise.all([
       admin.from('accounts').select('business_name').eq('id', step.account_id).single(),
-      admin.from('lead_automations').select('discount_percent, hero_image_url, accent_color').eq('account_id', step.account_id).single(),
+      admin.from('lead_automations').select('discount_percent, hero_image_url, accent_color, email_copy').eq('account_id', step.account_id).single(),
     ])
 
     // Resolve form URL: prefer lead's own form, fall back to account's first active form
@@ -121,6 +121,7 @@ export async function processDueSteps(accountId?: string): Promise<number> {
       accountId: step.account_id,
       heroImageUrl,
       accentColor: automationConfig?.accent_color ?? null,
+      customCopy: (automationConfig?.email_copy as Record<string, unknown> | null)?.[step.step as string] as import('@/lib/send-automation-step').StepCopy ?? null,
       smsOptIn: (lead.form_data as Record<string, unknown> | null)?._sms_opt_in === true,
     })
 

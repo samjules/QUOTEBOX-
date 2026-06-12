@@ -9,6 +9,13 @@ function esc(s: string) {
     .replace(/"/g, '&quot;')
 }
 
+export interface StepCopy {
+  subject?: string
+  heading?: string
+  body?: string
+  outro?: string
+}
+
 export function buildAutomationEmail(params: {
   name: string
   businessName: string
@@ -19,6 +26,7 @@ export function buildAutomationEmail(params: {
   trackingPixelUrl?: string | null
   trackedFormUrl?: string | null
   accentColor?: string | null
+  customCopy?: StepCopy | null
 }): { subject: string; html: string } {
   const { name, businessName, formUrl, step, discountPercent, heroImageUrl, trackingPixelUrl, trackedFormUrl } = params
   const accentColor = params.accentColor || '#5b50d6'
@@ -60,7 +68,14 @@ export function buildAutomationEmail(params: {
     },
   }
 
-  const c = configs[step]
+  const custom = params.customCopy ?? {}
+  const c = {
+    ...configs[step],
+    ...(custom.subject  ? { subject:  custom.subject  } : {}),
+    ...(custom.heading  ? { heading:  custom.heading  } : {}),
+    ...(custom.body     ? { body:     custom.body     } : {}),
+    ...(custom.outro    ? { outro:    custom.outro    } : {}),
+  }
 
   const html = `<!DOCTYPE html>
 <html>
@@ -142,6 +157,7 @@ export async function sendAutomationStep(params: {
   accountId?: string | null
   heroImageUrl?: string | null
   accentColor?: string | null
+  customCopy?: StepCopy | null
   smsOptIn?: boolean
 }) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://quote-box.com'
@@ -169,6 +185,7 @@ export async function sendAutomationStep(params: {
     discountPercent: params.discountPercent,
     heroImageUrl: params.heroImageUrl ?? null,
     accentColor: params.accentColor ?? null,
+    customCopy: params.customCopy ?? null,
     trackingPixelUrl,
     trackedFormUrl,
   }

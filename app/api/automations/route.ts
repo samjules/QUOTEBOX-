@@ -43,6 +43,7 @@ export async function PUT(request: NextRequest) {
   if ('hero_image_url' in body) patch.hero_image_url = body.hero_image_url ?? null
   if ('default_lead_value' in body) patch.default_lead_value = body.default_lead_value != null ? Math.max(0, Number(body.default_lead_value)) : null
   if ('accent_color' in body) patch.accent_color = typeof body.accent_color === 'string' && /^#[0-9a-fA-F]{6}$/.test(body.accent_color) ? body.accent_color : '#5b50d6'
+  if ('email_copy' in body) patch.email_copy = body.email_copy ?? null
 
   const { data } = await admin
     .from('lead_automations')
