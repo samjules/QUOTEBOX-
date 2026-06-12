@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 
 interface AutomationConfig {
   is_enabled: boolean
@@ -62,7 +62,6 @@ function IconZap({ className }: { className?: string }) {
     </svg>
   )
 }
-
 function IconBell({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -71,7 +70,6 @@ function IconBell({ className }: { className?: string }) {
     </svg>
   )
 }
-
 function IconTag({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -80,7 +78,6 @@ function IconTag({ className }: { className?: string }) {
     </svg>
   )
 }
-
 function IconXCircle({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -169,33 +166,51 @@ function formatScheduled(dateStr: string): string {
 
 function buildStepLeadGroups(leadActivity: LeadActivityRow[]): Record<string, StepLeadGroups> {
   const result: Record<string, StepLeadGroups> = {}
-
   for (const row of leadActivity) {
     for (const s of row.steps) {
       if (!result[s.step]) result[s.step] = { clicked: [], opened: [], sent: [], pending: [] }
       const chip: LeadChip = { id: row.lead.id, name: row.lead.name, scheduledAt: s.scheduled_at }
       const hasClick = s.events.some(e => e.event_type === 'link_click')
       const hasOpen = s.events.some(e => e.event_type === 'email_open')
-
-      if (s.status === 'pending') {
-        result[s.step].pending.push(chip)
-      } else if (hasClick) {
-        result[s.step].clicked.push(chip)
-      } else if (hasOpen) {
-        result[s.step].opened.push(chip)
-      } else {
-        result[s.step].sent.push(chip)
-      }
+      if (s.status === 'pending') result[s.step].pending.push(chip)
+      else if (hasClick) result[s.step].clicked.push(chip)
+      else if (hasOpen) result[s.step].opened.push(chip)
+      else result[s.step].sent.push(chip)
     }
   }
-
   return result
 }
 
-function LeadGroupSection({
+function Chip({
+  chip,
+  chipBg,
+  chipBorder,
+  chipText,
+  avatarBg,
+  timingColor,
+}: {
+  chip: LeadChip
+  chipBg: string
+  chipBorder: string
+  chipText: string
+  avatarBg: string
+  timingColor: string
+}) {
+  return (
+    <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full border text-xs font-medium ${chipBg} ${chipBorder}`}>
+      <div className={`w-4 h-4 rounded-full ${avatarBg} text-white flex items-center justify-center text-[8px] font-bold shrink-0`}>
+        {initials(chip.name)}
+      </div>
+      <span className={`max-w-[64px] truncate ${chipText}`}>{chip.name?.split(' ')[0] || 'Lead'}</span>
+      <span className={`shrink-0 text-[9px] font-normal ${timingColor}`}>{formatScheduled(chip.scheduledAt)}</span>
+    </div>
+  )
+}
+
+function ChipGroup({
   label,
   leads,
-  dotColor,
+  dot,
   chipBg,
   chipBorder,
   chipText,
@@ -204,46 +219,129 @@ function LeadGroupSection({
 }: {
   label: string
   leads: LeadChip[]
-  dotColor: string
+  dot: string
   chipBg: string
   chipBorder: string
   chipText: string
   avatarBg: string
   timingColor: string
 }) {
-  if (leads.length === 0) return null
-  const visible = leads.slice(0, 6)
-  const overflow = leads.length - 6
+  if (!leads.length) return null
+  const visible = leads.slice(0, 5)
+  const overflow = leads.length - 5
   return (
-    <div>
-      <div className="flex items-center gap-1.5 mb-1.5">
-        <div className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center gap-1.5">
+        <div className={`w-1.5 h-1.5 rounded-full ${dot} shrink-0`} />
         <span className="text-[10px] font-semibold uppercase tracking-widest text-white/30">
           {label} · {leads.length}
         </span>
       </div>
       <div className="flex flex-wrap gap-1.5">
-        {visible.map((chip) => (
-          <div
-            key={chip.id}
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-full border text-xs font-medium ${chipBg} ${chipBorder}`}
-          >
-            <div className={`w-4 h-4 rounded-full ${avatarBg} text-white flex items-center justify-center text-[8px] font-bold shrink-0`}>
-              {initials(chip.name)}
-            </div>
-            <span className={`max-w-[60px] truncate ${chipText}`}>
-              {chip.name?.split(' ')[0] || 'Lead'}
-            </span>
-            <span className={`shrink-0 text-[9px] font-normal ${timingColor}`}>
-              {formatScheduled(chip.scheduledAt)}
-            </span>
-          </div>
+        {visible.map(c => (
+          <Chip key={c.id} chip={c} chipBg={chipBg} chipBorder={chipBorder} chipText={chipText} avatarBg={avatarBg} timingColor={timingColor} />
         ))}
         {overflow > 0 && (
-          <div className={`flex items-center px-2 py-1 rounded-full border text-xs font-medium ${chipBg} ${chipBorder} ${chipText} opacity-60`}>
+          <div className={`flex items-center px-2 py-1 rounded-full border text-xs font-medium ${chipBg} ${chipBorder} ${chipText} opacity-50`}>
             +{overflow}
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+// Y-split tree section rendered between a step card and the next connector
+function BranchSection({ groups }: { groups: StepLeadGroups }) {
+  const leftLeads = [...groups.sent, ...groups.pending]
+  const rightLeads = [...groups.clicked, ...groups.opened]
+  const hasLeft = leftLeads.length > 0
+  const hasRight = rightLeads.length > 0
+  if (!hasLeft && !hasRight) return null
+
+  return (
+    // relative container — absolute lines stretch with its height
+    <div className="relative w-full">
+      {/* Center stem down from card */}
+      <div className="absolute top-0 h-5 left-1/2 w-px bg-brand-500/30 -translate-x-px" />
+
+      {/* Horizontal split bar */}
+      <div className="absolute top-5 left-1/4 right-1/4 h-px bg-brand-500/20" />
+
+      {/* Left arm — runs full height, reconnects at bottom */}
+      {hasLeft && <div className="absolute top-5 bottom-5 left-1/4 w-px bg-brand-500/20" />}
+
+      {/* Right arm — fixed height, terminates (engaged leads exit here) */}
+      {hasRight && <div className="absolute top-5 h-14 right-1/4 w-px bg-brand-500/15" />}
+
+      {/* Bottom reconnect: left arm → center stem for next connector */}
+      {hasLeft && (
+        <>
+          <div className="absolute bottom-5 left-1/4 w-1/4 h-px bg-brand-500/20" />
+          <div className="absolute bottom-0 h-5 left-1/2 w-px bg-brand-500/30 -translate-x-px" />
+        </>
+      )}
+
+      {/* Chip columns */}
+      <div className="grid grid-cols-2 pt-8 pb-8">
+
+        {/* Left branch: no response + pending */}
+        <div className="flex flex-col gap-4 items-end pr-8 pl-4">
+          {hasLeft && (
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-white/20 text-right">
+              No response
+            </p>
+          )}
+          <ChipGroup
+            label="No response"
+            leads={groups.sent}
+            dot="bg-white/20"
+            chipBg="bg-white/[0.04]"
+            chipBorder="border-white/10"
+            chipText="text-white/40"
+            avatarBg="bg-white/20"
+            timingColor="text-white/20"
+          />
+          <ChipGroup
+            label="Pending"
+            leads={groups.pending}
+            dot="bg-sky-400"
+            chipBg="bg-sky-500/10"
+            chipBorder="border-sky-500/20"
+            chipText="text-sky-300"
+            avatarBg="bg-sky-600"
+            timingColor="text-sky-600/50"
+          />
+        </div>
+
+        {/* Right branch: clicked + opened */}
+        <div className="flex flex-col gap-4 items-start pl-8 pr-4">
+          {hasRight && (
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-white/20">
+              Engaged
+            </p>
+          )}
+          <ChipGroup
+            label="Clicked"
+            leads={groups.clicked}
+            dot="bg-emerald-400"
+            chipBg="bg-emerald-500/10"
+            chipBorder="border-emerald-500/25"
+            chipText="text-emerald-300"
+            avatarBg="bg-emerald-600"
+            timingColor="text-emerald-600/50"
+          />
+          <ChipGroup
+            label="Opened"
+            leads={groups.opened}
+            dot="bg-brand-400"
+            chipBg="bg-brand-600/10"
+            chipBorder="border-brand-500/25"
+            chipText="text-brand-300"
+            avatarBg="bg-brand-600"
+            timingColor="text-brand-500/50"
+          />
+        </div>
       </div>
     </div>
   )
@@ -310,7 +408,7 @@ export default function AutomationsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full bg-[#0D0F1A]">
+      <div className="flex-1 flex items-center justify-center bg-[#0D0F1A]">
         <div className="flex items-center gap-2 text-white/30 text-sm">
           <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -324,15 +422,11 @@ export default function AutomationsPage() {
 
   const stepLeadGroups = buildStepLeadGroups(leadActivity)
 
-  const totalInFunnel = leadActivity.filter(r =>
-    r.steps.some(s => s.status === 'pending')
-  ).length
-  const totalSent = leadActivity.reduce((acc, r) =>
-    acc + r.steps.filter(s => s.status === 'sent').length, 0
-  )
+  const totalInFunnel = leadActivity.filter(r => r.steps.some(s => s.status === 'pending')).length
+  const totalSent = leadActivity.reduce((acc, r) => acc + r.steps.filter(s => s.status === 'sent').length, 0)
 
   return (
-    <div className="min-h-full px-8 py-8 bg-[#0D0F1A]">
+    <div className="flex-1 px-8 py-8 bg-[#0D0F1A]">
 
       {/* Page header */}
       <div className="flex items-center justify-between mb-8 max-w-screen-xl mx-auto">
@@ -395,11 +489,10 @@ export default function AutomationsPage() {
 
       {/* ── FLOW TAB ── */}
       {tab === 'flow' && (
-        <div className="flex flex-col">
+        <div className="flex flex-col items-center w-full">
 
           {/* Trigger */}
-          <div className="grid grid-cols-[1fr_380px_1fr]">
-            <div />
+          <div className="w-[380px]">
             <div className="bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl p-5 shadow-lg shadow-brand-600/25">
               <div className="flex items-center gap-3.5">
                 <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
@@ -414,42 +507,34 @@ export default function AutomationsPage() {
                 </div>
               </div>
             </div>
-            <div />
           </div>
 
-          {/* Steps */}
           {STEPS.map((step) => {
             const s: StepStats = stats[step.key] ?? { sent: 0, opens: 0, clicks: 0 }
             const pct = (n: number) => s.sent > 0 ? Math.round((n / s.sent) * 100) : 0
             const hasFunnel = s.sent > 0
             const Icon = STEP_ICONS[step.key as keyof typeof STEP_ICONS]
             const groups = stepLeadGroups[step.key] ?? { clicked: [], opened: [], sent: [], pending: [] }
-            const hasAnyLeads = groups.clicked.length + groups.opened.length + groups.sent.length + groups.pending.length > 0
+            const hasBranch = step.channels.length > 0 &&
+              (groups.clicked.length + groups.opened.length + groups.sent.length + groups.pending.length > 0)
 
             return (
-              <div key={step.key}>
+              <Fragment key={step.key}>
 
-                {/* Connector */}
-                <div className="grid grid-cols-[1fr_380px_1fr]">
-                  <div />
-                  <div className="flex flex-col items-center py-3">
-                    <div className="w-px h-8 bg-gradient-to-b from-white/0 to-brand-500/30" />
-                    <span className="text-[9px] font-semibold uppercase tracking-widest text-brand-400 bg-brand-600/10 border border-brand-500/25 rounded-full px-3 py-1 my-1.5">
-                      {step.wait}
-                    </span>
-                    <div className="w-px h-6 bg-gradient-to-b from-brand-500/30 to-white/0" />
-                    <svg className="w-2 h-2 text-brand-500/40" viewBox="0 0 8 8" fill="currentColor">
-                      <path d="M4 8L0 2h8z" />
-                    </svg>
-                  </div>
-                  <div />
+                {/* Wait connector — centered */}
+                <div className="flex flex-col items-center py-3">
+                  <div className="w-px h-8 bg-gradient-to-b from-white/0 to-brand-500/30" />
+                  <span className="text-[9px] font-semibold uppercase tracking-widest text-brand-400 bg-brand-600/10 border border-brand-500/25 rounded-full px-3 py-1 my-1.5">
+                    {step.wait}
+                  </span>
+                  <div className="w-px h-6 bg-gradient-to-b from-brand-500/30 to-white/0" />
+                  <svg className="w-2 h-2 text-brand-500/40" viewBox="0 0 8 8" fill="currentColor">
+                    <path d="M4 8L0 2h8z" />
+                  </svg>
                 </div>
 
-                {/* Node + lead groups */}
-                <div className="grid grid-cols-[1fr_380px_1fr] items-start">
-                  <div />
-
-                  {/* Card */}
+                {/* Step card — fixed width centered */}
+                <div className="w-[380px]">
                   <div
                     className={`rounded-2xl border border-white/[0.08] overflow-hidden transition-opacity ${!config.is_enabled ? 'opacity-40' : ''}`}
                     style={{ background: '#161929', boxShadow: '0 4px 32px rgba(0,0,0,0.4)' }}
@@ -470,14 +555,7 @@ export default function AutomationsPage() {
                           {step.channels.length > 0 && (
                             <div className="flex gap-1.5 mt-3">
                               {step.channels.map((ch, i) => (
-                                <span
-                                  key={ch}
-                                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                                    i === 0
-                                      ? 'border-brand-500/40 text-brand-300 bg-brand-600/10'
-                                      : 'border-white/15 text-white/40'
-                                  }`}
-                                >
+                                <span key={ch} className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${i === 0 ? 'border-brand-500/40 text-brand-300 bg-brand-600/10' : 'border-white/15 text-white/40'}`}>
                                   {ch}
                                 </span>
                               ))}
@@ -486,27 +564,21 @@ export default function AutomationsPage() {
                         </div>
                       </div>
 
-                      {/* Funnel bars */}
                       {hasFunnel && step.channels.length > 0 && (
                         <div className="mt-4 pt-4 border-t border-white/[0.06]">
                           <div className="space-y-2.5">
                             {[
-                              { label: 'SENT', value: s.sent, bar: 100, barClass: 'bg-white/25' },
-                              { label: 'OPENED', value: s.opens, bar: pct(s.opens), barClass: 'bg-brand-500' },
-                              { label: 'CLICKED', value: s.clicks, bar: pct(s.clicks), barClass: 'bg-brand-400' },
+                              { label: 'SENT',    value: s.sent,   bar: 100,          barClass: 'bg-white/25'  },
+                              { label: 'OPENED',  value: s.opens,  bar: pct(s.opens), barClass: 'bg-brand-500' },
+                              { label: 'CLICKED', value: s.clicks, bar: pct(s.clicks),barClass: 'bg-brand-400' },
                             ].map((row) => (
                               <div key={row.label} className="flex items-center gap-2.5">
                                 <span className="text-[10px] font-semibold uppercase tracking-wider text-white/25 w-12 text-right shrink-0">{row.label}</span>
                                 <div className="flex-1 bg-white/[0.07] rounded-full h-1.5 overflow-hidden">
-                                  <div
-                                    className={`h-full rounded-full ${row.barClass} transition-all duration-700`}
-                                    style={{ width: `${row.bar}%` }}
-                                  />
+                                  <div className={`h-full rounded-full ${row.barClass} transition-all duration-700`} style={{ width: `${row.bar}%` }} />
                                 </div>
                                 <span className="text-xs text-white/70 w-6 text-right shrink-0 tabular-nums font-semibold">{row.value}</span>
-                                <span className="text-[10px] text-white/25 w-7 shrink-0 tabular-nums">
-                                  {row.bar < 100 ? `${row.bar}%` : ''}
-                                </span>
+                                <span className="text-[10px] text-white/25 w-7 shrink-0 tabular-nums">{row.bar < 100 ? `${row.bar}%` : ''}</span>
                               </div>
                             ))}
                           </div>
@@ -520,70 +592,23 @@ export default function AutomationsPage() {
                       )}
                     </div>
                   </div>
-
-                  {/* Lead groups — split by engagement */}
-                  {hasAnyLeads && (
-                    <div className="pl-8 pt-2 space-y-4">
-                      <LeadGroupSection
-                        label="Clicked"
-                        leads={groups.clicked}
-                        dotColor="bg-emerald-400"
-                        chipBg="bg-emerald-500/10"
-                        chipBorder="border-emerald-500/25"
-                        chipText="text-emerald-300"
-                        avatarBg="bg-emerald-600"
-                        timingColor="text-emerald-600/60"
-                      />
-                      <LeadGroupSection
-                        label="Opened"
-                        leads={groups.opened}
-                        dotColor="bg-brand-400"
-                        chipBg="bg-brand-600/10"
-                        chipBorder="border-brand-500/25"
-                        chipText="text-brand-300"
-                        avatarBg="bg-brand-600"
-                        timingColor="text-brand-500/60"
-                      />
-                      <LeadGroupSection
-                        label="No response"
-                        leads={groups.sent}
-                        dotColor="bg-white/20"
-                        chipBg="bg-white/[0.04]"
-                        chipBorder="border-white/10"
-                        chipText="text-white/40"
-                        avatarBg="bg-white/20"
-                        timingColor="text-white/25"
-                      />
-                      <LeadGroupSection
-                        label="Pending"
-                        leads={groups.pending}
-                        dotColor="bg-sky-400"
-                        chipBg="bg-sky-500/10"
-                        chipBorder="border-sky-500/20"
-                        chipText="text-sky-300"
-                        avatarBg="bg-sky-600"
-                        timingColor="text-sky-600/60"
-                      />
-                    </div>
-                  )}
                 </div>
 
-              </div>
+                {/* Inverted tree branch — splits left (no response) and right (engaged) */}
+                {hasBranch && <BranchSection groups={groups} />}
+
+              </Fragment>
             )
           })}
 
           {/* Exit note */}
-          <div className="grid grid-cols-[1fr_380px_1fr] mt-8">
-            <div />
-            <div className="flex justify-center">
-              <div className="flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-xs text-white/40">
-                <svg className="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l4 4 6-6" />
-                </svg>
-                Lead submits form → sequence stops automatically
-              </div>
+          <div className="mt-8 mb-8">
+            <div className="flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-xs text-white/40">
+              <svg className="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l4 4 6-6" />
+              </svg>
+              Lead submits form → sequence stops automatically
             </div>
-            <div />
           </div>
 
         </div>
@@ -598,9 +623,7 @@ export default function AutomationsPage() {
             <p className="text-xs text-white/40 mb-4">Applied in the Step 3 email to win back hesitant leads.</p>
             <div className="flex items-center gap-3">
               <input
-                type="number"
-                min={1}
-                max={100}
+                type="number" min={1} max={100}
                 value={config.discount_percent}
                 onChange={(e) => setConfig({ ...config, discount_percent: Number(e.target.value) })}
                 onBlur={() => save({ discount_percent: config.discount_percent })}
@@ -623,9 +646,7 @@ export default function AutomationsPage() {
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
                 >
                   {testLeads.map((l) => (
-                    <option key={l.id} value={l.id}>
-                      {l.name || 'Unnamed'} — {l.email}
-                    </option>
+                    <option key={l.id} value={l.id}>{l.name || 'Unnamed'} — {l.email}</option>
                   ))}
                 </select>
                 <button
@@ -651,8 +672,7 @@ export default function AutomationsPage() {
                           {r.ok ? '✓' : '✕'}
                         </div>
                         <span className={r.ok ? 'text-white/60' : 'text-red-400'}>
-                          {STEP_LABELS[r.step] ?? r.step}
-                          {!r.ok && r.error ? ` — ${r.error}` : ''}
+                          {STEP_LABELS[r.step] ?? r.step}{!r.ok && r.error ? ` — ${r.error}` : ''}
                         </span>
                       </div>
                     ))}
@@ -671,9 +691,7 @@ export default function AutomationsPage() {
                 ['SMS requires Twilio', 'Set TWILIO_* env vars to enable SMS alongside emails.'],
               ].map(([title, desc], i) => (
                 <li key={i} className="flex gap-3">
-                  <span className="w-5 h-5 rounded-full bg-brand-600/20 text-brand-400 flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5">
-                    {i + 1}
-                  </span>
+                  <span className="w-5 h-5 rounded-full bg-brand-600/20 text-brand-400 flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5">{i + 1}</span>
                   <div>
                     <p className="text-sm font-medium text-white/70">{title}</p>
                     <p className="text-xs text-white/35 mt-0.5">{desc}</p>
