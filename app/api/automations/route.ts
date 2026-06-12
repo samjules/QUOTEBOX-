@@ -22,7 +22,7 @@ export async function GET() {
     .eq('account_id', accountId)
     .single()
 
-  return NextResponse.json(data ?? { account_id: accountId, is_enabled: true, discount_percent: 10 })
+  return NextResponse.json(data ?? { account_id: accountId, is_enabled: true, discount_percent: 10, default_lead_value: null })
 }
 
 export async function PUT(request: NextRequest) {
@@ -40,6 +40,7 @@ export async function PUT(request: NextRequest) {
         is_enabled: Boolean(body.is_enabled),
         discount_percent: Math.min(100, Math.max(0, Number(body.discount_percent) || 10)),
         hero_image_url: body.hero_image_url ?? null,
+        default_lead_value: body.default_lead_value != null ? Math.max(0, Number(body.default_lead_value)) : null,
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'account_id' }

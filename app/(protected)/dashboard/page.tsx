@@ -88,12 +88,12 @@ export default async function DashboardPage({
     )
   }
 
-  // Billing
-  let { data: billing } = await admin
-    .from('billing')
-    .select('*')
-    .eq('account_id', account.id)
-    .single()
+  // Billing + automation config (parallel)
+  const [{ data: billingRaw }, { data: automationConfig }] = await Promise.all([
+    admin.from('billing').select('*').eq('account_id', account.id).single(),
+    admin.from('lead_automations').select('default_lead_value').eq('account_id', account.id).single(),
+  ])
+  let billing = billingRaw
 
   if (!billing) {
     const { data: newBilling } = await admin
@@ -208,11 +208,13 @@ export default async function DashboardPage({
     const qt = (l.form_data as Record<string, unknown> | null)?._quote_total
     return sum + (typeof qt === 'number' ? qt : 0)
   }, 0)
+  const defaultLeadValue = automationConfig?.default_lead_value ?? null
   const bookedPipeline = (pipelineData ?? [])
     .filter(l => l.status === 'booked')
     .reduce((sum, l) => {
       const qt = (l.form_data as Record<string, unknown> | null)?._quote_total
-      return sum + (typeof qt === 'number' ? qt : 0)
+      const value = typeof qt === 'number' ? qt : (defaultLeadValue ?? 0)
+      return sum + value
     }, 0)
   const conversionRate = totalLeads > 0 ? ((bookedLeads / totalLeads) * 100).toFixed(1) : '0'
   const periodSpending = (periodTxns ?? [])
