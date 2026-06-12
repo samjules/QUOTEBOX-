@@ -175,7 +175,7 @@ export async function sendAutomationStep(params: {
     if (apiKey) {
       const resend = new Resend(apiKey)
       const { subject, html } = buildAutomationEmail(emailParams)
-      const from = process.env.RESEND_FROM_EMAIL || 'Quote.Box <onboarding@resend.dev>'
+      const from = process.env.RESEND_FROM_EMAIL || 'Quote.Box <noreply@quotebox-forms.com>'
       try {
         const { error } = await resend.emails.send({ from, to: params.email, subject, html })
         if (error) console.error('Resend error:', error)

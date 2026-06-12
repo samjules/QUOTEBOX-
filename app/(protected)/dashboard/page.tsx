@@ -427,10 +427,6 @@ export default async function DashboardPage({
                   {roas !== null && <HormoziStat label="ROAS" value={`${roas.toFixed(2)}x`} highlight={roas >= 1 ? 'green' : 'red'} />}
                   {profitPerLead !== null && <HormoziStat label="Profit / Lead" value={`$${profitPerLead.toLocaleString('en-US', { maximumFractionDigits: 0 })}`} highlight={profitPerLead >= 0 ? 'green' : 'red'} />}
                 </div>
-                {/* DEBUG — remove once fixed */}
-                <p className="mt-3 text-xs text-slate-500 font-mono">
-                  debug: defaultLeadValue={String(defaultLeadValue)} bookedLeads={bookedLeads} withQuote={bookedLeadsWithQuote.length} withoutQuote={bookedLeadsWithoutQuote} bookedPipeline={bookedPipeline.toFixed(0)}
-                </p>
                 <LtvDefaultValueInput initial={defaultLeadValue} />
               </div>
             </div>

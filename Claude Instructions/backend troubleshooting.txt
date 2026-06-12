@@ -1,0 +1,173 @@
+QUOTEBOX iOS — BACKEND TROUBLESHOOTING
+=======================================
+
+PROBLEM:
+The iOS app's VSL (Video Sales Letter) script generation fails because the backend
+API routes do not exist yet. All endpoints return 404.
+
+BASE URL: https://quote-box.com
+The backend is a Next.js app. API routes need to be created.
+
+========================================================================
+REQUIRED API ENDPOINTS (4 total)
+========================================================================
+
+All endpoints expect:
+  - Header: Content-Type: application/json
+  - Header: Authorization: Bearer <supabase_access_token>
+  - Use the Bearer token to identify the authenticated user/account
+
+------------------------------------------------------------------------
+1) POST /api/vsl/generate-script
+------------------------------------------------------------------------
+Purpose: Use an AI model (Claude recommended) to generate a VSL script.
+
+Request body (JSON, snake_case):
+{
+  "business_name": "QuoteBox Roofing",
+  "offer": "Free roof inspection + 20% off",
+  "target_audience": "Homeowners in Dallas, TX"
+}
+
+Expected response (JSON):
+{
+  "script": {
+    "id": "<new_campaign_id>",
+    "title": "<generated_title>",
+    "script": "<the full script text>",
+    "estimated_duration": 90
+  }
+}
+
+Notes:
+  - "id" should be a unique campaign ID (UUID recommended). Create a campaign
+    record in the database at this point with status "pending".
+  - "estimated_duration" is in seconds. Estimate based on ~150 words per minute.
+  - "script" (the text) should be a persuasive VSL script using the provided
+    business name, offer, and target audience.
+  - The iOS app decodes this using GenerateScriptResponse -> VSLScript.
+
+------------------------------------------------------------------------
+2) POST /api/vsl/process-video
+------------------------------------------------------------------------
+Purpose: Kick off server-side video processing (remove silence, add captions).
+
+Request body (JSON, snake_case):
+{
+  "campaign_id": "<campaign_id from step 1>",
+  "video_url": "<public Supabase storage URL of the raw video>"
+}
+
+Expected response (JSON):
+{
+  "success": true,
+  "message": "Processing started"
+}
+
+Notes:
+  - Update the campaign record: status = "processing",
+    current_step = "removing_silence", raw_video_url = <video_url>
+  - Start async video processing (ffmpeg or similar):
+      1. Remove silence
+      2. Add captions (speech-to-text + burn-in)
+      3. Finalize
+  - Update current_step as processing progresses.
+  - On completion: status = "completed", processed_video_url = <final_url>
+  - On failure: status = "failed"
+
+------------------------------------------------------------------------
+3) GET /api/vsl/campaign/:campaignId
+------------------------------------------------------------------------
+Purpose: Poll campaign status (iOS app polls every 4 seconds).
+
+Expected response (JSON, snake_case):
+{
+  "id": "<campaign_id>",
+  "account_id": "<account_id>",
+  "title": "Generated Title",
+  "status": "processing",          // "processing" | "completed" | "failed"
+  "current_step": "adding_captions", // "removing_silence" | "adding_captions" | "finalizing" | null
+  "raw_video_url": "https://...",
+  "processed_video_url": null,     // set when status = "completed"
+  "created_at": "2026-03-19T..."
+}
+
+------------------------------------------------------------------------
+4) POST /api/vsl/retry
+------------------------------------------------------------------------
+Purpose: Retry a failed campaign's video processing.
+
+Request body (JSON, snake_case):
+{
+  "campaign_id": "<campaign_id>"
+}
+
+Expected response: same as process-video (success: true/false)
+
+Notes:
+  - Reset campaign status to "processing" and current_step to "removing_silence"
+  - Re-run the video processing pipeline
+
+========================================================================
+TESTING WITH CURL
+========================================================================
+
+# Test generate-script (no auth, should still create the route):
+curl -X POST https://quote-box.com/api/vsl/generate-script \
+  -H "Content-Type: application/json" \
+  -d '{"business_name":"Test Roofing","offer":"Free inspection","target_audience":"Homeowners"}'
+
+# Expected: JSON response with script object (or 401 if auth is enforced)
+# Current:  307 redirect -> 404 (route does not exist)
+
+# Test campaign status:
+curl https://quote-box.com/api/vsl/campaign/test-id
+
+========================================================================
+SUPABASE STORAGE INFO
+========================================================================
+
+The iOS app uploads raw videos to Supabase Storage:
+  - Bucket: "vsls"
+  - Path:   {campaignId}/raw.mp4
+  - The upload returns a public URL which is sent to process-video
+
+========================================================================
+NEXT.JS FILE STRUCTURE (expected)
+========================================================================
+
+app/
+  api/
+    vsl/
+      generate-script/
+        route.ts          <-- POST handler
+      process-video/
+        route.ts          <-- POST handler
+      campaign/
+        [campaignId]/
+          route.ts        <-- GET handler
+      retry/
+        route.ts          <-- POST handler
+
+========================================================================
+DATABASE SCHEMA (suggested - campaigns table)
+========================================================================
+
+Table: vsl_campaigns
+  - id              UUID PRIMARY KEY
+  - account_id      TEXT NOT NULL (from auth token)
+  - title           TEXT
+  - status          TEXT DEFAULT 'pending'  -- pending | processing | completed | failed
+  - current_step    TEXT                    -- removing_silence | adding_captions | finalizing
+  - script_text     TEXT
+  - raw_video_url   TEXT
+  - processed_video_url TEXT
+  - created_at      TIMESTAMPTZ DEFAULT NOW()
+
+========================================================================
+PRIORITY
+========================================================================
+
+Start with endpoint #1 (generate-script) — it's the first thing users hit and
+is currently blocking all VSL functionality. Even a minimal implementation that
+returns a hardcoded script would unblock iOS development.

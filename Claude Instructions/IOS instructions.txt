@@ -1,0 +1,369 @@
+================================================================================
+IOS INSTRUCTIONS — VSL TELEPROMPTER, FILM & AUTO-EDIT FEATURE
+================================================================================
+
+You are building an iOS app (Swift / SwiftUI) that connects to an existing
+Next.js + Supabase backend. This document describes every backend endpoint,
+database table, and processing pipeline you need to integrate with.
+
+The backend is already deployed. You do NOT need to build or modify it.
+Your job is to build the iOS client that calls these APIs.
+
+================================================================================
+1. AUTHENTICATION
+================================================================================
+
+All API calls (except the internal worker) require a valid Supabase JWT.
+The iOS app must:
+  - Sign in via Supabase Auth (email/password or OAuth)
+  - Attach the JWT as a Bearer token in the Authorization header on every request
+  - Use the Supabase Swift SDK or raw HTTP with the JWT
+
+Supabase project details should come from environment/config (NEXT_PUBLIC_SUPABASE_URL
+and NEXT_PUBLIC_SUPABASE_ANON_KEY equivalent values for iOS).
+
+================================================================================
+2. API ENDPOINTS
+================================================================================
+
+Base URL: The deployed NEXT_PUBLIC_SITE_URL (e.g. https://quotebox.app)
+
+--------------------------------------------------------------------------------
+2a. GENERATE SCRIPT
+--------------------------------------------------------------------------------
+
+  POST /api/ai/generate-script
+
+  Headers:
+    Authorization: Bearer <supabase_jwt>
+    Content-Type: application/json
+
+  Request body:
+    {
+      "business": "Roofing company in Dallas",
+      "offer": "Free roof inspection this month",
+      "audience": "Homeowners over 40 in DFW area"
+    }
+
+  Success response (200):
+    {
+      "hook": "Your roof is silently costing you thousands",
+      "lines": [
+        "Most homeowners don't know.",
+        "Small leaks become big problems.",
+        "We catch them early.",
+        ...15-25 lines total...
+      ],
+      "cta": "Book your free inspection today"
+    }
+
+  Error responses:
+    401 — { "error": "Unauthorized" }
+    400 — { "error": "Missing required fields: business, offer, audience" }
+    500 — { "error": "Script generation failed" }
+
+  NOTES FOR iOS:
+    - The "hook" is a bold opening line (max ~10 words). Display it prominently.
+    - "lines" is an array of 15-25 short spoken lines (max ~7 words each).
+      These are the teleprompter lines the user reads aloud while filming.
+    - "cta" is the closing call-to-action line.
+    - The script is optimized for 60-90 second spoken delivery.
+    - You should display these lines one at a time in a teleprompter-style UI
+      that scrolls or advances as the user speaks/taps.
+
+--------------------------------------------------------------------------------
+2b. PROCESS VIDEO (kick off background job)
+--------------------------------------------------------------------------------
+
+  POST /api/ai/process-video
+
+  Headers:
+    Authorization: Bearer <supabase_jwt>
+    Content-Type: application/json
+
+  Request body:
+    {
+      "video_url": "https://...supabase.co/storage/v1/object/public/vsls/...",
+      "script": {                    // optional — stored with campaign
+        "hook": "...",
+        "lines": ["..."],
+        "cta": "..."
+      }
+    }
+
+  Success response (202 Accepted):
+    {
+      "campaign_id": "uuid-string",
+      "status": "processing"
+    }
+
+  Error responses:
+    401 — { "error": "Unauthorized" }
+    400 — { "error": "Missing required field: video_url" }
+    500 — { "error": "Failed to create campaign" }
+
+  NOTES FOR iOS:
+    - This returns IMMEDIATELY (HTTP 202). The actual video processing happens
+      in the background on the server. It can take 1-5 minutes.
+    - After receiving campaign_id, poll the campaign status endpoint (2c below).
+    - The video_url must be a publicly accessible URL. If the user films on-device,
+      you must first UPLOAD the video to Supabase Storage (bucket: "vsls"),
+      get the public URL, then pass it here.
+
+  UPLOAD FLOW (before calling process-video):
+    1. User films video on iPhone
+    2. Upload to Supabase Storage bucket "vsls" at path: {account_id}/{timestamp}.mp4
+    3. Get the public URL from Supabase Storage
+    4. Call POST /api/ai/process-video with that URL
+
+--------------------------------------------------------------------------------
+2c. POLL CAMPAIGN STATUS
+--------------------------------------------------------------------------------
+
+  GET /api/ai/campaign/{campaign_id}
+
+  Headers:
+    Authorization: Bearer <supabase_jwt>
+
+  Success response (200):
+    {
+      "id": "uuid",
+      "status": "processing" | "complete" | "failed",
+      "current_step": "transcribing" | "editing" | "captioning" | "rendering" | null,
+      "steps": [
+        { "step": "transcribing", "status": "complete", "error": null, "updated_at": "..." },
+        { "step": "editing",      "status": "processing", "error": null, "updated_at": "..." },
+        { "step": "captioning",   "status": "pending", "error": null, "updated_at": "..." },
+        { "step": "rendering",    "status": "pending", "error": null, "updated_at": "..." }
+      ],
+      "processed_video_url": null,       // populated when status = "complete"
+      "error_message": null,             // populated when status = "failed"
+      "created_at": "2026-03-18T..."
+    }
+
+  Error responses:
+    401 — { "error": "Unauthorized" }
+    403 — { "error": "Forbidden" } (user doesn't own this campaign)
+    404 — { "error": "Campaign not found" }
+
+  NOTES FOR iOS:
+    - Poll this endpoint every 3-5 seconds while status is "processing".
+    - The 4 steps always execute in order: transcribing → editing → captioning → rendering.
+    - Show a progress UI with the 4 steps. Highlight the current_step.
+    - When status = "complete", processed_video_url contains the final video with
+      burned-in captions and silence removed. Let the user preview/download it.
+    - When status = "failed", show error_message and offer a retry button.
+
+  STEP DESCRIPTIONS (for UI labels):
+    - "transcribing" → "Transcribing audio..."
+    - "editing"      → "Removing silence..."
+    - "captioning"   → "Generating captions..."
+    - "rendering"    → "Burning captions & rendering..."
+
+--------------------------------------------------------------------------------
+2d. RETRY FAILED CAMPAIGN
+--------------------------------------------------------------------------------
+
+  POST /api/ai/campaign/{campaign_id}
+
+  Headers:
+    Authorization: Bearer <supabase_jwt>
+    Content-Type: application/json
+
+  Request body:
+    { "action": "retry" }
+
+  Success response (202):
+    { "campaign_id": "uuid", "status": "processing" }
+
+  Error responses:
+    400 — { "error": "Only failed campaigns can be retried" }
+    400 — { "error": "Max retries (3) reached" }
+    403 — { "error": "Forbidden" }
+    404 — { "error": "Campaign not found" }
+
+  NOTES FOR iOS:
+    - Max 3 retries per campaign. After that, user must start over.
+    - After a successful retry call, resume polling GET /api/ai/campaign/{id}.
+
+================================================================================
+3. DATABASE TABLES (for Supabase direct queries if needed)
+================================================================================
+
+You can also query these tables directly via the Supabase Swift SDK if you
+prefer real-time subscriptions over polling.
+
+  TABLE: campaigns
+  ─────────────────────────────────────────────────────────
+  id                  UUID (PK)
+  user_id             UUID (FK → auth.users)
+  status              TEXT: "processing" | "complete" | "failed"
+  original_video_url  TEXT
+  processed_video_url TEXT (nullable — set when complete)
+  script              JSONB (nullable)
+  retry_count         INTEGER (default 0, max 3)
+  error_message       TEXT (nullable)
+  created_at          TIMESTAMPTZ
+  updated_at          TIMESTAMPTZ
+
+  RLS: Users can only SELECT/INSERT/UPDATE/DELETE their own rows (user_id = auth.uid()).
+
+  TABLE: campaign_steps
+  ─────────────────────────────────────────────────────────
+  id           UUID (PK)
+  campaign_id  UUID (FK → campaigns, CASCADE delete)
+  step         TEXT: "transcribing" | "editing" | "captioning" | "rendering"
+  status       TEXT: "pending" | "processing" | "complete" | "failed"
+  error        TEXT (nullable)
+  updated_at   TIMESTAMPTZ
+  UNIQUE(campaign_id, step)
+
+  RLS: Users can SELECT steps for campaigns they own.
+
+  TABLE: vsls (media library)
+  ─────────────────────────────────────────────────────────
+  id            UUID (PK)
+  account_id    UUID (FK)
+  title         TEXT
+  file_name     TEXT
+  file_url      TEXT (public URL)
+  storage_path  TEXT (internal storage path)
+  file_size     INTEGER (bytes)
+  created_at    TIMESTAMPTZ
+
+  TABLE: accounts
+  ─────────────────────────────────────────────────────────
+  id        UUID (PK)
+  owner_id  UUID (FK → auth.users)
+  ...other fields...
+
+  TABLE: billing
+  ─────────────────────────────────────────────────────────
+  account_id  UUID (FK)
+  plan        TEXT: "starter" | "growth" | "fully_managed"
+  ...other fields...
+
+  Plan limits for media uploads:
+    starter       → 1 file
+    growth        → unlimited
+    fully_managed → unlimited
+
+================================================================================
+4. SUPABASE STORAGE BUCKETS
+================================================================================
+
+  Bucket: "vsls"
+    Purpose: Raw uploaded media (videos + images)
+    Path pattern: {account_id}/{timestamp}.{ext}
+    Max file size: 500 MB
+    Accepted types: video/*, image/*
+
+  Bucket: "video-campaigns"
+    Purpose: Processed output videos (read-only for client)
+    Path pattern: campaigns/{user_id}/{campaign_id}/output.mp4
+    The processed_video_url in the campaigns table points here.
+
+================================================================================
+5. COMPLETE USER FLOW (what the iOS app should implement)
+================================================================================
+
+SCREEN 1: SCRIPT GENERATOR
+  - User enters: business type, offer, target audience
+  - Tap "Generate Script"
+  - Call POST /api/ai/generate-script
+  - Display the returned hook, lines[], and cta
+  - User can regenerate or accept the script
+
+SCREEN 2: TELEPROMPTER + CAMERA
+  - Display the script lines one at a time (or scrolling) over the camera preview
+  - The hook displays first, then lines advance (auto-scroll or tap-to-advance)
+  - The cta displays last
+  - User records video while reading the teleprompter
+  - Use AVFoundation for camera/microphone access
+  - Save recorded video locally as .mp4
+
+SCREEN 3: UPLOAD & PROCESS
+  - Upload the recorded .mp4 to Supabase Storage (bucket: "vsls")
+  - Get the public URL
+  - Call POST /api/ai/process-video with the video URL and script object
+  - Receive campaign_id
+  - Transition to the progress screen
+
+SCREEN 4: PROCESSING PROGRESS
+  - Poll GET /api/ai/campaign/{campaign_id} every 3-5 seconds
+  - Show a 4-step progress indicator:
+      1. Transcribing audio
+      2. Removing silence
+      3. Generating captions
+      4. Rendering final video
+  - On complete: show the processed video (processed_video_url)
+  - On failure: show error + retry button
+  - User can preview, share, or save the final video to Camera Roll
+
+SCREEN 5 (optional): CAMPAIGN HISTORY
+  - Query campaigns table for user's past campaigns
+  - Show status, date, thumbnail
+  - Tap to view/download processed video
+
+================================================================================
+6. WHAT THE BACKEND DOES (so you understand what's happening server-side)
+================================================================================
+
+When you call POST /api/ai/process-video, the server:
+
+  Step 1 — TRANSCRIBING:
+    - Downloads the video from the URL you provided
+    - Extracts audio as 16kHz mono WAV using FFmpeg
+    - Sends audio to OpenAI Whisper API for word-level transcription
+    - Strips filler words (um, uh, like, basically, literally, etc.)
+
+  Step 2 — EDITING (silence removal):
+    - Analyzes word timestamps to find gaps > 1.0 second
+    - Trims out those silent sections using FFmpeg
+    - Concatenates remaining speech segments
+    - Retimes all word timestamps to match the new shortened timeline
+
+  Step 3 — CAPTIONING:
+    - Groups words into chunks of 4 words each
+    - Generates an SRT subtitle file with accurate timestamps
+
+  Step 4 — RENDERING:
+    - Burns the SRT captions into the video (white Arial, black outline)
+    - Uploads final .mp4 to Supabase Storage (bucket: "video-campaigns")
+    - Updates the campaign record with processed_video_url
+
+  The result is a professionally edited video with:
+    - All dead air / silence removed
+    - Filler words cut out
+    - Burned-in captions for social media
+    - Clean concatenated segments with preserved A/V sync
+
+================================================================================
+7. ENVIRONMENT VARIABLES NEEDED IN iOS APP
+================================================================================
+
+  SUPABASE_URL          — Your Supabase project URL
+  SUPABASE_ANON_KEY     — Public anon key for Supabase
+  API_BASE_URL          — The deployed Next.js app URL (e.g. https://quotebox.app)
+
+  These should be stored securely (Keychain or build-time config, NOT hardcoded).
+
+================================================================================
+8. KEY IMPLEMENTATION NOTES
+================================================================================
+
+  - All API auth uses Supabase JWT. The iOS app should use Supabase Swift SDK
+    for auth and pass the session token to custom API calls.
+  - Video upload max is 500 MB. Consider compressing on-device before upload.
+  - The processing pipeline has a 5-minute server timeout. Very long videos
+    (> 5-10 minutes) may fail. Consider limiting recording to ~2-3 minutes.
+  - Poll interval of 3-5 seconds is appropriate. Don't poll more aggressively.
+  - The teleprompter should be readable over a camera preview. Use large white
+    text with a dark semi-transparent background or drop shadow.
+  - Script lines are designed to be ~7 words max — perfect for teleprompter display.
+  - Consider using Supabase Realtime subscriptions on the campaigns table as an
+    alternative to polling (subscribe to status changes on the campaign row).
+
+================================================================================
+END OF INSTRUCTIONS
+================================================================================

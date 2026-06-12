@@ -1,0 +1,345 @@
+================================================================================
+ANDROID INSTRUCTIONS — EMPLOYEE TIME CLOCK APP
+================================================================================
+
+You are building an Android app (Kotlin / Jetpack Compose) that connects to an
+existing Next.js + Supabase backend. This document describes every backend
+endpoint, database table, and flow you need to integrate with.
+
+The backend is already deployed. You do NOT need to build or modify it.
+Your job is to build the Android client that calls these APIs.
+
+================================================================================
+1. AUTHENTICATION
+================================================================================
+
+Employees log in with email/password via Supabase Auth. They do NOT sign up
+inside the app — the account owner invites them from the web dashboard, which
+creates their auth user. The employee just logs in.
+
+All API calls require a valid Supabase JWT.
+The Android app must:
+  - Sign in via Supabase Auth (email/password)
+  - Attach the JWT as a Bearer token in the Authorization header
+  - Use the Supabase Kotlin SDK or raw HTTP with the JWT
+  - Persist the session so the user stays logged in between app launches
+
+Supabase project details:
+  SUPABASE_URL      — Your Supabase project URL
+  SUPABASE_ANON_KEY — Public anon key for Supabase
+
+================================================================================
+2. HOW EMPLOYEES GET CREATED (context — NOT built in the Android app)
+================================================================================
+
+The account owner (on the web app) goes to Settings → Team Members and enters
+the employee's email address. This:
+
+  1. Creates a row in `account_members` with role='employee' and an invite_token
+  2. Sends an email with a link to /invite/{token}
+  3. The employee clicks the link, sets their name + password
+  4. This creates a Supabase auth user and links it to the account_members row
+
+After that, the employee can log in to the Android app with their email/password.
+
+================================================================================
+3. DATABASE TABLES
+================================================================================
+
+TABLE: account_members
+─────────────────────────────────────────────────────────
+  id            UUID (PK)
+  account_id    UUID (FK → accounts)
+  user_id       UUID (FK → auth.users, nullable until accepted)
+  email         TEXT
+  name          TEXT (nullable)
+  role          TEXT: 'owner' | 'employee'
+  invite_token  UUID (nullable, cleared after acceptance)
+  invited_at    TIMESTAMPTZ
+  accepted_at   TIMESTAMPTZ (nullable)
+  created_at    TIMESTAMPTZ
+
+  RLS:
+    - Owners: full access to their account's members
+    - Employees: can SELECT their own membership row
+
+  UNIQUE INDEX: (account_id, email)
+
+TABLE: time_entries
+─────────────────────────────────────────────────────────
+  id            UUID (PK)
+  account_id    UUID (FK → accounts)
+  user_id       UUID (FK → auth.users)
+  lead_id       UUID (FK → leads, nullable)
+  clock_in      TIMESTAMPTZ (defaults to now())
+  clock_out     TIMESTAMPTZ (nullable — null means currently clocked in)
+  notes         TEXT (nullable)
+  created_at    TIMESTAMPTZ
+
+  RLS:
+    - Employees: full CRUD on their own entries (user_id = auth.uid())
+    - Owners: can SELECT all entries for their account
+
+TABLE: leads (read-only for context)
+─────────────────────────────────────────────────────────
+  id            UUID (PK)
+  account_id    UUID (FK → accounts)
+  name          TEXT (nullable)
+  email         TEXT (nullable)
+  phone         TEXT (nullable)
+  form_type     TEXT (nullable)
+  status        TEXT: 'new' | 'contacted' | 'booked' | 'lost' | 'held'
+  created_at    TIMESTAMPTZ
+
+  Employees can read leads for their account (via account_members relationship).
+  The app uses leads as an optional "job" selector when clocking in.
+
+TABLE: accounts (read-only for context)
+─────────────────────────────────────────────────────────
+  id              UUID (PK)
+  owner_id        UUID (FK → auth.users)
+  business_name   TEXT
+
+================================================================================
+4. CORE OPERATIONS (via Supabase SDK direct queries)
+================================================================================
+
+The Android app should use the Supabase Kotlin SDK to query tables directly.
+No custom API endpoints are needed — RLS handles all authorization.
+
+--------------------------------------------------------------------------------
+4a. RESOLVE ACCOUNT ON LOGIN
+--------------------------------------------------------------------------------
+
+After login, determine the user's account and role:
+
+  // Step 1: Check if user is an owner
+  SELECT id FROM accounts WHERE owner_id = {auth.uid()} LIMIT 1
+
+  // Step 2: If not owner, check account_members
+  SELECT account_id, role FROM account_members
+    WHERE user_id = {auth.uid()}
+    AND accepted_at IS NOT NULL
+    LIMIT 1
+
+Store the account_id and role ('owner' or 'employee') for the session.
+
+IMPORTANT: If neither query returns a result, the user has no account.
+Show an error message: "No account found. Ask your employer to send an invite."
+
+--------------------------------------------------------------------------------
+4b. CHECK FOR OPEN CLOCK-IN
+--------------------------------------------------------------------------------
+
+On app launch (after login), check if the user is currently clocked in:
+
+  SELECT * FROM time_entries
+    WHERE user_id = {auth.uid()}
+    AND clock_out IS NULL
+    LIMIT 1
+
+If a row is returned, the user is currently clocked in. Show the active timer
+with the clock_in timestamp as the start time.
+
+--------------------------------------------------------------------------------
+4c. CLOCK IN
+--------------------------------------------------------------------------------
+
+Before clocking in, ALWAYS check for an existing open entry (4b above).
+If one exists, do NOT create a new one — show the active timer instead.
+
+  INSERT INTO time_entries (account_id, user_id, lead_id, notes)
+  VALUES ({account_id}, {auth.uid()}, {lead_id or null}, {notes or null})
+
+  - account_id: from the session (resolved in 4a)
+  - lead_id: optional — the user can select a lead/job from the dropdown
+  - notes: optional — a short description of the work
+  - clock_in: defaults to now() on the server
+
+--------------------------------------------------------------------------------
+4d. CLOCK OUT
+--------------------------------------------------------------------------------
+
+  UPDATE time_entries
+  SET clock_out = now()
+  WHERE id = {entry_id}
+  AND user_id = {auth.uid()}
+
+Only update the entry that belongs to the current user (RLS enforces this).
+
+--------------------------------------------------------------------------------
+4e. FETCH RECENT TIME ENTRIES
+--------------------------------------------------------------------------------
+
+  SELECT * FROM time_entries
+  WHERE user_id = {auth.uid()}
+  ORDER BY clock_in DESC
+  LIMIT 50
+
+This returns the user's recent entries for the history list.
+
+--------------------------------------------------------------------------------
+4f. FETCH LEADS FOR JOB SELECTOR
+--------------------------------------------------------------------------------
+
+  SELECT id, name FROM leads
+  WHERE account_id = {account_id}
+  AND status IN ('new', 'contacted', 'booked')
+  ORDER BY created_at DESC
+  LIMIT 100
+
+Use this to populate the "Job / Lead" dropdown when clocking in.
+Note: Employees can read leads through the account_members RLS relationship.
+If RLS blocks this query, use the account_id from the member's context.
+
+================================================================================
+5. COMPLETE USER FLOW
+================================================================================
+
+SCREEN 1: LOGIN
+  - Email + password fields
+  - "Log In" button → Supabase Auth sign-in
+  - On success: resolve account (4a), navigate to Time Clock
+  - On failure: show error message
+  - "Forgot password?" link → Supabase Auth password reset
+  - NO sign-up button — employees are invited by the owner
+
+SCREEN 2: TIME CLOCK (main screen)
+  - On load: check for open clock-in (4b)
+
+  IF NOT CLOCKED IN:
+    - Large "Clock In" button (green)
+    - "Job / Lead" dropdown (optional) — populated from leads (4f)
+    - "Notes" text field (optional)
+    - Tap "Clock In" → insert time_entry (4c) → switch to active timer
+
+  IF CLOCKED IN:
+    - Large live timer showing elapsed time since clock_in
+      Format: HH:MM:SS, updating every second
+    - Show the job name (if lead_id was set) and notes
+    - Show clock-in time (e.g. "Clocked in at 8:30 AM")
+    - Large "Clock Out" button (red)
+    - Tap "Clock Out" → update time_entry (4d) → switch to clock-in view
+
+SCREEN 3: TIME HISTORY
+  - List of recent time entries (4e)
+  - Each row shows:
+      Date (e.g. "03/26")
+      Clock in time — Clock out time (or "Active" in green if still open)
+      Duration (e.g. "4h 32m")
+      Job name (if any)
+      Notes (if any)
+  - Pull-to-refresh
+  - Consider grouping by date
+
+NAVIGATION:
+  - Bottom navigation bar with 2 tabs:
+      1. Time Clock (screen 2)
+      2. History (screen 3)
+  - Logout button in top-right or settings menu
+
+================================================================================
+6. LIVE TIMER IMPLEMENTATION
+================================================================================
+
+When the user is clocked in:
+  - Store the clock_in timestamp from the server response
+  - Use a coroutine/timer that ticks every 1 second
+  - Calculate elapsed = System.currentTimeMillis() - clock_in_timestamp_millis
+  - Format as HH:MM:SS
+  - The timer should survive screen rotation and backgrounding
+  - Use ViewModel + StateFlow for the timer state
+
+When the app is backgrounded:
+  - The timer continues when the user returns (recalculate from clock_in)
+  - Optionally show an ongoing notification: "Clocked in — 2h 15m"
+
+================================================================================
+7. OFFLINE CONSIDERATIONS
+================================================================================
+
+  - If the device is offline when the user tries to clock in/out, queue the
+    action and sync when connectivity returns
+  - At minimum: show a clear error if the network request fails
+  - The clock_in time should be the moment the user tapped the button,
+    NOT the moment the server received it (pass the timestamp explicitly
+    if you want offline accuracy)
+
+================================================================================
+8. UI/UX GUIDELINES
+================================================================================
+
+  - Use Material 3 / Material You design system
+  - Primary color: Indigo (#4F46E5) to match the web app
+  - The Clock In button should be large and prominent (at least 200dp tall)
+  - The live timer should be very large (48sp+ font, mono-spaced)
+  - Use green for Clock In, red for Clock Out
+  - Show the business name in the top bar (from accounts.business_name)
+  - Keep it simple — employees use this in the field, often with gloves/dirty hands
+  - Large touch targets, minimal text input required
+  - Dark mode support is nice-to-have
+
+================================================================================
+9. NOTIFICATIONS (optional but recommended)
+================================================================================
+
+  - When clocked in for 8+ hours, show a reminder notification:
+    "You've been clocked in for 8 hours. Don't forget to clock out!"
+  - When clocked in and app is backgrounded, show an ongoing notification:
+    "QuoteBox — Clocked in since 8:30 AM"
+  - Use WorkManager or AlarmManager for the 8-hour reminder
+
+================================================================================
+10. ENVIRONMENT VARIABLES / BUILD CONFIG
+================================================================================
+
+  SUPABASE_URL          — Your Supabase project URL
+  SUPABASE_ANON_KEY     — Public anon key for Supabase
+
+  Store these in local.properties or BuildConfig, NOT hardcoded in source.
+  Do NOT commit these values to git.
+
+================================================================================
+11. DEPENDENCIES
+================================================================================
+
+Recommended libraries:
+  - io.github.jan-tennert.supabase:postgrest-kt     (Supabase Kotlin SDK)
+  - io.github.jan-tennert.supabase:gotrue-kt         (Supabase Auth)
+  - io.ktor:ktor-client-android                      (HTTP client for Supabase SDK)
+  - androidx.compose.*                                (Jetpack Compose UI)
+  - androidx.lifecycle:lifecycle-viewmodel-compose    (ViewModel)
+  - androidx.navigation:navigation-compose            (Navigation)
+  - org.jetbrains.kotlinx:kotlinx-coroutines-android (Coroutines)
+  - kotlinx-datetime                                  (Timestamp handling)
+
+================================================================================
+12. PERMISSIONS
+================================================================================
+
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+  (for the ongoing clock-in notification, Android 13+)
+
+No camera, location, or storage permissions needed for the time clock feature.
+
+================================================================================
+13. KEY IMPLEMENTATION NOTES
+================================================================================
+
+  - PREVENT DOUBLE CLOCK-IN: Always check for an open entry before inserting.
+    The server has no unique constraint preventing it, so the client must check.
+  - TIME ZONES: All timestamps are stored as UTC (TIMESTAMPTZ). Convert to
+    the device's local timezone for display only.
+  - DURATION CALCULATION: duration = clock_out - clock_in (or now() if still open).
+    Calculate on the client, not stored in the database.
+  - SESSION PERSISTENCE: Use the Supabase SDK's built-in session storage so
+    the user doesn't have to log in every time they open the app.
+  - The employee can ONLY see their own time entries (RLS enforced).
+    They cannot see other employees' entries.
+  - The lead/job selector is a convenience feature. If the leads query fails
+    (e.g., no leads exist), just hide the dropdown — it's optional.
+
+================================================================================
+END OF INSTRUCTIONS
+================================================================================
