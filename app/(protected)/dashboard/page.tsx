@@ -88,15 +88,6 @@ export default async function DashboardPage({
     )
   }
 
-  // Fetch all leads
-  const { data: allLeads } = await supabase
-    .from('leads')
-    .select('id, account_id, hosted_form_id, name, email, phone, form_type, form_data, status, created_at')
-    .eq('account_id', account.id)
-    .order('created_at', { ascending: false })
-
-  const leads = allLeads ?? []
-
   // Billing
   let { data: billing } = await admin
     .from('billing')
@@ -123,60 +114,124 @@ export default async function DashboardPage({
   const startOfPeriod = getStartDate(timeframe)
   const periodLabel = timeframeLabel(timeframe)
 
-  // Today boundaries (always needed for DailyView)
+  // Date boundaries
   const startOfToday = new Date()
   startOfToday.setHours(0, 0, 0, 0)
   const todayDateStr = startOfToday.toISOString().slice(0, 10)
-
-  // startOfMonth always needed for games rank + usage banner
   const startOfMonth = new Date()
   startOfMonth.setDate(1)
   startOfMonth.setHours(0, 0, 0, 0)
 
-  // Period transactions for spending stat
-  const txnQuery = supabase
+  const fromIso = startOfPeriod?.toISOString() ?? null
+  const monthIso = startOfMonth.toISOString()
+  const todayIso = startOfToday.toISOString()
+
+  // DB-level count queries — accurate regardless of row volume
+  function countLeads(status?: string, from?: string | null) {
+    let q = admin.from('leads')
+      .select('*', { count: 'exact', head: true })
+      .eq('account_id', account.id)
+    if (from) q = q.gte('created_at', from)
+    if (status) q = q.eq('status', status)
+    return q
+  }
+
+  const txnQuery = admin
     .from('billing_transactions')
     .select('*')
     .eq('account_id', account.id)
     .eq('type', 'lead_charge')
-  const { data: periodTxns } = startOfPeriod
-    ? await txnQuery.gte('created_at', startOfPeriod.toISOString())
-    : await txnQuery
 
-  // Monthly transactions always for usage banner
-  const { data: monthlyTxns } = await supabase
-    .from('billing_transactions')
-    .select('*')
-    .eq('account_id', account.id)
-    .eq('type', 'lead_charge')
-    .gte('created_at', startOfMonth.toISOString())
-
-  // Onboarding checklist data
-  const [{ data: vsls }, { data: forms }, { data: campaigns }] = await Promise.all([
-    supabase.from('vsls').select('id').eq('account_id', account.id).limit(1),
-    supabase.from('hosted_forms').select('id').eq('account_id', account.id).limit(1),
-    supabase.from('meta_campaigns').select('id').eq('account_id', account.id).limit(1),
+  const [
+    { count: totalLeadsCount },
+    { count: newLeadsCount },
+    { count: bookedLeadsCount },
+    { count: contactedLeadsCount },
+    { count: lostLeadsCount },
+    { count: monthlyLeadsCount },
+    { data: todayLeadsData },
+    { data: todayAllData },
+    { data: pipelineData },
+    { data: periodTxns },
+    { data: vsls },
+    { data: forms },
+    { data: campaigns },
+  ] = await Promise.all([
+    countLeads(undefined, fromIso),
+    countLeads('new', fromIso),
+    countLeads('booked', fromIso),
+    countLeads('contacted', fromIso),
+    countLeads('lost', fromIso),
+    countLeads(undefined, monthIso),
+    // Today's leads rows for DailyView display
+    admin.from('leads')
+      .select('id, name, email, phone, status, created_at, form_data')
+      .eq('account_id', account.id)
+      .gte('created_at', todayIso)
+      .order('created_at', { ascending: false })
+      .limit(20),
+    // All today's rows for appointment filtering (booking_date check)
+    admin.from('leads')
+      .select('id, name, email, phone, status, created_at, form_data')
+      .eq('account_id', account.id)
+      .gte('created_at', todayIso)
+      .order('created_at', { ascending: false }),
+    // Pipeline: only rows with form_data for the period
+    admin.from('leads')
+      .select('form_data')
+      .eq('account_id', account.id)
+      .gte('created_at', fromIso ?? '1970-01-01T00:00:00Z')
+      .not('form_data', 'is', null)
+      .limit(5000),
+    // Period billing transactions
+    fromIso
+      ? txnQuery.gte('created_at', fromIso)
+      : txnQuery,
+    // Onboarding checklist
+    admin.from('vsls').select('id').eq('account_id', account.id).limit(1),
+    admin.from('hosted_forms').select('id').eq('account_id', account.id).limit(1),
+    admin.from('meta_campaigns').select('id').eq('account_id', account.id).limit(1),
   ])
+
+  const totalLeads = totalLeadsCount ?? 0
+  const newLeads = newLeadsCount ?? 0
+  const bookedLeads = bookedLeadsCount ?? 0
+  const contactedLeads = contactedLeadsCount ?? 0
+  const lostLeads = lostLeadsCount ?? 0
+  const monthlyLeads = monthlyLeadsCount ?? 0
+  const todayLeads = todayLeadsData ?? []
+  const todayAppointments = (todayAllData ?? []).filter((l) => {
+    const fd = l.form_data as Record<string, unknown> | null
+    return fd?._booking_date === todayDateStr
+  })
+  const periodPipeline = (pipelineData ?? []).reduce((sum, l) => {
+    const qt = (l.form_data as Record<string, unknown> | null)?._quote_total
+    return sum + (typeof qt === 'number' ? qt : 0)
+  }, 0)
+  const conversionRate = totalLeads > 0 ? ((bookedLeads / totalLeads) * 100).toFixed(1) : '0'
+  const periodSpending = (periodTxns ?? [])
+    .reduce((sum: number, tx: { amount: number }) => sum + Math.abs(tx.amount), 0)
+  const plan = billing?.plan ?? null
 
   // QuoteBox Games ranking (only if enrolled — always monthly)
   let gamesRank: number | null = null
   let gamesBookedThisMonth = 0
   if (account.games_enrolled) {
-    gamesBookedThisMonth = leads.filter(
-      (l) => l.status === 'booked' && new Date(l.created_at) >= startOfMonth
-    ).length
+    const { count: myBooked } = await admin.from('leads')
+      .select('*', { count: 'exact', head: true })
+      .eq('account_id', account.id)
+      .eq('status', 'booked')
+      .gte('created_at', monthIso)
+    gamesBookedThisMonth = myBooked ?? 0
 
     const { data: enrolledAccounts } = await admin
-      .from('accounts')
-      .select('id')
-      .eq('games_enrolled', true)
+      .from('accounts').select('id').eq('games_enrolled', true)
     const enrolledIds = (enrolledAccounts ?? []).map((a: { id: string }) => a.id)
 
     const { data: allBookedLeads } = await admin
-      .from('leads')
-      .select('account_id')
+      .from('leads').select('account_id')
       .eq('status', 'booked')
-      .gte('created_at', startOfMonth.toISOString())
+      .gte('created_at', monthIso)
       .in('account_id', enrolledIds)
 
     const counts: Record<string, number> = {}
@@ -189,6 +244,27 @@ export default async function DashboardPage({
     gamesRank = ahead + 1
   }
 
+  // Meta ad spend — pulled directly from the Graph API if connected
+  const META_DATE_PRESET: Record<Timeframe, string> = {
+    today: 'today', week: 'last_7d', month: 'this_month', year: 'this_year', all: 'maximum',
+  }
+  let metaAdSpend: number | null = null
+  if (account.meta_access_token && account.meta_ad_account_id) {
+    try {
+      const spendRes = await fetch(
+        `https://graph.facebook.com/v18.0/act_${account.meta_ad_account_id}/insights` +
+        `?fields=spend&date_preset=${META_DATE_PRESET[timeframe]}&level=account` +
+        `&access_token=${account.meta_access_token}`,
+        { next: { revalidate: 300 } }
+      )
+      if (spendRes.ok) {
+        const spendJson = await spendRes.json()
+        const raw = spendJson.data?.[0]?.spend
+        if (raw != null) metaAdSpend = parseFloat(raw)
+      }
+    } catch { /* Meta unavailable — omit the card */ }
+  }
+
   const blessed = billing?.blessed === true
   const metaConnected = !!account.meta_access_token
   const hasBillingPlan = !!billing?.plan
@@ -196,40 +272,6 @@ export default async function DashboardPage({
   const hasForm = (forms?.length ?? 0) > 0
   const hasCampaign = (campaigns?.length ?? 0) > 0
   const onboardingComplete = metaConnected && hasBillingPlan && hasCreatives && hasForm
-
-  // Period-filtered leads
-  const periodLeads = startOfPeriod
-    ? leads.filter((l) => new Date(l.created_at) >= startOfPeriod)
-    : leads
-
-  // Stats computed from period
-  const totalLeads = periodLeads.length
-  const newLeads = periodLeads.filter((l) => l.status === 'new').length
-  const bookedLeads = periodLeads.filter((l) => l.status === 'booked').length
-  const contactedLeads = periodLeads.filter((l) => l.status === 'contacted').length
-  const lostLeads = periodLeads.filter((l) => l.status === 'lost').length
-  const conversionRate =
-    totalLeads > 0 ? ((bookedLeads / totalLeads) * 100).toFixed(1) : '0'
-  const periodSpending = periodTxns
-    ? Math.abs(periodTxns.reduce((sum: number, tx: { amount: number }) => sum + tx.amount, 0))
-    : 0
-  const plan = billing?.plan ?? null
-
-  // Monthly leads for usage banner (always month)
-  const monthlyLeads = leads.filter((l) => new Date(l.created_at) >= startOfMonth).length
-
-  // Today's data (DailyView always shows today)
-  const todayLeads = leads.filter((l) => new Date(l.created_at) >= startOfToday)
-  const todayAppointments = leads.filter((l) => {
-    const fd = l.form_data as Record<string, unknown> | null
-    return fd?._booking_date === todayDateStr
-  })
-
-  // Pipeline value for the selected period
-  const periodPipeline = periodLeads.reduce((sum, l) => {
-    const qt = (l.form_data as Record<string, unknown> | null)?._quote_total
-    return sum + (typeof qt === 'number' ? qt : 0)
-  }, 0)
 
   return (
     <div className="py-6 min-h-full" style={{ background: '#f4f4f6' }}>
@@ -266,7 +308,7 @@ export default async function DashboardPage({
           )}
 
           {/* Primary Stats Grid */}
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className={`grid grid-cols-1 gap-5 sm:grid-cols-2 ${metaAdSpend !== null ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}>
             <StatCard
               icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>}
               iconBg="bg-[#5b5bd6]"
@@ -295,6 +337,15 @@ export default async function DashboardPage({
               value={`$${periodSpending.toFixed(2)}`}
               sub={periodLabel}
             />
+            {metaAdSpend !== null && (
+              <StatCard
+                icon={<svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>}
+                iconBg="bg-[#1877F2]"
+                label="Meta Ad Spend"
+                value={`$${metaAdSpend.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                sub={periodLabel}
+              />
+            )}
           </div>
 
           {/* Pipeline Value */}
