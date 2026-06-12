@@ -22,20 +22,35 @@ export default function TimeframeBar({ active }: { active: string }) {
   }
 
   return (
-    <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 w-fit">
-      {OPTIONS.map((opt) => (
-        <button
-          key={opt.value}
-          onClick={() => select(opt.value)}
-          className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-            active === opt.value
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          {opt.label}
-        </button>
-      ))}
+    <div
+      className="flex items-center p-1 gap-0.5"
+      style={{
+        background: 'rgba(0,0,0,0.12)',
+        borderRadius: 10,
+        backdropFilter: 'blur(8px)',
+        border: '1px solid rgba(255,255,255,0.15)',
+      }}
+    >
+      {OPTIONS.map((opt) => {
+        const isActive = active === opt.value
+        return (
+          <button
+            key={opt.value}
+            onClick={() => select(opt.value)}
+            className="relative px-3 py-1.5 text-[13px] font-medium rounded-[7px] transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#5b5bd6]"
+            style={isActive ? {
+              background: 'rgba(255,255,255,0.95)',
+              color: '#111',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.14), 0 0 0 0.5px rgba(0,0,0,0.06)',
+            } : {
+              color: 'rgba(255,255,255,0.7)',
+              background: 'transparent',
+            }}
+          >
+            {opt.label}
+          </button>
+        )
+      })}
     </div>
   )
 }

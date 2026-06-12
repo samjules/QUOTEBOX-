@@ -298,38 +298,90 @@ export default async function DashboardPage({
   const onboardingComplete = metaConnected && hasBillingPlan && hasCreatives && hasForm
   const dashboardBgUrl = account.dashboard_bg_url ?? null
 
+  const hasBg = !!dashboardBgUrl
+
   return (
-    <div className="min-h-full relative" style={dashboardBgUrl ? {
-      backgroundImage: `url(${dashboardBgUrl})`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundAttachment: 'fixed',
-    } : { background: '#f4f4f6' }}>
-      {/* White overlay when bg image is set */}
-      {dashboardBgUrl && <div className="absolute inset-0 bg-white/60 pointer-events-none" />}
-      <div className="relative z-10 py-6">
-      <DealNotificationBanner position="top" />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: "'Instrument Sans', sans-serif", letterSpacing: '-0.02em' }}>Dashboard</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Overview of your lead generation performance
-            </p>
-          </div>
-          <TimeframeBar active={timeframe} />
+    <div className="min-h-full relative" style={{ background: '#ededf2' }}>
+
+      {/* ── Photo zone: top 340px, blurred + scrimmed ── */}
+      {hasBg && (
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 340, overflow: 'hidden', zIndex: 0 }}>
+          <div style={{
+            position: 'absolute', inset: 0,
+            backgroundImage: `url(${dashboardBgUrl})`,
+            backgroundSize: 'cover', backgroundPosition: 'center',
+            filter: 'blur(2px) saturate(0.75)',
+            transform: 'scale(1.05)',
+          }} />
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.78) 100%)',
+          }} />
         </div>
-      </div>
+      )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-        <div className="py-4 space-y-6">
-          {/* Today at a Glance */}
-          <DailyView todayLeads={todayLeads} todayAppointments={todayAppointments} />
+      <div className="relative" style={{ zIndex: 10 }}>
+        <DealNotificationBanner position="top" />
 
-          {/* Lead usage banner — hidden for blessed accounts */}
+        {/* ── Page header ── */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h1
+                className="font-extrabold tracking-tight"
+                style={{
+                  fontFamily: "'Instrument Sans', sans-serif",
+                  fontSize: 28,
+                  letterSpacing: '-0.03em',
+                  color: hasBg ? '#fff' : '#111',
+                }}
+              >
+                Dashboard
+              </h1>
+              <p style={{ fontSize: 13, color: hasBg ? 'rgba(255,255,255,0.45)' : '#9ca3af', marginTop: 2 }}>
+                {periodLabel}
+              </p>
+            </div>
+            <TimeframeBar active={timeframe} />
+          </div>
+        </div>
+
+        {/* ── Hero: Pipeline Value ── */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {hasBg ? (
+            <div className="py-7">
+              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginBottom: 8 }}>
+                Pipeline Value · {totalLeads} lead{totalLeads !== 1 ? 's' : ''}
+              </p>
+              <p
+                className="tabular-nums"
+                style={{ fontSize: 60, fontWeight: 800, color: '#fff', letterSpacing: '-0.04em', lineHeight: 1 }}
+              >
+                ${periodPipeline.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+              </p>
+            </div>
+          ) : (
+            <div className="py-4">
+              <div className={CARD} style={{ ...CARD_STYLE, padding: '24px 28px' }}>
+                <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 6 }}>
+                  Pipeline Value · {periodLabel}
+                </p>
+                <p className="tabular-nums" style={{ fontSize: 48, fontWeight: 800, color: '#111', letterSpacing: '-0.03em', lineHeight: 1 }}>
+                  ${periodPipeline.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                </p>
+                <p style={{ fontSize: 13, color: '#9ca3af', marginTop: 6 }}>{totalLeads} total leads</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── Main content (below photo zone) ── */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 pb-10 space-y-5" style={{ marginTop: hasBg ? 0 : 8 }}>
+
+          {/* Lead usage banner */}
           {!blessed && <LeadUsageBanner plan={plan} monthlyLeads={monthlyLeads} />}
 
-          {/* Onboarding checklist — hidden for PPL */}
+          {/* Onboarding checklist */}
           {!onboardingComplete && (
             <OnboardingChecklist
               metaConnected={metaConnected}
@@ -340,146 +392,141 @@ export default async function DashboardPage({
             />
           )}
 
-          {/* Primary Stats Grid */}
-          <div className={`grid grid-cols-1 gap-5 sm:grid-cols-2 ${metaAdSpend !== null ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
+          {/* Today at a Glance */}
+          <DailyView todayLeads={todayLeads} todayAppointments={todayAppointments} />
+
+          {/* Stat grid — Total dominant, secondary pair, Meta tertiary */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Total Leads — dominant */}
+            <div className={`${CARD} lg:col-span-1`} style={CARD_STYLE}>
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9ca3af' }}>Total Leads</p>
+                  <div className="flex items-center justify-center w-9 h-9 rounded-xl text-white" style={{ background: '#5b5bd6' }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4.5 h-4.5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>
+                  </div>
+                </div>
+                <p className="tabular-nums" style={{ fontSize: 42, fontWeight: 800, color: '#111', letterSpacing: '-0.03em', lineHeight: 1 }}>{totalLeads}</p>
+                <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 6, letterSpacing: '0.04em' }}>{periodLabel}</p>
+              </div>
+            </div>
+
+            {/* New Leads */}
             <StatCard
-              icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>}
-              iconBg="bg-[#5b5bd6]"
-              label="Total Leads"
-              value={totalLeads}
-              sub={periodLabel}
-            />
-            <StatCard
-              icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>}
-              iconBg="bg-yellow-500"
+              icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4.5 h-4.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" /></svg>}
+              iconBg="#5b5bd6"
               label="New Leads"
               value={newLeads}
               sub={periodLabel}
             />
+
+            {/* Booked Leads */}
             <StatCard
-              icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-              iconBg="bg-green-500"
-              label="Booked Leads"
+              icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4.5 h-4.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+              iconBg="#7c6fe0"
+              label="Booked"
               value={bookedLeads}
               sub={periodLabel}
             />
-            {metaAdSpend !== null && (
+
+            {/* Meta Ad Spend — tertiary, shown when connected */}
+            {metaAdSpend !== null ? (
               <StatCard
-                icon={<svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>}
-                iconBg="bg-[#1877F2]"
+                icon={<svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>}
+                iconBg="#1877F2"
                 label="Meta Ad Spend"
                 value={`$${metaAdSpend.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                sub={periodLabel}
+              />
+            ) : (
+              /* Conversion rate fills the 4th slot when Meta not connected */
+              <StatCard
+                icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4.5 h-4.5"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" /></svg>}
+                iconBg="#5b5bd6"
+                label="Conversion"
+                value={`${conversionRate}%`}
                 sub={periodLabel}
               />
             )}
           </div>
 
-          {/* Pipeline Value */}
-          <div className={CARD} style={CARD_STYLE}>
-            <div className="p-5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className="flex items-center justify-center h-12 w-12 rounded-md bg-emerald-600 text-white">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Pipeline Value</dt>
-                      <dd className="text-3xl font-semibold text-gray-900">
-                        ${periodPipeline.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-                <div className="text-right flex-shrink-0 ml-4">
-                  <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">{periodLabel}</p>
-                  <p className="text-sm text-gray-500 mt-0.5">
-                    {totalLeads} lead{totalLeads !== 1 ? 's' : ''}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Hormozi LTV Calculator */}
+          {/* LTV Calculator — frosted glass, continuous with page */}
           {showHormoziCard && (
-            <div className="overflow-hidden rounded-2xl" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0f172a 100%)', boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 8px 32px rgba(0,0,0,0.18)' }}>
+            <div className={CARD} style={CARD_STYLE}>
               <div className="p-6">
                 <div className="flex items-center gap-3 mb-5">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/10">
-                    <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <div className="flex items-center justify-center w-9 h-9 rounded-xl text-white" style={{ background: '#5b5bd6' }}>
+                    <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-white" style={{ fontFamily: "'Instrument Sans', sans-serif" }}>LTV Calculator</h3>
-                    <p className="text-xs text-slate-400 mt-0.5">{periodLabel} · {bookedLeads} booked lead{bookedLeads !== 1 ? 's' : ''}</p>
+                    <h3 className="font-bold text-gray-900" style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: 15 }}>LTV Calculator</h3>
+                    <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 2, letterSpacing: '0.03em' }}>
+                      {periodLabel} · {bookedLeads} booked lead{bookedLeads !== 1 ? 's' : ''}
+                    </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-                  <HormoziStat label="Avg Deal Value" value={avgDealValue > 0 ? `$${avgDealValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '—'} />
+
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+                  <HormoziStat label="Avg Deal" value={avgDealValue > 0 ? `$${avgDealValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '—'} />
                   <HormoziStat label="Value / Lead" value={valuePerLead > 0 ? `$${valuePerLead.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '—'} />
                   <HormoziStat label="Booking Rate" value={`${bookingRate.toFixed(1)}%`} />
-                  {costPerLead !== null && <HormoziStat label="Cost / Lead" value={`$${costPerLead.toLocaleString('en-US', { maximumFractionDigits: 2 })}`} highlight="red" />}
-                  {costPerClient !== null && <HormoziStat label="Cost / Client" value={`$${costPerClient.toLocaleString('en-US', { maximumFractionDigits: 2 })}`} highlight="red" />}
-                  {roas !== null && <HormoziStat label="ROAS" value={`${roas.toFixed(2)}x`} highlight={roas >= 1 ? 'green' : 'red'} />}
-                  {profitPerLead !== null && <HormoziStat label="Profit / Lead" value={`$${profitPerLead.toLocaleString('en-US', { maximumFractionDigits: 0 })}`} highlight={profitPerLead >= 0 ? 'green' : 'red'} />}
+                  {costPerLead !== null && <HormoziStat label="Cost / Lead" value={`$${costPerLead.toLocaleString('en-US', { maximumFractionDigits: 2 })}`} />}
+                  {costPerClient !== null && <HormoziStat label="Cost / Client" value={`$${costPerClient.toLocaleString('en-US', { maximumFractionDigits: 2 })}`} />}
+                  {roas !== null && <HormoziStat label="ROAS" value={`${roas.toFixed(2)}x`} highlight={roas >= 1 ? 'green' : undefined} large />}
+                  {profitPerLead !== null && <HormoziStat label="Profit / Lead" value={`$${profitPerLead.toLocaleString('en-US', { maximumFractionDigits: 0 })}`} highlight={profitPerLead >= 0 ? 'green' : undefined} />}
                 </div>
                 <LtvDefaultValueInput initial={defaultLeadValue} />
               </div>
             </div>
           )}
 
-          {/* Secondary Stats Row */}
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+          {/* Secondary stats */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <MiniStat
-              icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-blue-600"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 6.75z" /></svg>}
-              iconBg="bg-blue-100"
+              icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4.5 h-4.5" style={{ color: '#5b5bd6' }}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 6.75z" /></svg>}
+              iconBg="rgba(91,91,214,0.1)"
               label="Contacted"
               value={contactedLeads}
             />
             <MiniStat
-              icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-red-600"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>}
-              iconBg="bg-red-100"
+              icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4.5 h-4.5 text-gray-400"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>}
+              iconBg="rgba(0,0,0,0.05)"
               label="Lost"
               value={lostLeads}
             />
-            <MiniStat
-              icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-green-600"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" /></svg>}
-              iconBg="bg-green-100"
-              label="Conversion Rate"
-              value={`${conversionRate}%`}
-            />
+            {metaAdSpend !== null && (
+              <MiniStat
+                icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4.5 h-4.5" style={{ color: '#5b5bd6' }}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" /></svg>}
+                iconBg="rgba(91,91,214,0.1)"
+                label="Conversion Rate"
+                value={`${conversionRate}%`}
+              />
+            )}
           </div>
 
-          {/* QuoteBox Games Card */}
+          {/* QuoteBox Games */}
           {account.games_enrolled && gamesRank !== null && (
             <div className="overflow-hidden rounded-2xl" style={{ background: 'linear-gradient(135deg, #5b5bd6 0%, #16213e 50%, #0f3460 100%)', boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.12)' }}>
               <div className="p-6 text-white">
                 <div className="flex items-center gap-3 mb-4">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 002.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 012.916.52 6.003 6.003 0 01-5.395 4.972m0 0a6.726 6.726 0 01-2.749 1.35m0 0a6.772 6.772 0 01-3.044 0" />
                   </svg>
-                  <h3 className="text-lg font-bold">QuoteBox Games</h3>
+                  <h3 className="text-base font-bold">QuoteBox Games</h3>
                 </div>
-                <div className="flex items-baseline gap-4 mb-2">
+                <div className="flex items-baseline gap-6 mb-3">
                   <div>
-                    <p className="text-3xl font-extrabold">#{gamesRank}</p>
-                    <p className="text-sm text-brand-200">Your rank</p>
+                    <p className="tabular-nums text-3xl font-extrabold">#{gamesRank}</p>
+                    <p className="text-xs text-white/50 mt-1 uppercase tracking-wide">Your rank</p>
                   </div>
                   <div>
-                    <p className="text-3xl font-extrabold">{gamesBookedThisMonth}</p>
-                    <p className="text-sm text-brand-200">Booked this month</p>
+                    <p className="tabular-nums text-3xl font-extrabold">{gamesBookedThisMonth}</p>
+                    <p className="text-xs text-white/50 mt-1 uppercase tracking-wide">Booked this month</p>
                   </div>
                 </div>
-                <Link
-                  href="/games"
-                  className="inline-block mt-3 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-semibold transition-colors"
-                >
+                <Link href="/games" className="inline-block px-4 py-2 bg-white/15 hover:bg-white/25 rounded-lg text-sm font-semibold transition-colors">
                   View Leaderboard →
                 </Link>
               </div>
@@ -488,38 +535,18 @@ export default async function DashboardPage({
 
           {/* Quick Actions */}
           <div className={`${CARD} p-6`} style={CARD_STYLE}>
-            <h3 className="text-base font-bold text-gray-900 mb-4" style={{ fontFamily: "'Instrument Sans', sans-serif" }}>
+            <h3 className="font-bold text-gray-900 mb-4" style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: 15 }}>
               Quick Actions
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <QuickAction
-                href="/leads"
-                icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>}
-                title="View All Leads"
-                desc="Manage your leads"
-              />
-              <QuickAction
-                href="/hosted-forms"
-                icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>}
-                title="Hosted Forms"
-                desc="Manage your forms"
-              />
-              <QuickAction
-                href="/billing"
-                icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" /></svg>}
-                title="Billing"
-                desc="Manage credits"
-              />
-              <QuickAction
-                href="/rewards"
-                icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 002.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 012.916.52 6.003 6.003 0 01-5.395 4.972m0 0a6.726 6.726 0 01-2.749 1.35m0 0a6.772 6.772 0 01-3.044 0" /></svg>}
-                title="Rewards"
-                desc="View your pipeline tier"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <QuickAction href="/leads" icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>} title="View All Leads" desc="Manage your leads" />
+              <QuickAction href="/hosted-forms" icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>} title="Hosted Forms" desc="Manage your forms" />
+              <QuickAction href="/billing" icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" /></svg>} title="Billing" desc="Manage credits" />
+              <QuickAction href="/rewards" icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 002.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 012.916.52 6.003 6.003 0 01-5.395 4.972m0 0a6.726 6.726 0 01-2.749 1.35m0 0a6.772 6.772 0 01-3.044 0" /></svg>} title="Rewards" desc="View your pipeline tier" />
             </div>
           </div>
+
         </div>
-      </div>
       </div>
     </div>
   )
@@ -527,8 +554,12 @@ export default async function DashboardPage({
 
 // ── Components ────────────────────────────────────────────────
 
-const CARD = 'overflow-hidden rounded-2xl border border-white/70 backdrop-blur-xl'
-const CARD_STYLE = { background: 'rgba(255,255,255,0.72)', boxShadow: '0 2px 12px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.05)' }
+const CARD = 'overflow-hidden rounded-2xl border backdrop-blur-xl'
+const CARD_STYLE = {
+  background: 'rgba(255,255,255,0.88)',
+  borderColor: 'rgba(255,255,255,0.7)',
+  boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)',
+}
 
 function StatCard({
   icon,
@@ -546,16 +577,14 @@ function StatCard({
   return (
     <div className={CARD} style={CARD_STYLE}>
       <div className="p-5">
-        <div className="flex items-start justify-between">
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">{label}</p>
-            <p className="text-3xl font-bold text-gray-900 leading-none">{value}</p>
-            {sub && <p className="text-xs text-gray-400 mt-1.5">{sub}</p>}
-          </div>
-          <div className={`flex-shrink-0 flex items-center justify-center h-11 w-11 rounded-xl ${iconBg} text-white ml-3`}>
+        <div className="flex items-start justify-between mb-3">
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9ca3af' }}>{label}</p>
+          <div className="flex items-center justify-center w-9 h-9 rounded-xl text-white flex-shrink-0 ml-2" style={{ background: iconBg }}>
             {icon}
           </div>
         </div>
+        <p className="tabular-nums font-bold text-gray-900 leading-none" style={{ fontSize: 32, letterSpacing: '-0.02em' }}>{value}</p>
+        {sub && <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 6, letterSpacing: '0.04em' }}>{sub}</p>}
       </div>
     </div>
   )
@@ -574,14 +603,14 @@ function MiniStat({
 }) {
   return (
     <div className={CARD} style={CARD_STYLE}>
-      <div className="p-5">
-        <div className="flex items-center gap-4">
-          <div className={`flex-shrink-0 ${iconBg} rounded-xl p-3`}>
+      <div className="p-4">
+        <div className="flex items-center gap-3">
+          <div className="flex-shrink-0 rounded-xl p-2.5" style={{ background: iconBg }}>
             {icon}
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">{label}</p>
-            <p className="text-2xl font-bold text-gray-900 mt-0.5">{value}</p>
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9ca3af' }}>{label}</p>
+            <p className="tabular-nums font-bold text-gray-900" style={{ fontSize: 24, letterSpacing: '-0.02em', lineHeight: 1.2, marginTop: 2 }}>{value}</p>
           </div>
         </div>
       </div>
@@ -593,16 +622,18 @@ function HormoziStat({
   label,
   value,
   highlight,
+  large,
 }: {
   label: string
   value: string
-  highlight?: 'green' | 'red'
+  highlight?: 'green'
+  large?: boolean
 }) {
-  const valueColor = highlight === 'green' ? 'text-emerald-400' : highlight === 'red' ? 'text-red-400' : 'text-white'
+  const valueColor = highlight === 'green' ? '#34d399' : '#111827'
   return (
-    <div className="bg-white/5 rounded-xl p-3.5">
-      <p className="text-xs font-medium text-slate-400 mb-1.5 leading-tight">{label}</p>
-      <p className={`text-xl font-bold leading-none ${valueColor}`}>{value}</p>
+    <div className="rounded-xl p-3.5" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}>
+      <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 6 }}>{label}</p>
+      <p className="tabular-nums font-bold leading-none" style={{ fontSize: large ? 26 : 18, color: valueColor, letterSpacing: '-0.01em' }}>{value}</p>
     </div>
   )
 }
@@ -779,6 +810,14 @@ type LeadRow = {
   form_data: Record<string, unknown> | null
 }
 
+function initials(name: string | null) {
+  if (!name) return '?'
+  const parts = name.trim().split(/\s+/)
+  return parts.length > 1
+    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    : parts[0][0].toUpperCase()
+}
+
 function DailyView({
   todayLeads,
   todayAppointments,
@@ -790,49 +829,57 @@ function DailyView({
   const dateLabel = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)' }}>
-      <div className="px-6 pt-5 pb-4 border-b border-gray-100 flex items-center justify-between">
+    <div className={`${CARD} overflow-hidden`} style={CARD_STYLE}>
+      {/* Header */}
+      <div className="px-6 pt-5 pb-4 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
         <div>
-          <h3 className="text-base font-bold text-gray-900" style={{ fontFamily: "'Instrument Sans', sans-serif" }}>Today</h3>
-          <p className="text-sm text-gray-500 mt-0.5">{dateLabel}</p>
+          <h3 className="font-bold text-gray-900" style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: 15 }}>Today</h3>
+          <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>{dateLabel}</p>
         </div>
-        <div className="flex gap-4 text-center">
+        <div className="flex gap-5 text-right">
           <div>
-            <p className="text-2xl font-bold" style={{ color: '#5b5bd6' }}>{todayLeads.length}</p>
-            <p className="text-xs text-gray-400 uppercase tracking-wide">New leads</p>
+            <p className="tabular-nums font-bold" style={{ fontSize: 22, color: '#5b5bd6', lineHeight: 1 }}>{todayLeads.length}</p>
+            <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9ca3af', marginTop: 3 }}>New leads</p>
           </div>
-          <div className="border-l border-gray-100 pl-4">
-            <p className="text-2xl font-bold text-green-600">{todayAppointments.length}</p>
-            <p className="text-xs text-gray-400 uppercase tracking-wide">Appointments</p>
+          <div style={{ borderLeft: '1px solid rgba(0,0,0,0.06)', paddingLeft: 20 }}>
+            <p className="tabular-nums font-bold" style={{ fontSize: 22, color: todayAppointments.length > 0 ? '#5b5bd6' : '#9ca3af', lineHeight: 1 }}>{todayAppointments.length}</p>
+            <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9ca3af', marginTop: 3 }}>Appts</p>
           </div>
         </div>
       </div>
 
-      <div className="divide-y divide-gray-50">
-        {todayLeads.length === 0 && todayAppointments.length === 0 ? (
-          <p className="px-6 py-4 text-sm text-gray-400">No leads or appointments today yet.</p>
-        ) : null}
+      {/* Rows */}
+      <div>
+        {todayLeads.length === 0 && todayAppointments.length === 0 && (
+          <p className="px-6 py-5 text-sm text-gray-400">No leads or appointments today yet.</p>
+        )}
 
         {todayLeads.slice(0, 5).map((lead) => (
-          <Link key={lead.id} href="/leads" className="flex items-center gap-3 px-6 py-3 hover:bg-gray-50 transition">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'rgba(26,26,46,0.08)' }}>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4" style={{ color: '#5b5bd6' }}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-              </svg>
+          <Link
+            key={lead.id}
+            href="/leads"
+            className="flex items-center gap-3 px-6 py-3 transition-colors hover:bg-black/[0.02]"
+            style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}
+          >
+            <div
+              className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
+              style={{ background: '#5b5bd6' }}
+            >
+              {initials(lead.name)}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">{lead.name ?? 'Unknown'}</p>
+              <p className="text-sm font-semibold text-gray-900 truncate">{lead.name ?? 'Unknown'}</p>
               <p className="text-xs text-gray-400 truncate">{lead.phone ?? lead.email ?? 'No contact info'}</p>
             </div>
-            <span className="flex-shrink-0 text-xs font-medium text-gray-400">
+            <span style={{ fontSize: 11, color: '#9ca3af', flexShrink: 0 }}>
               {new Date(lead.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
             </span>
           </Link>
         ))}
 
         {todayLeads.length > 5 && (
-          <div className="px-6 py-2 text-center">
-            <Link href="/leads" className="text-xs font-medium hover:underline" style={{ color: '#5b5bd6' }}>
+          <div className="px-6 py-2.5 text-center" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+            <Link href="/leads" className="text-xs font-semibold hover:underline" style={{ color: '#5b5bd6' }}>
               +{todayLeads.length - 5} more leads today
             </Link>
           </div>
@@ -842,18 +889,24 @@ function DailyView({
           const fd = lead.form_data ?? {}
           const amount = fd._amount as string | undefined
           return (
-            <Link key={`appt-${lead.id}`} href="/calendar" className="flex items-center gap-3 px-6 py-3 hover:bg-green-50 transition">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-green-600">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5" />
-                </svg>
+            <Link
+              key={`appt-${lead.id}`}
+              href="/calendar"
+              className="flex items-center gap-3 px-6 py-3 transition-colors hover:bg-black/[0.02]"
+              style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}
+            >
+              <div
+                className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                style={{ background: '#7c6fe0' }}
+              >
+                {initials(lead.name)}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{lead.name ?? 'Unknown'} — Appointment</p>
-                <p className="text-xs text-gray-400 truncate">{lead.phone ?? lead.email ?? 'No contact info'}</p>
+                <p className="text-sm font-semibold text-gray-900 truncate">{lead.name ?? 'Unknown'}</p>
+                <p className="text-xs text-gray-400 truncate">Appointment · {lead.phone ?? lead.email ?? 'No contact'}</p>
               </div>
               {amount && (
-                <span className="flex-shrink-0 text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                <span className="flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: 'rgba(91,91,214,0.1)', color: '#5b5bd6' }}>
                   ${amount}
                 </span>
               )}
