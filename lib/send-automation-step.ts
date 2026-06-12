@@ -18,9 +18,10 @@ export function buildAutomationEmail(params: {
   heroImageUrl?: string | null
   trackingPixelUrl?: string | null
   trackedFormUrl?: string | null
+  accentColor?: string | null
 }): { subject: string; html: string } {
   const { name, businessName, formUrl, step, discountPercent, heroImageUrl, trackingPixelUrl, trackedFormUrl } = params
-  const accentColor = '#4f46e5'
+  const accentColor = params.accentColor || '#5b50d6'
   const btnStyle = `display:inline-block;background:${accentColor};color:#fff;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:700;text-decoration:none;`
 
   const ctaUrl = trackedFormUrl ?? formUrl
@@ -75,11 +76,11 @@ export function buildAutomationEmail(params: {
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
           <tr>
             <td style="background:${accentColor};border-radius:14px 14px 0 0;padding:24px 28px;">
-              <span style="font-family:Georgia,serif;font-size:18px;font-weight:900;color:#fff;letter-spacing:0.02em;">
-                Quote<span style="color:#FFE500;">.</span>Box
-              </span>
-              <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:4px;">
-                on behalf of <strong style="color:#fff;">${esc(businessName)}</strong>
+              <div style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.01em;">
+                ${esc(businessName)}
+              </div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:5px;letter-spacing:0.02em;">
+                via <span style="font-family:Georgia,serif;font-weight:700;">Quote<span style="color:#FFE500;">.</span>Box</span>
               </div>
             </td>
           </tr>
@@ -140,6 +141,7 @@ export async function sendAutomationStep(params: {
   leadId?: string | null
   accountId?: string | null
   heroImageUrl?: string | null
+  accentColor?: string | null
   smsOptIn?: boolean
 }) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://quote-box.com'
@@ -166,6 +168,7 @@ export async function sendAutomationStep(params: {
     step: params.step,
     discountPercent: params.discountPercent,
     heroImageUrl: params.heroImageUrl ?? null,
+    accentColor: params.accentColor ?? null,
     trackingPixelUrl,
     trackedFormUrl,
   }

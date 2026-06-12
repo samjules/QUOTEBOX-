@@ -7,6 +7,8 @@ interface AutomationConfig {
   discount_percent: number
   hero_image_url: string | null
   default_lead_value: number | null
+  accent_color: string | null
+  business_name?: string
 }
 
 interface TestLead {
@@ -347,9 +349,85 @@ function BranchSection({ groups }: { groups: StepLeadGroups }) {
   )
 }
 
+function buildPreviewHtml(params: {
+  companyName: string
+  accentColor: string
+  heroImageUrl: string | null
+  step: 'initial_contact' | 'day1_followup' | 'discount_offer'
+  discountPercent: number
+}): string {
+  const { companyName, accentColor, heroImageUrl, step, discountPercent } = params
+  const btnStyle = `display:inline-block;background:${accentColor};color:#fff;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:700;text-decoration:none;`
+  const heroBlock = heroImageUrl
+    ? `<tr><td style="padding:0;"><img src="${heroImageUrl}" alt="" width="520" style="width:100%;max-width:520px;display:block;" /></td></tr>`
+    : ''
+  const configs = {
+    initial_contact: {
+      subject: `Hi Alex, get your free estimate from ${companyName}`,
+      heading: `We'd love to give you a free quote!`,
+      body: `Thanks for reaching out to <strong>${companyName}</strong>! We saw your inquiry and want to make it easy for you to get an instant estimate — no phone calls needed, just answer a few quick questions.`,
+      outro: `We'll follow up once you submit. Takes less than 2 minutes!`,
+    },
+    day1_followup: {
+      heading: `Just checking in!`,
+      body: `We noticed you haven't had a chance to get your estimate from <strong>${companyName}</strong> yet — no worries, life gets busy! Whenever you're ready, your free estimate is just a click away.`,
+      outro: `Questions? Contact ${companyName} directly — we're happy to help.`,
+    },
+    discount_offer: {
+      heading: `Here's an exclusive offer just for you`,
+      body: `We really want to earn your business at <strong>${companyName}</strong>. As a thank-you for your interest, we're offering you <strong style="color:${accentColor};">${discountPercent}% off</strong> your first booking. Just mention this email when you reach out and we'll apply it automatically.`,
+      outro: `This offer is just for you — grab it before it expires!`,
+    },
+  }
+  const c = configs[step]
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f7f6f3;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f7f6f3;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+        <tr>
+          <td style="background:${accentColor};border-radius:14px 14px 0 0;padding:24px 28px;">
+            <div style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-0.01em;">${companyName}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:5px;letter-spacing:0.02em;">via <span style="font-family:Georgia,serif;font-weight:700;">Quote<span style="color:#FFE500;">.</span>Box</span></div>
+          </td>
+        </tr>
+        ${heroBlock}
+        <tr>
+          <td style="background:white;padding:32px 32px 28px;border-radius:0 0 14px 14px;">
+            <p style="margin:0 0 8px;font-size:15px;color:#64748b;">Hi Alex,</p>
+            <h2 style="margin:0 0 16px;font-size:20px;color:#1e293b;">${c.heading}</h2>
+            <p style="margin:0 0 20px;font-size:15px;color:#334155;line-height:1.6;">${c.body}</p>
+            <div style="text-align:center;margin:28px 0;">
+              <a href="#" style="${btnStyle}">Get My Free Estimate →</a>
+            </div>
+            <p style="margin:0;font-size:14px;color:#64748b;line-height:1.6;">${c.outro}</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px 0 8px;text-align:center;">
+            <p style="margin:0 0 4px;font-size:12px;color:#94a3b8;">Sent by <strong style="color:#94a3b8;">${companyName}</strong> via <span style="color:#94a3b8;">Quote.Box</span></p>
+            <p style="margin:0;font-size:11px;color:#cbd5e1;">This is an automated message — please do not reply to this email.</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`
+}
+
+const COLOR_PRESETS = [
+  { label: 'Brand',   value: '#5b50d6' },
+  { label: 'Indigo',  value: '#4f46e5' },
+  { label: 'Sky',     value: '#0ea5e9' },
+  { label: 'Emerald', value: '#10b981' },
+  { label: 'Rose',    value: '#f43f5e' },
+  { label: 'Slate',   value: '#334155' },
+]
+
 export default function AutomationsPage() {
-  const [tab, setTab] = useState<'flow' | 'settings'>('flow')
-  const [config, setConfig] = useState<AutomationConfig>({ is_enabled: true, discount_percent: 10, hero_image_url: null, default_lead_value: null })
+  const [tab, setTab] = useState<'flow' | 'email' | 'settings'>('flow')
+  const [config, setConfig] = useState<AutomationConfig>({ is_enabled: true, discount_percent: 10, hero_image_url: null, default_lead_value: null, accent_color: '#5b50d6' })
+  const [previewStep, setPreviewStep] = useState<'initial_contact' | 'day1_followup' | 'discount_offer'>('initial_contact')
   const [stats, setStats] = useState<Record<string, StepStats>>({})
   const [leadActivity, setLeadActivity] = useState<LeadActivityRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -464,7 +542,7 @@ export default function AutomationsPage() {
       {/* Tabs */}
       <div className="max-w-screen-xl mx-auto mb-8">
         <div className="inline-flex items-center gap-0.5 bg-white/5 border border-white/10 rounded-xl p-1">
-          {(['flow', 'settings'] as const).map((t) => (
+          {(['flow', 'email', 'settings'] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -472,7 +550,7 @@ export default function AutomationsPage() {
                 tab === t ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white/70'
               }`}
             >
-              {t === 'flow' ? 'Flow' : 'Settings'}
+              {t === 'flow' ? 'Flow' : t === 'email' ? 'Email' : 'Settings'}
             </button>
           ))}
         </div>
@@ -608,6 +686,137 @@ export default function AutomationsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l4 4 6-6" />
               </svg>
               Lead submits form → sequence stops automatically
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* ── EMAIL DESIGNER TAB ── */}
+      {tab === 'email' && (
+        <div className="max-w-screen-xl mx-auto flex gap-8 items-start">
+
+          {/* Controls */}
+          <div className="w-72 shrink-0 space-y-5">
+
+            {/* Step selector */}
+            <div className="rounded-2xl border border-white/[0.08] p-5" style={{ background: '#161929' }}>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-3">Preview step</p>
+              <div className="flex flex-col gap-1.5">
+                {([
+                  { key: 'initial_contact', label: 'Instant Contact' },
+                  { key: 'day1_followup',   label: 'Day 1 Follow-up' },
+                  { key: 'discount_offer',  label: 'Discount Offer'  },
+                ] as const).map(s => (
+                  <button
+                    key={s.key}
+                    onClick={() => setPreviewStep(s.key)}
+                    className={`text-left px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                      previewStep === s.key
+                        ? 'bg-brand-600/20 text-brand-300 border border-brand-500/30'
+                        : 'text-white/40 hover:text-white/70 hover:bg-white/5 border border-transparent'
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Accent color */}
+            <div className="rounded-2xl border border-white/[0.08] p-5" style={{ background: '#161929' }}>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-3">Accent color</p>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {COLOR_PRESETS.map(p => (
+                  <button
+                    key={p.value}
+                    title={p.label}
+                    onClick={() => save({ accent_color: p.value })}
+                    className="w-7 h-7 rounded-full border-2 transition-all"
+                    style={{
+                      background: p.value,
+                      borderColor: config.accent_color === p.value ? '#fff' : 'transparent',
+                      boxShadow: config.accent_color === p.value ? `0 0 0 1px ${p.value}` : 'none',
+                    }}
+                  />
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg shrink-0 border border-white/10" style={{ background: config.accent_color || '#5b50d6' }} />
+                <input
+                  type="text"
+                  maxLength={7}
+                  value={config.accent_color || '#5b50d6'}
+                  onChange={e => setConfig(c => ({ ...c, accent_color: e.target.value }))}
+                  onBlur={() => {
+                    const v = config.accent_color || ''
+                    if (/^#[0-9a-fA-F]{6}$/.test(v)) save({ accent_color: v })
+                  }}
+                  className="flex-1 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white font-mono focus:outline-none focus:ring-1 focus:ring-brand-500"
+                />
+                <input
+                  type="color"
+                  value={config.accent_color || '#5b50d6'}
+                  onChange={e => setConfig(c => ({ ...c, accent_color: e.target.value }))}
+                  onBlur={() => save({ accent_color: config.accent_color })}
+                  className="w-7 h-7 rounded-lg border border-white/10 bg-transparent cursor-pointer p-0 overflow-hidden"
+                  style={{ appearance: 'none' }}
+                />
+              </div>
+            </div>
+
+            {/* Header image */}
+            <div className="rounded-2xl border border-white/[0.08] p-5" style={{ background: '#161929' }}>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-3">Header image</p>
+              {config.hero_image_url && (
+                <div className="relative mb-3 rounded-lg overflow-hidden border border-white/10">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={config.hero_image_url} alt="" className="w-full h-20 object-cover" />
+                  <button
+                    onClick={() => save({ hero_image_url: null })}
+                    className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/60 text-white/80 flex items-center justify-center text-[10px] hover:bg-black/80 transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+              <input
+                type="url"
+                placeholder="https://..."
+                value={config.hero_image_url || ''}
+                onChange={e => setConfig(c => ({ ...c, hero_image_url: e.target.value || null }))}
+                onBlur={() => save({ hero_image_url: config.hero_image_url })}
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-brand-500 placeholder-white/20"
+              />
+              <p className="text-[11px] text-white/25 mt-2">Paste a public image URL. Shown below the header in the email.</p>
+            </div>
+
+          </div>
+
+          {/* Live preview */}
+          <div className="flex-1 min-w-0">
+            <div className="rounded-2xl border border-white/[0.08] overflow-hidden" style={{ background: '#161929' }}>
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.06]">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+                </div>
+                <span className="text-[11px] text-white/30 ml-1">Email preview</span>
+              </div>
+              <iframe
+                srcDoc={buildPreviewHtml({
+                  companyName: config.business_name || 'Your Company',
+                  accentColor: (/^#[0-9a-fA-F]{6}$/.test(config.accent_color || '') ? config.accent_color : '#5b50d6') as string,
+                  heroImageUrl: config.hero_image_url,
+                  step: previewStep,
+                  discountPercent: config.discount_percent,
+                })}
+                className="w-full border-0"
+                style={{ height: '600px' }}
+                title="Email preview"
+                sandbox="allow-same-origin"
+              />
             </div>
           </div>
 
