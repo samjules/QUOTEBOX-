@@ -296,9 +296,18 @@ export default async function DashboardPage({
   const hasForm = (forms?.length ?? 0) > 0
   const hasCampaign = (campaigns?.length ?? 0) > 0
   const onboardingComplete = metaConnected && hasBillingPlan && hasCreatives && hasForm
+  const dashboardBgUrl = account.dashboard_bg_url ?? null
 
   return (
-    <div className="py-6 min-h-full" style={{ background: '#f4f4f6' }}>
+    <div className="min-h-full relative" style={dashboardBgUrl ? {
+      backgroundImage: `url(${dashboardBgUrl})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundAttachment: 'fixed',
+    } : { background: '#f4f4f6' }}>
+      {/* White overlay when bg image is set */}
+      {dashboardBgUrl && <div className="absolute inset-0 bg-white/60 pointer-events-none" />}
+      <div className="relative z-10 py-6">
       <DealNotificationBanner position="top" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -373,7 +382,7 @@ export default async function DashboardPage({
           </div>
 
           {/* Pipeline Value */}
-          <div className="bg-white overflow-hidden rounded-2xl" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)' }}>
+          <div className={CARD} style={CARD_STYLE}>
             <div className="p-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
@@ -485,7 +494,7 @@ export default async function DashboardPage({
           )}
 
           {/* Quick Actions */}
-          <div className="bg-white rounded-2xl p-6" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)' }}>
+          <div className={`${CARD} p-6`} style={CARD_STYLE}>
             <h3 className="text-base font-bold text-gray-900 mb-4" style={{ fontFamily: "'Instrument Sans', sans-serif" }}>
               Quick Actions
             </h3>
@@ -518,11 +527,15 @@ export default async function DashboardPage({
           </div>
         </div>
       </div>
+      </div>
     </div>
   )
 }
 
 // ── Components ────────────────────────────────────────────────
+
+const CARD = 'overflow-hidden rounded-2xl border border-white/70 backdrop-blur-xl'
+const CARD_STYLE = { background: 'rgba(255,255,255,0.72)', boxShadow: '0 2px 12px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.05)' }
 
 function StatCard({
   icon,
@@ -538,7 +551,7 @@ function StatCard({
   sub?: string
 }) {
   return (
-    <div className="bg-white overflow-hidden rounded-2xl" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)' }}>
+    <div className={CARD} style={CARD_STYLE}>
       <div className="p-5">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
@@ -567,7 +580,7 @@ function MiniStat({
   value: string | number
 }) {
   return (
-    <div className="bg-white overflow-hidden rounded-2xl" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)' }}>
+    <div className={CARD} style={CARD_STYLE}>
       <div className="p-5">
         <div className="flex items-center gap-4">
           <div className={`flex-shrink-0 ${iconBg} rounded-xl p-3`}>

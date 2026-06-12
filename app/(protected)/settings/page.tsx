@@ -40,6 +40,11 @@ export default function SettingsPage() {
   const [logoUploading, setLogoUploading] = useState(false)
   const logoInputRef = useRef<HTMLInputElement>(null)
 
+  // Dashboard background state
+  const [dashboardBgUrl, setDashboardBgUrl] = useState<string | null>(null)
+  const [bgUploading, setBgUploading] = useState(false)
+  const bgInputRef = useRef<HTMLInputElement>(null)
+
   // Meta connection state
   const [metaConnected, setMetaConnected] = useState(false)
   const [metaUserId, setMetaUserId] = useState<string | null>(null)
@@ -110,6 +115,7 @@ export default function SettingsPage() {
         setAccountId(account.id)
         setBusinessName(account.business_name ?? '')
         setLogoUrl(account.logo_url ?? null)
+        setDashboardBgUrl(account.dashboard_bg_url ?? null)
         if (account.meta_access_token) {
           setMetaConnected(true)
           setMetaUserId(account.meta_user_id ?? null)
@@ -511,6 +517,32 @@ export default function SettingsPage() {
     setLogoUploading(false)
   }
 
+  async function handleBgUpload(file: File) {
+    if (!accountId) return
+    setBgUploading(true)
+    const ext = file.name.split('.').pop()
+    const path = `dashboard-bg/${accountId}/bg-${Date.now()}.${ext}`
+    const { error: uploadErr } = await supabase.storage.from('vsls').upload(path, file, { upsert: true })
+    if (uploadErr) {
+      setMessage('Error: Failed to upload background image')
+      setBgUploading(false)
+      return
+    }
+    const { data: { publicUrl } } = supabase.storage.from('vsls').getPublicUrl(path)
+    const { error: saveErr } = await supabase
+      .from('accounts')
+      .update({ dashboard_bg_url: publicUrl } as Record<string, string>)
+      .eq('id', accountId)
+    if (saveErr) {
+      setMessage('Error: Failed to save background image')
+    } else {
+      setDashboardBgUrl(publicUrl)
+      setMessage('Background updated!')
+      setTimeout(() => setMessage(''), 2000)
+    }
+    setBgUploading(false)
+  }
+
   async function handleToggleLeaderboard(hidden: boolean) {
     if (!accountId) return
     setSavingLeaderboard(true)
@@ -617,6 +649,57 @@ export default function SettingsPage() {
                 onChange={(e) => {
                   const file = e.target.files?.[0]
                   if (file) handleLogoUpload(file)
+                  e.target.value = ''
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Dashboard Background */}
+          <div className="bg-white shadow rounded-xl p-6">
+            <h2 className="text-lg font-medium text-gray-900 mb-1">Dashboard Background</h2>
+            <p className="text-sm text-gray-500 mb-5">Upload a photo that appears behind your dashboard cards. Works best with landscape or wide images.</p>
+            <div className="flex items-center gap-5">
+              <div className="w-32 h-20 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                {dashboardBgUrl ? (
+                  <img src={dashboardBgUrl} alt="Dashboard background" className="w-full h-full object-cover" />
+                ) : (
+                  <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                  </svg>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => bgInputRef.current?.click()}
+                  disabled={bgUploading}
+                  className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition disabled:opacity-50 text-sm font-medium"
+                >
+                  {bgUploading ? 'Uploading…' : dashboardBgUrl ? 'Change Image' : 'Upload Image'}
+                </button>
+                {dashboardBgUrl && (
+                  <button
+                    onClick={async () => {
+                      await supabase.from('accounts').update({ dashboard_bg_url: null } as Record<string, null>).eq('id', accountId)
+                      setDashboardBgUrl(null)
+                      setMessage('Background removed.')
+                      setTimeout(() => setMessage(''), 2000)
+                    }}
+                    className="text-sm text-red-500 hover:text-red-600 font-medium"
+                  >
+                    Remove image
+                  </button>
+                )}
+                <p className="text-xs text-gray-400">JPG, PNG, WebP — max 5 MB</p>
+              </div>
+              <input
+                ref={bgInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) handleBgUpload(file)
                   e.target.value = ''
                 }}
               />

@@ -1,0 +1,1 @@
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS dashboard_bg_url TEXT DEFAULT NULL;
