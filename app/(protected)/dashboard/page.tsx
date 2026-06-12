@@ -176,9 +176,9 @@ export default async function DashboardPage({
       .eq('account_id', account.id)
       .gte('created_at', todayIso)
       .order('created_at', { ascending: false }),
-    // Pipeline: only rows with form_data for the period
+    // Pipeline: only rows with form_data for the period (include status for Hormozi metrics)
     admin.from('leads')
-      .select('form_data')
+      .select('form_data, status')
       .eq('account_id', account.id)
       .gte('created_at', fromIso ?? '1970-01-01T00:00:00Z')
       .not('form_data', 'is', null)
@@ -208,6 +208,12 @@ export default async function DashboardPage({
     const qt = (l.form_data as Record<string, unknown> | null)?._quote_total
     return sum + (typeof qt === 'number' ? qt : 0)
   }, 0)
+  const bookedPipeline = (pipelineData ?? [])
+    .filter(l => l.status === 'booked')
+    .reduce((sum, l) => {
+      const qt = (l.form_data as Record<string, unknown> | null)?._quote_total
+      return sum + (typeof qt === 'number' ? qt : 0)
+    }, 0)
   const conversionRate = totalLeads > 0 ? ((bookedLeads / totalLeads) * 100).toFixed(1) : '0'
   const periodSpending = (periodTxns ?? [])
     .reduce((sum: number, tx: { amount: number }) => sum + Math.abs(tx.amount), 0)
@@ -264,6 +270,16 @@ export default async function DashboardPage({
       }
     } catch { /* Meta unavailable — omit the card */ }
   }
+
+  // Hormozi LTV metrics (computed after metaAdSpend is resolved)
+  const avgDealValue = bookedLeads > 0 ? bookedPipeline / bookedLeads : 0
+  const valuePerLead = totalLeads > 0 ? bookedPipeline / totalLeads : 0
+  const costPerLead = metaAdSpend !== null && totalLeads > 0 ? metaAdSpend / totalLeads : null
+  const costPerClient = metaAdSpend !== null && bookedLeads > 0 ? metaAdSpend / bookedLeads : null
+  const roas = metaAdSpend !== null && metaAdSpend > 0 ? bookedPipeline / metaAdSpend : null
+  const profitPerLead = costPerLead !== null ? valuePerLead - costPerLead : null
+  const bookingRate = totalLeads > 0 ? (bookedLeads / totalLeads) * 100 : 0
+  const showHormoziCard = bookedLeads > 0 || (metaAdSpend !== null && metaAdSpend > 0)
 
   const blessed = billing?.blessed === true
   const metaConnected = !!account.meta_access_token
@@ -378,6 +394,34 @@ export default async function DashboardPage({
               </div>
             </div>
           </div>
+
+          {/* Hormozi LTV Calculator */}
+          {showHormoziCard && (
+            <div className="overflow-hidden rounded-2xl" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0f172a 100%)', boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 8px 32px rgba(0,0,0,0.18)' }}>
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/10">
+                    <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-white" style={{ fontFamily: "'Instrument Sans', sans-serif" }}>LTV Calculator</h3>
+                    <p className="text-xs text-slate-400 mt-0.5">{periodLabel} · {bookedLeads} booked lead{bookedLeads !== 1 ? 's' : ''}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                  <HormoziStat label="Avg Deal Value" value={avgDealValue > 0 ? `$${avgDealValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '—'} />
+                  <HormoziStat label="Value / Lead" value={valuePerLead > 0 ? `$${valuePerLead.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : '—'} />
+                  <HormoziStat label="Booking Rate" value={`${bookingRate.toFixed(1)}%`} />
+                  {costPerLead !== null && <HormoziStat label="Cost / Lead" value={`$${costPerLead.toLocaleString('en-US', { maximumFractionDigits: 2 })}`} highlight="red" />}
+                  {costPerClient !== null && <HormoziStat label="Cost / Client" value={`$${costPerClient.toLocaleString('en-US', { maximumFractionDigits: 2 })}`} highlight="red" />}
+                  {roas !== null && <HormoziStat label="ROAS" value={`${roas.toFixed(2)}x`} highlight={roas >= 1 ? 'green' : 'red'} />}
+                  {profitPerLead !== null && <HormoziStat label="Profit / Lead" value={`$${profitPerLead.toLocaleString('en-US', { maximumFractionDigits: 0 })}`} highlight={profitPerLead >= 0 ? 'green' : 'red'} />}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Secondary Stats Row */}
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
@@ -526,6 +570,24 @@ function MiniStat({
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+function HormoziStat({
+  label,
+  value,
+  highlight,
+}: {
+  label: string
+  value: string
+  highlight?: 'green' | 'red'
+}) {
+  const valueColor = highlight === 'green' ? 'text-emerald-400' : highlight === 'red' ? 'text-red-400' : 'text-white'
+  return (
+    <div className="bg-white/5 rounded-xl p-3.5">
+      <p className="text-xs font-medium text-slate-400 mb-1.5 leading-tight">{label}</p>
+      <p className={`text-xl font-bold leading-none ${valueColor}`}>{value}</p>
     </div>
   )
 }
