@@ -452,6 +452,7 @@ export default function AutomationsPage() {
   const [leadActivity, setLeadActivity] = useState<LeadActivityRow[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [testLeads, setTestLeads] = useState<TestLead[]>([])
   const [testLeadId, setTestLeadId] = useState<string>('')
   const [testSending, setTestSending] = useState(false)
@@ -496,12 +497,31 @@ export default function AutomationsPage() {
     const next = { ...config, ...updates }
     setConfig(next)
     setSaving(true)
-    await fetch('/api/automations', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(next),
-    })
-    setSaving(false)
+    setSaveState('saving')
+    try {
+      const res = await fetch('/api/automations', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(next),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        console.error('Save failed:', err)
+        setSaveState('error')
+        setTimeout(() => setSaveState('idle'), 3000)
+      } else {
+        const saved = await res.json()
+        if (saved) setConfig({ ...next, ...saved, business_name: next.business_name })
+        setSaveState('saved')
+        setTimeout(() => setSaveState('idle'), 2000)
+      }
+    } catch (e) {
+      console.error('Save error:', e)
+      setSaveState('error')
+      setTimeout(() => setSaveState('idle'), 3000)
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function openMediaPicker() {
@@ -865,9 +885,13 @@ export default function AutomationsPage() {
             <button
               onClick={() => save({ accent_color: config.accent_color, hero_image_url: config.hero_image_url })}
               disabled={saving}
-              className="w-full py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-500 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+              className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-50 ${
+                saveState === 'saved' ? 'bg-emerald-600 text-white' :
+                saveState === 'error' ? 'bg-red-600 text-white' :
+                'bg-brand-600 text-white hover:bg-brand-500'
+              }`}
             >
-              {saving ? (
+              {saveState === 'saving' ? (
                 <>
                   <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -875,7 +899,7 @@ export default function AutomationsPage() {
                   </svg>
                   Saving…
                 </>
-              ) : 'Save changes'}
+              ) : saveState === 'saved' ? '✓ Saved' : saveState === 'error' ? '✕ Save failed — check console' : 'Save changes'}
             </button>
 
           </div>
