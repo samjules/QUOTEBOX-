@@ -23,20 +23,36 @@ interface TestResult {
   error?: string
 }
 
-interface ActivityStep {
-  id: string
-  step: string
-  status: string
-  scheduled_at: string
-  sent_at: string | null
-  lead_id: string
-  leads: { name: string | null; email: string | null; phone: string | null } | null
+interface LeadActivityRow {
+  lead: { id: string; name: string | null; email: string | null }
+  steps: Array<{
+    step: string
+    status: string
+    scheduled_at: string
+    sent_at: string | null
+    events: Array<{ step: string; event_type: string; created_at: string }>
+  }>
+  converted: boolean
+  convertedAt: string | null
 }
 
 interface StepStats {
   sent: number
   opens: number
   clicks: number
+}
+
+interface LeadChip {
+  id: string
+  name: string | null
+  scheduledAt: string
+}
+
+interface StepLeadGroups {
+  clicked: LeadChip[]
+  opened: LeadChip[]
+  sent: LeadChip[]
+  pending: LeadChip[]
 }
 
 function IconZap({ className }: { className?: string }) {
@@ -151,11 +167,93 @@ function formatScheduled(dateStr: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+function buildStepLeadGroups(leadActivity: LeadActivityRow[]): Record<string, StepLeadGroups> {
+  const result: Record<string, StepLeadGroups> = {}
+
+  for (const row of leadActivity) {
+    for (const s of row.steps) {
+      if (!result[s.step]) result[s.step] = { clicked: [], opened: [], sent: [], pending: [] }
+      const chip: LeadChip = { id: row.lead.id, name: row.lead.name, scheduledAt: s.scheduled_at }
+      const hasClick = s.events.some(e => e.event_type === 'link_click')
+      const hasOpen = s.events.some(e => e.event_type === 'email_open')
+
+      if (s.status === 'pending') {
+        result[s.step].pending.push(chip)
+      } else if (hasClick) {
+        result[s.step].clicked.push(chip)
+      } else if (hasOpen) {
+        result[s.step].opened.push(chip)
+      } else {
+        result[s.step].sent.push(chip)
+      }
+    }
+  }
+
+  return result
+}
+
+function LeadGroupSection({
+  label,
+  leads,
+  dotColor,
+  chipBg,
+  chipBorder,
+  chipText,
+  avatarBg,
+  timingColor,
+}: {
+  label: string
+  leads: LeadChip[]
+  dotColor: string
+  chipBg: string
+  chipBorder: string
+  chipText: string
+  avatarBg: string
+  timingColor: string
+}) {
+  if (leads.length === 0) return null
+  const visible = leads.slice(0, 6)
+  const overflow = leads.length - 6
+  return (
+    <div>
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <div className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-white/30">
+          {label} · {leads.length}
+        </span>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {visible.map((chip) => (
+          <div
+            key={chip.id}
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-full border text-xs font-medium ${chipBg} ${chipBorder}`}
+          >
+            <div className={`w-4 h-4 rounded-full ${avatarBg} text-white flex items-center justify-center text-[8px] font-bold shrink-0`}>
+              {initials(chip.name)}
+            </div>
+            <span className={`max-w-[60px] truncate ${chipText}`}>
+              {chip.name?.split(' ')[0] || 'Lead'}
+            </span>
+            <span className={`shrink-0 text-[9px] font-normal ${timingColor}`}>
+              {formatScheduled(chip.scheduledAt)}
+            </span>
+          </div>
+        ))}
+        {overflow > 0 && (
+          <div className={`flex items-center px-2 py-1 rounded-full border text-xs font-medium ${chipBg} ${chipBorder} ${chipText} opacity-60`}>
+            +{overflow}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function AutomationsPage() {
   const [tab, setTab] = useState<'flow' | 'settings'>('flow')
   const [config, setConfig] = useState<AutomationConfig>({ is_enabled: true, discount_percent: 10, hero_image_url: null, default_lead_value: null })
-  const [activity, setActivity] = useState<ActivityStep[]>([])
   const [stats, setStats] = useState<Record<string, StepStats>>({})
+  const [leadActivity, setLeadActivity] = useState<LeadActivityRow[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [testLeads, setTestLeads] = useState<TestLead[]>([])
@@ -167,12 +265,12 @@ export default function AutomationsPage() {
     async function load() {
       const [cfgRes, actRes, leadsRes, statsRes] = await Promise.all([
         fetch('/api/automations'),
-        fetch('/api/automations/activity'),
+        fetch('/api/automations/lead-activity'),
         fetch('/api/automations/test'),
         fetch('/api/automations/stats'),
       ])
       if (cfgRes.ok) setConfig(await cfgRes.json())
-      if (actRes.ok) setActivity(await actRes.json())
+      if (actRes.ok) setLeadActivity(await actRes.json())
       if (statsRes.ok) setStats(await statsRes.json())
       if (leadsRes.ok) {
         const leads = await leadsRes.json()
@@ -224,22 +322,14 @@ export default function AutomationsPage() {
     )
   }
 
-  const currentStepByLead: Record<string, ActivityStep> = {}
-  for (const row of activity) {
-    if (row.status !== 'pending') continue
-    const existing = currentStepByLead[row.lead_id]
-    if (!existing || new Date(row.scheduled_at) < new Date(existing.scheduled_at)) {
-      currentStepByLead[row.lead_id] = row
-    }
-  }
-  const leadsByStep = Object.values(currentStepByLead).reduce((acc, row) => {
-    if (!acc[row.step]) acc[row.step] = []
-    acc[row.step].push(row)
-    return acc
-  }, {} as Record<string, ActivityStep[]>)
+  const stepLeadGroups = buildStepLeadGroups(leadActivity)
 
-  const totalInFunnel = Object.keys(currentStepByLead).length
-  const totalSent = activity.filter(a => a.status === 'sent').length
+  const totalInFunnel = leadActivity.filter(r =>
+    r.steps.some(s => s.status === 'pending')
+  ).length
+  const totalSent = leadActivity.reduce((acc, r) =>
+    acc + r.steps.filter(s => s.status === 'sent').length, 0
+  )
 
   return (
     <div className="min-h-full px-8 py-8 bg-[#0D0F1A]">
@@ -285,9 +375,7 @@ export default function AutomationsPage() {
               key={t}
               onClick={() => setTab(t)}
               className={`px-5 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                tab === t
-                  ? 'bg-white/10 text-white'
-                  : 'text-white/40 hover:text-white/70'
+                tab === t ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white/70'
               }`}
             >
               {t === 'flow' ? 'Flow' : 'Settings'}
@@ -298,7 +386,7 @@ export default function AutomationsPage() {
 
       {!config.is_enabled && (
         <div className="max-w-screen-xl mx-auto mb-8 rounded-xl bg-amber-500/10 border border-amber-500/20 px-4 py-3 text-sm text-amber-400 flex items-center gap-2">
-          <svg className="w-4 h-4 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
           Automations are paused — new leads will not receive automated messages.
@@ -331,11 +419,12 @@ export default function AutomationsPage() {
 
           {/* Steps */}
           {STEPS.map((step) => {
-            const pending = leadsByStep[step.key] || []
             const s: StepStats = stats[step.key] ?? { sent: 0, opens: 0, clicks: 0 }
             const pct = (n: number) => s.sent > 0 ? Math.round((n / s.sent) * 100) : 0
             const hasFunnel = s.sent > 0
             const Icon = STEP_ICONS[step.key as keyof typeof STEP_ICONS]
+            const groups = stepLeadGroups[step.key] ?? { clicked: [], opened: [], sent: [], pending: [] }
+            const hasAnyLeads = groups.clicked.length + groups.opened.length + groups.sent.length + groups.pending.length > 0
 
             return (
               <div key={step.key}>
@@ -356,7 +445,7 @@ export default function AutomationsPage() {
                   <div />
                 </div>
 
-                {/* Node + lead chips */}
+                {/* Node + lead groups */}
                 <div className="grid grid-cols-[1fr_380px_1fr] items-start">
                   <div />
 
@@ -432,37 +521,51 @@ export default function AutomationsPage() {
                     </div>
                   </div>
 
-                  {/* Lead chips */}
-                  <div className="pl-8 pt-4">
-                    {pending.length > 0 && (
-                      <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25 mb-2 pl-1">
-                        Leads at this stage
-                      </p>
-                    )}
-                    <div className="flex flex-wrap gap-2 content-start">
-                      {pending.slice(0, 10).map((row) => (
-                        <div
-                          key={row.id}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border border-brand-500/20 bg-brand-600/10 text-xs font-medium"
-                        >
-                          <div className="w-5 h-5 rounded-full bg-brand-600 text-white flex items-center justify-center text-[9px] font-bold shrink-0">
-                            {initials(row.leads?.name)}
-                          </div>
-                          <span className="max-w-[72px] truncate text-brand-300">
-                            {row.leads?.name?.split(' ')[0] || 'Lead'}
-                          </span>
-                          <span className="text-brand-500/60 shrink-0 text-[10px] font-normal">
-                            {formatScheduled(row.scheduled_at)}
-                          </span>
-                        </div>
-                      ))}
-                      {pending.length > 10 && (
-                        <div className="flex items-center px-2.5 py-1.5 rounded-full border border-brand-500/20 bg-brand-600/10 text-xs font-medium text-brand-400">
-                          +{pending.length - 10}
-                        </div>
-                      )}
+                  {/* Lead groups — split by engagement */}
+                  {hasAnyLeads && (
+                    <div className="pl-8 pt-2 space-y-4">
+                      <LeadGroupSection
+                        label="Clicked"
+                        leads={groups.clicked}
+                        dotColor="bg-emerald-400"
+                        chipBg="bg-emerald-500/10"
+                        chipBorder="border-emerald-500/25"
+                        chipText="text-emerald-300"
+                        avatarBg="bg-emerald-600"
+                        timingColor="text-emerald-600/60"
+                      />
+                      <LeadGroupSection
+                        label="Opened"
+                        leads={groups.opened}
+                        dotColor="bg-brand-400"
+                        chipBg="bg-brand-600/10"
+                        chipBorder="border-brand-500/25"
+                        chipText="text-brand-300"
+                        avatarBg="bg-brand-600"
+                        timingColor="text-brand-500/60"
+                      />
+                      <LeadGroupSection
+                        label="No response"
+                        leads={groups.sent}
+                        dotColor="bg-white/20"
+                        chipBg="bg-white/[0.04]"
+                        chipBorder="border-white/10"
+                        chipText="text-white/40"
+                        avatarBg="bg-white/20"
+                        timingColor="text-white/25"
+                      />
+                      <LeadGroupSection
+                        label="Pending"
+                        leads={groups.pending}
+                        dotColor="bg-sky-400"
+                        chipBg="bg-sky-500/10"
+                        chipBorder="border-sky-500/20"
+                        chipText="text-sky-300"
+                        avatarBg="bg-sky-600"
+                        timingColor="text-sky-600/60"
+                      />
                     </div>
-                  </div>
+                  )}
                 </div>
 
               </div>
@@ -490,7 +593,6 @@ export default function AutomationsPage() {
       {tab === 'settings' && (
         <div className="max-w-lg mx-auto space-y-5">
 
-          {/* Discount */}
           <div className="rounded-2xl border border-white/[0.08] p-6" style={{ background: '#161929' }}>
             <h2 className="text-sm font-semibold text-white/80 mb-1">Discount Offer</h2>
             <p className="text-xs text-white/40 mb-4">Applied in the Step 3 email to win back hesitant leads.</p>
@@ -508,7 +610,6 @@ export default function AutomationsPage() {
             </div>
           </div>
 
-          {/* Send test */}
           <div className="rounded-2xl border border-white/[0.08] p-6" style={{ background: '#161929' }}>
             <h2 className="text-sm font-semibold text-white/80 mb-1">Send Test</h2>
             <p className="text-xs text-white/40 mb-4">Fire all automation steps immediately to a real lead.</p>
@@ -561,7 +662,6 @@ export default function AutomationsPage() {
             )}
           </div>
 
-          {/* How it works */}
           <div className="rounded-2xl border border-white/[0.08] p-6" style={{ background: '#161929' }}>
             <h2 className="text-sm font-semibold text-white/80 mb-4">How it works</h2>
             <ol className="space-y-3">
