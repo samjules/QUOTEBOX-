@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getAccountForUser } from '@/lib/account'
 import DealNotificationBanner from '@/components/DealNotificationBanner'
 import TimeframeBar from '@/components/TimeframeBar'
+import LtvDefaultValueInput from './LtvDefaultValueInput'
 import type { ReactNode } from 'react'
 
 const PLAN_LIMITS: Record<string, number> = { starter: 10, growth: 50 }
@@ -421,6 +422,7 @@ export default async function DashboardPage({
                   {roas !== null && <HormoziStat label="ROAS" value={`${roas.toFixed(2)}x`} highlight={roas >= 1 ? 'green' : 'red'} />}
                   {profitPerLead !== null && <HormoziStat label="Profit / Lead" value={`$${profitPerLead.toLocaleString('en-US', { maximumFractionDigits: 0 })}`} highlight={profitPerLead >= 0 ? 'green' : 'red'} />}
                 </div>
+                <LtvDefaultValueInput initial={defaultLeadValue} />
               </div>
             </div>
           )}

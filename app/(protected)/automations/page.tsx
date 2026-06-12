@@ -473,25 +473,6 @@ export default function AutomationsPage() {
             </div>
           </div>
 
-          {/* Default Lead Value */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-6" style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>
-            <h2 className="text-sm font-semibold text-gray-700 mb-1">Default Lead Value</h2>
-            <p className="text-xs text-gray-400 mb-4">Used in the LTV calculator for booked leads that don&apos;t have a quote total from the form. Leave blank to exclude those leads from the average.</p>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-500 font-medium">$</span>
-              <input
-                type="number"
-                min={0}
-                placeholder="e.g. 1200"
-                value={config.default_lead_value ?? ''}
-                onChange={(e) => setConfig({ ...config, default_lead_value: e.target.value === '' ? null : Number(e.target.value) })}
-                onBlur={() => save({ default_lead_value: config.default_lead_value })}
-                className="w-32 border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-gray-50"
-              />
-              <span className="text-xs text-gray-400">per booked lead</span>
-            </div>
-          </div>
-
           {/* Send test */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6" style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>
             <h2 className="text-sm font-semibold text-gray-700 mb-1">Send Test</h2>
