@@ -812,17 +812,12 @@ export default function AutomationsPage() {
                   maxLength={7}
                   value={config.accent_color || '#5b50d6'}
                   onChange={e => setConfig(c => ({ ...c, accent_color: e.target.value }))}
-                  onBlur={() => {
-                    const v = config.accent_color || ''
-                    if (/^#[0-9a-fA-F]{6}$/.test(v)) save({ accent_color: v })
-                  }}
                   className="flex-1 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white font-mono focus:outline-none focus:ring-1 focus:ring-brand-500"
                 />
                 <input
                   type="color"
                   value={config.accent_color || '#5b50d6'}
                   onChange={e => setConfig(c => ({ ...c, accent_color: e.target.value }))}
-                  onBlur={() => save({ accent_color: config.accent_color })}
                   className="w-7 h-7 rounded-lg border border-white/10 bg-transparent cursor-pointer p-0 overflow-hidden"
                   style={{ appearance: 'none' }}
                 />
@@ -865,6 +860,23 @@ export default function AutomationsPage() {
               )}
               <p className="text-[11px] text-white/25">Displayed below the header in every automation email.</p>
             </div>
+
+            {/* Save button */}
+            <button
+              onClick={() => save({ accent_color: config.accent_color, hero_image_url: config.hero_image_url })}
+              disabled={saving}
+              className="w-full py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-500 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+            >
+              {saving ? (
+                <>
+                  <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                  Saving…
+                </>
+              ) : 'Save changes'}
+            </button>
 
           </div>
 
