@@ -9,6 +9,7 @@ interface AutomationConfig {
 }
 
 const HERO_IMAGES = [
+  { url: '/quotebox-icon.png', label: 'QB Logo' },
   { url: '/DSCN8733.jpg', label: 'Photo' },
   { url: '/FW93315_1080x.webp', label: 'Banner' },
   { url: '/Garden-Supplies-_1600x1000.jpg', label: 'Garden' },
@@ -41,15 +42,22 @@ interface ActivityStep {
   leads: { name: string | null; email: string | null; phone: string | null } | null
 }
 
+interface StepStats {
+  sent: number
+  opens: number
+  clicks: number
+}
+
 const STEPS = [
   {
     key: 'initial_contact',
     label: 'Instant Contact',
     wait: 'Immediately',
     icon: '⚡',
-    colorBg: 'bg-brand-500',
-    colorBorder: 'border-brand-200',
-    colorIcon: 'bg-brand-50 text-brand-600',
+    accent: 'bg-violet-500',
+    glow: 'shadow-violet-500/10',
+    iconBg: 'bg-violet-500/15 text-violet-400',
+    pill: 'bg-violet-500/10 text-violet-300 border border-violet-500/20',
     channels: ['Email', 'SMS'],
     description: 'Send a direct link to your quote form the moment the lead arrives.',
   },
@@ -58,9 +66,10 @@ const STEPS = [
     label: 'Day 1 Follow-up',
     wait: 'Wait 24h',
     icon: '🔔',
-    colorBg: 'bg-blue-500',
-    colorBorder: 'border-blue-200',
-    colorIcon: 'bg-blue-50 text-blue-600',
+    accent: 'bg-blue-500',
+    glow: 'shadow-blue-500/10',
+    iconBg: 'bg-blue-500/15 text-blue-400',
+    pill: 'bg-blue-500/10 text-blue-300 border border-blue-500/20',
     channels: ['Email', 'SMS'],
     description: "If they haven't submitted a quote, send a friendly reminder.",
   },
@@ -69,9 +78,10 @@ const STEPS = [
     label: 'Discount Offer',
     wait: 'Wait 24h',
     icon: '🎁',
-    colorBg: 'bg-amber-500',
-    colorBorder: 'border-amber-200',
-    colorIcon: 'bg-amber-50 text-amber-600',
+    accent: 'bg-amber-500',
+    glow: 'shadow-amber-500/10',
+    iconBg: 'bg-amber-500/15 text-amber-400',
+    pill: 'bg-amber-500/10 text-amber-300 border border-amber-500/20',
     channels: ['Email', 'SMS'],
     description: 'Sweeten the deal with an exclusive discount to win them over.',
     hasDiscount: true,
@@ -81,9 +91,10 @@ const STEPS = [
     label: 'Mark as Lost',
     wait: 'Wait 24h',
     icon: '🚫',
-    colorBg: 'bg-gray-400',
-    colorBorder: 'border-gray-200',
-    colorIcon: 'bg-gray-50 text-gray-500',
+    accent: 'bg-slate-600',
+    glow: 'shadow-slate-900/10',
+    iconBg: 'bg-slate-700 text-slate-400',
+    pill: 'bg-slate-700/60 text-slate-400 border border-slate-600/30',
     channels: [],
     description: 'No engagement after 72h — lead is automatically marked as lost.',
   },
@@ -96,26 +107,35 @@ const STEP_LABELS: Record<string, string> = {
   mark_lost: 'Mark as Lost',
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  sent: 'bg-green-100 text-green-800',
-  skipped: 'bg-gray-100 text-gray-600',
+function initials(name: string | null | undefined): string {
+  if (!name) return '?'
+  const parts = name.trim().split(' ')
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  return name[0].toUpperCase()
 }
 
-function ArrowDown() {
-  return (
-    <svg className="w-3 h-3 text-gray-400" viewBox="0 0 12 12" fill="none">
-      <path d="M6 1v9M2.5 7l3.5 3.5L9.5 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
+function formatScheduled(dateStr: string): string {
+  const d = new Date(dateStr)
+  const now = new Date()
+  const diffMs = d.getTime() - now.getTime()
+  if (diffMs > 0) {
+    const h = Math.round(diffMs / 3600000)
+    if (h < 1) return 'sending soon'
+    if (h < 24) return `in ${h}h`
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
+  const h = Math.round(-diffMs / 3600000)
+  if (h < 1) return 'just now'
+  if (h < 24) return `${h}h ago`
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 export default function AutomationsPage() {
   const [config, setConfig] = useState<AutomationConfig>({ is_enabled: true, discount_percent: 10, hero_image_url: null })
   const [activity, setActivity] = useState<ActivityStep[]>([])
+  const [stats, setStats] = useState<Record<string, StepStats>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-
   const [testLeads, setTestLeads] = useState<TestLead[]>([])
   const [testLeadId, setTestLeadId] = useState<string>('')
   const [testSending, setTestSending] = useState(false)
@@ -123,13 +143,15 @@ export default function AutomationsPage() {
 
   useEffect(() => {
     async function load() {
-      const [cfgRes, actRes, leadsRes] = await Promise.all([
+      const [cfgRes, actRes, leadsRes, statsRes] = await Promise.all([
         fetch('/api/automations'),
         fetch('/api/automations/activity'),
         fetch('/api/automations/test'),
+        fetch('/api/automations/stats'),
       ])
       if (cfgRes.ok) setConfig(await cfgRes.json())
       if (actRes.ok) setActivity(await actRes.json())
+      if (statsRes.ok) setStats(await statsRes.json())
       if (leadsRes.ok) {
         const leads = await leadsRes.json()
         setTestLeads(leads)
@@ -168,131 +190,277 @@ export default function AutomationsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-400">
-        Loading automations…
+      <div className="flex items-center justify-center h-full">
+        <div className="flex items-center gap-2 text-slate-400 text-sm">
+          <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+          </svg>
+          Loading…
+        </div>
       </div>
     )
   }
 
+  const pendingByStep = activity.reduce((acc, row) => {
+    if (row.status === 'pending') {
+      if (!acc[row.step]) acc[row.step] = []
+      acc[row.step].push(row)
+    }
+    return acc
+  }, {} as Record<string, ActivityStep[]>)
+
+  const totalPending = activity.filter(a => a.status === 'pending').length
+  const totalSent = activity.filter(a => a.status === 'sent').length
+
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-8">
+    <div className="p-6 max-w-6xl mx-auto">
+
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-center justify-between mb-7">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Automations</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Automatically nurture every Meta lead from first touch to close.
-          </p>
+          <h1 className="text-xl font-semibold text-gray-900 tracking-tight">Automations</h1>
+          <p className="text-sm text-gray-400 mt-0.5">Nurture every lead from first touch to close.</p>
         </div>
         <div className="flex items-center gap-3">
-          {saving && <span className="text-sm text-gray-400">Saving…</span>}
-          <span className="text-sm font-medium text-gray-700">
-            {config.is_enabled ? 'Enabled' : 'Disabled'}
-          </span>
-          <button
-            onClick={() => save({ is_enabled: !config.is_enabled })}
-            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none ${
-              config.is_enabled ? 'bg-brand-600' : 'bg-gray-300'
-            }`}
-          >
-            <span
-              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-                config.is_enabled ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          {saving && (
+            <span className="text-xs text-gray-400 flex items-center gap-1.5">
+              <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+              </svg>
+              Saving
+            </span>
+          )}
+          <div className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-xl px-3.5 py-2 shadow-sm">
+            <div className={`w-2 h-2 rounded-full transition-colors ${config.is_enabled ? 'bg-emerald-400' : 'bg-gray-300'}`} />
+            <span className="text-sm font-medium text-gray-700">{config.is_enabled ? 'Live' : 'Paused'}</span>
+            <button
+              onClick={() => save({ is_enabled: !config.is_enabled })}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ml-0.5 ${config.is_enabled ? 'bg-brand-600' : 'bg-gray-200'}`}
+            >
+              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${config.is_enabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
+            </button>
+          </div>
         </div>
       </div>
 
       {!config.is_enabled && (
-        <div className="rounded-lg bg-yellow-50 border border-yellow-200 px-4 py-3 text-sm text-yellow-800">
-          Automations are paused. New Meta leads will not receive automated messages.
+        <div className="mb-6 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-700 flex items-center gap-2">
+          <svg className="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          Automations are paused — new leads will not receive automated messages.
         </div>
       )}
 
-      {/* Flow map + sidebar */}
-      <div className="flex gap-6 items-start">
+      {/* Main layout */}
+      <div className="flex gap-5 items-start">
 
         {/* Canvas */}
-        <div className="flex-1 bg-gray-50 rounded-2xl border border-gray-200 p-8 min-h-[560px]">
-          <div className="flex flex-col items-center">
+        <div className="flex-1 bg-slate-950 rounded-2xl border border-slate-800/80 overflow-hidden">
+
+          {/* Canvas header bar */}
+          <div className="flex items-center justify-between px-6 py-3.5 border-b border-slate-800/80">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Lead Flow</span>
+            <div className="flex items-center gap-5">
+              <span className="flex items-center gap-1.5 text-xs text-slate-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                {totalPending} pending
+              </span>
+              <span className="flex items-center gap-1.5 text-xs text-slate-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                {totalSent} sent
+              </span>
+            </div>
+          </div>
+
+          {/* Flow area */}
+          <div
+            className="p-8 pb-10"
+            style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.035) 1px, transparent 1px)', backgroundSize: '24px 24px' }}
+          >
 
             {/* Trigger node */}
-            <div className="w-full max-w-xs">
-              <div className="bg-brand-600 rounded-xl p-4 text-white shadow-md">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center text-lg shrink-0">
-                    🎯
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-brand-200 leading-none mb-0.5">Trigger</p>
-                    <p className="font-semibold leading-tight">Any New Lead</p>
-                    <p className="text-xs text-brand-300 mt-0.5">Meta or hosted form</p>
+            <div className="flex items-start gap-5">
+              <div className="w-72 shrink-0">
+                <div className="bg-gradient-to-br from-brand-600 to-brand-700 rounded-2xl p-4 shadow-xl shadow-brand-500/20">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center text-xl shrink-0">🎯</div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-brand-200 leading-none mb-1">Trigger</p>
+                      <p className="font-semibold text-white leading-tight text-sm">Any New Lead</p>
+                      <p className="text-xs text-brand-300 mt-0.5">Meta or hosted form</p>
+                    </div>
                   </div>
                 </div>
               </div>
+              <div className="flex-1" />
             </div>
 
             {/* Steps */}
-            {STEPS.map((step) => (
-              <div key={step.key} className="w-full max-w-xs flex flex-col items-center">
+            {STEPS.map((step) => {
+              const pending = pendingByStep[step.key] || []
+              const s: StepStats = stats[step.key] ?? { sent: 0, opens: 0, clicks: 0 }
+              const pct = (n: number) => s.sent > 0 ? Math.round((n / s.sent) * 100) : 0
+              const hasFunnel = s.sent > 0
 
-                {/* Connector */}
-                <div className="flex flex-col items-center py-1">
-                  <div className="w-px h-4 bg-gray-300" />
-                  <span className="text-xs bg-white border border-gray-200 text-gray-500 px-2.5 py-0.5 rounded-full font-medium shadow-sm my-1 whitespace-nowrap">
-                    {step.wait}
-                  </span>
-                  <div className="w-px h-4 bg-gray-300" />
-                  <ArrowDown />
-                </div>
+              return (
+                <div key={step.key}>
 
-                {/* Step node */}
-                <div className={`w-full bg-white rounded-xl border ${step.colorBorder} shadow-sm p-4 ${!config.is_enabled ? 'opacity-50' : ''}`}>
-                  <div className="flex items-start gap-3">
-                    <div className={`w-9 h-9 rounded-lg ${step.colorIcon} flex items-center justify-center text-lg shrink-0`}>
-                      {step.icon}
+                  {/* Connector */}
+                  <div className="flex items-start gap-5">
+                    <div className="w-72 shrink-0 flex flex-col items-center py-1">
+                      <div className="w-px h-5 bg-gradient-to-b from-slate-700 to-slate-800" />
+                      <div className="text-[10px] font-mono text-slate-500 bg-slate-900 border border-slate-700/60 px-2.5 py-1 rounded-full my-1 tracking-wide">
+                        {step.wait}
+                      </div>
+                      <div className="w-px h-4 bg-gradient-to-b from-slate-800 to-slate-700" />
+                      <svg className="w-2 h-2 text-slate-700" viewBox="0 0 8 8" fill="currentColor">
+                        <path d="M4 8L0 2h8L4 8z" />
+                      </svg>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm leading-tight">{step.label}</p>
-                      <p className="text-xs text-gray-500 mt-0.5 leading-snug">
-                        {step.hasDiscount
-                          ? step.description.replace('exclusive discount', `${config.discount_percent}% discount`)
-                          : step.description}
-                      </p>
-                      {step.channels.length > 0 && (
-                        <div className="flex gap-1 mt-2 flex-wrap">
-                          {step.channels.map((ch) => (
-                            <span key={ch} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-medium">
-                              {ch}
-                            </span>
-                          ))}
+                    <div className="flex-1" />
+                  </div>
+
+                  {/* Node + pending queue row */}
+                  <div className="flex items-start gap-4">
+
+                    {/* Step node */}
+                    <div className={`w-72 shrink-0 bg-slate-900 rounded-2xl border border-slate-800 shadow-lg ${step.glow} overflow-hidden ${!config.is_enabled ? 'opacity-40' : ''}`}>
+                      <div className={`h-[3px] ${step.accent}`} />
+                      <div className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className={`w-10 h-10 rounded-xl ${step.iconBg} flex items-center justify-center text-xl shrink-0`}>
+                            {step.icon}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2 mb-0.5">
+                              <p className="font-semibold text-slate-100 text-sm leading-tight">{step.label}</p>
+                              {pending.length > 0 && (
+                                <span className="text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/25 px-1.5 py-0.5 rounded-full shrink-0">
+                                  {pending.length}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-500 leading-snug">
+                              {step.hasDiscount
+                                ? step.description.replace('exclusive discount', `${config.discount_percent}% discount`)
+                                : step.description}
+                            </p>
+                            {step.channels.length > 0 && (
+                              <div className="flex gap-1 mt-2.5">
+                                {step.channels.map((ch) => (
+                                  <span key={ch} className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${step.pill}`}>
+                                    {ch}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      )}
+
+                        {/* Funnel */}
+                        {hasFunnel && step.channels.length > 0 && (
+                          <div className="mt-3.5 pt-3 border-t border-slate-800">
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-slate-600 mb-2">Performance</p>
+                            <div className="space-y-1.5">
+                              {[
+                                { label: 'Sent', value: s.sent, bar: 100, color: 'bg-slate-500' },
+                                { label: 'Opened', value: s.opens, bar: pct(s.opens), color: 'bg-violet-500' },
+                                { label: 'Clicked', value: s.clicks, bar: pct(s.clicks), color: 'bg-sky-500' },
+                              ].map((row) => (
+                                <div key={row.label} className="flex items-center gap-2">
+                                  <span className="text-[9px] text-slate-600 w-9 shrink-0 text-right tabular-nums">{row.label}</span>
+                                  <div className="flex-1 bg-slate-800 rounded-full h-[5px] overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-full ${row.color} transition-all duration-500`}
+                                      style={{ width: `${row.bar}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-[10px] text-slate-300 w-5 text-right shrink-0 tabular-nums">{row.value}</span>
+                                  <span className="text-[9px] text-slate-600 w-7 shrink-0 tabular-nums">
+                                    {row.bar < 100 ? `${row.bar}%` : ''}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* No data yet placeholder */}
+                        {!hasFunnel && step.channels.length > 0 && (
+                          <div className="mt-3.5 pt-3 border-t border-slate-800">
+                            <p className="text-[10px] text-slate-700 italic">No sends yet</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
+
+                    {/* Pending queue — appears only when there are pending leads */}
+                    {pending.length > 0 && (
+                      <div className="flex items-start gap-3 flex-1 min-w-0 pt-1">
+                        <div className="flex items-center">
+                          <div className="w-6 h-px bg-slate-700" />
+                          <svg className="w-1.5 h-1.5 text-slate-600 -mr-px" viewBox="0 0 6 6" fill="currentColor">
+                            <circle cx="3" cy="3" r="3" />
+                          </svg>
+                        </div>
+                        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 min-w-0 max-w-[220px]">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2.5 flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                            {pending.length} queued
+                          </p>
+                          <div className="space-y-2">
+                            {pending.slice(0, 4).map((row) => (
+                              <div key={row.id} className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[9px] font-bold text-slate-300 shrink-0">
+                                  {initials(row.leads?.name)}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs text-slate-300 truncate leading-tight">
+                                    {row.leads?.name || 'Unknown'}
+                                  </p>
+                                  <p className="text-[10px] text-slate-600 leading-tight">
+                                    {formatScheduled(row.scheduled_at)}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                            {pending.length > 4 && (
+                              <p className="text-[10px] text-slate-600 pl-8">+{pending.length - 4} more</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                   </div>
                 </div>
-
-              </div>
-            ))}
+              )
+            })}
 
             {/* Exit note */}
-            <div className="mt-4 flex items-center gap-2 text-xs text-gray-400">
-              <svg className="w-3.5 h-3.5 text-green-500" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l4 4 6-6" />
-              </svg>
-              Lead submits quote form at any point → sequence stops
+            <div className="flex items-start gap-5 mt-5">
+              <div className="w-72 shrink-0 flex justify-center">
+                <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
+                  <svg className="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l4 4 6-6" />
+                  </svg>
+                  Lead submits form → sequence stops
+                </div>
+              </div>
             </div>
 
           </div>
         </div>
 
-        {/* Sidebar: settings + activity */}
-        <div className="w-72 space-y-4 shrink-0">
+        {/* Sidebar */}
+        <div className="w-64 space-y-4 shrink-0">
 
-          {/* Discount setting */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Discount Offer</h2>
+          {/* Discount */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+            <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Discount Offer</h2>
             <div className="flex items-center gap-2">
               <input
                 type="number"
@@ -301,21 +469,23 @@ export default function AutomationsPage() {
                 value={config.discount_percent}
                 onChange={(e) => setConfig({ ...config, discount_percent: Number(e.target.value) })}
                 onBlur={() => save({ discount_percent: config.discount_percent })}
-                className="w-16 border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-16 border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-center font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-gray-50"
               />
-              <span className="text-sm text-gray-500">%</span>
+              <span className="text-sm font-medium text-gray-500">%</span>
               <span className="text-xs text-gray-400">off in step 3</span>
             </div>
           </div>
 
           {/* Hero image */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Email Hero Image</h2>
-            <div className="grid grid-cols-3 gap-2">
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+            <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Email Hero Image</h2>
+            <div className="grid grid-cols-3 gap-1.5">
               <button
                 onClick={() => save({ hero_image_url: null })}
-                className={`aspect-video rounded-lg border-2 flex items-center justify-center text-xs text-gray-400 transition-colors ${
-                  !config.hero_image_url ? 'border-brand-500 bg-brand-50 text-brand-600 font-medium' : 'border-gray-200 hover:border-gray-300'
+                className={`aspect-video rounded-lg border-2 flex items-center justify-center text-[10px] font-semibold transition-all ${
+                  !config.hero_image_url
+                    ? 'border-brand-500 bg-brand-50 text-brand-600'
+                    : 'border-gray-200 text-gray-400 hover:border-gray-300'
                 }`}
               >
                 None
@@ -324,8 +494,10 @@ export default function AutomationsPage() {
                 <button
                   key={img.url}
                   onClick={() => save({ hero_image_url: img.url })}
-                  className={`aspect-video rounded-lg border-2 overflow-hidden relative transition-colors ${
-                    config.hero_image_url === img.url ? 'border-brand-500 ring-2 ring-brand-200' : 'border-gray-200 hover:border-gray-300'
+                  className={`aspect-video rounded-lg border-2 overflow-hidden transition-all ${
+                    config.hero_image_url === img.url
+                      ? 'border-brand-500 ring-2 ring-brand-200'
+                      : 'border-gray-200 hover:border-gray-300'
                   }`}
                   title={img.label}
                 >
@@ -335,23 +507,23 @@ export default function AutomationsPage() {
               ))}
             </div>
             {config.hero_image_url && (
-              <p className="text-xs text-gray-400 mt-2">
-                Selected: {HERO_IMAGES.find((i) => i.url === config.hero_image_url)?.label ?? config.hero_image_url}
+              <p className="text-[10px] text-gray-400 mt-2 truncate">
+                ✓ {HERO_IMAGES.find((i) => i.url === config.hero_image_url)?.label ?? config.hero_image_url}
               </p>
             )}
           </div>
 
-          {/* Test panel */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Send Test</h2>
+          {/* Test */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+            <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Send Test</h2>
             {testLeads.length === 0 ? (
               <p className="text-xs text-gray-400">No leads with emails yet.</p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 <select
                   value={testLeadId}
                   onChange={(e) => { setTestLeadId(e.target.value); setTestResults(null) }}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 bg-gray-50"
                 >
                   {testLeads.map((l) => (
                     <option key={l.id} value={l.id}>
@@ -362,11 +534,11 @@ export default function AutomationsPage() {
                 <button
                   onClick={sendTest}
                   disabled={testSending}
-                  className="w-full px-3 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full px-3 py-2 bg-slate-900 text-white text-xs font-semibold rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
                 >
                   {testSending ? (
                     <>
-                      <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                       </svg>
@@ -375,19 +547,14 @@ export default function AutomationsPage() {
                   ) : 'Send All Steps Now'}
                 </button>
                 {testResults && (
-                  <div className="space-y-1.5 pt-1">
+                  <div className="space-y-1.5 pt-0.5">
                     {testResults.map((r) => (
                       <div key={r.step} className="flex items-center gap-2 text-xs">
-                        {r.ok ? (
-                          <span className="w-4 h-4 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0">✓</span>
-                        ) : (
-                          <span className="w-4 h-4 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">✕</span>
-                        )}
-                        <span className={r.ok ? 'text-gray-700' : 'text-red-600'}>
-                          {r.step === 'initial_contact' ? 'Instant Contact'
-                            : r.step === 'day1_followup' ? 'Day 1 Follow-up'
-                            : r.step === 'discount_offer' ? 'Discount Offer'
-                            : r.step}
+                        <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold ${r.ok ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                          {r.ok ? '✓' : '✕'}
+                        </div>
+                        <span className={r.ok ? 'text-gray-600' : 'text-red-600'}>
+                          {STEP_LABELS[r.step] ?? r.step}
                           {!r.ok && r.error ? ` — ${r.error}` : ''}
                         </span>
                       </div>
@@ -398,48 +565,22 @@ export default function AutomationsPage() {
             )}
           </div>
 
-          {/* Activity feed */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100">
-              <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Recent Activity</h2>
-            </div>
-            {activity.length === 0 ? (
-              <div className="px-4 py-8 text-center text-xs text-gray-400">
-                No activity yet. Starts when Meta leads come in.
-              </div>
-            ) : (
-              <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
-                {activity.map((row) => (
-                  <div key={row.id} className="flex items-start gap-2 px-4 py-3">
-                    <span
-                      className={`text-xs font-medium px-1.5 py-0.5 rounded-full shrink-0 ${STATUS_COLORS[row.status] ?? 'bg-gray-100 text-gray-600'}`}
-                    >
-                      {row.status}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-gray-700 truncate">
-                        {STEP_LABELS[row.step] ?? row.step}
-                        {row.leads?.name ? ` → ${row.leads.name}` : ''}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {row.sent_at
-                          ? new Date(row.sent_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-                          : `Scheduled ${new Date(row.scheduled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Info */}
-          <div className="rounded-xl bg-brand-50 border border-brand-100 px-4 py-3 text-xs text-brand-600 space-y-1">
-            <p className="font-semibold text-brand-700">How it works</p>
-            <ul className="list-disc list-inside space-y-0.5 text-brand-500">
-              <li>Triggered by every new lead (Meta or form)</li>
-              <li>Stops if quote form is submitted</li>
-              <li>Requires Twilio env vars for SMS</li>
+          {/* How it works */}
+          <div className="rounded-2xl bg-slate-950 border border-slate-800 px-4 py-4">
+            <p className="text-xs font-semibold text-slate-300 mb-2.5">How it works</p>
+            <ul className="space-y-2">
+              {[
+                'Triggered by every new Meta or form lead',
+                'Sequence stops when quote form is submitted',
+                'Requires Twilio env vars for SMS',
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-2 text-xs text-slate-500">
+                  <span className="mt-0.5 w-4 h-4 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 text-[9px] font-bold text-slate-400">
+                    {i + 1}
+                  </span>
+                  {item}
+                </li>
+              ))}
             </ul>
           </div>
 
