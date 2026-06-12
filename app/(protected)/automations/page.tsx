@@ -44,14 +44,14 @@ const STEPS = [
     label: 'Instant Contact',
     wait: 'Immediately',
     icon: '⚡',
-    accent: 'bg-violet-500',
-    iconBg: 'bg-violet-50 text-violet-600',
-    pill: 'bg-violet-50 text-violet-600 border border-violet-100',
-    avatarBg: 'bg-violet-500',
+    accent: 'bg-violet-400',
+    iconBg: 'bg-violet-50 text-violet-500',
+    pill: 'bg-violet-50 text-violet-500 border border-violet-100',
+    avatarBg: 'bg-violet-400',
     chipRing: 'border-violet-200 bg-violet-50',
-    chipText: 'text-violet-800',
-    barOpen: 'bg-violet-400',
-    barClick: 'bg-violet-600',
+    chipText: 'text-violet-700',
+    barOpen: 'bg-violet-300',
+    barClick: 'bg-violet-500',
     channels: ['Email', 'SMS'],
     description: 'Send a direct link to your quote form the moment the lead arrives.',
   },
@@ -60,30 +60,30 @@ const STEPS = [
     label: 'Day 1 Follow-up',
     wait: 'Wait 24h',
     icon: '🔔',
-    accent: 'bg-blue-500',
-    iconBg: 'bg-blue-50 text-blue-600',
-    pill: 'bg-blue-50 text-blue-600 border border-blue-100',
-    avatarBg: 'bg-blue-500',
-    chipRing: 'border-blue-200 bg-blue-50',
-    chipText: 'text-blue-800',
-    barOpen: 'bg-blue-400',
-    barClick: 'bg-blue-600',
+    accent: 'bg-sky-400',
+    iconBg: 'bg-sky-50 text-sky-500',
+    pill: 'bg-sky-50 text-sky-500 border border-sky-100',
+    avatarBg: 'bg-sky-400',
+    chipRing: 'border-sky-200 bg-sky-50',
+    chipText: 'text-sky-700',
+    barOpen: 'bg-sky-300',
+    barClick: 'bg-sky-500',
     channels: ['Email', 'SMS'],
-    description: "If they haven't submitted a quote, send a friendly reminder.",
+    description: "Friendly reminder if they haven't submitted a quote yet.",
   },
   {
     key: 'discount_offer',
     label: 'Discount Offer',
     wait: 'Wait 24h',
     icon: '🎁',
-    accent: 'bg-amber-500',
-    iconBg: 'bg-amber-50 text-amber-600',
-    pill: 'bg-amber-50 text-amber-600 border border-amber-100',
-    avatarBg: 'bg-amber-500',
+    accent: 'bg-amber-400',
+    iconBg: 'bg-amber-50 text-amber-500',
+    pill: 'bg-amber-50 text-amber-500 border border-amber-100',
+    avatarBg: 'bg-amber-400',
     chipRing: 'border-amber-200 bg-amber-50',
-    chipText: 'text-amber-800',
-    barOpen: 'bg-amber-400',
-    barClick: 'bg-amber-600',
+    chipText: 'text-amber-700',
+    barOpen: 'bg-amber-300',
+    barClick: 'bg-amber-500',
     channels: ['Email', 'SMS'],
     description: 'Sweeten the deal with an exclusive discount to win them over.',
     hasDiscount: true,
@@ -93,14 +93,14 @@ const STEPS = [
     label: 'Mark as Lost',
     wait: 'Wait 24h',
     icon: '🚫',
-    accent: 'bg-gray-300',
-    iconBg: 'bg-gray-100 text-gray-500',
-    pill: 'bg-gray-100 text-gray-500 border border-gray-200',
-    avatarBg: 'bg-gray-400',
+    accent: 'bg-gray-200',
+    iconBg: 'bg-gray-50 text-gray-400',
+    pill: 'bg-gray-50 text-gray-400 border border-gray-100',
+    avatarBg: 'bg-gray-300',
     chipRing: 'border-gray-200 bg-gray-50',
-    chipText: 'text-gray-600',
-    barOpen: 'bg-gray-300',
-    barClick: 'bg-gray-400',
+    chipText: 'text-gray-500',
+    barOpen: 'bg-gray-200',
+    barClick: 'bg-gray-300',
     channels: [],
     description: 'No engagement after 72h — lead is automatically marked as lost.',
   },
@@ -131,12 +131,12 @@ function formatScheduled(dateStr: string): string {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
   const h = Math.round(-diffMs / 3600000)
-  if (h < 1) return 'now'
   if (h < 24) return `${h}h ago`
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 export default function AutomationsPage() {
+  const [tab, setTab] = useState<'flow' | 'settings'>('flow')
   const [config, setConfig] = useState<AutomationConfig>({ is_enabled: true, discount_percent: 10, hero_image_url: null })
   const [activity, setActivity] = useState<ActivityStep[]>([])
   const [stats, setStats] = useState<Record<string, StepStats>>({})
@@ -197,7 +197,7 @@ export default function AutomationsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="flex items-center gap-2 text-gray-400 text-sm">
+        <div className="flex items-center gap-2 text-gray-300 text-sm">
           <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
@@ -208,8 +208,7 @@ export default function AutomationsPage() {
     )
   }
 
-  // For each lead, find only their earliest pending step (the one they're actually waiting on).
-  // All steps are inserted as pending up front, so without this leads appear at every step.
+  // Each lead appears only at their next upcoming step (earliest pending scheduled_at)
   const currentStepByLead: Record<string, ActivityStep> = {}
   for (const row of activity) {
     if (row.status !== 'pending') continue
@@ -228,14 +227,16 @@ export default function AutomationsPage() {
   const totalSent = activity.filter(a => a.status === 'sent').length
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
+    <div className="min-h-full px-8 py-8">
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-10">
+      {/* Page header */}
+      <div className="flex items-center justify-between mb-8 max-w-screen-xl mx-auto">
         <div>
           <h1 className="text-xl font-semibold text-gray-900 tracking-tight">Automations</h1>
           <p className="text-sm text-gray-400 mt-0.5">
-            {totalInFunnel > 0 ? `${totalInFunnel} leads active in funnel · ${totalSent} sent total` : 'Nurture every lead from first touch to close.'}
+            {totalInFunnel > 0
+              ? `${totalInFunnel} leads in funnel · ${totalSent} sent total`
+              : 'Nurture every lead from first touch to close.'}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -249,7 +250,7 @@ export default function AutomationsPage() {
             </span>
           )}
           <div className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-xl px-3.5 py-2 shadow-sm">
-            <div className={`w-2 h-2 rounded-full transition-colors ${config.is_enabled ? 'bg-emerald-400' : 'bg-gray-300'}`} />
+            <div className={`w-2 h-2 rounded-full ${config.is_enabled ? 'bg-emerald-400' : 'bg-gray-300'}`} />
             <span className="text-sm font-medium text-gray-700">{config.is_enabled ? 'Live' : 'Paused'}</span>
             <button
               onClick={() => save({ is_enabled: !config.is_enabled })}
@@ -261,36 +262,52 @@ export default function AutomationsPage() {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="max-w-screen-xl mx-auto mb-8">
+        <div className="inline-flex items-center gap-0.5 bg-gray-100 rounded-xl p-1">
+          {(['flow', 'settings'] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-5 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                tab === t
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              {t === 'flow' ? 'Flow' : 'Settings'}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {!config.is_enabled && (
-        <div className="mb-8 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-700 flex items-center gap-2">
-          <svg className="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <div className="max-w-screen-xl mx-auto mb-8 rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 text-sm text-amber-600 flex items-center gap-2">
+          <svg className="w-4 h-4 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
           Automations are paused — new leads will not receive automated messages.
         </div>
       )}
 
-      {/* Main layout */}
-      <div className="flex gap-8 items-start">
+      {/* ── FLOW TAB ── */}
+      {tab === 'flow' && (
+        <div className="flex flex-col">
 
-        {/* Flow — full white, no container */}
-        <div className="flex-1 min-w-0">
-
-          {/* Trigger node */}
-          <div className="flex items-start gap-10">
-            <div className="w-80 shrink-0">
-              <div className="bg-gradient-to-br from-brand-600 to-brand-700 rounded-2xl p-5 shadow-lg shadow-brand-500/20">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center text-2xl shrink-0">🎯</div>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-brand-200 leading-none mb-1">Trigger</p>
-                    <p className="font-semibold text-white leading-tight">Any New Lead</p>
-                    <p className="text-xs text-brand-300 mt-0.5">Meta or hosted form</p>
-                  </div>
+          {/* Trigger — centered via symmetric grid */}
+          <div className="grid grid-cols-[1fr_380px_1fr]">
+            <div />
+            <div className="bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl p-5 shadow-md shadow-brand-500/15">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl shrink-0">🎯</div>
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-brand-100 leading-none mb-1">Trigger</p>
+                  <p className="font-semibold text-white text-sm leading-tight">Any New Lead</p>
+                  <p className="text-xs text-brand-200 mt-0.5">Meta or hosted form</p>
                 </div>
               </div>
             </div>
-            <div className="flex-1" />
+            <div />
           </div>
 
           {/* Steps */}
@@ -303,25 +320,29 @@ export default function AutomationsPage() {
             return (
               <div key={step.key}>
 
-                {/* Connector */}
-                <div className="flex items-start">
-                  <div className="w-80 shrink-0 flex flex-col items-center py-2">
+                {/* Connector — stays in center column */}
+                <div className="grid grid-cols-[1fr_380px_1fr]">
+                  <div />
+                  <div className="flex flex-col items-center py-3">
                     <div className="w-px h-8 bg-gray-200" />
-                    <div className="text-[11px] text-gray-400 border border-gray-200 bg-white rounded-full px-3 py-1 my-2 shadow-sm font-medium">
+                    <span className="text-[11px] text-gray-400 bg-white border border-gray-200 rounded-full px-3 py-1 my-1.5 font-medium shadow-sm">
                       {step.wait}
-                    </div>
+                    </span>
                     <div className="w-px h-6 bg-gray-200" />
-                    <svg className="w-2.5 h-2.5 text-gray-300" viewBox="0 0 10 10" fill="currentColor">
-                      <path d="M5 10L0 3h10z" />
+                    <svg className="w-2 h-2 text-gray-300" viewBox="0 0 8 8" fill="currentColor">
+                      <path d="M4 8L0 2h8z" />
                     </svg>
                   </div>
+                  <div />
                 </div>
 
-                {/* Node + lead chips */}
-                <div className="flex items-start gap-10">
+                {/* Node (center) + lead chips (right) */}
+                <div className="grid grid-cols-[1fr_380px_1fr] items-start">
+                  <div />
 
-                  {/* Step node */}
-                  <div className={`w-80 shrink-0 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden ${!config.is_enabled ? 'opacity-50' : ''}`}>
+                  {/* Node card */}
+                  <div className={`bg-white rounded-2xl border border-gray-100 overflow-hidden transition-opacity ${!config.is_enabled ? 'opacity-50' : ''}`}
+                    style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.05)' }}>
                     <div className={`h-[3px] ${step.accent}`} />
                     <div className="p-5">
                       <div className="flex items-start gap-3.5">
@@ -329,14 +350,14 @@ export default function AutomationsPage() {
                           {step.icon}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-900 text-sm leading-tight mb-0.5">{step.label}</p>
-                          <p className="text-xs text-gray-500 leading-snug">
+                          <p className="font-semibold text-gray-900 text-sm leading-tight mb-1">{step.label}</p>
+                          <p className="text-xs text-gray-400 leading-relaxed">
                             {step.hasDiscount
                               ? step.description.replace('exclusive discount', `${config.discount_percent}% discount`)
                               : step.description}
                           </p>
                           {step.channels.length > 0 && (
-                            <div className="flex gap-1.5 mt-2.5">
+                            <div className="flex gap-1.5 mt-3">
                               {step.channels.map((ch) => (
                                 <span key={ch} className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${step.pill}`}>
                                   {ch}
@@ -349,23 +370,23 @@ export default function AutomationsPage() {
 
                       {/* Funnel bars */}
                       {hasFunnel && step.channels.length > 0 && (
-                        <div className="mt-4 pt-4 border-t border-gray-100">
-                          <div className="space-y-2">
+                        <div className="mt-4 pt-4 border-t border-gray-50">
+                          <div className="space-y-2.5">
                             {[
-                              { label: 'Sent', value: s.sent, bar: 100, color: 'bg-gray-300' },
+                              { label: 'Sent', value: s.sent, bar: 100, color: 'bg-gray-200' },
                               { label: 'Opened', value: s.opens, bar: pct(s.opens), color: step.barOpen },
                               { label: 'Clicked', value: s.clicks, bar: pct(s.clicks), color: step.barClick },
                             ].map((row) => (
-                              <div key={row.label} className="flex items-center gap-2">
-                                <span className="text-[10px] text-gray-400 w-10 shrink-0 text-right tabular-nums">{row.label}</span>
-                                <div className="flex-1 bg-gray-100 rounded-full h-[5px] overflow-hidden">
+                              <div key={row.label} className="flex items-center gap-2.5">
+                                <span className="text-[10px] text-gray-300 w-10 text-right shrink-0 tabular-nums">{row.label}</span>
+                                <div className="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
                                   <div
                                     className={`h-full rounded-full ${row.color} transition-all duration-700`}
                                     style={{ width: `${row.bar}%` }}
                                   />
                                 </div>
-                                <span className="text-[11px] text-gray-600 w-6 text-right shrink-0 tabular-nums font-medium">{row.value}</span>
-                                <span className="text-[10px] text-gray-400 w-7 shrink-0 tabular-nums">
+                                <span className="text-[11px] text-gray-500 w-6 text-right shrink-0 tabular-nums font-medium">{row.value}</span>
+                                <span className="text-[10px] text-gray-300 w-7 shrink-0 tabular-nums">
                                   {row.bar < 100 ? `${row.bar}%` : ''}
                                 </span>
                               </div>
@@ -375,66 +396,69 @@ export default function AutomationsPage() {
                       )}
 
                       {!hasFunnel && step.channels.length > 0 && (
-                        <div className="mt-4 pt-4 border-t border-gray-100">
+                        <div className="mt-4 pt-4 border-t border-gray-50">
                           <p className="text-[11px] text-gray-300">No sends yet</p>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  {/* Lead chips — funnel level */}
-                  {pending.length > 0 && (
-                    <div className="flex-1 flex flex-wrap gap-2 items-start pt-4 min-w-0">
-                      {pending.slice(0, 12).map((row) => (
-                        <div
-                          key={row.id}
-                          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-xs font-medium ${step.chipRing} ${step.chipText}`}
-                        >
-                          <div className={`w-5 h-5 rounded-full ${step.avatarBg} text-white flex items-center justify-center text-[9px] font-bold shrink-0`}>
-                            {initials(row.leads?.name)}
-                          </div>
-                          <span className="truncate max-w-[80px]">
-                            {row.leads?.name?.split(' ')[0] || 'Lead'}
-                          </span>
-                          <span className="text-[10px] opacity-50 shrink-0">
-                            {formatScheduled(row.scheduled_at)}
-                          </span>
+                  {/* Lead chips — right column, visually flowing down the funnel */}
+                  <div className="pl-8 pt-4 flex flex-wrap gap-2 content-start">
+                    {pending.slice(0, 10).map((row) => (
+                      <div
+                        key={row.id}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-xs font-medium ${step.chipRing} ${step.chipText}`}
+                      >
+                        <div className={`w-5 h-5 rounded-full ${step.avatarBg} text-white flex items-center justify-center text-[9px] font-bold shrink-0`}>
+                          {initials(row.leads?.name)}
                         </div>
-                      ))}
-                      {pending.length > 12 && (
-                        <div className="flex items-center px-2.5 py-1.5 rounded-full border border-gray-200 bg-gray-50 text-xs text-gray-400 font-medium">
-                          +{pending.length - 12} more
-                        </div>
-                      )}
-                    </div>
-                  )}
-
+                        <span className="max-w-[72px] truncate">
+                          {row.leads?.name?.split(' ')[0] || 'Lead'}
+                        </span>
+                        <span className="opacity-40 shrink-0 text-[10px]">
+                          {formatScheduled(row.scheduled_at)}
+                        </span>
+                      </div>
+                    ))}
+                    {pending.length > 10 && (
+                      <div className={`flex items-center px-2.5 py-1.5 rounded-full border text-xs font-medium ${step.chipRing} ${step.chipText} opacity-60`}>
+                        +{pending.length - 10}
+                      </div>
+                    )}
+                  </div>
                 </div>
+
               </div>
             )
           })}
 
           {/* Exit note */}
-          <div className="flex items-start mt-6">
-            <div className="w-80 flex justify-center">
-              <div className="flex items-center gap-1.5 text-xs text-gray-400">
+          <div className="grid grid-cols-[1fr_380px_1fr] mt-6">
+            <div />
+            <div className="flex justify-center">
+              <div className="flex items-center gap-1.5 text-xs text-gray-300">
                 <svg className="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l4 4 6-6" />
                 </svg>
-                Lead submits form → sequence stops
+                Lead submits form → sequence stops automatically
               </div>
             </div>
+            <div />
           </div>
 
         </div>
+      )}
 
-        {/* Sidebar */}
-        <div className="w-64 space-y-4 shrink-0">
+      {/* ── SETTINGS TAB ── */}
+      {tab === 'settings' && (
+        <div className="max-w-lg mx-auto space-y-5">
 
           {/* Discount */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-            <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Discount Offer</h2>
-            <div className="flex items-center gap-2">
+          <div className="bg-white rounded-2xl border border-gray-100 p-6" style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>
+            <h2 className="text-sm font-semibold text-gray-700 mb-1">Discount Offer</h2>
+            <p className="text-xs text-gray-400 mb-4">Applied in the Step 3 email to win back hesitant leads.</p>
+            <div className="flex items-center gap-3">
               <input
                 type="number"
                 min={1}
@@ -442,24 +466,24 @@ export default function AutomationsPage() {
                 value={config.discount_percent}
                 onChange={(e) => setConfig({ ...config, discount_percent: Number(e.target.value) })}
                 onBlur={() => save({ discount_percent: config.discount_percent })}
-                className="w-16 border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-center font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-gray-50"
+                className="w-20 border border-gray-200 rounded-xl px-3 py-2 text-sm text-center font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-gray-50"
               />
-              <span className="text-sm font-medium text-gray-500">%</span>
-              <span className="text-xs text-gray-400">off in step 3</span>
+              <span className="text-sm text-gray-400 font-medium">% off</span>
             </div>
           </div>
 
-          {/* Test */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-            <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Send Test</h2>
+          {/* Send test */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6" style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>
+            <h2 className="text-sm font-semibold text-gray-700 mb-1">Send Test</h2>
+            <p className="text-xs text-gray-400 mb-4">Fire all automation steps immediately to a real lead.</p>
             {testLeads.length === 0 ? (
-              <p className="text-xs text-gray-400">No leads with emails yet.</p>
+              <p className="text-sm text-gray-300">No leads with email addresses yet.</p>
             ) : (
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 <select
                   value={testLeadId}
                   onChange={(e) => { setTestLeadId(e.target.value); setTestResults(null) }}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 bg-gray-50"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-gray-50"
                 >
                   {testLeads.map((l) => (
                     <option key={l.id} value={l.id}>
@@ -470,11 +494,11 @@ export default function AutomationsPage() {
                 <button
                   onClick={sendTest}
                   disabled={testSending}
-                  className="w-full px-3 py-2 bg-gray-900 text-white text-xs font-semibold rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
+                  className="w-full px-4 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
                 >
                   {testSending ? (
                     <>
-                      <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                       </svg>
@@ -483,13 +507,13 @@ export default function AutomationsPage() {
                   ) : 'Send All Steps Now'}
                 </button>
                 {testResults && (
-                  <div className="space-y-1.5 pt-0.5">
+                  <div className="space-y-2 pt-1">
                     {testResults.map((r) => (
-                      <div key={r.step} className="flex items-center gap-2 text-xs">
-                        <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold ${r.ok ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                      <div key={r.step} className="flex items-center gap-2.5 text-sm">
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[11px] font-bold ${r.ok ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-500'}`}>
                           {r.ok ? '✓' : '✕'}
                         </div>
-                        <span className={r.ok ? 'text-gray-600' : 'text-red-600'}>
+                        <span className={r.ok ? 'text-gray-600' : 'text-red-500'}>
                           {STEP_LABELS[r.step] ?? r.step}
                           {!r.ok && r.error ? ` — ${r.error}` : ''}
                         </span>
@@ -502,26 +526,30 @@ export default function AutomationsPage() {
           </div>
 
           {/* How it works */}
-          <div className="rounded-2xl bg-gray-50 border border-gray-100 px-4 py-4">
-            <p className="text-xs font-semibold text-gray-600 mb-2.5">How it works</p>
-            <ul className="space-y-2">
+          <div className="bg-white rounded-2xl border border-gray-100 p-6" style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.04)' }}>
+            <h2 className="text-sm font-semibold text-gray-700 mb-4">How it works</h2>
+            <ol className="space-y-3">
               {[
-                'Triggered by every new Meta or form lead',
-                'Sequence stops when quote form is submitted',
-                'Requires Twilio env vars for SMS',
-              ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2 text-xs text-gray-400">
-                  <span className="mt-0.5 w-4 h-4 rounded-full bg-white border border-gray-200 flex items-center justify-center shrink-0 text-[9px] font-bold text-gray-400 shadow-sm">
+                ['Triggered automatically', 'Every new Meta lead or hosted form submission starts the sequence.'],
+                ['Stops on conversion', 'The moment a lead submits your quote form, the sequence stops.'],
+                ['SMS requires Twilio', 'Set TWILIO_* env vars to enable SMS alongside emails.'],
+              ].map(([title, desc], i) => (
+                <li key={i} className="flex gap-3">
+                  <span className="w-5 h-5 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5">
                     {i + 1}
                   </span>
-                  {item}
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">{title}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
+                  </div>
                 </li>
               ))}
-            </ul>
+            </ol>
           </div>
 
         </div>
-      </div>
+      )}
+
     </div>
   )
 }
