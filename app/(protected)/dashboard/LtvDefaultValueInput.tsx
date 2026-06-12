@@ -1,8 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function LtvDefaultValueInput({ initial }: { initial: number | null }) {
+  const router = useRouter()
   const [value, setValue] = useState(initial != null ? String(initial) : '')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -17,6 +19,7 @@ export default function LtvDefaultValueInput({ initial }: { initial: number | nu
     })
     setSaving(false)
     setSaved(true)
+    router.refresh()
     setTimeout(() => setSaved(false), 2000)
   }
 
