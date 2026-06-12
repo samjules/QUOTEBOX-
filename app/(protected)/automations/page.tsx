@@ -208,26 +208,34 @@ export default function AutomationsPage() {
     )
   }
 
-  const pendingByStep = activity.reduce((acc, row) => {
-    if (row.status === 'pending') {
-      if (!acc[row.step]) acc[row.step] = []
-      acc[row.step].push(row)
+  // For each lead, find only their earliest pending step (the one they're actually waiting on).
+  // All steps are inserted as pending up front, so without this leads appear at every step.
+  const currentStepByLead: Record<string, ActivityStep> = {}
+  for (const row of activity) {
+    if (row.status !== 'pending') continue
+    const existing = currentStepByLead[row.lead_id]
+    if (!existing || new Date(row.scheduled_at) < new Date(existing.scheduled_at)) {
+      currentStepByLead[row.lead_id] = row
     }
+  }
+  const leadsByStep = Object.values(currentStepByLead).reduce((acc, row) => {
+    if (!acc[row.step]) acc[row.step] = []
+    acc[row.step].push(row)
     return acc
   }, {} as Record<string, ActivityStep[]>)
 
-  const totalPending = activity.filter(a => a.status === 'pending').length
+  const totalInFunnel = Object.keys(currentStepByLead).length
   const totalSent = activity.filter(a => a.status === 'sent').length
 
   return (
-    <div className="p-8">
+    <div className="p-8 max-w-5xl mx-auto">
 
       {/* Header */}
       <div className="flex items-center justify-between mb-10">
         <div>
           <h1 className="text-xl font-semibold text-gray-900 tracking-tight">Automations</h1>
           <p className="text-sm text-gray-400 mt-0.5">
-            {totalPending > 0 ? `${totalPending} leads active in funnel · ${totalSent} sent total` : 'Nurture every lead from first touch to close.'}
+            {totalInFunnel > 0 ? `${totalInFunnel} leads active in funnel · ${totalSent} sent total` : 'Nurture every lead from first touch to close.'}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -287,7 +295,7 @@ export default function AutomationsPage() {
 
           {/* Steps */}
           {STEPS.map((step) => {
-            const pending = pendingByStep[step.key] || []
+            const pending = leadsByStep[step.key] || []
             const s: StepStats = stats[step.key] ?? { sent: 0, opens: 0, clicks: 0 }
             const pct = (n: number) => s.sent > 0 ? Math.round((n / s.sent) * 100) : 0
             const hasFunnel = s.sent > 0
