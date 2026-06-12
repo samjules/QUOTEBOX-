@@ -210,13 +210,18 @@ export default async function DashboardPage({
     return sum + (typeof qt === 'number' ? qt : 0)
   }, 0)
   const defaultLeadValue = automationConfig?.default_lead_value ?? null
-  const bookedPipeline = (pipelineData ?? [])
-    .filter(l => l.status === 'booked')
-    .reduce((sum, l) => {
-      const qt = (l.form_data as Record<string, unknown> | null)?._quote_total
-      const value = typeof qt === 'number' ? qt : (defaultLeadValue ?? 0)
-      return sum + value
-    }, 0)
+  // Only booked leads that have a real numeric _quote_total
+  const bookedLeadsWithQuote = (pipelineData ?? []).filter(l => {
+    if (l.status !== 'booked') return false
+    const qt = (l.form_data as Record<string, unknown> | null)?._quote_total
+    return typeof qt === 'number'
+  })
+  const bookedPipelineFromQuotes = bookedLeadsWithQuote.reduce((sum, l) => {
+    return sum + ((l.form_data as Record<string, unknown>)._quote_total as number)
+  }, 0)
+  // Apply fallback to every booked lead that doesn't have a real quote
+  const bookedLeadsWithoutQuote = Math.max(0, bookedLeads - bookedLeadsWithQuote.length)
+  const bookedPipeline = bookedPipelineFromQuotes + (defaultLeadValue ?? 0) * bookedLeadsWithoutQuote
   const conversionRate = totalLeads > 0 ? ((bookedLeads / totalLeads) * 100).toFixed(1) : '0'
   const periodSpending = (periodTxns ?? [])
     .reduce((sum: number, tx: { amount: number }) => sum + Math.abs(tx.amount), 0)
