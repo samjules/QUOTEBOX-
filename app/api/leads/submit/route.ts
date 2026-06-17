@@ -43,6 +43,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'This form is no longer active' }, { status: 400 })
   }
 
+  // Strip literal control characters from string values so PostgreSQL's JSON
+  // parser doesn't reject the form_data jsonb insert (error 22P02).
+  // This can happen when textarea answers contain newlines or other control chars.
+  function sanitizeJsonValue(val: unknown): unknown {
+    if (typeof val === 'string') return val.replace(/[\x00-\x1f\x7f]/g, ' ')
+    if (Array.isArray(val)) return val.map(sanitizeJsonValue)
+    if (val !== null && typeof val === 'object') {
+      return Object.fromEntries(
+        Object.entries(val as Record<string, unknown>).map(([k, v]) => [k, sanitizeJsonValue(v)])
+      )
+    }
+    return val
+  }
+
   const { data: insertedLead, error } = await supabaseAdmin.from('leads').insert({
     account_id: body.account_id,
     hosted_form_id: body.hosted_form_id,
@@ -50,7 +64,7 @@ export async function POST(request: NextRequest) {
     email: body.email,
     phone: body.phone,
     form_type: body.form_type,
-    form_data: body.form_data,
+    form_data: sanitizeJsonValue(body.form_data),
     status: body.status,
   }).select('id').single()
 
