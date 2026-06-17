@@ -62,6 +62,7 @@ export async function POST(request: NextRequest) {
     const sanitizedFormData = sanitizeJsonValue(body.form_data)
     console.log('DEBUG pre-insert: account', body.account_id, 'form', body.hosted_form_id, 'status', body.status)
 
+    // DEBUG: try insert without form_data to isolate 22P02 source
     const { data, error: insertError } = await supabaseAdmin.from('leads').insert({
       account_id: body.account_id,
       hosted_form_id: body.hosted_form_id,
@@ -69,7 +70,6 @@ export async function POST(request: NextRequest) {
       email: body.email,
       phone: body.phone,
       form_type: body.form_type,
-      form_data: sanitizedFormData,
       status: body.status,
     }).select('id').single()
 
