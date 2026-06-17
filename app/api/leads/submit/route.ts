@@ -60,13 +60,7 @@ export async function POST(request: NextRequest) {
   let insertedLead: { id: string } | null = null
   try {
     const sanitizedFormData = sanitizeJsonValue(body.form_data)
-    console.log('DEBUG pre-insert: account', body.account_id, 'form', body.hosted_form_id, 'status', body.status)
 
-    // DEBUG: query triggers on leads table
-    const { data: triggerData, error: triggerErr } = await supabaseAdmin.rpc('exec_sql', { sql: "SELECT trigger_name, event_manipulation, action_statement FROM information_schema.triggers WHERE event_object_table = 'leads' ORDER BY trigger_name" }).maybeSingle()
-    return NextResponse.json({ triggers: triggerData, triggerErr: triggerErr?.message, hint: 'remove this after debugging' })
-
-    // eslint-disable-next-line no-unreachable
     const { data, error: insertError } = await supabaseAdmin.from('leads').insert({
       account_id: body.account_id,
       hosted_form_id: body.hosted_form_id,
@@ -75,9 +69,8 @@ export async function POST(request: NextRequest) {
       phone: body.phone,
       form_type: body.form_type,
       status: body.status,
+      form_data: sanitizedFormData,
     }).select('id').single()
-
-    console.log('DEBUG insert done. error_code:', insertError?.code ?? 'none', 'data_id:', data?.id ?? 'none')
 
     if (insertError) {
       return NextResponse.json({ error: 'Failed to submit lead', _dbg: { code: insertError.code, msg: insertError.message, details: String(insertError.details) } }, { status: 500 })
