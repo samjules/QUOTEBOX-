@@ -43,24 +43,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'This form is no longer active' }, { status: 400 })
   }
 
-  // Strip literal control characters from string values so PostgreSQL's JSON
-  // parser doesn't reject the form_data jsonb insert (error 22P02).
-  // This can happen when textarea answers contain newlines or other control chars.
-  function sanitizeJsonValue(val: unknown): unknown {
-    if (typeof val === 'string') return val.replace(/[\x00-\x1f\x7f]/g, ' ')
-    if (Array.isArray(val)) return val.map(sanitizeJsonValue)
-    if (val !== null && typeof val === 'object') {
-      return Object.fromEntries(
-        Object.entries(val as Record<string, unknown>).map(([k, v]) => [k, sanitizeJsonValue(v)])
-      )
-    }
-    return val
-  }
-
   let insertedLead: { id: string } | null = null
   try {
-    const sanitizedFormData = sanitizeJsonValue(body.form_data)
-
     const { data, error: insertError } = await supabaseAdmin.from('leads').insert({
       account_id: body.account_id,
       hosted_form_id: body.hosted_form_id,
@@ -69,15 +53,15 @@ export async function POST(request: NextRequest) {
       phone: body.phone,
       form_type: body.form_type,
       status: body.status,
-      form_data: sanitizedFormData,
+      form_data: body.form_data,
     }).select('id').single()
 
     if (insertError) {
-      return NextResponse.json({ error: 'Failed to submit lead', _dbg: { code: insertError.code, msg: insertError.message, details: String(insertError.details) } }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to submit lead' }, { status: 500 })
     }
     insertedLead = data
-  } catch (err) {
-    return NextResponse.json({ error: 'Failed to submit lead', _dbg: { threw: err instanceof Error ? err.message : String(err) } }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Failed to submit lead' }, { status: 500 })
   }
 
   // Server-side credit deduction for credit-based plans
@@ -93,7 +77,6 @@ export async function POST(request: NextRequest) {
       // Blessed accounts skip credit deduction entirely
     } else if (billing && (billing.plan === 'fully_managed' || billing.plan === 'pay_per_lead')) {
       if (billing.credit_balance >= COST_PER_LEAD) {
-        // Guarded update to prevent race conditions
         const { data: updated } = await supabaseAdmin
           .from('billing')
           .update({ credit_balance: billing.credit_balance - COST_PER_LEAD })
@@ -116,7 +99,6 @@ export async function POST(request: NextRequest) {
       }
     }
   } catch (err) {
-    // Non-fatal: lead is already saved, log billing error
     console.error('Credit deduction error:', err)
   }
 
@@ -124,7 +106,6 @@ export async function POST(request: NextRequest) {
   if (body.email) {
     Promise.resolve().then(async () => {
       try {
-        // Find the most recently automated lead with the same email
         const { data: automatedLeads } = await supabaseAdmin
           .from('automation_steps')
           .select('lead_id, account_id, step, sent_at, status')
@@ -135,7 +116,6 @@ export async function POST(request: NextRequest) {
 
         if (!automatedLeads?.length) return
 
-        // Find the ORIGINAL lead (not the one just inserted) that matches this email
         const leadIds = Array.from(new Set(automatedLeads.map((s) => s.lead_id)))
         const { data: matchedLeads } = await supabaseAdmin
           .from('leads')
