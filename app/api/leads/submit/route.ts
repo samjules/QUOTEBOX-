@@ -57,34 +57,30 @@ export async function POST(request: NextRequest) {
     return val
   }
 
-  const sanitizedFormData = sanitizeJsonValue(body.form_data)
-  console.log('DEBUG lead insert payload:', JSON.stringify({
-    account_id: body.account_id,
-    hosted_form_id: body.hosted_form_id,
-    name: body.name,
-    email: body.email,
-    phone: body.phone,
-    form_type: body.form_type,
-    status: body.status,
-    form_data_keys: Object.keys(body.form_data ?? {}),
-    form_data_raw_sample: JSON.stringify(body.form_data).slice(0, 500),
-    form_data_sanitized_sample: JSON.stringify(sanitizedFormData).slice(0, 500),
-  }))
+  let insertedLead: { id: string } | null = null
+  try {
+    const sanitizedFormData = sanitizeJsonValue(body.form_data)
+    console.log('DEBUG pre-insert: account', body.account_id, 'form', body.hosted_form_id, 'status', body.status)
 
-  const { data: insertedLead, error } = await supabaseAdmin.from('leads').insert({
-    account_id: body.account_id,
-    hosted_form_id: body.hosted_form_id,
-    name: body.name,
-    email: body.email,
-    phone: body.phone,
-    form_type: body.form_type,
-    form_data: sanitizedFormData,
-    status: body.status,
-  }).select('id').single()
+    const result = await supabaseAdmin.from('leads').insert({
+      account_id: body.account_id,
+      hosted_form_id: body.hosted_form_id,
+      name: body.name,
+      email: body.email,
+      phone: body.phone,
+      form_type: body.form_type,
+      form_data: sanitizedFormData,
+      status: body.status,
+    }).select('id').single()
 
-  if (error) {
-    console.error('Lead insert error (full):', JSON.stringify(error))
-    console.error('Lead insert error details:', error.code, error.message, error.details, error.hint)
+    if (result.error) {
+      console.error('Lead insert error:', result.error.code, result.error.message, result.error.details)
+      return NextResponse.json({ error: 'Failed to submit lead' }, { status: 500 })
+    }
+    insertedLead = result.data
+    console.log('DEBUG lead inserted ok:', insertedLead?.id)
+  } catch (err) {
+    console.error('Lead insert threw:', err instanceof Error ? err.message : String(err))
     return NextResponse.json({ error: 'Failed to submit lead' }, { status: 500 })
   }
 
