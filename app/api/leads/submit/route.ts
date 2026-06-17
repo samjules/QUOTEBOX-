@@ -62,7 +62,11 @@ export async function POST(request: NextRequest) {
     const sanitizedFormData = sanitizeJsonValue(body.form_data)
     console.log('DEBUG pre-insert: account', body.account_id, 'form', body.hosted_form_id, 'status', body.status)
 
-    // DEBUG: try insert without form_data to isolate 22P02 source
+    // DEBUG: query triggers on leads table
+    const { data: triggerData, error: triggerErr } = await supabaseAdmin.rpc('exec_sql', { sql: "SELECT trigger_name, event_manipulation, action_statement FROM information_schema.triggers WHERE event_object_table = 'leads' ORDER BY trigger_name" }).maybeSingle()
+    return NextResponse.json({ triggers: triggerData, triggerErr: triggerErr?.message, hint: 'remove this after debugging' })
+
+    // eslint-disable-next-line no-unreachable
     const { data, error: insertError } = await supabaseAdmin.from('leads').insert({
       account_id: body.account_id,
       hosted_form_id: body.hosted_form_id,
