@@ -76,14 +76,11 @@ export async function POST(request: NextRequest) {
     console.log('DEBUG insert done. error_code:', insertError?.code ?? 'none', 'data_id:', data?.id ?? 'none')
 
     if (insertError) {
-      console.log('LEAD INSERT FAILED:', insertError.code, insertError.message, String(insertError.details), String(insertError.hint))
-      return NextResponse.json({ error: 'Failed to submit lead' }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to submit lead', _dbg: { code: insertError.code, msg: insertError.message, details: String(insertError.details) } }, { status: 500 })
     }
     insertedLead = data
-    console.log('DEBUG lead inserted ok:', insertedLead?.id)
   } catch (err) {
-    console.log('LEAD INSERT THREW:', err instanceof Error ? err.message : String(err))
-    return NextResponse.json({ error: 'Failed to submit lead' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to submit lead', _dbg: { threw: err instanceof Error ? err.message : String(err) } }, { status: 500 })
   }
 
   // Server-side credit deduction for credit-based plans
