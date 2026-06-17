@@ -57,6 +57,20 @@ export async function POST(request: NextRequest) {
     return val
   }
 
+  const sanitizedFormData = sanitizeJsonValue(body.form_data)
+  console.log('DEBUG lead insert payload:', JSON.stringify({
+    account_id: body.account_id,
+    hosted_form_id: body.hosted_form_id,
+    name: body.name,
+    email: body.email,
+    phone: body.phone,
+    form_type: body.form_type,
+    status: body.status,
+    form_data_keys: Object.keys(body.form_data ?? {}),
+    form_data_raw_sample: JSON.stringify(body.form_data).slice(0, 500),
+    form_data_sanitized_sample: JSON.stringify(sanitizedFormData).slice(0, 500),
+  }))
+
   const { data: insertedLead, error } = await supabaseAdmin.from('leads').insert({
     account_id: body.account_id,
     hosted_form_id: body.hosted_form_id,
@@ -64,12 +78,13 @@ export async function POST(request: NextRequest) {
     email: body.email,
     phone: body.phone,
     form_type: body.form_type,
-    form_data: sanitizeJsonValue(body.form_data),
+    form_data: sanitizedFormData,
     status: body.status,
   }).select('id').single()
 
   if (error) {
-    console.error('Lead insert error:', error)
+    console.error('Lead insert error (full):', JSON.stringify(error))
+    console.error('Lead insert error details:', error.code, error.message, error.details, error.hint)
     return NextResponse.json({ error: 'Failed to submit lead' }, { status: 500 })
   }
 
