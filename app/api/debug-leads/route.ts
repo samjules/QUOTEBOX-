@@ -6,7 +6,7 @@ const FORM_ID = '3c54f2d9-5ea9-44f2-99bb-42b9775ec9ab'
 
 export async function GET(request: NextRequest) {
   const secret = request.nextUrl.searchParams.get('secret')
-  if (secret !== process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(-8)) {
+  if (secret !== process.env.INTERNAL_API_KEY) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   }
 
