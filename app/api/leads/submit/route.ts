@@ -62,8 +62,7 @@ export async function POST(request: NextRequest) {
     const sanitizedFormData = sanitizeJsonValue(body.form_data)
     console.log('DEBUG pre-insert: account', body.account_id, 'form', body.hosted_form_id, 'status', body.status)
 
-    console.log('DEBUG calling insert...')
-    const insertPromise = supabaseAdmin.from('leads').insert({
+    const { data, error: insertError } = await supabaseAdmin.from('leads').insert({
       account_id: body.account_id,
       hosted_form_id: body.hosted_form_id,
       name: body.name,
@@ -74,22 +73,16 @@ export async function POST(request: NextRequest) {
       status: body.status,
     }).select('id').single()
 
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('INSERT_TIMEOUT_8s')), 8000)
-    )
+    console.log('DEBUG insert done. error_code:', insertError?.code ?? 'none', 'data_id:', data?.id ?? 'none')
 
-    const result = await Promise.race([insertPromise, timeoutPromise])
-    console.log('DEBUG insert resolved, error:', (result as {error?: {code?: string}}).error?.code ?? 'none')
-
-    if ((result as {error?: {code?: string; message?: string; details?: string}}).error) {
-      const e = (result as {error: {code?: string; message?: string; details?: string}}).error
-      console.error('Lead insert error:', e.code, e.message, e.details)
+    if (insertError) {
+      console.log('LEAD INSERT FAILED:', insertError.code, insertError.message, String(insertError.details), String(insertError.hint))
       return NextResponse.json({ error: 'Failed to submit lead' }, { status: 500 })
     }
-    insertedLead = (result as {data: {id: string}}).data
+    insertedLead = data
     console.log('DEBUG lead inserted ok:', insertedLead?.id)
   } catch (err) {
-    console.error('Lead insert threw:', err instanceof Error ? err.message : String(err))
+    console.log('LEAD INSERT THREW:', err instanceof Error ? err.message : String(err))
     return NextResponse.json({ error: 'Failed to submit lead' }, { status: 500 })
   }
 
