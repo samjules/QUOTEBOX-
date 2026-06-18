@@ -212,5 +212,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${siteUrl}/signup?step=4&meta=connected`)
   }
 
+  // Return to onboarding wizard
+  if (from === 'onboarding') {
+    return NextResponse.redirect(`${siteUrl}/onboarding?meta=connected`)
+  }
+
   return NextResponse.redirect(`${siteUrl}/lead-machine?connected=true`)
 }

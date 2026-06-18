@@ -119,10 +119,11 @@ interface SetupWizardProps {
   accountId: string
   onCustomize: (formId: string, formName: string, slug: string) => void
   onAdvanced: () => void
+  onDone?: (formId: string) => void
 }
 
 // ── Component ─────────────────────────────────────────────────
-export default function SetupWizard({ accountId, onCustomize, onAdvanced }: SetupWizardProps) {
+export default function SetupWizard({ accountId, onCustomize, onAdvanced, onDone }: SetupWizardProps) {
   const supabase = createClient()
   const TOTAL_STEPS = 4
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 'success'>(1)
@@ -386,16 +387,28 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+              {onDone && (
+                <button onClick={() => onDone(savedFormId)} style={{
+                  width: '100%', padding: '12px 0', borderRadius: 10,
+                  background: brandColor, color: '#fff', border: 'none',
+                  fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer',
+                }}>Continue to next step →</button>
+              )}
               <a href={`https://quote-box.com/${liveSlug}`} target="_blank" rel="noreferrer" style={{
                 display: 'block', textAlign: 'center', padding: '12px 0',
-                background: brandColor, color: '#fff', borderRadius: 10,
-                fontWeight: 700, fontSize: '0.88rem', textDecoration: 'none',
+                background: onDone ? 'none' : brandColor,
+                color: onDone ? 'var(--fg)' : '#fff',
+                border: onDone ? '1px solid var(--border)' : 'none',
+                borderRadius: 10,
+                fontWeight: onDone ? 600 : 700, fontSize: '0.88rem', textDecoration: 'none',
               }}>Preview form</a>
-              <button onClick={() => onCustomize(savedFormId, businessName.trim() + ' Quote', liveSlug)} style={{
-                width: '100%', padding: '12px 0', borderRadius: 10,
-                background: 'none', border: '1px solid var(--border)',
-                color: 'var(--fg)', fontSize: '0.88rem', fontWeight: 600, cursor: 'pointer',
-              }}>Customize your form</button>
+              {!onDone && (
+                <button onClick={() => onCustomize(savedFormId, businessName.trim() + ' Quote', liveSlug)} style={{
+                  width: '100%', padding: '12px 0', borderRadius: 10,
+                  background: 'none', border: '1px solid var(--border)',
+                  color: 'var(--fg)', fontSize: '0.88rem', fontWeight: 600, cursor: 'pointer',
+                }}>Customize your form</button>
+              )}
             </div>
 
             {pixelId.trim() && (

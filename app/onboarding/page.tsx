@@ -1,228 +1,223 @@
 'use client'
 
-// MIGRATION REQUIRED — run once in the Supabase SQL editor:
-//   ALTER TABLE accounts ADD COLUMN IF NOT EXISTS phone TEXT;
-//   ALTER TABLE accounts ADD COLUMN IF NOT EXISTS logo_url TEXT;
-
-import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useRef, useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import SetupWizard from '@/app/(protected)/form-builder/SetupWizard'
 
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '12px 14px',
-  borderRadius: 10,
-  border: '1.5px solid #e5e4e0',
-  fontSize: '0.95rem',
-  outline: 'none',
-  boxSizing: 'border-box',
-  fontFamily: 'inherit',
-  color: '#1a1a2e',
-  background: 'white',
+type Step = 1 | 2 | 3 | 4 | 'done'
+
+const STEP_LABELS: Record<1 | 2 | 3 | 4, string> = {
+  1: 'Logo',
+  2: 'Background',
+  3: 'Quote Form',
+  4: 'Meta Ads',
 }
 
-const primaryBtn: React.CSSProperties = {
-  width: '100%',
-  padding: '14px',
-  borderRadius: 10,
-  border: 'none',
-  background: '#1a1a2e',
-  color: '#ffe500',
-  fontSize: '1rem',
-  fontWeight: 700,
-  cursor: 'pointer',
-  fontFamily: 'inherit',
-  letterSpacing: '0.01em',
-}
-
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: '0.85rem',
-  fontWeight: 600,
-  color: '#334155',
-  marginBottom: 8,
-}
-
-// Spinner SVG
 function Spinner() {
   return (
-    <svg
-      style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 8, animation: 'spin 0.8s linear infinite' }}
-      width="18" height="18" viewBox="0 0 24 24" fill="none"
-    >
+    <svg style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 8, animation: 'spin 0.8s linear infinite' }}
+      width="18" height="18" viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4" strokeDashoffset="10" strokeLinecap="round" />
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </svg>
   )
 }
 
-// Field type badge
-function FieldBadge({ type }: { type: string }) {
-  const colors: Record<string, { bg: string; text: string }> = {
-    radio:    { bg: '#eff6ff', text: '#2563eb' },
-    dropdown: { bg: '#f0fdf4', text: '#16a34a' },
-    checkbox: { bg: '#fdf4ff', text: '#9333ea' },
-    number:   { bg: '#fff7ed', text: '#ea580c' },
-    textarea: { bg: '#f8fafc', text: '#475569' },
-    route:    { bg: '#fef9c3', text: '#854d0e' },
-    image:    { bg: '#fff1f2', text: '#be123c' },
-  }
-  const c = colors[type] || { bg: '#f1f5f9', text: '#475569' }
+// ── Step dots progress indicator ────────────────────────────────────────────
+function StepDots({ current }: { current: Step }) {
+  const steps: Array<1 | 2 | 3 | 4> = [1, 2, 3, 4]
+  const currentNum = current === 'done' ? 5 : current
   return (
-    <span style={{
-      display: 'inline-block',
-      padding: '2px 8px',
-      borderRadius: 6,
-      fontSize: '0.72rem',
-      fontWeight: 600,
-      letterSpacing: '0.03em',
-      textTransform: 'uppercase' as const,
-      background: c.bg,
-      color: c.text,
-    }}>
-      {type}
-    </span>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 24 }}>
+      {steps.map((s, i) => {
+        const done = s < currentNum
+        const active = s === currentNum
+        return (
+          <div key={s} style={{ display: 'flex', alignItems: 'center', flex: i < steps.length - 1 ? 1 : 'none' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '0.72rem', fontWeight: 700,
+                background: done ? '#1a1a2e' : active ? '#1a1a2e' : 'rgba(26,26,46,0.1)',
+                color: done ? '#ffe500' : active ? '#ffe500' : 'rgba(26,26,46,0.4)',
+                boxShadow: active ? '0 0 0 4px rgba(26,26,46,0.12)' : 'none',
+                transition: 'all 0.25s',
+              }}>
+                {done ? (
+                  <svg width="11" height="11" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2 6l3 3 5-5" />
+                  </svg>
+                ) : s}
+              </div>
+              <span style={{
+                marginTop: 5, fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.05em',
+                textTransform: 'uppercase' as const, whiteSpace: 'nowrap',
+                color: s <= currentNum ? 'rgba(26,26,46,0.7)' : 'rgba(26,26,46,0.3)',
+              }}>
+                {STEP_LABELS[s]}
+              </span>
+            </div>
+            {i < steps.length - 1 && (
+              <div style={{
+                flex: 1, height: 2, margin: '0 6px', marginBottom: 18,
+                background: done ? '#1a1a2e' : 'rgba(26,26,46,0.1)',
+                transition: 'background 0.25s',
+              }} />
+            )}
+          </div>
+        )
+      })}
+    </div>
   )
 }
 
-export default function OnboardingPage() {
+// ── Image upload area ─────────────────────────────────────────────────────────
+interface UploadBoxProps {
+  previewUrl: string | null
+  uploading: boolean
+  label: string
+  hint: string
+  aspectRatio?: string
+  onFile: (file: File) => void
+}
+function UploadBox({ previewUrl, uploading, label, hint, aspectRatio = '16/7', onFile }: UploadBoxProps) {
+  const ref = useRef<HTMLInputElement>(null)
+  return (
+    <div>
+      <div
+        onClick={() => !uploading && ref.current?.click()}
+        style={{
+          width: '100%', aspectRatio, borderRadius: 12,
+          border: `2px dashed ${previewUrl ? 'transparent' : '#d1d5db'}`,
+          background: previewUrl ? 'transparent' : '#f8fafc',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: uploading ? 'default' : 'pointer', overflow: 'hidden',
+          position: 'relative', transition: 'border-color 0.15s',
+        }}
+      >
+        {previewUrl ? (
+          <>
+            <img src={previewUrl} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            {!uploading && (
+              <div style={{
+                position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                opacity: 0, transition: 'opacity 0.15s',
+              }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.opacity = '1' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.opacity = '0' }}
+              >
+                <span style={{ color: '#fff', fontSize: '0.82rem', fontWeight: 600 }}>Change photo</span>
+              </div>
+            )}
+          </>
+        ) : uploading ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#64748b', fontSize: '0.85rem' }}>
+            <Spinner />Uploading…
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '20px 16px' }}>
+            <div style={{ width: 40, height: 40, background: '#e2e8f0', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
+              <svg width="18" height="18" fill="none" stroke="#94a3b8" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#374151' }}>Click to upload</div>
+            <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 3 }}>{hint}</div>
+          </div>
+        )}
+      </div>
+      <input ref={ref} type="file" accept="image/*" style={{ display: 'none' }}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = '' }}
+      />
+    </div>
+  )
+}
+
+// ── Main wizard ───────────────────────────────────────────────────────────────
+function OnboardingWizard() {
   const supabase = createClient()
   const router = useRouter()
+  const searchParams = useSearchParams()
 
-  // Steps: 0=company, 1=phone, 2=AI form gen, 3=done
-  const [step, setStep] = useState<0 | 1 | 2 | 3>(0)
+  const [step, setStep] = useState<Step>(1)
   const [accountId, setAccountId] = useState('')
-  const [authEmail, setAuthEmail] = useState('')
-  const [businessName, setBusinessName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [metaFlash, setMetaFlash] = useState(false)
 
-  // Logo state
+  // Step 1: logo
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [logoUploading, setLogoUploading] = useState(false)
-  const logoInputRef = useRef<HTMLInputElement>(null)
 
-  // AI form gen state
-  const [businessDescription, setBusinessDescription] = useState('')
-  const [generating, setGenerating] = useState(false)
-  const [generatedFormId, setGeneratedFormId] = useState('')
-  const [generatedFormName, setGeneratedFormName] = useState('')
-  const [generatedFields, setGeneratedFields] = useState<Array<{ type: string; label: string }>>([])
+  // Step 2: background
+  const [bgUrl, setBgUrl] = useState<string | null>(null)
+  const [bgUploading, setBgUploading] = useState(false)
+
+  // Meta connected state
+  const [metaConnected, setMetaConnected] = useState(false)
 
   useEffect(() => {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.replace('/login'); return }
 
-      setAuthEmail(user.email ?? '')
-
       const { data: account } = await supabase
         .from('accounts')
-        .select('id, business_name')
+        .select('id, logo_url, dashboard_bg_url')
         .eq('owner_id', user.id)
         .single()
 
       if (!account) { router.replace('/dashboard'); return }
 
       setAccountId(account.id)
-      setBusinessName(account.business_name ?? '')
+      if (account.logo_url) setLogoUrl(account.logo_url)
+      if ((account as Record<string, unknown>).dashboard_bg_url) setBgUrl((account as Record<string, unknown>).dashboard_bg_url as string)
+
+      // Handle meta OAuth callback
+      const metaParam = searchParams.get('meta')
+      if (metaParam === 'connected') {
+        setMetaConnected(true)
+        setMetaFlash(true)
+        setStep(4)
+        setTimeout(() => {
+          setMetaFlash(false)
+          setStep('done')
+        }, 1600)
+      }
+
       setLoading(false)
     }
     init()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  function goToStep1() {
-    if (!businessName.trim()) {
-      setError('Please enter your company name')
-      return
-    }
-    setError('')
-    setStep(1)
-  }
-
+  // ── Logo upload ──
   async function handleLogoUpload(file: File) {
     if (!accountId) return
     setLogoUploading(true)
     const ext = file.name.split('.').pop() ?? 'png'
     const path = `logos/${accountId}/logo-${Date.now()}.${ext}`
-    const { error: uploadErr } = await supabase.storage.from('vsls').upload(path, file, { upsert: true })
-    if (uploadErr) { setLogoUploading(false); return }
+    const { error } = await supabase.storage.from('vsls').upload(path, file, { upsert: true })
+    if (error) { setLogoUploading(false); return }
     const { data: { publicUrl } } = supabase.storage.from('vsls').getPublicUrl(path)
-    await supabase
-      .from('accounts')
-      .update({ logo_url: publicUrl } as Record<string, string>)
-      .eq('id', accountId)
+    await supabase.from('accounts').update({ logo_url: publicUrl } as Record<string, string>).eq('id', accountId)
     setLogoUrl(publicUrl)
     setLogoUploading(false)
   }
 
-  async function handleFinish() {
-    setSaving(true)
-    setError('')
-
-    const { error: nameErr } = await supabase
-      .from('accounts')
-      .update({ business_name: businessName.trim() })
-      .eq('id', accountId)
-
-    if (nameErr) {
-      setError(nameErr.message)
-      setSaving(false)
-      return
-    }
-
-    if (phone.trim()) {
-      await supabase
-        .from('accounts')
-        .update({ phone: phone.trim() } as Record<string, string>)
-        .eq('id', accountId)
-    }
-
-    setSaving(false)
-    setStep(2)
-  }
-
-  async function handleGenerateForm() {
-    if (!businessDescription.trim()) {
-      setError('Please describe your business')
-      return
-    }
-    setError('')
-    setGenerating(true)
-
-    try {
-      const res = await fetch('/api/onboarding/generate-form', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          businessDescription: businessDescription.trim(),
-          businessName: businessName.trim(),
-          accountId,
-        }),
-      })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        setError(data.error || 'Failed to generate form')
-        setGenerating(false)
-        return
-      }
-
-      setGeneratedFormId(data.formId)
-      setGeneratedFormName(data.formName)
-      // Extract a summary of the generated fields to show the user
-      const fields = data.formConfig?.fields ?? []
-      setGeneratedFields(fields.map((f: { type: string; label: string }) => ({ type: f.type, label: f.label })))
-      setStep(3)
-    } catch {
-      setError('Something went wrong. Please try again.')
-    } finally {
-      setGenerating(false)
-    }
+  // ── Background upload ──
+  async function handleBgUpload(file: File) {
+    if (!accountId) return
+    setBgUploading(true)
+    const ext = file.name.split('.').pop() ?? 'jpg'
+    const path = `backgrounds/${accountId}/bg-${Date.now()}.${ext}`
+    const { error } = await supabase.storage.from('vsls').upload(path, file, { upsert: true })
+    if (error) { setBgUploading(false); return }
+    const { data: { publicUrl } } = supabase.storage.from('vsls').getPublicUrl(path)
+    await supabase.from('accounts').update({ dashboard_bg_url: publicUrl } as Record<string, string>).eq('id', accountId)
+    setBgUrl(publicUrl)
+    setBgUploading(false)
   }
 
   if (loading) {
@@ -233,341 +228,256 @@ export default function OnboardingPage() {
     )
   }
 
-  const totalSteps = 3
-  const progressPct = step === 0 ? 33 : step === 1 ? 66 : step === 2 ? 100 : 100
+  // ── Step 3: Full-screen SetupWizard ──────────────────────────────────────
+  if (step === 3) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg, #f7f6f3)' }}>
+        {/* Thin onboarding context bar */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '10px 24px', background: '#1a1a2e', flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ffe500' }} />
+            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+              Setup — Step 3 of 4: Build your quote form
+            </span>
+          </div>
+          <button
+            onClick={() => setStep(4)}
+            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem', cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            Skip for now →
+          </button>
+        </div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          {accountId && (
+            <SetupWizard
+              accountId={accountId}
+              onCustomize={() => setStep(4)}
+              onAdvanced={() => router.push('/form-builder')}
+              onDone={() => setStep(4)}
+            />
+          )}
+        </div>
+      </div>
+    )
+  }
 
-  const stepTitles = [
-    'Welcome to Quote Box!',
-    'Your contact details',
-    'Build your first form with Robert',
-    "You're all set!",
-  ]
-  const stepSubtitles = [
-    "Let's confirm your company info so clients know who they're getting a quote from.",
-    'Add a phone number so leads know how to reach you.',
-    `Tell us what ${businessName} does and Robert will build a ready-to-use quote form for you.`,
-    `${businessName} is ready. Your Robert-generated form is live and ready to capture leads.`,
-  ]
+  // ── Card layout for steps 1, 2, 4 and done ────────────────────────────────
+  const stepTitles: Record<Step, string> = {
+    1: 'Add your company logo',
+    2: 'Add a background photo',
+    3: '',
+    4: 'Connect your Meta account',
+    done: "You're all set!",
+  }
+  const stepSubtitles: Record<Step, string> = {
+    1: 'Your logo appears in the dashboard sidebar and on your quote forms.',
+    2: 'This image shows as the background on your dashboard — great for a truck or team photo.',
+    3: '',
+    4: "Connect Facebook to run lead ads and capture leads directly. You can do this later too.",
+    done: "Your dashboard is ready. Start sharing your quote form to capture leads.",
+  }
 
   return (
     <div style={{
-      minHeight: '100vh',
-      background: '#f7f6f3',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
+      minHeight: '100vh', background: '#f7f6f3',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '40px 16px',
     }}>
       <div style={{
-        width: '100%',
-        maxWidth: step === 2 ? 540 : 480,
-        background: 'white',
-        borderRadius: 20,
+        width: '100%', maxWidth: 500,
+        background: 'white', borderRadius: 20,
         boxShadow: '0 8px 40px rgba(0,0,0,0.10)',
         overflow: 'hidden',
-        transition: 'max-width 0.3s ease',
       }}>
-        {/* Header */}
+        {/* Yellow header stripe */}
         <div style={{ background: '#ffe500', padding: '28px 32px 24px' }}>
-          <div style={{ fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: 'rgba(26,26,46,0.5)', marginBottom: 10 }}>
-            {step < 3 ? `Step ${step + 1} of ${totalSteps}` : 'Complete'}
-          </div>
-          {step < 3 && (
-            <div style={{ height: 4, background: 'rgba(26,26,46,0.12)', borderRadius: 2, marginBottom: 20, overflow: 'hidden' }}>
-              <div style={{
-                height: '100%',
-                background: '#1a1a2e',
-                borderRadius: 2,
-                width: `${progressPct}%`,
-                transition: 'width 0.35s ease',
-              }} />
-            </div>
+          {step !== 'done' && (
+            <StepDots current={step} />
           )}
-          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1a1a2e', lineHeight: 1.2, marginBottom: 8 }}>
+          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1a1a2e', lineHeight: 1.2, marginBottom: 6 }}>
             {stepTitles[step]}
           </div>
-          <div style={{ fontSize: '0.88rem', color: 'rgba(26,26,46,0.6)', lineHeight: 1.55 }}>
+          <div style={{ fontSize: '0.86rem', color: 'rgba(26,26,46,0.6)', lineHeight: 1.55 }}>
             {stepSubtitles[step]}
           </div>
         </div>
 
         {/* Body */}
-        <div style={{ padding: '28px 32px 32px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+        <div style={{ padding: '28px 32px 32px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-          {/* ── Step 0: Company name ── */}
-          {step === 0 && (
-            <>
-              <div>
-                <label style={labelStyle}>Company Name *</label>
-                <input
-                  type="text"
-                  value={businessName}
-                  onChange={(e) => { setBusinessName(e.target.value); setError('') }}
-                  placeholder="e.g. Acme Cleaning Co."
-                  autoFocus
-                  style={inputStyle}
-                  onKeyDown={(e) => { if (e.key === 'Enter') goToStep1() }}
-                />
-              </div>
-
-              <div>
-                <label style={labelStyle}>Login Email</label>
-                <input
-                  type="email"
-                  value={authEmail}
-                  readOnly
-                  style={{ ...inputStyle, background: '#f8fafc', color: '#64748b' }}
-                />
-                <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 5 }}>
-                  Your account email — used to log in
-                </div>
-              </div>
-
-              {/* Logo upload */}
-              <div>
-                <label style={labelStyle}>
-                  Business Logo{' '}
-                  <span style={{ fontWeight: 400, color: '#94a3b8' }}>(optional)</span>
-                </label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <div style={{
-                    width: 56, height: 56, borderRadius: 10,
-                    border: '1.5px dashed #e5e4e0', background: '#f8fafc',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    overflow: 'hidden', flexShrink: 0,
-                  }}>
-                    {logoUrl ? (
-                      <img src={logoUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                    ) : (
-                      <svg width="22" height="22" fill="none" stroke="#cbd5e1" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => logoInputRef.current?.click()}
-                    disabled={logoUploading}
-                    style={{
-                      padding: '9px 16px', borderRadius: 8,
-                      border: '1.5px solid #e5e4e0', background: 'white',
-                      fontSize: '0.84rem', fontWeight: 600, cursor: 'pointer',
-                      color: '#334155', fontFamily: 'inherit',
-                      opacity: logoUploading ? 0.6 : 1,
-                    }}
-                  >
-                    {logoUploading ? 'Uploading…' : logoUrl ? 'Change Logo' : 'Upload Logo'}
-                  </button>
-                  <input
-                    ref={logoInputRef}
-                    type="file"
-                    accept="image/*"
-                    style={{ display: 'none' }}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) handleLogoUpload(file)
-                      e.target.value = ''
-                    }}
-                  />
-                </div>
-                <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 6 }}>
-                  Shows at the bottom of your sidebar
-                </div>
-              </div>
-
-              {error && (
-                <div style={{ fontSize: '0.84rem', color: '#ef4444', fontWeight: 500 }}>{error}</div>
-              )}
-
-              <button style={primaryBtn} onClick={goToStep1}>
-                Continue →
-              </button>
-            </>
-          )}
-
-          {/* ── Step 1: Phone ── */}
+          {/* ── Step 1: Logo ── */}
           {step === 1 && (
             <>
-              <div>
-                <label style={labelStyle}>
-                  Phone Number{' '}
-                  <span style={{ fontWeight: 400, color: '#94a3b8' }}>(optional)</span>
-                </label>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+1 555 000 0000"
-                  autoFocus
-                  style={inputStyle}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleFinish() }}
-                />
-              </div>
-
-              {error && (
-                <div style={{ fontSize: '0.84rem', color: '#ef4444', fontWeight: 500 }}>{error}</div>
+              <UploadBox
+                previewUrl={logoUrl}
+                uploading={logoUploading}
+                label="Company logo"
+                hint="PNG or JPG recommended · max 5 MB"
+                aspectRatio="3/1"
+                onFile={handleLogoUpload}
+              />
+              {logoUrl && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#f0fdf4', borderRadius: 9, border: '1px solid #bbf7d0' }}>
+                  <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="#16a34a" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l3 3 7-7" />
+                  </svg>
+                  <span style={{ fontSize: '0.82rem', color: '#166534', fontWeight: 600 }}>Logo uploaded</span>
+                </div>
               )}
-
               <button
-                style={{ ...primaryBtn, opacity: saving ? 0.6 : 1, cursor: saving ? 'not-allowed' : 'pointer' }}
-                disabled={saving}
-                onClick={handleFinish}
+                onClick={() => setStep(2)}
+                style={{
+                  width: '100%', padding: '13px', borderRadius: 9, border: 'none',
+                  background: '#1a1a2e', color: '#ffe500', fontSize: '0.95rem', fontWeight: 700,
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}
               >
-                {saving ? 'Saving…' : 'Continue →'}
-              </button>
-
-              <button
-                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.82rem', cursor: 'pointer', padding: 0, fontFamily: 'inherit', alignSelf: 'flex-start' }}
-                onClick={() => setStep(0)}
-              >
-                ← Back
+                {logoUrl ? 'Continue →' : 'Skip for now →'}
               </button>
             </>
           )}
 
-          {/* ── Step 2: AI Form Generator ── */}
+          {/* ── Step 2: Background ── */}
           {step === 2 && (
             <>
-              {/* AI badge */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '10px 14px',
-                background: 'linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%)',
-                borderRadius: 10,
-                border: '1px solid #e0e7ff',
-              }}>
-                <img src="/icons/logo-1772578089154.jpg" alt="Robert" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-                <span style={{ fontSize: '0.8rem', color: '#4338ca', fontWeight: 600 }}>
-                  Powered by Robert — your form will be ready in seconds
-                </span>
-              </div>
-
-              <div>
-                <label style={labelStyle}>Describe your business and services *</label>
-                <textarea
-                  value={businessDescription}
-                  onChange={(e) => { setBusinessDescription(e.target.value); setError('') }}
-                  placeholder={`e.g. "We're a residential cleaning company. We offer standard cleans, deep cleans, and move-in/out cleans. We also offer add-ons like oven cleaning and laundry."`}
-                  autoFocus
-                  rows={5}
-                  style={{
-                    ...inputStyle,
-                    resize: 'vertical',
-                    lineHeight: 1.55,
-                    minHeight: 110,
-                  }}
-                />
-                <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 5 }}>
-                  The more detail you give, the better the form. Include services, pricing tiers, add-ons, or anything customers typically ask about.
+              <UploadBox
+                previewUrl={bgUrl}
+                uploading={bgUploading}
+                label="Dashboard background"
+                hint="Wide landscape photo works best · max 5 MB"
+                aspectRatio="16/7"
+                onFile={handleBgUpload}
+              />
+              {bgUrl && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#f0fdf4', borderRadius: 9, border: '1px solid #bbf7d0' }}>
+                  <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="#16a34a" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l3 3 7-7" />
+                  </svg>
+                  <span style={{ fontSize: '0.82rem', color: '#166534', fontWeight: 600 }}>Background uploaded</span>
                 </div>
-              </div>
-
-              {error && (
-                <div style={{ fontSize: '0.84rem', color: '#ef4444', fontWeight: 500 }}>{error}</div>
               )}
-
               <button
-                style={{
-                  ...primaryBtn,
-                  opacity: generating ? 0.7 : 1,
-                  cursor: generating ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-                disabled={generating}
-                onClick={handleGenerateForm}
-              >
-                {generating ? (
-                  <><Spinner />Generating your form…</>
-                ) : (
-                  '✦ Generate My Form'
-                )}
-              </button>
-
-              <button
-                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.82rem', cursor: 'pointer', padding: 0, fontFamily: 'inherit', alignSelf: 'center' }}
                 onClick={() => setStep(3)}
+                style={{
+                  width: '100%', padding: '13px', borderRadius: 9, border: 'none',
+                  background: '#1a1a2e', color: '#ffe500', fontSize: '0.95rem', fontWeight: 700,
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}
               >
-                Skip, I'll build it manually →
+                {bgUrl ? 'Continue →' : 'Skip for now →'}
               </button>
-
               <button
-                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.82rem', cursor: 'pointer', padding: 0, fontFamily: 'inherit', alignSelf: 'flex-start' }}
                 onClick={() => setStep(1)}
+                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.82rem', cursor: 'pointer', padding: 0, fontFamily: 'inherit', alignSelf: 'flex-start' }}
               >
                 ← Back
               </button>
             </>
           )}
 
-          {/* ── Step 3: Done ── */}
-          {step === 3 && (
-            <div style={{ textAlign: 'center', padding: '8px 0' }}>
-              <div style={{
-                width: 64, height: 64, borderRadius: '50%',
-                background: '#f0fdf4', border: '2px solid #86efac',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                margin: '0 auto 18px', fontSize: '1.6rem', color: '#16a34a',
-              }}>
-                ✓
-              </div>
-
-              {generatedFormId ? (
+          {/* ── Step 4: Meta connect ── */}
+          {step === 4 && (
+            <>
+              {metaFlash && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', background: '#f0fdf4', borderRadius: 9, border: '1px solid #bbf7d0' }}>
+                  <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="#16a34a" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l3 3 7-7" />
+                  </svg>
+                  <span style={{ fontSize: '0.84rem', color: '#166534', fontWeight: 600 }}>Meta connected! Taking you to your dashboard…</span>
+                </div>
+              )}
+              {!metaFlash && (
                 <>
-                  {/* Show generated field summary */}
-                  {generatedFields.length > 0 && (
-                    <div style={{ textAlign: 'left', marginBottom: 22 }}>
-                      <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <img src="/icons/logo-1772578089154.jpg" alt="Robert" style={{ width: 16, height: 16, borderRadius: '50%', objectFit: 'cover' }} />
-                        Robert generated {generatedFields.length} fields:
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                        {generatedFields.map((f, i) => (
-                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', background: '#f8fafc', borderRadius: 8 }}>
-                            <FieldBadge type={f.type} />
-                            <span style={{ fontSize: '0.85rem', color: '#1a1a2e', fontWeight: 500 }}>{f.label}</span>
-                          </div>
-                        ))}
-                      </div>
+                  {metaConnected ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', background: '#f0fdf4', borderRadius: 9, border: '1px solid #bbf7d0' }}>
+                      <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="#16a34a" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l3 3 7-7" />
+                      </svg>
+                      <span style={{ fontSize: '0.84rem', color: '#166534', fontWeight: 600 }}>Meta account connected</span>
                     </div>
+                  ) : (
+                    <a
+                      href="/api/meta/connect?from=onboarding"
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                        width: '100%', padding: '13px', borderRadius: 9, border: 'none',
+                        background: '#1877F2', color: '#fff', fontSize: '0.95rem', fontWeight: 700,
+                        cursor: 'pointer', textDecoration: 'none', boxSizing: 'border-box',
+                      }}
+                    >
+                      <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.931-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
+                      </svg>
+                      Connect Meta →
+                    </a>
                   )}
-                  <div style={{ fontSize: '0.9rem', color: '#64748b', lineHeight: 1.65, marginBottom: 24 }}>
-                    Your Robert-generated form is live. Open the form builder to preview it, tweak pricing, or add more fields.
-                  </div>
                   <button
-                    style={{ ...primaryBtn, marginBottom: 12 }}
-                    onClick={() => router.push(`/form-builder?id=${generatedFormId}`)}
+                    onClick={() => setStep('done')}
+                    style={{
+                      width: '100%', padding: '12px', borderRadius: 9,
+                      border: '1.5px solid #e2e8f0', background: 'white',
+                      color: '#374151', fontSize: '0.88rem', fontWeight: 600,
+                      cursor: 'pointer', fontFamily: 'inherit',
+                    }}
                   >
-                    Open in Form Builder →
+                    {metaConnected ? 'Continue →' : 'Skip for now →'}
                   </button>
-                </>
-              ) : (
-                <>
-                  <div style={{ fontSize: '0.9rem', color: '#64748b', lineHeight: 1.65, marginBottom: 28 }}>
-                    Your account is live. Create your first quote form to start capturing leads from your website.
-                  </div>
                   <button
-                    style={{ ...primaryBtn, marginBottom: 12 }}
-                    onClick={() => router.push('/form-builder')}
+                    onClick={() => setStep(3)}
+                    style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.82rem', cursor: 'pointer', padding: 0, fontFamily: 'inherit', alignSelf: 'flex-start' }}
                   >
-                    Build my first form →
+                    ← Back
                   </button>
                 </>
               )}
+            </>
+          )}
 
+          {/* ── Done ── */}
+          {step === 'done' && (
+            <div style={{ textAlign: 'center', padding: '8px 0' }}>
+              <div style={{
+                width: 60, height: 60, borderRadius: '50%',
+                background: '#f0fdf4', border: '2px solid #86efac',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                margin: '0 auto 20px', color: '#16a34a',
+              }}>
+                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1a1a2e', marginBottom: 10 }}>
+                Dashboard is ready
+              </div>
+              <div style={{ fontSize: '0.88rem', color: '#64748b', lineHeight: 1.65, marginBottom: 28 }}>
+                Everything is set up. Start sharing your quote form to capture leads right away.
+              </div>
               <button
-                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.82rem', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
                 onClick={() => router.push('/dashboard')}
+                style={{
+                  width: '100%', padding: '13px', borderRadius: 9, border: 'none',
+                  background: '#1a1a2e', color: '#ffe500', fontSize: '0.95rem', fontWeight: 700,
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}
               >
-                Go to dashboard
+                Go to dashboard →
               </button>
             </div>
           )}
+
         </div>
       </div>
     </div>
+  )
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={null}>
+      <OnboardingWizard />
+    </Suspense>
   )
 }
