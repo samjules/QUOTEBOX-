@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import SetupWizard from './SetupWizard'
 import type { FormField, FieldOption, ConditionalRule, RuleCondition, RadiusTier } from '@/lib/types'
 import { computeBreakdown } from '@/lib/pricing'
 import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop'
@@ -2165,7 +2166,8 @@ export default function FormBuilderPage() {
   const router = useRouter()
 
   // ── State ──
-  const [screen, setScreen] = useState<'picker' | 'builder'>('builder')
+  const [screen, setScreen] = useState<'picker' | 'builder'>('picker')
+  const [pickerTab, setPickerTab] = useState<'wizard' | 'advanced'>('wizard')
   const [fields, setFields] = useState<FormField[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [testMode, setTestMode] = useState(false)
@@ -2369,49 +2371,7 @@ export default function FormBuilderPage() {
         await loadExistingForm(editId)
         setScreen('builder')
       } else {
-        // New form — seed with the 3 moving company sections
-        const homeSizeId = uid()
-        const routeId = uid()
-        const addOnsId = uid()
-        setFields([
-          {
-            id: homeSizeId,
-            type: 'radio',
-            label: 'Home Size',
-            required: true,
-            options: [
-              { id: uid(), label: 'Studio / 1 Bed', price: 120, hours: 2 },
-              { id: uid(), label: '2 Bedrooms',     price: 150, hours: 3 },
-              { id: uid(), label: '3 Bedrooms',     price: 180, hours: 4 },
-              { id: uid(), label: '4+ Bedrooms',    price: 220, hours: 5 },
-            ],
-          },
-          {
-            id: routeId,
-            type: 'route',
-            label: 'Moving Route',
-            required: true,
-            routeChargeType: 'radius_tiers',
-            radiusTiers: [
-              { id: uid(), maxMiles: 20,   driveCharge: 50 },
-              { id: uid(), maxMiles: 40,   driveCharge: 100 },
-              { id: uid(), maxMiles: null, driveCharge: 175 },
-            ],
-          },
-          {
-            id: addOnsId,
-            type: 'checkbox',
-            label: 'Add-ons',
-            required: false,
-            options: [
-              { id: uid(), label: 'Packing & Unpacking', price: 150 },
-              { id: uid(), label: 'Piano / Heavy Items',  price: 100 },
-              { id: uid(), label: 'Long Carry (>75 ft)',  price: 75  },
-              { id: uid(), label: 'Storage (1 month)',    price: 80  },
-            ],
-          },
-        ])
-        setSelectedId(homeSizeId)
+        setScreen('picker')
       }
     }
     init()
@@ -2918,7 +2878,7 @@ export default function FormBuilderPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 160 }}>
           <div className="builder-logo">Form Builder</div>
           {screen === 'builder' && existingForms.length > 0 && (
-            <button className="bb bb-ghost" style={{ fontSize: '0.78rem', padding: '4px 10px' }} onClick={() => setScreen('picker')}>
+            <button className="bb bb-ghost" style={{ fontSize: '0.78rem', padding: '4px 10px' }} onClick={() => { setPickerTab('advanced'); setScreen('picker') }}>
               ← All Forms
             </button>
           )}
@@ -2958,56 +2918,103 @@ export default function FormBuilderPage() {
 
       {/* Template picker or builder */}
       {screen === 'picker' ? (
-        <div style={{ overflowY: 'auto', height: 'calc(100vh - 52px)' }}>
-          {/* ── Existing forms ── */}
-          {(existingForms.length > 0 || existingFormsLoading) && (
-            <div style={{ maxWidth: 960, margin: '0 auto', padding: '28px 28px 0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                <h2 style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.05rem', fontWeight: 700, color: 'var(--fg)', margin: 0 }}>
-                  Your Forms
-                </h2>
-              </div>
-              {existingFormsLoading ? (
-                <p style={{ fontSize: '0.82rem', color: 'var(--muted)' }}>Loading…</p>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12, marginBottom: 32 }}>
-                  {existingForms.map((f) => (
-                    <div key={f.id} style={{
-                      background: 'var(--surface)', border: '2px solid var(--border)',
-                      borderRadius: 12, padding: '16px 18px',
-                      display: 'flex', flexDirection: 'column', gap: 8,
-                    }}>
-                      <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--fg)', lineHeight: 1.3 }}>{f.form_name}</div>
-                      {f.form_config?.slug && (
-                        <div style={{ fontSize: '0.72rem', color: 'var(--muted)', fontFamily: "'DM Mono', monospace" }}>
-                          /{f.form_config.slug}
+        <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 52px)' }}>
+          {/* ── Tab bar ── */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '12px 20px 0', borderBottom: '1px solid var(--border)', background: 'var(--surface)', flexShrink: 0 }}>
+            {([
+              { id: 'wizard', label: 'Quick Setup' },
+              { id: 'advanced', label: 'Advanced' },
+            ] as const).map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setPickerTab(tab.id)}
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: '8px 8px 0 0',
+                  border: 'none',
+                  borderBottom: pickerTab === tab.id ? '2px solid var(--accent)' : '2px solid transparent',
+                  background: 'none',
+                  color: pickerTab === tab.id ? 'var(--accent)' : 'var(--muted)',
+                  fontWeight: pickerTab === tab.id ? 700 : 500,
+                  fontSize: '0.84rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.12s',
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* ── Wizard tab ── */}
+          {pickerTab === 'wizard' && accountId && (
+            <SetupWizard
+              accountId={accountId}
+              onCustomize={async (formId, formName, slug) => {
+                await loadExistingForm(formId)
+                setExistingForms((prev) => {
+                  if (prev.find((f) => f.id === formId)) return prev
+                  return [{ id: formId, form_name: formName, form_config: { slug } }, ...prev]
+                })
+                setScreen('builder')
+              }}
+              onAdvanced={() => setPickerTab('advanced')}
+            />
+          )}
+
+          {/* ── Advanced tab ── */}
+          {pickerTab === 'advanced' && (
+            <div style={{ overflowY: 'auto', flex: 1 }}>
+              {(existingForms.length > 0 || existingFormsLoading) && (
+                <div style={{ maxWidth: 960, margin: '0 auto', padding: '28px 28px 0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                    <h2 style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.05rem', fontWeight: 700, color: 'var(--fg)', margin: 0 }}>
+                      Your Forms
+                    </h2>
+                  </div>
+                  {existingFormsLoading ? (
+                    <p style={{ fontSize: '0.82rem', color: 'var(--muted)' }}>Loading…</p>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12, marginBottom: 32 }}>
+                      {existingForms.map((f) => (
+                        <div key={f.id} style={{
+                          background: 'var(--surface)', border: '2px solid var(--border)',
+                          borderRadius: 12, padding: '16px 18px',
+                          display: 'flex', flexDirection: 'column', gap: 8,
+                        }}>
+                          <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--fg)', lineHeight: 1.3 }}>{f.form_name}</div>
+                          {f.form_config?.slug && (
+                            <div style={{ fontSize: '0.72rem', color: 'var(--muted)', fontFamily: "'DM Mono', monospace" }}>
+                              /{f.form_config.slug}
+                            </div>
+                          )}
+                          <button
+                            onClick={async () => {
+                              await loadExistingForm(f.id)
+                              setScreen('builder')
+                            }}
+                            style={{
+                              marginTop: 4, background: '#1a1a2e', color: 'white',
+                              border: 'none', borderRadius: 8, padding: '8px 0',
+                              fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
+                            }}
+                          >
+                            Edit Form →
+                          </button>
                         </div>
-                      )}
-                      <button
-                        onClick={async () => {
-                          await loadExistingForm(f.id)
-                          setScreen('builder')
-                        }}
-                        style={{
-                          marginTop: 4, background: '#1a1a2e', color: 'white',
-                          border: 'none', borderRadius: 8, padding: '8px 0',
-                          fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
-                        }}
-                      >
-                        Edit Form →
-                      </button>
+                      ))}
                     </div>
-                  ))}
+                  )}
+                  <div style={{ height: 1, background: 'var(--border)', marginBottom: 8 }} />
                 </div>
               )}
-              <div style={{ height: 1, background: 'var(--border)', marginBottom: 8 }} />
+              <TemplatePicker
+                onSelect={applyTemplate}
+                onBlank={() => setScreen('builder')}
+                onAi={() => { setScreen('builder'); setAiModalOpen(true) }}
+              />
             </div>
           )}
-          <TemplatePicker
-            onSelect={applyTemplate}
-            onBlank={() => setScreen('builder')}
-            onAi={() => { setScreen('builder'); setAiModalOpen(true) }}
-          />
         </div>
       ) : null}
 
