@@ -670,6 +670,36 @@ function QuickAction({
 
 // ── Launch Runway ─────────────────────────────────────────────
 
+function IconCheck() {
+  return (
+    <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="#1a1a2e" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 8l3 3 7-7" />
+    </svg>
+  )
+}
+
+function IconTruck({ color }: { color: string }) {
+  return (
+    <svg width="18" height="16" viewBox="0 0 26 18" fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="1" y="1" width="14" height="11" rx="1.5" />
+      <path d="M15 4h5l4 5v5h-9V4z" />
+      <circle cx="5" cy="15.5" r="2.5" />
+      <circle cx="19" cy="15.5" r="2.5" />
+    </svg>
+  )
+}
+
+function IconSignal({ color }: { color: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1.5 8.5C4 5.5 7.8 3.5 12 3.5s8 2 10.5 5" />
+      <path d="M4.5 11.5C6.5 9.3 9.1 8 12 8s5.5 1.3 7.5 3.5" />
+      <path d="M7.5 14.5C9 12.8 10.4 12 12 12s3 .8 4.5 2.5" />
+      <circle cx="12" cy="18" r="1.2" fill={color} stroke="none" />
+    </svg>
+  )
+}
+
 function LaunchRunway({
   hasForm,
   metaConnected,
@@ -690,36 +720,52 @@ function LaunchRunway({
   }
 
   const milestones: Milestone[] = [
-    { key: 'account', label: 'Account\nCreated', done: true },
+    { key: 'account', label: 'Account\nOpen', done: true },
     {
       key: 'form', label: 'Quote\nForm', done: hasForm,
-      cta: { label: 'Build your form', href: '/form-builder', desc: 'You need somewhere to send the leads. Build your quote form first.' },
+      cta: {
+        label: 'Build your form',
+        href: '/form-builder',
+        desc: 'Build the form homeowners fill out. No form, no leads — it\'s that simple.',
+      },
     },
     {
       key: 'meta', label: 'Meta\nConnected', done: metaConnected,
-      cta: { label: 'Connect Meta', href: '/settings', desc: 'Link your Facebook Business account to unlock ad campaigns.' },
+      cta: {
+        label: 'Connect Meta',
+        href: '/settings',
+        desc: 'Link your Facebook Business account. That\'s where the jobs are.',
+      },
     },
     {
-      key: 'creatives', label: 'Ad\nCreatives', done: hasCreatives,
-      cta: { label: 'Upload creatives', href: '/vsls', desc: 'Photos or videos that make people stop scrolling. Upload at least one.' },
+      key: 'creatives', label: 'Creatives\nUploaded', done: hasCreatives,
+      cta: {
+        label: 'Upload creatives',
+        href: '/vsls',
+        desc: 'Show your truck, your crew, a before/after. Real photos beat stock every time.',
+      },
     },
     {
       key: 'campaign', label: 'Campaign\nLive', done: hasCampaign,
-      cta: { label: 'Launch campaign', href: '/lead-machine', desc: 'Everything is set. Hit launch and the leads start moving.' },
+      cta: {
+        label: 'Launch campaign',
+        href: '/lead-machine',
+        desc: 'Truck\'s loaded, route\'s set. Hit launch and the calls start coming in.',
+      },
     },
-    { key: 'lead', label: 'First Meta\nLead', done: false, isGoal: true },
+    { key: 'lead', label: 'First Job\nRequest', done: false, isGoal: true },
   ]
 
   const doneCount = milestones.filter((m) => m.done).length
   const nextStep = milestones.find((m) => !m.done && !m.isGoal)
-  const waitingForLead = doneCount === milestones.length - 1 // all done except the goal
+  const waitingForLead = doneCount === milestones.length - 1
 
   const headlines = [
-    "You're on the launchpad. Let's build your lead machine.",
-    "Form built. Now let's get it in front of people.",
-    "Meta connected. Upload your ad creatives next.",
-    "Creatives uploaded. You're one step from launch.",
-    "Campaign's live. Your first lead is on the way.",
+    "Truck's parked in the yard. Time to get it rolling.",
+    "Form built. Now let's get it in front of homeowners.",
+    "Meta connected. Upload your truck photos and job videos.",
+    "Creatives loaded up. One step from rolling out.",
+    "Truck's on the road. First job request is incoming.",
   ]
   const headline = headlines[Math.min(doneCount - 1, headlines.length - 1)]
 
@@ -727,20 +773,25 @@ function LaunchRunway({
     <div style={{ background: '#1a1a2e', borderRadius: 20, overflow: 'hidden' }}>
       <style>{`
         @keyframes runway-pulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(255,229,0,0.4); }
-          50% { box-shadow: 0 0 0 6px rgba(255,229,0,0); }
+          0%, 100% { box-shadow: 0 0 0 0 rgba(255,229,0,0.45); }
+          50% { box-shadow: 0 0 0 7px rgba(255,229,0,0); }
+        }
+        @keyframes runway-drive {
+          0%   { transform: translateX(-2px); }
+          50%  { transform: translateX(2px); }
+          100% { transform: translateX(-2px); }
         }
       `}</style>
 
       {/* Header */}
-      <div style={{ padding: '22px 24px 18px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+      <div style={{ padding: '22px 24px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
         <div>
           <div style={{ fontSize: '0.6rem', fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase' as const, color: '#ffe500', marginBottom: 7 }}>
-            Runway to your first Meta lead
+            Road to your first paid lead
           </div>
           <div style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', lineHeight: 1.35, maxWidth: 380 }}>
             {waitingForLead
-              ? '🔥 Ads are running. Your first lead is incoming — hang tight.'
+              ? 'Ads are running. Your first job request is on the way — sit tight.'
               : headline}
           </div>
         </div>
@@ -754,26 +805,26 @@ function LaunchRunway({
       </div>
 
       {/* Progress track */}
-      <div style={{ padding: '4px 24px 22px', overflowX: 'auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', minWidth: 420 }}>
+      <div style={{ padding: '4px 24px 20px', overflowX: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', minWidth: 430 }}>
           {milestones.map((m, i) => {
             const isNext = m === milestones.find((x) => !x.done)
             const isLast = i === milestones.length - 1
             return (
               <div key={m.key} style={{ display: 'flex', alignItems: 'center', flex: isLast ? 'none' : 1 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
-                  {/* Circle */}
+                  {/* Node circle */}
                   <div style={{
-                    width: 36, height: 36, borderRadius: '50%',
+                    width: 38, height: 38, borderRadius: '50%',
                     background: m.done
                       ? '#ffe500'
                       : m.isGoal
-                        ? 'rgba(255,229,0,0.08)'
+                        ? 'rgba(255,229,0,0.07)'
                         : isNext
-                          ? 'rgba(255,229,0,0.12)'
+                          ? 'rgba(255,229,0,0.13)'
                           : 'rgba(255,255,255,0.06)',
                     border: m.isGoal
-                      ? '2px dashed rgba(255,229,0,0.35)'
+                      ? '2px dashed rgba(255,229,0,0.3)'
                       : isNext
                         ? '2px solid #ffe500'
                         : 'none',
@@ -781,39 +832,51 @@ function LaunchRunway({
                     animation: isNext ? 'runway-pulse 2s ease-in-out infinite' : 'none',
                     transition: 'all 0.3s',
                   }}>
-                    {m.done ? (
-                      m.isGoal ? (
-                        <span style={{ fontSize: '1rem' }}>🏆</span>
-                      ) : (
-                        <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="#1a1a2e" strokeWidth={2.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l3 3 7-7" />
-                        </svg>
-                      )
-                    ) : m.isGoal ? (
-                      <span style={{ fontSize: '1rem' }}>🎯</span>
-                    ) : (
-                      <span style={{ fontSize: '0.72rem', fontWeight: 800, color: isNext ? '#ffe500' : 'rgba(255,255,255,0.25)' }}>
+                    {m.done && !m.isGoal && <IconCheck />}
+                    {m.isGoal && (
+                      <div style={{ animation: waitingForLead ? 'runway-drive 1.4s ease-in-out infinite' : 'none' }}>
+                        <IconTruck color={waitingForLead ? '#ffe500' : 'rgba(255,229,0,0.35)'} />
+                      </div>
+                    )}
+                    {!m.done && !m.isGoal && (
+                      <span style={{ fontSize: '0.72rem', fontWeight: 800, color: isNext ? '#ffe500' : 'rgba(255,255,255,0.22)' }}>
                         {i + 1}
                       </span>
                     )}
                   </div>
                   {/* Label */}
                   <div style={{
-                    marginTop: 6, fontSize: '0.6rem', fontWeight: 700,
-                    color: m.done ? '#ffe500' : isNext ? 'rgba(255,229,0,0.7)' : m.isGoal ? 'rgba(255,229,0,0.4)' : 'rgba(255,255,255,0.25)',
+                    marginTop: 6, fontSize: '0.58rem', fontWeight: 700,
+                    color: m.done
+                      ? '#ffe500'
+                      : isNext
+                        ? 'rgba(255,229,0,0.75)'
+                        : m.isGoal
+                          ? 'rgba(255,229,0,0.38)'
+                          : 'rgba(255,255,255,0.22)',
                     letterSpacing: '0.03em', textAlign: 'center' as const,
-                    whiteSpace: 'pre-line' as const, lineHeight: 1.3, maxWidth: 54,
+                    whiteSpace: 'pre-line' as const, lineHeight: 1.3, maxWidth: 56,
                   }}>
                     {m.label}
                   </div>
                 </div>
-                {/* Connector line */}
+                {/* Connector — dashed road line */}
                 {!isLast && (
-                  <div style={{
-                    flex: 1, height: 2, margin: '0 3px', marginBottom: 28,
-                    background: m.done ? '#ffe500' : 'rgba(255,255,255,0.08)',
-                    transition: 'background 0.4s',
-                  }} />
+                  <div style={{ flex: 1, position: 'relative', marginBottom: 26, height: 6, margin: '0 4px 26px' }}>
+                    <div style={{
+                      position: 'absolute', top: '50%', left: 0, right: 0,
+                      height: 3, transform: 'translateY(-50%)',
+                      background: m.done ? '#ffe500' : 'rgba(255,255,255,0.07)',
+                      transition: 'background 0.4s',
+                    }} />
+                    {!m.done && (
+                      <div style={{
+                        position: 'absolute', top: '50%', left: 0, right: 0,
+                        height: 3, transform: 'translateY(-50%)',
+                        backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.13) 0px, rgba(255,255,255,0.13) 6px, transparent 6px, transparent 14px)',
+                      }} />
+                    )}
+                  </div>
                 )}
               </div>
             )
@@ -831,9 +894,9 @@ function LaunchRunway({
           }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#fff', marginBottom: 3 }}>
-                Next up: {nextStep.cta.label}
+                Next: {nextStep.cta.label}
               </div>
-              <div style={{ fontSize: '0.73rem', color: 'rgba(255,255,255,0.45)', lineHeight: 1.45 }}>
+              <div style={{ fontSize: '0.73rem', color: 'rgba(255,255,255,0.42)', lineHeight: 1.5 }}>
                 {nextStep.cta.desc}
               </div>
             </div>
@@ -852,21 +915,23 @@ function LaunchRunway({
         </div>
       )}
 
-      {/* Waiting for lead state */}
+      {/* Waiting for lead — truck is rolling state */}
       {waitingForLead && (
         <div style={{ margin: '0 16px 16px' }}>
           <div style={{
-            background: 'rgba(255,229,0,0.07)', border: '1px solid rgba(255,229,0,0.15)',
+            background: 'rgba(255,229,0,0.06)', border: '1px solid rgba(255,229,0,0.14)',
             borderRadius: 12, padding: '14px 16px',
-            display: 'flex', alignItems: 'center', gap: 12,
+            display: 'flex', alignItems: 'center', gap: 14,
           }}>
-            <div style={{ fontSize: '1.3rem', flexShrink: 0 }}>📡</div>
+            <div style={{ flexShrink: 0 }}>
+              <IconSignal color="rgba(255,229,0,0.8)" />
+            </div>
             <div>
-              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#ffe500', marginBottom: 2 }}>
-                Listening for leads…
+              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#ffe500', marginBottom: 3 }}>
+                Truck is rolling — leads incoming
               </div>
-              <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)', lineHeight: 1.45 }}>
-                Your campaign is live. This banner disappears the moment your first Meta lead lands.
+              <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.42)', lineHeight: 1.5 }}>
+                Your ad is live and targeting homeowners in your area. This disappears the moment your first Meta lead lands.
               </div>
             </div>
           </div>
