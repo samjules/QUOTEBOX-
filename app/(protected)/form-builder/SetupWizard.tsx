@@ -19,16 +19,17 @@ function fid() {
 
 type PricingModel = 'job_size' | 'hourly' | 'skip'
 
-interface Tier { id: string; label: string; price: string }
+// hours = estimated job duration for this tier; price is the shared hourly rate
+interface Tier { id: string; label: string; hours: string }
 
 const SERVICE_ADDONS: Record<ServiceId, Array<{ label: string; price: number }>> = {
   moving:       [{ label: 'Packing & Unpacking', price: 150 }, { label: 'Piano / Heavy Items', price: 100 }, { label: 'Long Carry (>75 ft)', price: 75 }],
   junk_removal: [{ label: 'Same-day service', price: 50 }, { label: 'Heavy items (piano)', price: 75 }, { label: 'Appliance removal', price: 50 }],
 }
 
-const DEFAULT_TIERS: Record<ServiceId, Array<{ label: string }>> = {
-  moving:       [{ label: 'Studio / 1 Bed' }, { label: '2–3 Bedrooms' }, { label: '4+ Bedrooms' }],
-  junk_removal: [{ label: '1/4 Truck' }, { label: '1/2 Truck' }, { label: 'Full Truck' }],
+const DEFAULT_TIERS: Record<ServiceId, Array<{ label: string; hours: string }>> = {
+  moving:       [{ label: 'Studio / 1 Bed', hours: '3' }, { label: '2–3 Bedrooms', hours: '5' }, { label: '4+ Bedrooms', hours: '8' }],
+  junk_removal: [{ label: '1/4 Truck', hours: '2' }, { label: '1/2 Truck', hours: '3' }, { label: 'Full Truck', hours: '4' }],
 }
 
 function generateFields(
@@ -39,38 +40,41 @@ function generateFields(
 ): FormField[] {
   let mainField: FormField
 
+  // quote = hourlyRate × hours + driveCharge + extras
+  // The pricing engine reads: amount = option.price × option.hours
+  // So we store: option.price = hourlyRate, option.hours = job duration
+
   if (model === 'job_size') {
     mainField = {
       id: fid(), type: 'radio',
-      label: service === 'moving' ? 'Home Size' : 'Load Size',
+      label: service === 'moving' ? 'Home Size' : 'Truck Size',
       required: true, showPrices: true,
-      options: tiers.map((t, i) => ({
+      options: tiers.map((t) => ({
         id: fid(),
         label: t.label,
-        price: parseFloat(t.price) || 0,
-        hours: (i + 1) * 2,
+        price: hourlyRate,                  // $/hr rate
+        hours: parseFloat(t.hours) || 1,    // job hours for this tier
       })),
     }
   } else if (model === 'hourly') {
-    const r = hourlyRate
     mainField = {
       id: fid(), type: 'radio',
       label: 'How long do you need?',
       required: true, showPrices: true,
       options: [
-        { id: fid(), label: '1 Hour',   price: r * 1, hours: 1 },
-        { id: fid(), label: '2 Hours',  price: r * 2, hours: 2 },
-        { id: fid(), label: 'Half Day', price: r * 4, hours: 4 },
-        { id: fid(), label: 'Full Day', price: r * 8, hours: 8 },
+        { id: fid(), label: '1 Hour',   price: hourlyRate, hours: 1 },
+        { id: fid(), label: '2 Hours',  price: hourlyRate, hours: 2 },
+        { id: fid(), label: 'Half Day', price: hourlyRate, hours: 4 },
+        { id: fid(), label: 'Full Day', price: hourlyRate, hours: 8 },
       ],
     }
   } else {
     const defaults = DEFAULT_TIERS[service]
     mainField = {
       id: fid(), type: 'radio',
-      label: service === 'moving' ? 'Home Size' : 'Load Size',
+      label: service === 'moving' ? 'Home Size' : 'Truck Size',
       required: true, showPrices: false,
-      options: defaults.map((d, i) => ({ id: fid(), label: d.label, price: 0, hours: (i + 1) * 2 })),
+      options: defaults.map((d) => ({ id: fid(), label: d.label, price: 0, hours: parseFloat(d.hours) })),
     }
   }
 
@@ -131,9 +135,9 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
   // Step 2
   const [pricingModel, setPricingModel] = useState<PricingModel | null>(null)
   const [tiers, setTiers] = useState<Tier[]>([
-    { id: fid(), label: '', price: '' },
-    { id: fid(), label: '', price: '' },
-    { id: fid(), label: '', price: '' },
+    { id: fid(), label: '', hours: '' },
+    { id: fid(), label: '', hours: '' },
+    { id: fid(), label: '', hours: '' },
   ])
   const [hourlyRate, setHourlyRate] = useState('')
   const [showPrices, setShowPrices] = useState(true)
@@ -154,19 +158,19 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
   const [savedFormId, setSavedFormId] = useState('')
   const [copied, setCopied] = useState(false)
 
-  // Seed default tier labels when service type is chosen
+  // Seed default tiers when service type is chosen
   function selectService(id: ServiceId, color: string) {
     setServiceType(id)
     setBrandColor(color)
-    setTiers(DEFAULT_TIERS[id].map((d) => ({ id: fid(), label: d.label, price: '' })))
+    setTiers(DEFAULT_TIERS[id].map((d) => ({ id: fid(), label: d.label, hours: d.hours })))
   }
 
   // Tier helpers
-  function setTierField(id: string, key: 'label' | 'price', val: string) {
+  function setTierField(id: string, key: 'label' | 'hours', val: string) {
     setTiers((prev) => prev.map((t) => t.id === id ? { ...t, [key]: val } : t))
   }
   function addTier() {
-    setTiers((prev) => [...prev, { id: fid(), label: '', price: '' }])
+    setTiers((prev) => [...prev, { id: fid(), label: '', hours: '' }])
   }
   function removeTier(id: string) {
     setTiers((prev) => prev.filter((t) => t.id !== id))
@@ -258,11 +262,11 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const tiersValid = tiers.length > 0 && tiers.every((t) => t.label.trim() !== '' && t.price !== '')
+  const tiersValid = tiers.length > 0 && tiers.every((t) => t.label.trim() !== '' && t.hours !== '')
   const canGoNext2 = pricingModel !== null && (
     pricingModel === 'skip' ||
     (pricingModel === 'hourly' && hourlyRate !== '') ||
-    (pricingModel === 'job_size' && tiersValid)
+    (pricingModel === 'job_size' && tiersValid && hourlyRate !== '')
   )
 
   // ── Shared styles ──
@@ -509,27 +513,48 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
               </div>
             </div>
 
+            {/* Hourly rate — always shown when a model requiring it is selected */}
+            {(pricingModel === 'job_size' || pricingModel === 'hourly') && (
+              <div style={{ marginBottom: 20 }}>
+                <label style={fieldLabel}>Hourly labor rate</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, maxWidth: 180 }}>
+                  <span style={{ color: 'var(--muted)' }}>$</span>
+                  <input type="number" min={0} step={5} placeholder="75" value={hourlyRate}
+                    onChange={(e) => setHourlyRate(e.target.value)}
+                    style={{ ...inputStyle, padding: '10px 12px' }} autoFocus />
+                  <span style={{ fontSize: '0.84rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>/hr</span>
+                </div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: 5 }}>
+                  Quote = hourly rate × job hours + drive charge + extras
+                </div>
+              </div>
+            )}
+
+            {/* Job size tiers — label + estimated hours each */}
             {pricingModel === 'job_size' && (
               <div style={{ marginBottom: 20 }}>
-                <label style={fieldLabel}>Size tiers</label>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 7 }}>
+                  <label style={{ ...fieldLabel, marginBottom: 0 }}>{serviceType === 'junk_removal' ? 'Truck sizes' : 'Job sizes'}</label>
+                  <span style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>Name · Est. hours</span>
+                </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {tiers.map((t, i) => (
                     <div key={t.id} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                       <input
                         type="text"
-                        placeholder={`e.g. ${DEFAULT_TIERS[serviceType ?? 'moving'][i]?.label ?? 'Tier ' + (i + 1)}`}
+                        placeholder={DEFAULT_TIERS[serviceType ?? 'moving'][i]?.label ?? `Size ${i + 1}`}
                         value={t.label}
                         onChange={(e) => setTierField(t.id, 'label', e.target.value)}
                         style={{ ...inputStyle, flex: 2, padding: '9px 12px' }}
                       />
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1 }}>
-                        <span style={{ color: 'var(--muted)', fontSize: '0.9rem', flexShrink: 0 }}>$</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, width: 90, flexShrink: 0 }}>
                         <input
-                          type="number" min={0} step={5} placeholder="0"
-                          value={t.price}
-                          onChange={(e) => setTierField(t.id, 'price', e.target.value)}
+                          type="number" min={0.5} step={0.5} placeholder="hrs"
+                          value={t.hours}
+                          onChange={(e) => setTierField(t.id, 'hours', e.target.value)}
                           style={{ ...inputStyle, padding: '9px 10px' }}
                         />
+                        <span style={{ color: 'var(--muted)', fontSize: '0.76rem', whiteSpace: 'nowrap' }}>hr</span>
                       </div>
                       {tiers.length > 1 && (
                         <button onClick={() => removeTier(t.id)} style={{
@@ -548,19 +573,6 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
                   }}>
                     + Add another size
                   </button>
-                </div>
-              </div>
-            )}
-
-            {pricingModel === 'hourly' && (
-              <div style={{ marginBottom: 20 }}>
-                <label style={fieldLabel}>Hourly rate</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, maxWidth: 160 }}>
-                  <span style={{ color: 'var(--muted)' }}>$</span>
-                  <input type="number" min={0} step={5} placeholder="75" value={hourlyRate}
-                    onChange={(e) => setHourlyRate(e.target.value)}
-                    style={{ ...inputStyle, padding: '10px 12px' }} autoFocus />
-                  <span style={{ fontSize: '0.84rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>/hr</span>
                 </div>
               </div>
             )}
