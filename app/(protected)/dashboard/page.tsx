@@ -381,6 +381,12 @@ export default async function DashboardPage({
         {/* ── Main content (below photo zone) ── */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 pb-10 space-y-5" style={{ marginTop: hasBg ? 0 : 8 }}>
 
+          {/* Guaranteed results banner — shown until Meta is connected */}
+          {!metaConnected && <GuaranteedResultsBanner />}
+
+          {/* Welcome gift banner — shown while onboarding is in progress */}
+          {!onboardingComplete && <WelcomeGiftBanner />}
+
           {/* Lead usage banner */}
           {!blessed && <LeadUsageBanner plan={plan} monthlyLeads={monthlyLeads} />}
 
@@ -665,6 +671,114 @@ function QuickAction({
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
       </svg>
     </Link>
+  )
+}
+
+// ── Guaranteed Results Banner ────────────────────────────────
+
+function GuaranteedResultsBanner() {
+  return (
+    <div style={{
+      background: '#1a1a2e', borderRadius: 14,
+      padding: '14px 20px',
+      display: 'flex', alignItems: 'center', gap: 14,
+    }}>
+      {/* Shield icon */}
+      <div style={{ flexShrink: 0 }}>
+        <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#ffe500" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 2l7 3v6c0 5-3.5 9.5-7 11-3.5-1.5-7-6-7-11V5l7-3z" />
+          <path d="M9 12l2 2 4-4" />
+        </svg>
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#ffe500', letterSpacing: '0.01em', marginBottom: 2 }}>
+          Guaranteed results — hands-off marketing from $350/month
+        </div>
+        <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
+          We build your ads, manage your campaigns, and deliver leads directly to your dashboard. You just answer the calls.
+        </div>
+      </div>
+      <a
+        href="mailto:sales@quote-box.com"
+        style={{
+          flexShrink: 0, padding: '9px 18px', borderRadius: 8,
+          background: '#ffe500', color: '#1a1a2e',
+          fontSize: '0.78rem', fontWeight: 800, textDecoration: 'none',
+          whiteSpace: 'nowrap' as const, letterSpacing: '0.01em',
+        }}
+      >
+        Book a call →
+      </a>
+    </div>
+  )
+}
+
+// ── Welcome Gift Banner ───────────────────────────────────────
+
+function WelcomeGiftBanner() {
+  return (
+    <div style={{
+      border: '2px dashed #1a1a2e',
+      borderRadius: 14,
+      padding: '16px 20px',
+      background: '#fffef0',
+      display: 'flex', alignItems: 'center', gap: 16,
+      position: 'relative' as const,
+      overflow: 'hidden',
+    }}>
+      {/* Corner ribbon */}
+      <div style={{
+        position: 'absolute', top: 0, right: 0,
+        width: 0, height: 0,
+        borderStyle: 'solid',
+        borderWidth: '0 44px 44px 0',
+        borderColor: 'transparent #ffe500 transparent transparent',
+        borderRadius: '0 12px 0 0',
+      }} />
+
+      {/* Gift box icon */}
+      <div style={{ flexShrink: 0 }}>
+        <svg width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="#1a1a2e" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="8" width="18" height="13" rx="1" />
+          <path d="M21 8H3V6a1 1 0 011-1h16a1 1 0 011 1v2z" />
+          <path d="M12 5v16" />
+          <path d="M12 5c0-1.7-1-2.5-2-2.5S8 3.5 8 5h4z" />
+          <path d="M12 5c0-1.7 1-2.5 2-2.5S16 3.5 16 5h-4z" />
+        </svg>
+      </div>
+
+      <div style={{ flex: 1, minWidth: 0, paddingRight: 20 }}>
+        <div style={{
+          display: 'inline-block',
+          background: '#1a1a2e', color: '#ffe500',
+          fontSize: '0.6rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const,
+          padding: '2px 8px', borderRadius: 20, marginBottom: 6,
+        }}>
+          New member offer
+        </div>
+        <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1a1a2e', marginBottom: 4, lineHeight: 1.2 }}>
+          Your first month, on us.
+        </div>
+        <div style={{ fontSize: '0.78rem', color: '#374151', lineHeight: 1.55 }}>
+          Add a payment card and get your first Meta lead within <strong>7 days</strong> — we&apos;ll credit your entire first month free.
+        </div>
+        <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: 5 }}>
+          Card required to activate. Credit applied automatically to your first paid month. New accounts only.
+        </div>
+      </div>
+
+      <Link
+        href="/billing"
+        style={{
+          flexShrink: 0, padding: '10px 18px', borderRadius: 8,
+          background: '#1a1a2e', color: '#ffe500',
+          fontSize: '0.78rem', fontWeight: 800, textDecoration: 'none',
+          whiteSpace: 'nowrap' as const, letterSpacing: '0.01em',
+        }}
+      >
+        Add card →
+      </Link>
+    </div>
   )
 }
 
