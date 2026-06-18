@@ -254,7 +254,7 @@ function OnboardingWizard() {
           {accountId && (
             <SetupWizard
               accountId={accountId}
-              onCustomize={() => setStep(4)}
+              onCustomize={(formId) => router.push(`/form-builder?form_id=${formId}`)}
               onAdvanced={() => router.push('/form-builder')}
               onDone={() => setStep(4)}
             />

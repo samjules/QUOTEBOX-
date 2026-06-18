@@ -2329,28 +2329,15 @@ export default function FormBuilderPage() {
       }
       setAccountId(account.id)
 
-      // Fetch existing forms for the picker screen
+      // Fetch existing forms
       setExistingFormsLoading(true)
-      supabase
+      const { data: existingFormsData } = await supabase
         .from('hosted_forms')
         .select('id, form_name, form_config')
         .eq('account_id', account.id)
         .order('updated_at', { ascending: false })
-        .then(({ data }) => {
-          setExistingForms(data ?? [])
-          setExistingFormsLoading(false)
-        })
-
-      // Default slug to business name for new forms (not editing an existing one)
-      if (!searchParams.get('form_id') && account.business_name) {
-        const defaultSlug = account.business_name
-          .toLowerCase()
-          .replace(/[^a-z0-9-]/g, '-')
-          .replace(/-+/g, '-')
-          .replace(/^-|-$/g, '')
-        setFormSlug(defaultSlug)
-      }
-
+      setExistingForms(existingFormsData ?? [])
+      setExistingFormsLoading(false)
 
       const { data: billing } = await supabase
         .from('billing')
@@ -2368,9 +2355,24 @@ export default function FormBuilderPage() {
 
       const editId = searchParams.get('form_id')
       if (editId) {
+        // Explicit form requested via URL param
         await loadExistingForm(editId)
         setScreen('builder')
+      } else if ((existingFormsData ?? []).length > 0) {
+        // Auto-load the most recently updated form — no more landing on picker
+        // when the user already has a form from the wizard or a previous session
+        await loadExistingForm(existingFormsData![0].id)
+        setScreen('builder')
       } else {
+        // Brand new account with no forms yet — show the wizard
+        if (account.business_name) {
+          const defaultSlug = account.business_name
+            .toLowerCase()
+            .replace(/[^a-z0-9-]/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '')
+          setFormSlug(defaultSlug)
+        }
         setScreen('picker')
       }
     }
