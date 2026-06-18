@@ -157,6 +157,7 @@ export default async function DashboardPage({
     { data: vsls },
     { data: forms },
     { data: campaigns },
+    { data: metaLeadsData },
   ] = await Promise.all([
     countLeads(undefined, fromIso),
     countLeads('new', fromIso),
@@ -192,6 +193,7 @@ export default async function DashboardPage({
     admin.from('vsls').select('id').eq('account_id', account.id).limit(1),
     admin.from('hosted_forms').select('id').eq('account_id', account.id).limit(1),
     admin.from('meta_campaigns').select('id').eq('account_id', account.id).limit(1),
+    admin.from('leads').select('id').eq('account_id', account.id).eq('form_type', 'meta_lead_form').limit(1),
   ])
 
   const totalLeads = totalLeadsCount ?? 0
@@ -295,7 +297,8 @@ export default async function DashboardPage({
   const hasCreatives = (vsls?.length ?? 0) > 0
   const hasForm = (forms?.length ?? 0) > 0
   const hasCampaign = (campaigns?.length ?? 0) > 0
-  const onboardingComplete = metaConnected && hasBillingPlan && hasCreatives && hasForm
+  const hasMetaLead = (metaLeadsData?.length ?? 0) > 0
+  const onboardingComplete = hasMetaLead
   const dashboardBgUrl = account.dashboard_bg_url ?? null
 
   const hasBg = !!dashboardBgUrl
@@ -381,13 +384,12 @@ export default async function DashboardPage({
           {/* Lead usage banner */}
           {!blessed && <LeadUsageBanner plan={plan} monthlyLeads={monthlyLeads} />}
 
-          {/* Onboarding checklist */}
+          {/* Launch runway */}
           {!onboardingComplete && (
-            <OnboardingChecklist
-              metaConnected={metaConnected}
-              hasBillingPlan={hasBillingPlan}
-              hasCreatives={hasCreatives}
+            <LaunchRunway
               hasForm={hasForm}
+              metaConnected={metaConnected}
+              hasCreatives={hasCreatives}
               hasCampaign={hasCampaign}
             />
           )}
@@ -666,135 +668,211 @@ function QuickAction({
   )
 }
 
-// ── Onboarding Checklist ──────────────────────────────────────
+// ── Launch Runway ─────────────────────────────────────────────
 
-function OnboardingChecklist({
-  metaConnected,
-  hasBillingPlan,
-  hasCreatives,
+function LaunchRunway({
   hasForm,
+  metaConnected,
+  hasCreatives,
   hasCampaign,
 }: {
-  metaConnected: boolean
-  hasBillingPlan: boolean
-  hasCreatives: boolean
   hasForm: boolean
+  metaConnected: boolean
+  hasCreatives: boolean
   hasCampaign: boolean
 }) {
-  const steps = [
+  type Milestone = {
+    key: string
+    label: string
+    done: boolean
+    isGoal?: boolean
+    cta?: { label: string; href: string; desc: string }
+  }
+
+  const milestones: Milestone[] = [
+    { key: 'account', label: 'Account\nCreated', done: true },
     {
-      label: 'Connect your Meta account',
-      desc: 'Link your Facebook/Instagram account to enable ad campaigns',
-      href: '/settings',
-      done: metaConnected,
+      key: 'form', label: 'Quote\nForm', done: hasForm,
+      cta: { label: 'Build your form', href: '/form-builder', desc: 'You need somewhere to send the leads. Build your quote form first.' },
     },
     {
-      label: 'Select a billing plan',
-      desc: 'Choose a plan to start receiving leads',
-      href: '/billing',
-      done: hasBillingPlan,
+      key: 'meta', label: 'Meta\nConnected', done: metaConnected,
+      cta: { label: 'Connect Meta', href: '/settings', desc: 'Link your Facebook Business account to unlock ad campaigns.' },
     },
     {
-      label: 'Upload ad creatives',
-      desc: 'Add images or videos to use in your ad campaigns',
-      href: '/vsls',
-      done: hasCreatives,
+      key: 'creatives', label: 'Ad\nCreatives', done: hasCreatives,
+      cta: { label: 'Upload creatives', href: '/vsls', desc: 'Photos or videos that make people stop scrolling. Upload at least one.' },
     },
     {
-      label: 'Create a QuoteBox',
-      desc: 'Build a quote form to capture and qualify your leads',
-      href: '/form-builder',
-      done: hasForm,
+      key: 'campaign', label: 'Campaign\nLive', done: hasCampaign,
+      cta: { label: 'Launch campaign', href: '/lead-machine', desc: 'Everything is set. Hit launch and the leads start moving.' },
     },
-    {
-      label: 'Launch an ad campaign',
-      desc: 'Set up your first Meta ad campaign to drive traffic',
-      href: '/meta-ads',
-      done: hasCampaign,
-    },
+    { key: 'lead', label: 'First Meta\nLead', done: false, isGoal: true },
   ]
 
-  const completedCount = steps.filter((s) => s.done).length
-  const progressPct = Math.round((completedCount / steps.length) * 100)
+  const doneCount = milestones.filter((m) => m.done).length
+  const nextStep = milestones.find((m) => !m.done && !m.isGoal)
+  const waitingForLead = doneCount === milestones.length - 1 // all done except the goal
+
+  const headlines = [
+    "You're on the launchpad. Let's build your lead machine.",
+    "Form built. Now let's get it in front of people.",
+    "Meta connected. Upload your ad creatives next.",
+    "Creatives uploaded. You're one step from launch.",
+    "Campaign's live. Your first lead is on the way.",
+  ]
+  const headline = headlines[Math.min(doneCount - 1, headlines.length - 1)]
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)' }}>
-      <div className="px-6 pt-5 pb-4 border-b border-gray-100">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h3 className="text-base font-bold text-gray-900" style={{ fontFamily: "'Instrument Sans', sans-serif" }}>Get started</h3>
-            <p className="text-sm text-gray-500 mt-0.5">
-              {completedCount} of {steps.length} steps completed — close your first job this week!
-            </p>
+    <div style={{ background: '#1a1a2e', borderRadius: 20, overflow: 'hidden' }}>
+      <style>{`
+        @keyframes runway-pulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(255,229,0,0.4); }
+          50% { box-shadow: 0 0 0 6px rgba(255,229,0,0); }
+        }
+      `}</style>
+
+      {/* Header */}
+      <div style={{ padding: '22px 24px 18px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+        <div>
+          <div style={{ fontSize: '0.6rem', fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase' as const, color: '#ffe500', marginBottom: 7 }}>
+            Runway to your first Meta lead
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-28 h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{ width: `${progressPct}%`, background: '#5b5bd6' }}
-              />
-            </div>
-            <span className="text-xs font-semibold text-gray-400 w-8 text-right">{progressPct}%</span>
+          <div style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', lineHeight: 1.35, maxWidth: 380 }}>
+            {waitingForLead
+              ? '🔥 Ads are running. Your first lead is incoming — hang tight.'
+              : headline}
           </div>
         </div>
+        <div style={{
+          flexShrink: 0, background: 'rgba(255,229,0,0.1)', border: '1px solid rgba(255,229,0,0.2)',
+          borderRadius: 10, padding: '6px 12px', textAlign: 'center' as const,
+        }}>
+          <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#ffe500', lineHeight: 1 }}>{doneCount}</div>
+          <div style={{ fontSize: '0.58rem', fontWeight: 600, color: 'rgba(255,229,0,0.6)', letterSpacing: '0.06em', textTransform: 'uppercase' as const, marginTop: 2 }}>of {milestones.length}</div>
+        </div>
       </div>
-      <ul className="divide-y divide-gray-50">
-        {steps.map((step, i) => (
-          <ChecklistStep key={step.label} number={i + 1} {...step} />
-        ))}
-      </ul>
-    </div>
-  )
-}
 
-function ChecklistStep({
-  number,
-  label,
-  desc,
-  href,
-  done,
-}: {
-  number: number
-  label: string
-  desc: string
-  href: string
-  done: boolean
-}) {
-  return (
-    <li className={`flex items-center gap-4 px-6 py-3.5 ${done ? 'bg-gray-50/50' : ''}`}>
-      <div
-        className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
-          done
-            ? 'bg-green-500 text-white'
-            : 'bg-gray-100 text-gray-500'
-        }`}
-      >
-        {done ? (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-          </svg>
-        ) : (
-          number
-        )}
+      {/* Progress track */}
+      <div style={{ padding: '4px 24px 22px', overflowX: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', minWidth: 420 }}>
+          {milestones.map((m, i) => {
+            const isNext = m === milestones.find((x) => !x.done)
+            const isLast = i === milestones.length - 1
+            return (
+              <div key={m.key} style={{ display: 'flex', alignItems: 'center', flex: isLast ? 'none' : 1 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                  {/* Circle */}
+                  <div style={{
+                    width: 36, height: 36, borderRadius: '50%',
+                    background: m.done
+                      ? '#ffe500'
+                      : m.isGoal
+                        ? 'rgba(255,229,0,0.08)'
+                        : isNext
+                          ? 'rgba(255,229,0,0.12)'
+                          : 'rgba(255,255,255,0.06)',
+                    border: m.isGoal
+                      ? '2px dashed rgba(255,229,0,0.35)'
+                      : isNext
+                        ? '2px solid #ffe500'
+                        : 'none',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    animation: isNext ? 'runway-pulse 2s ease-in-out infinite' : 'none',
+                    transition: 'all 0.3s',
+                  }}>
+                    {m.done ? (
+                      m.isGoal ? (
+                        <span style={{ fontSize: '1rem' }}>🏆</span>
+                      ) : (
+                        <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="#1a1a2e" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l3 3 7-7" />
+                        </svg>
+                      )
+                    ) : m.isGoal ? (
+                      <span style={{ fontSize: '1rem' }}>🎯</span>
+                    ) : (
+                      <span style={{ fontSize: '0.72rem', fontWeight: 800, color: isNext ? '#ffe500' : 'rgba(255,255,255,0.25)' }}>
+                        {i + 1}
+                      </span>
+                    )}
+                  </div>
+                  {/* Label */}
+                  <div style={{
+                    marginTop: 6, fontSize: '0.6rem', fontWeight: 700,
+                    color: m.done ? '#ffe500' : isNext ? 'rgba(255,229,0,0.7)' : m.isGoal ? 'rgba(255,229,0,0.4)' : 'rgba(255,255,255,0.25)',
+                    letterSpacing: '0.03em', textAlign: 'center' as const,
+                    whiteSpace: 'pre-line' as const, lineHeight: 1.3, maxWidth: 54,
+                  }}>
+                    {m.label}
+                  </div>
+                </div>
+                {/* Connector line */}
+                {!isLast && (
+                  <div style={{
+                    flex: 1, height: 2, margin: '0 3px', marginBottom: 28,
+                    background: m.done ? '#ffe500' : 'rgba(255,255,255,0.08)',
+                    transition: 'background 0.4s',
+                  }} />
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
-      <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium ${done ? 'line-through text-gray-400' : 'text-gray-900'}`}>
-          {label}
-        </p>
-        <p className="text-xs text-gray-400 mt-0.5 truncate">{desc}</p>
-      </div>
-      {done ? (
-        <span className="flex-shrink-0 text-xs font-medium text-green-600">Done</span>
-      ) : (
-        <Link
-          href={href}
-          className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold rounded-lg transition whitespace-nowrap"
-          style={{ background: 'rgba(26,26,46,0.06)', color: '#5b5bd6' }}
-        >
-          Start &rarr;
-        </Link>
+
+      {/* Next step callout */}
+      {nextStep?.cta && !waitingForLead && (
+        <div style={{ margin: '0 16px 16px' }}>
+          <div style={{
+            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 12, padding: '14px 16px',
+            display: 'flex', alignItems: 'center', gap: 14,
+          }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#fff', marginBottom: 3 }}>
+                Next up: {nextStep.cta.label}
+              </div>
+              <div style={{ fontSize: '0.73rem', color: 'rgba(255,255,255,0.45)', lineHeight: 1.45 }}>
+                {nextStep.cta.desc}
+              </div>
+            </div>
+            <Link
+              href={nextStep.cta.href}
+              style={{
+                flexShrink: 0, padding: '9px 16px', borderRadius: 8,
+                background: '#ffe500', color: '#1a1a2e',
+                fontSize: '0.78rem', fontWeight: 800, textDecoration: 'none',
+                whiteSpace: 'nowrap' as const, letterSpacing: '0.01em',
+              }}
+            >
+              {nextStep.cta.label} →
+            </Link>
+          </div>
+        </div>
       )}
-    </li>
+
+      {/* Waiting for lead state */}
+      {waitingForLead && (
+        <div style={{ margin: '0 16px 16px' }}>
+          <div style={{
+            background: 'rgba(255,229,0,0.07)', border: '1px solid rgba(255,229,0,0.15)',
+            borderRadius: 12, padding: '14px 16px',
+            display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <div style={{ fontSize: '1.3rem', flexShrink: 0 }}>📡</div>
+            <div>
+              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#ffe500', marginBottom: 2 }}>
+                Listening for leads…
+              </div>
+              <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)', lineHeight: 1.45 }}>
+                Your campaign is live. This banner disappears the moment your first Meta lead lands.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 
