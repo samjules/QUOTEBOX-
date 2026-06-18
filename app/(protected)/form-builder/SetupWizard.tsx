@@ -4,10 +4,20 @@ import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { FormField } from '@/lib/types'
 
-// ── Service type catalog ──────────────────────────────────────
+// ── Service catalog ───────────────────────────────────────────
 const SERVICE_TYPES = [
-  { id: 'moving',       label: 'Moving',        icon: '🚛', color: '#F97316' },
-  { id: 'junk_removal', label: 'Junk Removal',  icon: '🗑️', color: '#374151' },
+  {
+    id: 'moving',
+    label: 'Moving',
+    desc: 'Local & long-distance residential moves',
+    color: '#F97316',
+  },
+  {
+    id: 'junk_removal',
+    label: 'Junk Removal',
+    desc: 'Haul-away, cleanouts & debris removal',
+    color: '#374151',
+  },
 ] as const
 
 type ServiceId = typeof SERVICE_TYPES[number]['id']
@@ -29,23 +39,20 @@ const SERVICE_ADDONS: Record<ServiceId, Array<{ label: string; price: number }>>
 
 const JOB_SIZE_LABELS: Record<ServiceId, [string, string, string]> = {
   moving:       ['Studio / 1 Bed', '2–3 Bedrooms', '4+ Bedrooms'],
-  junk_removal: ['Small Load (¼ truck)', 'Half Truck', 'Full Truck'],
+  junk_removal: ['Small Load (1/4 truck)', 'Half Truck', 'Full Truck'],
 }
 
 function generateFields(service: ServiceId, model: PricingModel, prices: PriceData): FormField[] {
   const addons = SERVICE_ADDONS[service]
   const sizeLabels = JOB_SIZE_LABELS[service]
-  const useRoute = service === 'moving' || service === 'junk_removal'
 
   let mainField: FormField
 
   if (model === 'job_size' && prices && 'small' in prices) {
     mainField = {
-      id: fid(),
-      type: 'radio',
-      label: service === 'moving' ? 'Home Size' : service === 'junk_removal' ? 'Load Size' : 'Job Size',
-      required: true,
-      showPrices: true,
+      id: fid(), type: 'radio',
+      label: service === 'moving' ? 'Home Size' : 'Load Size',
+      required: true, showPrices: true,
       options: [
         { id: fid(), label: sizeLabels[0], price: prices.small, hours: 2 },
         { id: fid(), label: sizeLabels[1], price: prices.medium, hours: 4 },
@@ -55,25 +62,21 @@ function generateFields(service: ServiceId, model: PricingModel, prices: PriceDa
   } else if (model === 'hourly' && prices && 'rate' in prices) {
     const r = prices.rate
     mainField = {
-      id: fid(),
-      type: 'radio',
+      id: fid(), type: 'radio',
       label: 'How long do you need?',
-      required: true,
-      showPrices: true,
+      required: true, showPrices: true,
       options: [
-        { id: fid(), label: '1 Hour',     price: r * 1, hours: 1 },
-        { id: fid(), label: '2 Hours',    price: r * 2, hours: 2 },
-        { id: fid(), label: 'Half Day',   price: r * 4, hours: 4 },
-        { id: fid(), label: 'Full Day',   price: r * 8, hours: 8 },
+        { id: fid(), label: '1 Hour',   price: r * 1, hours: 1 },
+        { id: fid(), label: '2 Hours',  price: r * 2, hours: 2 },
+        { id: fid(), label: 'Half Day', price: r * 4, hours: 4 },
+        { id: fid(), label: 'Full Day', price: r * 8, hours: 8 },
       ],
     }
   } else {
     mainField = {
-      id: fid(),
-      type: 'radio',
-      label: 'Job Size',
-      required: true,
-      showPrices: false,
+      id: fid(), type: 'radio',
+      label: service === 'moving' ? 'Home Size' : 'Load Size',
+      required: true, showPrices: false,
       options: [
         { id: fid(), label: sizeLabels[0], price: 0, hours: 2 },
         { id: fid(), label: sizeLabels[1], price: 0, hours: 4 },
@@ -84,35 +87,28 @@ function generateFields(service: ServiceId, model: PricingModel, prices: PriceDa
 
   const fields: FormField[] = [mainField]
 
-  if (useRoute) {
-    fields.push({
-      id: fid(),
-      type: 'route',
-      label: service === 'moving' ? 'Moving Route' : 'Pickup Location',
-      required: true,
-      routeChargeType: 'radius_tiers',
-      locationMode: service === 'junk_removal' ? 'single' : 'point_to_point',
-      radiusTiers: [
-        { id: fid(), maxMiles: 20, driveCharge: 50 },
-        { id: fid(), maxMiles: 40, driveCharge: 100 },
-        { id: fid(), maxMiles: null, driveCharge: 175 },
-      ],
-    } as FormField)
-  }
-
-  if (addons.length > 0) {
-    fields.push({
-      id: fid(),
-      type: 'checkbox',
-      label: 'Add-ons',
-      required: false,
-      options: addons.map((a) => ({ id: fid(), label: a.label, price: a.price })),
-    })
-  }
+  fields.push({
+    id: fid(), type: 'route',
+    label: service === 'moving' ? 'Moving Route' : 'Pickup Location',
+    required: true,
+    routeChargeType: 'radius_tiers',
+    locationMode: service === 'junk_removal' ? 'single' : 'point_to_point',
+    radiusTiers: [
+      { id: fid(), maxMiles: 20,   driveCharge: 50 },
+      { id: fid(), maxMiles: 40,   driveCharge: 100 },
+      { id: fid(), maxMiles: null, driveCharge: 175 },
+    ],
+  } as FormField)
 
   fields.push({
-    id: fid(),
-    type: 'textarea',
+    id: fid(), type: 'checkbox',
+    label: 'Add-ons',
+    required: false,
+    options: addons.map((a) => ({ id: fid(), label: a.label, price: a.price })),
+  })
+
+  fields.push({
+    id: fid(), type: 'textarea',
     label: 'Additional Notes',
     required: false,
     placeholder: 'Any special instructions or details about the job…',
@@ -121,7 +117,6 @@ function generateFields(service: ServiceId, model: PricingModel, prices: PriceDa
   return fields
 }
 
-// ── Slug helpers ──────────────────────────────────────────────
 function toSlug(name: string) {
   return name
     .toLowerCase()
@@ -131,6 +126,8 @@ function toSlug(name: string) {
     .replace(/-+/g, '-')
     .slice(0, 40)
 }
+
+const COLOR_PRESETS = ['#F97316', '#374151', '#1a1a2e', '#22C55E', '#3B82F6', '#8B5CF6', '#EF4444', '#0EA5E9']
 
 // ── Props ─────────────────────────────────────────────────────
 interface SetupWizardProps {
@@ -143,13 +140,12 @@ interface SetupWizardProps {
 export default function SetupWizard({ accountId, onCustomize, onAdvanced }: SetupWizardProps) {
   const supabase = createClient()
 
-  // Step tracking (1–4 + 'success')
+  const TOTAL_STEPS = 4
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 'success'>(1)
 
   // Step 1
   const [businessName, setBusinessName] = useState('')
   const [serviceType, setServiceType] = useState<ServiceId | null>(null)
-
   const [brandColor, setBrandColor] = useState('#F97316')
 
   // Step 2
@@ -159,6 +155,7 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
   const [largePrice, setLargePrice] = useState('')
   const [hourlyRate, setHourlyRate] = useState('')
   const [showPrices, setShowPrices] = useState(true)
+  const [minQuote, setMinQuote] = useState('')
 
   // Step 3
   const [heroImageUrl, setHeroImageUrl] = useState('')
@@ -168,7 +165,7 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
   // Step 4
   const [pixelId, setPixelId] = useState('')
 
-  // Save state
+  // Save
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [liveSlug, setLiveSlug] = useState('')
@@ -200,7 +197,7 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
     setHeroUploading(false)
   }
 
-  // ── Save form ──
+  // ── Save ──
   async function handleLaunch() {
     if (!serviceType || !businessName.trim()) return
     setSaving(true)
@@ -209,11 +206,7 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
     const model: PricingModel = pricingModel ?? 'skip'
     let priceData: PriceData = null
     if (model === 'job_size') {
-      priceData = {
-        small: parseFloat(smallPrice) || 0,
-        medium: parseFloat(mediumPrice) || 0,
-        large: parseFloat(largePrice) || 0,
-      }
+      priceData = { small: parseFloat(smallPrice) || 0, medium: parseFloat(mediumPrice) || 0, large: parseFloat(largePrice) || 0 }
     } else if (model === 'hourly') {
       priceData = { rate: parseFloat(hourlyRate) || 0 }
     }
@@ -224,7 +217,6 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
     const formName = `${businessName.trim()} Quote`
     const baseSlug = toSlug(businessName.trim())
 
-    // Find a unique slug
     let slug = baseSlug
     const { data: conflicts } = await supabase
       .from('hosted_forms')
@@ -234,23 +226,25 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
       slug = `${baseSlug}-${Math.random().toString(36).slice(2, 5)}`
     }
 
+    const minQ = parseFloat(minQuote) || 0
+
     const formConfig = {
       slug,
       description: `Get an instant quote for your ${serviceInfo.label.toLowerCase()} job.`,
-      submit_label: 'Get My Quote →',
+      submit_label: 'Get My Quote',
       currency: '$',
       brand_color: brandColor,
       show_total: showPrices,
       quote_display: showPrices ? 'live' : 'hidden',
       hero_image_url: heroImageUrl,
       fields,
-      min_quote: 0,
+      min_quote: minQ,
       disclaimer_enabled: true,
       disclaimer_text: 'I understand this quote is an estimate and is not final until confirmed in writing.',
       send_email_estimate: true,
       confirm_title: "You're all set!",
       confirm_message: "We've received your details and will send your personalised quote shortly.",
-      next_step_label: 'Next Step →',
+      next_step_label: 'Next Step',
       total_label: showPrices ? 'Jobs start at' : 'Estimated Total',
       ...(pixelId.trim() ? { meta_pixel_id: pixelId.trim() } : {}),
       email_template: { subject: '', intro: '', outro: '', header_image: '', accent_color: brandColor },
@@ -282,14 +276,12 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
     }
   }
 
-  // ── Copy link ──
   function copyLink() {
     navigator.clipboard.writeText(`https://quote-box.com/${liveSlug}`)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // ── Helpers for step nav ──
   const canGoNext1 = businessName.trim().length > 1 && serviceType !== null
   const canGoNext2 = pricingModel !== null && (
     pricingModel === 'skip' ||
@@ -297,41 +289,71 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
     (pricingModel === 'job_size' && smallPrice !== '' && mediumPrice !== '' && largePrice !== '')
   )
 
-  // ── Render ──
-  const wrapStyle: React.CSSProperties = {
+  // ── Shared styles ──
+  const pageStyle: React.CSSProperties = {
     flex: 1,
     overflowY: 'auto',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    padding: '40px 24px 80px',
+    justifyContent: 'flex-start',
+    padding: '52px 24px 80px',
     background: 'var(--bg)',
   }
 
   const cardStyle: React.CSSProperties = {
-    maxWidth: 560,
+    maxWidth: 520,
     width: '100%',
     background: 'var(--surface)',
     border: '1px solid var(--border)',
-    borderRadius: 20,
-    padding: '36px 40px',
-    boxShadow: '0 4px 32px rgba(0,0,0,0.08)',
+    borderRadius: 16,
+    overflow: 'hidden',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.05), 0 8px 32px rgba(0,0,0,0.07)',
   }
 
-  const labelStyle: React.CSSProperties = {
+  const bodyStyle: React.CSSProperties = {
+    padding: '40px 44px 36px',
+  }
+
+  const stepLabel: React.CSSProperties = {
+    fontSize: '0.7rem',
+    fontWeight: 700,
+    letterSpacing: '0.1em',
+    textTransform: 'uppercase',
+    color: 'var(--muted)',
+    marginBottom: 10,
+  }
+
+  const headingStyle: React.CSSProperties = {
+    fontFamily: "'Instrument Sans', sans-serif",
+    fontSize: '1.5rem',
+    fontWeight: 800,
+    color: 'var(--fg)',
+    marginBottom: 6,
+    lineHeight: 1.2,
+  }
+
+  const subStyle: React.CSSProperties = {
+    fontSize: '0.84rem',
+    color: 'var(--muted)',
+    lineHeight: 1.6,
+    marginBottom: 28,
+  }
+
+  const fieldLabel: React.CSSProperties = {
     fontSize: '0.72rem',
     fontWeight: 700,
     color: 'var(--muted)',
-    letterSpacing: '0.08em',
+    letterSpacing: '0.07em',
     textTransform: 'uppercase',
-    marginBottom: 6,
+    marginBottom: 7,
     display: 'block',
   }
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
-    padding: '10px 13px',
-    borderRadius: 10,
+    padding: '11px 14px',
+    borderRadius: 9,
     border: '1px solid var(--border)',
     background: 'var(--surface2)',
     color: 'var(--fg)',
@@ -340,199 +362,196 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
     outline: 'none',
   }
 
-  // ── Step dots ──
-  function StepDots() {
-    const steps = [1, 2, 3, 4] as const
-    const current = step === 'success' ? 5 : step
+  const footerStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '20px 44px',
+    borderTop: '1px solid var(--border)',
+    background: 'var(--surface)',
+  }
+
+  // ── Progress bar ──
+  function ProgressBar({ current, total }: { current: number; total: number }) {
     return (
-      <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 28 }}>
-        {steps.map((s) => (
-          <div
-            key={s}
-            style={{
-              width: s < current ? 20 : s === current ? 24 : 8,
-              height: 8,
-              borderRadius: 4,
-              background: s < current ? 'var(--accent)' : s === current ? 'var(--accent)' : 'var(--border)',
-              opacity: s < current ? 0.5 : 1,
-              transition: 'all 0.2s',
-            }}
-          />
-        ))}
+      <div style={{ height: 3, background: 'var(--border)', position: 'relative' }}>
+        <div style={{
+          position: 'absolute', top: 0, left: 0, height: '100%',
+          width: `${(current / total) * 100}%`,
+          background: brandColor,
+          transition: 'width 0.3s ease',
+          borderRadius: '0 2px 2px 0',
+        }} />
       </div>
     )
   }
 
-  // ── SUCCESS screen ──
+  // ── SUCCESS ──
   if (step === 'success') {
     return (
-      <div style={wrapStyle}>
+      <div style={pageStyle}>
         <div style={cardStyle}>
-          <div style={{ textAlign: 'center', marginBottom: 32 }}>
-            <div style={{ fontSize: '3rem', marginBottom: 12 }}>🎉</div>
-            <div style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.6rem', fontWeight: 800, color: 'var(--fg)', marginBottom: 8 }}>
-              Your form is live!
+          <div style={{ height: 4, background: brandColor }} />
+          <div style={{ ...bodyStyle, textAlign: 'center' }}>
+            <div style={{
+              width: 56, height: 56, borderRadius: '50%',
+              background: `${brandColor}18`,
+              border: `2px solid ${brandColor}40`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 20px',
+              fontSize: '1.4rem', color: brandColor, fontWeight: 800,
+            }}>
+              ✓
             </div>
-            <div style={{ fontSize: '0.88rem', color: 'var(--muted)', lineHeight: 1.6 }}>
-              Share this link and start getting leads today.
+            <div style={{ ...headingStyle, marginBottom: 8 }}>Your form is live</div>
+            <div style={{ ...subStyle, marginBottom: 28 }}>
+              Share this link to start collecting leads immediately.
             </div>
-          </div>
 
-          {/* URL box */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            background: 'var(--surface2)', border: '1px solid var(--border)',
-            borderRadius: 12, padding: '12px 14px', marginBottom: 20,
-          }}>
-            <div style={{ flex: 1, fontSize: '0.9rem', fontFamily: "'DM Mono', monospace", color: 'var(--accent)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              quote-box.com/{liveSlug}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              background: 'var(--surface2)', border: '1px solid var(--border)',
+              borderRadius: 10, padding: '11px 14px', marginBottom: 20,
+              textAlign: 'left',
+            }}>
+              <div style={{ flex: 1, fontSize: '0.86rem', fontFamily: "'DM Mono', monospace", color: 'var(--accent)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                quote-box.com/{liveSlug}
+              </div>
+              <button
+                onClick={copyLink}
+                style={{
+                  flexShrink: 0, padding: '6px 14px', borderRadius: 7,
+                  background: copied ? brandColor : 'var(--surface)',
+                  border: `1px solid ${copied ? brandColor : 'var(--border)'}`,
+                  color: copied ? '#fff' : 'var(--fg)',
+                  fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
+                }}
+              >
+                {copied ? 'Copied' : 'Copy link'}
+              </button>
             </div>
-            <button
-              onClick={copyLink}
-              style={{
-                flexShrink: 0, padding: '6px 14px', borderRadius: 8,
-                background: copied ? 'var(--accent)' : 'var(--surface)',
-                border: '1px solid var(--border)', color: copied ? '#fff' : 'var(--fg)',
-                fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
-              }}
-            >
-              {copied ? '✓ Copied!' : 'Copy Link'}
-            </button>
-          </div>
 
-          {/* Action buttons */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <a
-              href={`https://quote-box.com/${liveSlug}`}
-              target="_blank"
-              rel="noreferrer"
-              style={{
-                display: 'block', textAlign: 'center', padding: '12px 0',
-                background: 'linear-gradient(135deg, #1a1a2e, #2a2a4e)',
-                color: '#fff', borderRadius: 12, fontWeight: 700,
-                fontSize: '0.92rem', textDecoration: 'none',
-              }}
-            >
-              Preview Your Form →
-            </a>
-            <button
-              onClick={() => onCustomize(savedFormId, businessName.trim() + ' Quote', liveSlug)}
-              style={{
-                width: '100%', padding: '12px 0', borderRadius: 12,
-                background: 'none', border: '1px solid var(--border)',
-                color: 'var(--fg)', fontSize: '0.88rem', fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              Customize your form
-            </button>
-          </div>
-
-          {/* Meta pixel notice */}
-          {pixelId.trim() && (
-            <div style={{ marginTop: 20, padding: '10px 14px', background: 'rgba(24,119,242,0.08)', borderRadius: 10, border: '1px solid rgba(24,119,242,0.2)', fontSize: '0.78rem', color: 'var(--muted)' }}>
-              📡 Meta Pixel <strong>{pixelId.trim()}</strong> connected — every form visitor will be tracked.
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+              <a
+                href={`https://quote-box.com/${liveSlug}`}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: 'block', textAlign: 'center', padding: '12px 0',
+                  background: brandColor, color: '#fff', borderRadius: 10,
+                  fontWeight: 700, fontSize: '0.88rem', textDecoration: 'none',
+                }}
+              >
+                Preview form
+              </a>
+              <button
+                onClick={() => onCustomize(savedFormId, businessName.trim() + ' Quote', liveSlug)}
+                style={{
+                  width: '100%', padding: '12px 0', borderRadius: 10,
+                  background: 'none', border: '1px solid var(--border)',
+                  color: 'var(--fg)', fontSize: '0.88rem', fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                Customize your form
+              </button>
             </div>
-          )}
+
+            {pixelId.trim() && (
+              <div style={{ marginTop: 20, padding: '10px 14px', background: 'rgba(24,119,242,0.06)', borderRadius: 9, border: '1px solid rgba(24,119,242,0.15)', fontSize: '0.76rem', color: 'var(--muted)', textAlign: 'left' }}>
+                Meta Pixel <span style={{ fontWeight: 700, color: 'var(--fg)' }}>{pixelId.trim()}</span> is connected. Every visitor to your form will be tracked.
+              </div>
+            )}
+          </div>
         </div>
       </div>
     )
   }
 
-  // ── STEP 1 — Business Info ──
+  // ── STEP 1 ──
   if (step === 1) {
     return (
-      <div style={wrapStyle}>
+      <div style={pageStyle}>
         <div style={cardStyle}>
-          <StepDots />
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.4rem', fontWeight: 800, color: 'var(--fg)', marginBottom: 6 }}>
-              Tell us about your business
-            </div>
-            <div style={{ fontSize: '0.84rem', color: 'var(--muted)' }}>
-              We'll build a quote form tailored to your service.
-            </div>
-          </div>
+          <ProgressBar current={1} total={TOTAL_STEPS} />
+          <div style={bodyStyle}>
+            <div style={stepLabel}>Step 1 of {TOTAL_STEPS}</div>
+            <div style={headingStyle}>Let's set up your form</div>
+            <div style={subStyle}>Tell us about your business and we'll build a tailored quote form.</div>
 
-          <div style={{ marginBottom: 22 }}>
-            <label style={labelStyle}>Business name</label>
-            <input
-              style={inputStyle}
-              type="text"
-              placeholder="e.g. Smith's Moving Co."
-              value={businessName}
-              onChange={(e) => setBusinessName(e.target.value)}
-              autoFocus
-            />
-          </div>
-
-          <div style={{ marginBottom: 22 }}>
-            <label style={labelStyle}>Which service?</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-              {SERVICE_TYPES.map((s) => {
-                const selected = serviceType === s.id
-                return (
-                  <button
-                    key={s.id}
-                    onClick={() => { setServiceType(s.id); setBrandColor(s.color) }}
-                    style={{
-                      padding: '12px 10px',
-                      borderRadius: 12,
-                      border: `2px solid ${selected ? s.color : 'var(--border)'}`,
-                      background: selected ? `${s.color}15` : 'var(--surface2)',
-                      cursor: 'pointer',
-                      textAlign: 'center',
-                      transition: 'all 0.13s',
-                      transform: selected ? 'translateY(-2px)' : 'none',
-                      boxShadow: selected ? `0 4px 16px ${s.color}30` : 'none',
-                    }}
-                  >
-                    <div style={{ fontSize: '1.4rem', marginBottom: 4 }}>{s.icon}</div>
-                    <div style={{ fontSize: '0.72rem', fontWeight: 600, color: selected ? s.color : 'var(--fg)', lineHeight: 1.3 }}>{s.label}</div>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          <div style={{ marginBottom: 4 }}>
-            <label style={labelStyle}>Brand color</label>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              {['#F97316','#374151','#1a1a2e','#22C55E','#3B82F6','#8B5CF6','#EF4444','#F59E0B'].map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setBrandColor(c)}
-                  style={{
-                    width: 30, height: 30, borderRadius: 8, background: c,
-                    border: brandColor === c ? '3px solid var(--fg)' : '3px solid transparent',
-                    outline: brandColor === c ? `2px solid ${c}` : 'none',
-                    cursor: 'pointer', flexShrink: 0,
-                  }}
-                />
-              ))}
+            <div style={{ marginBottom: 22 }}>
+              <label style={fieldLabel}>Business name</label>
               <input
-                type="color"
-                value={brandColor}
-                onChange={(e) => setBrandColor(e.target.value)}
-                title="Custom color"
-                style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', cursor: 'pointer', padding: 2, background: 'none' }}
+                style={inputStyle}
+                type="text"
+                placeholder="e.g. Smith's Moving Co."
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
+                autoFocus
               />
             </div>
+
+            <div style={{ marginBottom: 22 }}>
+              <label style={fieldLabel}>Service type</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                {SERVICE_TYPES.map((s) => {
+                  const sel = serviceType === s.id
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => { setServiceType(s.id); setBrandColor(s.color) }}
+                      style={{
+                        padding: '18px 16px',
+                        borderRadius: 10,
+                        border: `1.5px solid ${sel ? s.color : 'var(--border)'}`,
+                        background: sel ? `${s.color}0e` : 'var(--surface2)',
+                        cursor: 'pointer', textAlign: 'left',
+                        transition: 'border-color 0.12s, background 0.12s',
+                      }}
+                    >
+                      <div style={{ fontSize: '0.9rem', fontWeight: 700, color: sel ? s.color : 'var(--fg)', marginBottom: 4 }}>{s.label}</div>
+                      <div style={{ fontSize: '0.73rem', color: 'var(--muted)', lineHeight: 1.4 }}>{s.desc}</div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div>
+              <label style={fieldLabel}>Brand color</label>
+              <div style={{ display: 'flex', gap: 7, alignItems: 'center', flexWrap: 'wrap' }}>
+                {COLOR_PRESETS.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setBrandColor(c)}
+                    style={{
+                      width: 26, height: 26, borderRadius: 6, background: c,
+                      border: brandColor === c ? '2.5px solid var(--fg)' : '2.5px solid transparent',
+                      outline: brandColor === c ? `2px solid ${c}` : 'none',
+                      cursor: 'pointer', flexShrink: 0, padding: 0,
+                    }}
+                  />
+                ))}
+                <input
+                  type="color"
+                  value={brandColor}
+                  onChange={(e) => setBrandColor(e.target.value)}
+                  title="Custom color"
+                  style={{ width: 26, height: 26, borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', padding: 1, background: 'none' }}
+                />
+                <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontFamily: "'DM Mono', monospace" }}>{brandColor}</span>
+              </div>
+            </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 32 }}>
+          <div style={footerStyle}>
             <button
               onClick={onAdvanced}
               style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.8rem', cursor: 'pointer', padding: 0 }}
             >
-              Skip wizard → Advanced builder
+              Advanced builder
             </button>
-            <button
-              className="bb bb-primary"
-              disabled={!canGoNext1}
-              onClick={() => setStep(2)}
-            >
-              Next →
+            <button className="bb bb-primary" disabled={!canGoNext1} onClick={() => setStep(2)}>
+              Continue
             </button>
           </div>
         </div>
@@ -540,270 +559,221 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
     )
   }
 
-  // ── STEP 2 — Pricing ──
+  // ── STEP 2 ──
   if (step === 2) {
     const sizeLabels = serviceType ? JOB_SIZE_LABELS[serviceType] : ['Small', 'Medium', 'Large']
     return (
-      <div style={wrapStyle}>
+      <div style={pageStyle}>
         <div style={cardStyle}>
-          <StepDots />
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.4rem', fontWeight: 800, color: 'var(--fg)', marginBottom: 6 }}>
-              How do you charge?
-            </div>
-            <div style={{ fontSize: '0.84rem', color: 'var(--muted)' }}>
-              We'll set up the pricing fields automatically. You can fine-tune them later.
-            </div>
-          </div>
+          <ProgressBar current={2} total={TOTAL_STEPS} />
+          <div style={bodyStyle}>
+            <div style={stepLabel}>Step 2 of {TOTAL_STEPS}</div>
+            <div style={headingStyle}>Pricing</div>
+            <div style={subStyle}>Set your rates. You can adjust any of this later in the form builder.</div>
 
-          {/* Model selector */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 22 }}>
-            {([
-              { id: 'job_size', label: 'By job size', desc: 'Small / Medium / Large with fixed prices' },
-              { id: 'hourly',   label: 'By the hour', desc: 'Set an hourly rate, customer picks duration' },
-              { id: 'skip',     label: "I'll set this up later", desc: 'Start with a blank pricing section' },
-            ] as { id: PricingModel; label: string; desc: string }[]).map((m) => {
-              const sel = pricingModel === m.id
-              return (
-                <button
-                  key={m.id}
-                  onClick={() => setPricingModel(m.id)}
-                  style={{
-                    padding: '14px 16px',
-                    borderRadius: 12,
-                    border: `2px solid ${sel ? 'var(--accent)' : 'var(--border)'}`,
-                    background: sel ? 'rgba(var(--accent-rgb, 26,26,46),0.06)' : 'var(--surface2)',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'all 0.13s',
-                  }}
-                >
-                  <div style={{ fontSize: '0.88rem', fontWeight: 700, color: sel ? 'var(--accent)' : 'var(--fg)', marginBottom: 2 }}>{m.label}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{m.desc}</div>
-                </button>
-              )
-            })}
-          </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={fieldLabel}>How do you charge?</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {([
+                  { id: 'job_size', label: 'By job size',        desc: 'Fixed price per size tier — small, medium, large' },
+                  { id: 'hourly',   label: 'By the hour',         desc: 'Customer picks a duration, price scales with time' },
+                  { id: 'skip',     label: 'Set up later',        desc: 'Skip for now and configure manually' },
+                ] as { id: PricingModel; label: string; desc: string }[]).map((m) => {
+                  const sel = pricingModel === m.id
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => setPricingModel(m.id)}
+                      style={{
+                        padding: '14px 16px', borderRadius: 10, textAlign: 'left', cursor: 'pointer',
+                        border: `1.5px solid ${sel ? 'var(--accent)' : 'var(--border)'}`,
+                        background: sel ? 'rgba(var(--accent-rgb,26,26,46),0.05)' : 'var(--surface2)',
+                        transition: 'border-color 0.12s, background 0.12s',
+                      }}
+                    >
+                      <div style={{ fontSize: '0.88rem', fontWeight: 700, color: sel ? 'var(--accent)' : 'var(--fg)', marginBottom: 2 }}>{m.label}</div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--muted)' }}>{m.desc}</div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
 
-          {/* Job size prices */}
-          {pricingModel === 'job_size' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {[
-                { key: 'small' as const, label: sizeLabels[0], val: smallPrice, set: setSmallPrice },
-                { key: 'medium' as const, label: sizeLabels[1], val: mediumPrice, set: setMediumPrice },
-                { key: 'large' as const, label: sizeLabels[2], val: largePrice, set: setLargePrice },
-              ].map(({ label, val, set }) => (
-                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ flex: 1, fontSize: '0.84rem', color: 'var(--fg)', fontWeight: 500 }}>{label}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, width: 120 }}>
-                    <span style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>$</span>
-                    <input
-                      type="number"
-                      min={0}
-                      step={5}
-                      placeholder="0"
-                      value={val}
-                      onChange={(e) => set(e.target.value)}
-                      style={{ ...inputStyle, width: '100%', padding: '8px 10px' }}
-                    />
-                  </div>
+            {pricingModel === 'job_size' && (
+              <div style={{ marginBottom: 20 }}>
+                <label style={fieldLabel}>Starting prices</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {[
+                    { label: sizeLabels[0], val: smallPrice,  set: setSmallPrice },
+                    { label: sizeLabels[1], val: mediumPrice, set: setMediumPrice },
+                    { label: sizeLabels[2], val: largePrice,  set: setLargePrice },
+                  ].map(({ label, val, set }) => (
+                    <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ flex: 1, fontSize: '0.84rem', color: 'var(--fg)', fontWeight: 500 }}>{label}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, width: 110 }}>
+                        <span style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>$</span>
+                        <input type="number" min={0} step={5} placeholder="0" value={val}
+                          onChange={(e) => set(e.target.value)}
+                          style={{ ...inputStyle, padding: '8px 10px' }}
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            )}
 
-          {/* Hourly rate */}
-          {pricingModel === 'hourly' && (
-            <div>
-              <label style={labelStyle}>Your hourly rate ($)</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, maxWidth: 160 }}>
-                <span style={{ color: 'var(--muted)', fontSize: '1.1rem' }}>$</span>
-                <input
-                  type="number"
-                  min={0}
-                  step={5}
-                  placeholder="75"
-                  value={hourlyRate}
-                  onChange={(e) => setHourlyRate(e.target.value)}
-                  style={{ ...inputStyle, padding: '10px 12px' }}
-                  autoFocus
-                />
-                <span style={{ color: 'var(--muted)', fontSize: '0.84rem', whiteSpace: 'nowrap' }}>/hr</span>
+            {pricingModel === 'hourly' && (
+              <div style={{ marginBottom: 20 }}>
+                <label style={fieldLabel}>Hourly rate</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, maxWidth: 160 }}>
+                  <span style={{ color: 'var(--muted)' }}>$</span>
+                  <input type="number" min={0} step={5} placeholder="75" value={hourlyRate}
+                    onChange={(e) => setHourlyRate(e.target.value)}
+                    style={{ ...inputStyle, padding: '10px 12px' }}
+                    autoFocus
+                  />
+                  <span style={{ fontSize: '0.84rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>/hr</span>
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+              <div>
+                <label style={fieldLabel}>Minimum job price</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ color: 'var(--muted)' }}>$</span>
+                  <input type="number" min={0} step={5} placeholder="0" value={minQuote}
+                    onChange={(e) => setMinQuote(e.target.value)}
+                    style={{ ...inputStyle, padding: '10px 12px' }}
+                  />
+                </div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: 5 }}>We will never quote below this amount.</div>
               </div>
             </div>
-          )}
 
-          {/* Show prices toggle */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, padding: '14px 16px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface2)' }}>
-            <div>
-              <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--fg)', marginBottom: 2 }}>Show prices on your form?</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
-                {showPrices ? 'Prices will display as "Jobs start at $X"' : 'Prices are hidden — we collect contact info first'}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface2)' }}>
+              <div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--fg)', marginBottom: 2 }}>Show prices on your form</div>
+                <div style={{ fontSize: '0.73rem', color: 'var(--muted)' }}>
+                  {showPrices ? 'Prices will display as "Jobs start at $X"' : 'Prices are hidden until contact info is submitted'}
+                </div>
               </div>
+              <div
+                className={`toggle${showPrices ? ' on' : ''}`}
+                onClick={() => setShowPrices((v) => !v)}
+                style={{ flexShrink: 0, marginLeft: 16 }}
+              />
             </div>
-            <div
-              className={`toggle${showPrices ? ' on' : ''}`}
-              onClick={() => setShowPrices((v) => !v)}
-              style={{ flexShrink: 0, marginLeft: 16 }}
-            />
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
-            <button
-              onClick={() => setStep(1)}
-              className="bb bb-ghost"
-            >
-              ← Back
-            </button>
-            <button
-              className="bb bb-primary"
-              disabled={!canGoNext2}
-              onClick={() => setStep(3)}
-            >
-              Next →
-            </button>
+          <div style={footerStyle}>
+            <button className="bb bb-ghost" onClick={() => setStep(1)}>Back</button>
+            <button className="bb bb-primary" disabled={!canGoNext2} onClick={() => setStep(3)}>Continue</button>
           </div>
         </div>
       </div>
     )
   }
 
-  // ── STEP 3 — Hero Photo ──
+  // ── STEP 3 ──
   if (step === 3) {
     return (
-      <div style={wrapStyle}>
+      <div style={pageStyle}>
         <div style={cardStyle}>
-          <StepDots />
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.4rem', fontWeight: 800, color: 'var(--fg)', marginBottom: 6 }}>
-              Add a hero photo
-            </div>
-            <div style={{ fontSize: '0.84rem', color: 'var(--muted)' }}>
-              A photo of your work appears at the top of your form. Customers convert better when they can see your quality.
-            </div>
+          <ProgressBar current={3} total={TOTAL_STEPS} />
+          <div style={bodyStyle}>
+            <div style={stepLabel}>Step 3 of {TOTAL_STEPS}</div>
+            <div style={headingStyle}>Hero photo</div>
+            <div style={subStyle}>A photo at the top of your form builds trust and improves conversions. You can skip this and add one later.</div>
+
+            <input ref={heroFileRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleHeroFileSelect(f) }}
+            />
+
+            {heroImageUrl ? (
+              <div style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border)' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={heroImageUrl} alt="Hero" style={{ width: '100%', height: 190, objectFit: 'cover', display: 'block' }} />
+                <div style={{ padding: '8px 12px', background: 'var(--surface2)', display: 'flex', gap: 8 }}>
+                  <button onClick={() => heroFileRef.current?.click()}
+                    style={{ flex: 1, padding: '7px 0', borderRadius: 7, border: '1px solid var(--border)', background: 'none', color: 'var(--fg)', fontSize: '0.78rem', cursor: 'pointer' }}>
+                    Change photo
+                  </button>
+                  <button onClick={() => setHeroImageUrl('')}
+                    style={{ padding: '7px 14px', borderRadius: 7, border: '1px solid var(--border)', background: 'none', color: 'var(--muted)', fontSize: '0.78rem', cursor: 'pointer' }}>
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => heroFileRef.current?.click()} disabled={heroUploading}
+                style={{
+                  display: 'block', width: '100%', padding: '44px 20px', borderRadius: 10,
+                  border: '1.5px dashed var(--border)', background: 'var(--surface2)',
+                  cursor: heroUploading ? 'wait' : 'pointer', textAlign: 'center',
+                }}
+              >
+                {heroUploading ? (
+                  <div style={{ fontSize: '0.84rem', color: 'var(--muted)' }}>Uploading…</div>
+                ) : (
+                  <>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--fg)', marginBottom: 4 }}>Upload a photo</div>
+                    <div style={{ fontSize: '0.76rem', color: 'var(--muted)' }}>JPG, PNG or WebP — max 5 MB</div>
+                  </>
+                )}
+              </button>
+            )}
           </div>
 
-          <input
-            ref={heroFileRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            style={{ display: 'none' }}
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              if (file) handleHeroFileSelect(file)
-            }}
-          />
-
-          {heroImageUrl ? (
-            <div style={{ borderRadius: 14, overflow: 'hidden', border: '1px solid var(--border)', marginBottom: 16 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={heroImageUrl} alt="Hero" style={{ width: '100%', height: 200, objectFit: 'cover', display: 'block' }} />
-              <div style={{ padding: '8px 12px', background: 'var(--surface2)', display: 'flex', gap: 8 }}>
-                <button
-                  onClick={() => heroFileRef.current?.click()}
-                  style={{ flex: 1, padding: '6px 0', borderRadius: 8, border: '1px solid var(--border)', background: 'none', color: 'var(--fg)', fontSize: '0.78rem', cursor: 'pointer' }}
-                >
-                  Change photo
-                </button>
-                <button
-                  onClick={() => setHeroImageUrl('')}
-                  style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'none', color: 'var(--muted)', fontSize: '0.78rem', cursor: 'pointer' }}
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => heroFileRef.current?.click()}
-              disabled={heroUploading}
-              style={{
-                display: 'block', width: '100%', padding: '40px 20px',
-                borderRadius: 14, border: '2px dashed var(--border)',
-                background: 'var(--surface2)', cursor: heroUploading ? 'wait' : 'pointer',
-                textAlign: 'center', marginBottom: 16,
-              }}
-            >
-              {heroUploading ? (
-                <div style={{ fontSize: '0.88rem', color: 'var(--muted)' }}>Uploading…</div>
-              ) : (
-                <>
-                  <div style={{ fontSize: '2rem', marginBottom: 8 }}>📸</div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--fg)', marginBottom: 4 }}>Upload a photo</div>
-                  <div style={{ fontSize: '0.76rem', color: 'var(--muted)' }}>JPG, PNG or WebP · max 5 MB</div>
-                </>
-              )}
+          <div style={footerStyle}>
+            <button className="bb bb-ghost" onClick={() => setStep(2)}>Back</button>
+            <button className="bb bb-primary" disabled={heroUploading} onClick={() => setStep(4)}>
+              {heroImageUrl ? 'Continue' : 'Skip for now'}
             </button>
-          )}
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-            <button onClick={() => setStep(2)} className="bb bb-ghost">← Back</button>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {!heroImageUrl && (
-                <button
-                  onClick={() => setStep(4)}
-                  style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.84rem', cursor: 'pointer', padding: '8px 4px' }}
-                >
-                  Skip
-                </button>
-              )}
-              <button
-                className="bb bb-primary"
-                disabled={heroUploading}
-                onClick={() => setStep(4)}
-              >
-                Next →
-              </button>
-            </div>
           </div>
         </div>
       </div>
     )
   }
 
-  // ── STEP 4 — Meta Pixel ──
+  // ── STEP 4 ──
   return (
-    <div style={wrapStyle}>
+    <div style={pageStyle}>
       <div style={cardStyle}>
-        <StepDots />
-        <div style={{ marginBottom: 28 }}>
-          <div style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.4rem', fontWeight: 800, color: 'var(--fg)', marginBottom: 6 }}>
-            Track your form visitors
+        <ProgressBar current={4} total={TOTAL_STEPS} />
+        <div style={bodyStyle}>
+          <div style={stepLabel}>Step 4 of {TOTAL_STEPS}</div>
+          <div style={headingStyle}>Ad tracking</div>
+          <div style={subStyle}>
+            Connect a Meta Pixel to retarget people who visit your form and measure which ads are driving leads. This is optional — you can add it later in settings.
           </div>
-          <div style={{ fontSize: '0.84rem', color: 'var(--muted)', lineHeight: 1.6 }}>
-            If you run Facebook or Instagram ads, connecting your Pixel lets you retarget people who visited your form — and track which ads are driving leads.
+
+          <div>
+            <label style={fieldLabel}>Meta Pixel ID (optional)</label>
+            <input
+              style={inputStyle}
+              type="text"
+              placeholder="e.g. 1234567890123456"
+              value={pixelId}
+              onChange={(e) => setPixelId(e.target.value.replace(/\D/g, ''))}
+            />
+            <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: 6 }}>
+              Found in Meta Events Manager under Data Sources.
+            </div>
           </div>
+
+          {saveError && (
+            <div style={{ marginTop: 16, padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 9, fontSize: '0.8rem', color: '#ef4444' }}>
+              {saveError}
+            </div>
+          )}
         </div>
 
-        <div style={{ marginBottom: 20 }}>
-          <label style={labelStyle}>Meta Pixel ID (optional)</label>
-          <input
-            style={inputStyle}
-            type="text"
-            placeholder="e.g. 1234567890123456"
-            value={pixelId}
-            onChange={(e) => setPixelId(e.target.value.replace(/\D/g, ''))}
-          />
-          <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: 6, lineHeight: 1.5 }}>
-            Find this in Meta Events Manager → Data Sources → your Pixel.
-          </div>
-        </div>
-
-        {saveError && (
-          <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10, fontSize: '0.8rem', color: '#ef4444', marginBottom: 16 }}>
-            {saveError}
-          </div>
-        )}
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24 }}>
-          <button onClick={() => setStep(3)} className="bb bb-ghost">← Back</button>
-          <button
-            className="bb bb-primary"
-            disabled={saving}
-            onClick={handleLaunch}
-            style={{ minWidth: 140 }}
-          >
-            {saving ? 'Launching…' : '🚀 Go Live'}
+        <div style={footerStyle}>
+          <button className="bb bb-ghost" onClick={() => setStep(3)}>Back</button>
+          <button className="bb bb-primary" disabled={saving} onClick={handleLaunch} style={{ minWidth: 120 }}>
+            {saving ? 'Launching…' : 'Launch form'}
           </button>
         </div>
       </div>
