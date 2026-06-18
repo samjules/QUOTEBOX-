@@ -12,6 +12,7 @@ function SignupForm() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [hype, setHype] = useState(false)
 
   async function handleSubmit() {
     setError('')
@@ -42,11 +43,88 @@ function SignupForm() {
       .from('billing')
       .insert([{ account_id: newAccount.id, credit_balance: 0, total_spent: 0 }])
 
-    router.push('/onboarding')
+    setLoading(false)
+    setHype(true)
+    setTimeout(() => router.push('/onboarding'), 2200)
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') handleSubmit()
+  }
+
+  if (hype) {
+    return (
+      <div style={{
+        minHeight: '100vh', background: '#1a1a2e',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        padding: '40px 24px', textAlign: 'center',
+      }}>
+        <style>{`
+          @keyframes hype-in {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes hype-sub {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes hype-bar {
+            from { width: 0; }
+            to   { width: 100%; }
+          }
+        `}</style>
+
+        {/* Truck SVG */}
+        <div style={{ marginBottom: 32, animation: 'hype-in 0.5s ease both' }}>
+          <svg width="72" height="52" viewBox="0 0 36 26" fill="none" stroke="#ffe500" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="1" y="2" width="19" height="15" rx="2" />
+            <path d="M20 6h7l6 7v7H20V6z" />
+            <circle cx="7" cy="22" r="3" />
+            <circle cx="27" cy="22" r="3" />
+          </svg>
+        </div>
+
+        {/* Headline */}
+        <div style={{
+          fontSize: 'clamp(2rem, 6vw, 3.2rem)', fontWeight: 900,
+          color: '#ffe500', lineHeight: 1.05, letterSpacing: '-0.03em',
+          marginBottom: 16,
+          animation: 'hype-in 0.55s 0.1s ease both',
+        }}>
+          Account created.
+        </div>
+
+        {/* Hype line */}
+        <div style={{
+          fontSize: 'clamp(1rem, 3vw, 1.35rem)', fontWeight: 600,
+          color: 'rgba(255,255,255,0.85)', lineHeight: 1.4,
+          maxWidth: 420, marginBottom: 8,
+          animation: 'hype-sub 0.55s 0.3s ease both',
+        }}>
+          Get your first moving lead this week.
+        </div>
+        <div style={{
+          fontSize: '0.9rem', color: 'rgba(255,255,255,0.38)', lineHeight: 1.5,
+          animation: 'hype-sub 0.55s 0.45s ease both',
+        }}>
+          Setting up your dashboard now…
+        </div>
+
+        {/* Progress bar */}
+        <div style={{
+          marginTop: 40, width: 200, height: 3,
+          background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden',
+          animation: 'hype-sub 0.3s 0.6s ease both',
+        }}>
+          <div style={{
+            height: '100%', background: '#ffe500', borderRadius: 2,
+            animation: 'hype-bar 2s 0.65s ease forwards',
+            width: 0,
+          }} />
+        </div>
+      </div>
+    )
   }
 
   return (
