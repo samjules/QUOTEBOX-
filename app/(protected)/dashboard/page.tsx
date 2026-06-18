@@ -299,7 +299,7 @@ export default async function DashboardPage({
   const hasCampaign = (campaigns?.length ?? 0) > 0
   const hasMetaLead = (metaLeadsData?.length ?? 0) > 0
   const onboardingComplete = hasMetaLead
-  const dashboardBgUrl = account.dashboard_bg_url ?? null
+  const dashboardBgUrl = (account.dashboard_bg_url as string | null) ?? '/default-truck-bg.webp'
 
   const hasBg = !!dashboardBgUrl
 
