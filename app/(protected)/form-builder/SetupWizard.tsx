@@ -6,16 +6,8 @@ import type { FormField } from '@/lib/types'
 
 // ── Service type catalog ──────────────────────────────────────
 const SERVICE_TYPES = [
-  { id: 'moving',           label: 'Moving',               icon: '🚛', color: '#F97316' },
-  { id: 'junk_removal',     label: 'Junk Removal',          icon: '🗑️', color: '#374151' },
-  { id: 'cleaning',         label: 'Cleaning',              icon: '🧹', color: '#0EA5E9' },
-  { id: 'landscaping',      label: 'Landscaping / Lawn',    icon: '🌿', color: '#22C55E' },
-  { id: 'pressure_washing', label: 'Pressure Washing',      icon: '💧', color: '#3B82F6' },
-  { id: 'roofing',          label: 'Roofing',               icon: '🏠', color: '#6B7280' },
-  { id: 'painting',         label: 'Painting',              icon: '🎨', color: '#8B5CF6' },
-  { id: 'hvac',             label: 'HVAC',                  icon: '❄️', color: '#F59E0B' },
-  { id: 'plumbing',         label: 'Plumbing',              icon: '🔧', color: '#06B6D4' },
-  { id: 'other',            label: 'Something else',        icon: '⚡', color: '#1a1a2e' },
+  { id: 'moving',       label: 'Moving',        icon: '🚛', color: '#F97316' },
+  { id: 'junk_removal', label: 'Junk Removal',  icon: '🗑️', color: '#374151' },
 ] as const
 
 type ServiceId = typeof SERVICE_TYPES[number]['id']
@@ -31,29 +23,13 @@ interface HourlyPrice { rate: number }
 type PriceData = JobSizePrices | HourlyPrice | null
 
 const SERVICE_ADDONS: Record<ServiceId, Array<{ label: string; price: number }>> = {
-  moving:           [{ label: 'Packing & Unpacking', price: 150 }, { label: 'Piano / Heavy Items', price: 100 }, { label: 'Long Carry (>75 ft)', price: 75 }],
-  junk_removal:     [{ label: 'Same-day service', price: 50 }, { label: 'Heavy items (piano)', price: 75 }, { label: 'Appliance removal', price: 50 }],
-  cleaning:         [{ label: 'Oven cleaning', price: 50 }, { label: 'Fridge cleaning', price: 30 }, { label: 'Window cleaning', price: 80 }],
-  landscaping:      [{ label: 'Edging', price: 40 }, { label: 'Fertilization', price: 60 }, { label: 'Mulching', price: 80 }],
-  pressure_washing: [{ label: 'Deck cleaning', price: 150 }, { label: 'Driveway', price: 100 }, { label: 'Fence cleaning', price: 80 }],
-  roofing:          [{ label: 'Gutter cleaning', price: 150 }, { label: 'Fascia repair', price: 200 }, { label: 'Flashing repair', price: 175 }],
-  painting:         [{ label: 'Priming', price: 100 }, { label: 'Texture work', price: 150 }, { label: 'Trim painting', price: 200 }],
-  hvac:             [{ label: 'Filter replacement', price: 25 }, { label: 'Duct cleaning', price: 200 }, { label: 'Thermostat install', price: 150 }],
-  plumbing:         [{ label: 'Emergency surcharge', price: 75 }, { label: 'Water heater flush', price: 50 }, { label: 'Drain treatment', price: 40 }],
-  other:            [{ label: 'Rush service', price: 50 }, { label: 'Extended warranty', price: 75 }],
+  moving:       [{ label: 'Packing & Unpacking', price: 150 }, { label: 'Piano / Heavy Items', price: 100 }, { label: 'Long Carry (>75 ft)', price: 75 }],
+  junk_removal: [{ label: 'Same-day service', price: 50 }, { label: 'Heavy items (piano)', price: 75 }, { label: 'Appliance removal', price: 50 }],
 }
 
 const JOB_SIZE_LABELS: Record<ServiceId, [string, string, string]> = {
-  moving:           ['Studio / 1 Bed', '2–3 Bedrooms', '4+ Bedrooms'],
-  junk_removal:     ['Small Load (¼ truck)', 'Half Truck', 'Full Truck'],
-  cleaning:         ['1 Bedroom / Studio', '2–3 Bedrooms', '4+ Bedrooms'],
-  landscaping:      ['Small yard (< ¼ acre)', 'Medium yard (¼–½ acre)', 'Large yard (½+ acre)'],
-  pressure_washing: ['Small area', 'Medium area', 'Large area'],
-  roofing:          ['Small repair', 'Mid-size repair', 'Full replacement'],
-  painting:         ['1 room', '2–3 rooms', 'Whole home'],
-  hvac:             ['Single unit', '2–3 units', 'Full system'],
-  plumbing:         ['Minor fix', 'Standard job', 'Major job'],
-  other:            ['Small job', 'Medium job', 'Large job'],
+  moving:       ['Studio / 1 Bed', '2–3 Bedrooms', '4+ Bedrooms'],
+  junk_removal: ['Small Load (¼ truck)', 'Half Truck', 'Full Truck'],
 }
 
 function generateFields(service: ServiceId, model: PricingModel, prices: PriceData): FormField[] {
@@ -174,12 +150,15 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
   const [businessName, setBusinessName] = useState('')
   const [serviceType, setServiceType] = useState<ServiceId | null>(null)
 
+  const [brandColor, setBrandColor] = useState('#F97316')
+
   // Step 2
   const [pricingModel, setPricingModel] = useState<PricingModel | null>(null)
   const [smallPrice, setSmallPrice] = useState('')
   const [mediumPrice, setMediumPrice] = useState('')
   const [largePrice, setLargePrice] = useState('')
   const [hourlyRate, setHourlyRate] = useState('')
+  const [showPrices, setShowPrices] = useState(true)
 
   // Step 3
   const [heroImageUrl, setHeroImageUrl] = useState('')
@@ -239,7 +218,8 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
       priceData = { rate: parseFloat(hourlyRate) || 0 }
     }
 
-    const fields = generateFields(serviceType, model, priceData)
+    const rawFields = generateFields(serviceType, model, priceData)
+    const fields = rawFields.map((f) => ({ ...f, showPrices }))
     const serviceInfo = SERVICE_TYPES.find((s) => s.id === serviceType)!
     const formName = `${businessName.trim()} Quote`
     const baseSlug = toSlug(businessName.trim())
@@ -259,9 +239,9 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
       description: `Get an instant quote for your ${serviceInfo.label.toLowerCase()} job.`,
       submit_label: 'Get My Quote →',
       currency: '$',
-      brand_color: serviceInfo.color,
-      show_total: true,
-      quote_display: 'live',
+      brand_color: brandColor,
+      show_total: showPrices,
+      quote_display: showPrices ? 'live' : 'hidden',
       hero_image_url: heroImageUrl,
       fields,
       min_quote: 0,
@@ -271,9 +251,9 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
       confirm_title: "You're all set!",
       confirm_message: "We've received your details and will send your personalised quote shortly.",
       next_step_label: 'Next Step →',
-      total_label: 'Estimated Total',
+      total_label: showPrices ? 'Jobs start at' : 'Estimated Total',
       ...(pixelId.trim() ? { meta_pixel_id: pixelId.trim() } : {}),
-      email_template: { subject: '', intro: '', outro: '', header_image: '', accent_color: serviceInfo.color },
+      email_template: { subject: '', intro: '', outro: '', header_image: '', accent_color: brandColor },
     }
 
     try {
@@ -486,15 +466,15 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
             />
           </div>
 
-          <div>
-            <label style={labelStyle}>What kind of work do you do?</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
+          <div style={{ marginBottom: 22 }}>
+            <label style={labelStyle}>Which service?</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
               {SERVICE_TYPES.map((s) => {
                 const selected = serviceType === s.id
                 return (
                   <button
                     key={s.id}
-                    onClick={() => setServiceType(s.id)}
+                    onClick={() => { setServiceType(s.id); setBrandColor(s.color) }}
                     style={{
                       padding: '12px 10px',
                       borderRadius: 12,
@@ -512,6 +492,31 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
                   </button>
                 )
               })}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 4 }}>
+            <label style={labelStyle}>Brand color</label>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              {['#F97316','#374151','#1a1a2e','#22C55E','#3B82F6','#8B5CF6','#EF4444','#F59E0B'].map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setBrandColor(c)}
+                  style={{
+                    width: 30, height: 30, borderRadius: 8, background: c,
+                    border: brandColor === c ? '3px solid var(--fg)' : '3px solid transparent',
+                    outline: brandColor === c ? `2px solid ${c}` : 'none',
+                    cursor: 'pointer', flexShrink: 0,
+                  }}
+                />
+              ))}
+              <input
+                type="color"
+                value={brandColor}
+                onChange={(e) => setBrandColor(e.target.value)}
+                title="Custom color"
+                style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', cursor: 'pointer', padding: 2, background: 'none' }}
+              />
             </div>
           </div>
 
@@ -628,7 +633,22 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
             </div>
           )}
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 32 }}>
+          {/* Show prices toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, padding: '14px 16px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface2)' }}>
+            <div>
+              <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--fg)', marginBottom: 2 }}>Show prices on your form?</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
+                {showPrices ? 'Prices will display as "Jobs start at $X"' : 'Prices are hidden — we collect contact info first'}
+              </div>
+            </div>
+            <div
+              className={`toggle${showPrices ? ' on' : ''}`}
+              onClick={() => setShowPrices((v) => !v)}
+              style={{ flexShrink: 0, marginLeft: 16 }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
             <button
               onClick={() => setStep(1)}
               className="bb bb-ghost"
