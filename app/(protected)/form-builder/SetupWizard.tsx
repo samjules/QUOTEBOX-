@@ -6,18 +6,8 @@ import type { FormField } from '@/lib/types'
 
 // ── Service catalog ───────────────────────────────────────────
 const SERVICE_TYPES = [
-  {
-    id: 'moving',
-    label: 'Moving',
-    desc: 'Local & long-distance residential moves',
-    color: '#F97316',
-  },
-  {
-    id: 'junk_removal',
-    label: 'Junk Removal',
-    desc: 'Haul-away, cleanouts & debris removal',
-    color: '#374151',
-  },
+  { id: 'moving',       label: 'Moving',       desc: 'Local & long-distance residential moves', color: '#F97316' },
+  { id: 'junk_removal', label: 'Junk Removal',  desc: 'Haul-away, cleanouts & debris removal',   color: '#374151' },
 ] as const
 
 type ServiceId = typeof SERVICE_TYPES[number]['id']
@@ -28,39 +18,41 @@ function fid() {
 }
 
 type PricingModel = 'job_size' | 'hourly' | 'skip'
-interface JobSizePrices { small: number; medium: number; large: number }
-interface HourlyPrice { rate: number }
-type PriceData = JobSizePrices | HourlyPrice | null
+
+interface Tier { id: string; label: string; price: string }
 
 const SERVICE_ADDONS: Record<ServiceId, Array<{ label: string; price: number }>> = {
   moving:       [{ label: 'Packing & Unpacking', price: 150 }, { label: 'Piano / Heavy Items', price: 100 }, { label: 'Long Carry (>75 ft)', price: 75 }],
   junk_removal: [{ label: 'Same-day service', price: 50 }, { label: 'Heavy items (piano)', price: 75 }, { label: 'Appliance removal', price: 50 }],
 }
 
-const JOB_SIZE_LABELS: Record<ServiceId, [string, string, string]> = {
-  moving:       ['Studio / 1 Bed', '2–3 Bedrooms', '4+ Bedrooms'],
-  junk_removal: ['Small Load (1/4 truck)', 'Half Truck', 'Full Truck'],
+const DEFAULT_TIERS: Record<ServiceId, Array<{ label: string }>> = {
+  moving:       [{ label: 'Studio / 1 Bed' }, { label: '2–3 Bedrooms' }, { label: '4+ Bedrooms' }],
+  junk_removal: [{ label: '1/4 Truck' }, { label: '1/2 Truck' }, { label: 'Full Truck' }],
 }
 
-function generateFields(service: ServiceId, model: PricingModel, prices: PriceData): FormField[] {
-  const addons = SERVICE_ADDONS[service]
-  const sizeLabels = JOB_SIZE_LABELS[service]
-
+function generateFields(
+  service: ServiceId,
+  model: PricingModel,
+  tiers: Tier[],
+  hourlyRate: number,
+): FormField[] {
   let mainField: FormField
 
-  if (model === 'job_size' && prices && 'small' in prices) {
+  if (model === 'job_size') {
     mainField = {
       id: fid(), type: 'radio',
       label: service === 'moving' ? 'Home Size' : 'Load Size',
       required: true, showPrices: true,
-      options: [
-        { id: fid(), label: sizeLabels[0], price: prices.small, hours: 2 },
-        { id: fid(), label: sizeLabels[1], price: prices.medium, hours: 4 },
-        { id: fid(), label: sizeLabels[2], price: prices.large, hours: 6 },
-      ],
+      options: tiers.map((t, i) => ({
+        id: fid(),
+        label: t.label,
+        price: parseFloat(t.price) || 0,
+        hours: (i + 1) * 2,
+      })),
     }
-  } else if (model === 'hourly' && prices && 'rate' in prices) {
-    const r = prices.rate
+  } else if (model === 'hourly') {
+    const r = hourlyRate
     mainField = {
       id: fid(), type: 'radio',
       label: 'How long do you need?',
@@ -73,15 +65,12 @@ function generateFields(service: ServiceId, model: PricingModel, prices: PriceDa
       ],
     }
   } else {
+    const defaults = DEFAULT_TIERS[service]
     mainField = {
       id: fid(), type: 'radio',
       label: service === 'moving' ? 'Home Size' : 'Load Size',
       required: true, showPrices: false,
-      options: [
-        { id: fid(), label: sizeLabels[0], price: 0, hours: 2 },
-        { id: fid(), label: sizeLabels[1], price: 0, hours: 4 },
-        { id: fid(), label: sizeLabels[2], price: 0, hours: 6 },
-      ],
+      options: defaults.map((d, i) => ({ id: fid(), label: d.label, price: 0, hours: (i + 1) * 2 })),
     }
   }
 
@@ -102,15 +91,13 @@ function generateFields(service: ServiceId, model: PricingModel, prices: PriceDa
 
   fields.push({
     id: fid(), type: 'checkbox',
-    label: 'Add-ons',
-    required: false,
-    options: addons.map((a) => ({ id: fid(), label: a.label, price: a.price })),
+    label: 'Add-ons', required: false,
+    options: SERVICE_ADDONS[service].map((a) => ({ id: fid(), label: a.label, price: a.price })),
   })
 
   fields.push({
     id: fid(), type: 'textarea',
-    label: 'Additional Notes',
-    required: false,
+    label: 'Additional Notes', required: false,
     placeholder: 'Any special instructions or details about the job…',
   })
 
@@ -118,13 +105,7 @@ function generateFields(service: ServiceId, model: PricingModel, prices: PriceDa
 }
 
 function toSlug(name: string) {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .slice(0, 40)
+  return name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-').replace(/-+/g, '-').slice(0, 40)
 }
 
 const COLOR_PRESETS = ['#F97316', '#374151', '#1a1a2e', '#22C55E', '#3B82F6', '#8B5CF6', '#EF4444', '#0EA5E9']
@@ -139,7 +120,6 @@ interface SetupWizardProps {
 // ── Component ─────────────────────────────────────────────────
 export default function SetupWizard({ accountId, onCustomize, onAdvanced }: SetupWizardProps) {
   const supabase = createClient()
-
   const TOTAL_STEPS = 4
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 'success'>(1)
 
@@ -150,9 +130,11 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
 
   // Step 2
   const [pricingModel, setPricingModel] = useState<PricingModel | null>(null)
-  const [smallPrice, setSmallPrice] = useState('')
-  const [mediumPrice, setMediumPrice] = useState('')
-  const [largePrice, setLargePrice] = useState('')
+  const [tiers, setTiers] = useState<Tier[]>([
+    { id: fid(), label: '', price: '' },
+    { id: fid(), label: '', price: '' },
+    { id: fid(), label: '', price: '' },
+  ])
   const [hourlyRate, setHourlyRate] = useState('')
   const [showPrices, setShowPrices] = useState(true)
   const [minQuote, setMinQuote] = useState('')
@@ -171,6 +153,24 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
   const [liveSlug, setLiveSlug] = useState('')
   const [savedFormId, setSavedFormId] = useState('')
   const [copied, setCopied] = useState(false)
+
+  // Seed default tier labels when service type is chosen
+  function selectService(id: ServiceId, color: string) {
+    setServiceType(id)
+    setBrandColor(color)
+    setTiers(DEFAULT_TIERS[id].map((d) => ({ id: fid(), label: d.label, price: '' })))
+  }
+
+  // Tier helpers
+  function setTierField(id: string, key: 'label' | 'price', val: string) {
+    setTiers((prev) => prev.map((t) => t.id === id ? { ...t, [key]: val } : t))
+  }
+  function addTier() {
+    setTiers((prev) => [...prev, { id: fid(), label: '', price: '' }])
+  }
+  function removeTier(id: string) {
+    setTiers((prev) => prev.filter((t) => t.id !== id))
+  }
 
   // ── Hero upload ──
   async function handleHeroFileSelect(file: File) {
@@ -204,29 +204,15 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
     setSaveError('')
 
     const model: PricingModel = pricingModel ?? 'skip'
-    let priceData: PriceData = null
-    if (model === 'job_size') {
-      priceData = { small: parseFloat(smallPrice) || 0, medium: parseFloat(mediumPrice) || 0, large: parseFloat(largePrice) || 0 }
-    } else if (model === 'hourly') {
-      priceData = { rate: parseFloat(hourlyRate) || 0 }
-    }
-
-    const rawFields = generateFields(serviceType, model, priceData)
+    const rawFields = generateFields(serviceType, model, tiers, parseFloat(hourlyRate) || 0)
     const fields = rawFields.map((f) => ({ ...f, showPrices }))
     const serviceInfo = SERVICE_TYPES.find((s) => s.id === serviceType)!
     const formName = `${businessName.trim()} Quote`
     const baseSlug = toSlug(businessName.trim())
 
     let slug = baseSlug
-    const { data: conflicts } = await supabase
-      .from('hosted_forms')
-      .select('id')
-      .eq('form_config->>slug', slug)
-    if ((conflicts ?? []).length > 0) {
-      slug = `${baseSlug}-${Math.random().toString(36).slice(2, 5)}`
-    }
-
-    const minQ = parseFloat(minQuote) || 0
+    const { data: conflicts } = await supabase.from('hosted_forms').select('id').eq('form_config->>slug', slug)
+    if ((conflicts ?? []).length > 0) slug = `${baseSlug}-${Math.random().toString(36).slice(2, 5)}`
 
     const formConfig = {
       slug,
@@ -238,7 +224,7 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
       quote_display: showPrices ? 'live' : 'hidden',
       hero_image_url: heroImageUrl,
       fields,
-      min_quote: minQ,
+      min_quote: parseFloat(minQuote) || 0,
       disclaimer_enabled: true,
       disclaimer_text: 'I understand this quote is an estimate and is not final until confirmed in writing.',
       send_email_estimate: true,
@@ -253,24 +239,14 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
     try {
       const { data, error } = await supabase
         .from('hosted_forms')
-        .insert({
-          account_id: accountId,
-          form_name: formName,
-          form_type: 'quote',
-          form_config: formConfig,
-          is_active: true,
-          updated_at: new Date().toISOString(),
-        })
-        .select()
-        .single()
-
+        .insert({ account_id: accountId, form_name: formName, form_type: 'quote', form_config: formConfig, is_active: true, updated_at: new Date().toISOString() })
+        .select().single()
       if (error) throw error
       setLiveSlug(slug)
       setSavedFormId(data.id)
       setStep('success')
     } catch (e: unknown) {
-      const err = e as { message?: string }
-      setSaveError(err.message ?? 'Something went wrong. Try again.')
+      setSaveError((e as { message?: string }).message ?? 'Something went wrong. Try again.')
     } finally {
       setSaving(false)
     }
@@ -282,11 +258,11 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const canGoNext1 = businessName.trim().length > 1 && serviceType !== null
+  const tiersValid = tiers.length > 0 && tiers.every((t) => t.label.trim() !== '' && t.price !== '')
   const canGoNext2 = pricingModel !== null && (
     pricingModel === 'skip' ||
     (pricingModel === 'hourly' && hourlyRate !== '') ||
-    (pricingModel === 'job_size' && smallPrice !== '' && mediumPrice !== '' && largePrice !== '')
+    (pricingModel === 'job_size' && tiersValid)
   )
 
   // ── Shared styles ──
@@ -301,6 +277,7 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
     background: 'var(--bg)',
   }
 
+  // Card uses flex-column so the footer is always visible, body scrolls
   const cardStyle: React.CSSProperties = {
     maxWidth: 520,
     width: '100%',
@@ -309,75 +286,58 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
     borderRadius: 16,
     overflow: 'hidden',
     boxShadow: '0 1px 4px rgba(0,0,0,0.05), 0 8px 32px rgba(0,0,0,0.07)',
+    display: 'flex',
+    flexDirection: 'column',
+    maxHeight: 'calc(100vh - 160px)',
   }
 
   const bodyStyle: React.CSSProperties = {
-    padding: '40px 44px 36px',
-  }
-
-  const stepLabel: React.CSSProperties = {
-    fontSize: '0.7rem',
-    fontWeight: 700,
-    letterSpacing: '0.1em',
-    textTransform: 'uppercase',
-    color: 'var(--muted)',
-    marginBottom: 10,
-  }
-
-  const headingStyle: React.CSSProperties = {
-    fontFamily: "'Instrument Sans', sans-serif",
-    fontSize: '1.5rem',
-    fontWeight: 800,
-    color: 'var(--fg)',
-    marginBottom: 6,
-    lineHeight: 1.2,
-  }
-
-  const subStyle: React.CSSProperties = {
-    fontSize: '0.84rem',
-    color: 'var(--muted)',
-    lineHeight: 1.6,
-    marginBottom: 28,
-  }
-
-  const fieldLabel: React.CSSProperties = {
-    fontSize: '0.72rem',
-    fontWeight: 700,
-    color: 'var(--muted)',
-    letterSpacing: '0.07em',
-    textTransform: 'uppercase',
-    marginBottom: 7,
-    display: 'block',
-  }
-
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '11px 14px',
-    borderRadius: 9,
-    border: '1px solid var(--border)',
-    background: 'var(--surface2)',
-    color: 'var(--fg)',
-    fontSize: '0.92rem',
-    boxSizing: 'border-box',
-    outline: 'none',
+    padding: '36px 44px 28px',
+    overflowY: 'auto',
+    flex: 1,
   }
 
   const footerStyle: React.CSSProperties = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '20px 44px',
+    padding: '16px 44px',
     borderTop: '1px solid var(--border)',
     background: 'var(--surface)',
+    flexShrink: 0,
   }
 
-  // ── Progress bar ──
-  function ProgressBar({ current, total }: { current: number; total: number }) {
+  const stepLabelStyle: React.CSSProperties = {
+    fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em',
+    textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 10,
+  }
+
+  const headingStyle: React.CSSProperties = {
+    fontFamily: "'Instrument Sans', sans-serif",
+    fontSize: '1.5rem', fontWeight: 800, color: 'var(--fg)', marginBottom: 6, lineHeight: 1.2,
+  }
+
+  const subStyle: React.CSSProperties = {
+    fontSize: '0.84rem', color: 'var(--muted)', lineHeight: 1.6, marginBottom: 24,
+  }
+
+  const fieldLabel: React.CSSProperties = {
+    fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)',
+    letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 7, display: 'block',
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '11px 14px', borderRadius: 9,
+    border: '1px solid var(--border)', background: 'var(--surface2)',
+    color: 'var(--fg)', fontSize: '0.92rem', boxSizing: 'border-box', outline: 'none',
+  }
+
+  function ProgressBar({ current }: { current: number }) {
     return (
-      <div style={{ height: 3, background: 'var(--border)', position: 'relative' }}>
+      <div style={{ height: 3, background: 'var(--border)', flexShrink: 0 }}>
         <div style={{
-          position: 'absolute', top: 0, left: 0, height: '100%',
-          width: `${(current / total) * 100}%`,
+          height: '100%',
+          width: `${(current / TOTAL_STEPS) * 100}%`,
           background: brandColor,
           transition: 'width 0.3s ease',
           borderRadius: '0 2px 2px 0',
@@ -390,75 +350,53 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
   if (step === 'success') {
     return (
       <div style={pageStyle}>
-        <div style={cardStyle}>
-          <div style={{ height: 4, background: brandColor }} />
-          <div style={{ ...bodyStyle, textAlign: 'center' }}>
+        <div style={{ ...cardStyle, maxHeight: 'none' }}>
+          <div style={{ height: 4, background: brandColor, flexShrink: 0 }} />
+          <div style={{ ...bodyStyle, textAlign: 'center', overflow: 'visible' }}>
             <div style={{
-              width: 56, height: 56, borderRadius: '50%',
-              background: `${brandColor}18`,
-              border: `2px solid ${brandColor}40`,
+              width: 52, height: 52, borderRadius: '50%',
+              background: `${brandColor}18`, border: `2px solid ${brandColor}40`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              margin: '0 auto 20px',
-              fontSize: '1.4rem', color: brandColor, fontWeight: 800,
-            }}>
-              ✓
-            </div>
+              margin: '0 auto 18px', fontSize: '1.3rem', color: brandColor, fontWeight: 800,
+            }}>✓</div>
             <div style={{ ...headingStyle, marginBottom: 8 }}>Your form is live</div>
-            <div style={{ ...subStyle, marginBottom: 28 }}>
-              Share this link to start collecting leads immediately.
-            </div>
+            <div style={{ ...subStyle, marginBottom: 24 }}>Share this link to start collecting leads immediately.</div>
 
             <div style={{
               display: 'flex', alignItems: 'center', gap: 8,
               background: 'var(--surface2)', border: '1px solid var(--border)',
-              borderRadius: 10, padding: '11px 14px', marginBottom: 20,
-              textAlign: 'left',
+              borderRadius: 10, padding: '11px 14px', marginBottom: 16, textAlign: 'left',
             }}>
               <div style={{ flex: 1, fontSize: '0.86rem', fontFamily: "'DM Mono', monospace", color: 'var(--accent)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 quote-box.com/{liveSlug}
               </div>
-              <button
-                onClick={copyLink}
-                style={{
-                  flexShrink: 0, padding: '6px 14px', borderRadius: 7,
-                  background: copied ? brandColor : 'var(--surface)',
-                  border: `1px solid ${copied ? brandColor : 'var(--border)'}`,
-                  color: copied ? '#fff' : 'var(--fg)',
-                  fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
-                }}
-              >
+              <button onClick={copyLink} style={{
+                flexShrink: 0, padding: '6px 14px', borderRadius: 7,
+                background: copied ? brandColor : 'var(--surface)',
+                border: `1px solid ${copied ? brandColor : 'var(--border)'}`,
+                color: copied ? '#fff' : 'var(--fg)',
+                fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
+              }}>
                 {copied ? 'Copied' : 'Copy link'}
               </button>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-              <a
-                href={`https://quote-box.com/${liveSlug}`}
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  display: 'block', textAlign: 'center', padding: '12px 0',
-                  background: brandColor, color: '#fff', borderRadius: 10,
-                  fontWeight: 700, fontSize: '0.88rem', textDecoration: 'none',
-                }}
-              >
-                Preview form
-              </a>
-              <button
-                onClick={() => onCustomize(savedFormId, businessName.trim() + ' Quote', liveSlug)}
-                style={{
-                  width: '100%', padding: '12px 0', borderRadius: 10,
-                  background: 'none', border: '1px solid var(--border)',
-                  color: 'var(--fg)', fontSize: '0.88rem', fontWeight: 600, cursor: 'pointer',
-                }}
-              >
-                Customize your form
-              </button>
+              <a href={`https://quote-box.com/${liveSlug}`} target="_blank" rel="noreferrer" style={{
+                display: 'block', textAlign: 'center', padding: '12px 0',
+                background: brandColor, color: '#fff', borderRadius: 10,
+                fontWeight: 700, fontSize: '0.88rem', textDecoration: 'none',
+              }}>Preview form</a>
+              <button onClick={() => onCustomize(savedFormId, businessName.trim() + ' Quote', liveSlug)} style={{
+                width: '100%', padding: '12px 0', borderRadius: 10,
+                background: 'none', border: '1px solid var(--border)',
+                color: 'var(--fg)', fontSize: '0.88rem', fontWeight: 600, cursor: 'pointer',
+              }}>Customize your form</button>
             </div>
 
             {pixelId.trim() && (
-              <div style={{ marginTop: 20, padding: '10px 14px', background: 'rgba(24,119,242,0.06)', borderRadius: 9, border: '1px solid rgba(24,119,242,0.15)', fontSize: '0.76rem', color: 'var(--muted)', textAlign: 'left' }}>
-                Meta Pixel <span style={{ fontWeight: 700, color: 'var(--fg)' }}>{pixelId.trim()}</span> is connected. Every visitor to your form will be tracked.
+              <div style={{ marginTop: 18, padding: '10px 14px', background: 'rgba(24,119,242,0.06)', borderRadius: 9, border: '1px solid rgba(24,119,242,0.15)', fontSize: '0.76rem', color: 'var(--muted)', textAlign: 'left' }}>
+                Meta Pixel <span style={{ fontWeight: 700, color: 'var(--fg)' }}>{pixelId.trim()}</span> is connected.
               </div>
             )}
           </div>
@@ -472,42 +410,30 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
     return (
       <div style={pageStyle}>
         <div style={cardStyle}>
-          <ProgressBar current={1} total={TOTAL_STEPS} />
+          <ProgressBar current={1} />
           <div style={bodyStyle}>
-            <div style={stepLabel}>Step 1 of {TOTAL_STEPS}</div>
+            <div style={stepLabelStyle}>Step 1 of {TOTAL_STEPS}</div>
             <div style={headingStyle}>Let's set up your form</div>
             <div style={subStyle}>Tell us about your business and we'll build a tailored quote form.</div>
 
-            <div style={{ marginBottom: 22 }}>
+            <div style={{ marginBottom: 20 }}>
               <label style={fieldLabel}>Business name</label>
-              <input
-                style={inputStyle}
-                type="text"
-                placeholder="e.g. Smith's Moving Co."
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
-                autoFocus
-              />
+              <input style={inputStyle} type="text" placeholder="e.g. Smith's Moving Co."
+                value={businessName} onChange={(e) => setBusinessName(e.target.value)} autoFocus />
             </div>
 
-            <div style={{ marginBottom: 22 }}>
+            <div style={{ marginBottom: 20 }}>
               <label style={fieldLabel}>Service type</label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 {SERVICE_TYPES.map((s) => {
                   const sel = serviceType === s.id
                   return (
-                    <button
-                      key={s.id}
-                      onClick={() => { setServiceType(s.id); setBrandColor(s.color) }}
-                      style={{
-                        padding: '18px 16px',
-                        borderRadius: 10,
-                        border: `1.5px solid ${sel ? s.color : 'var(--border)'}`,
-                        background: sel ? `${s.color}0e` : 'var(--surface2)',
-                        cursor: 'pointer', textAlign: 'left',
-                        transition: 'border-color 0.12s, background 0.12s',
-                      }}
-                    >
+                    <button key={s.id} onClick={() => selectService(s.id, s.color)} style={{
+                      padding: '18px 16px', borderRadius: 10, textAlign: 'left', cursor: 'pointer',
+                      border: `1.5px solid ${sel ? s.color : 'var(--border)'}`,
+                      background: sel ? `${s.color}0e` : 'var(--surface2)',
+                      transition: 'border-color 0.12s, background 0.12s',
+                    }}>
                       <div style={{ fontSize: '0.9rem', fontWeight: 700, color: sel ? s.color : 'var(--fg)', marginBottom: 4 }}>{s.label}</div>
                       <div style={{ fontSize: '0.73rem', color: 'var(--muted)', lineHeight: 1.4 }}>{s.desc}</div>
                     </button>
@@ -520,37 +446,26 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
               <label style={fieldLabel}>Brand color</label>
               <div style={{ display: 'flex', gap: 7, alignItems: 'center', flexWrap: 'wrap' }}>
                 {COLOR_PRESETS.map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setBrandColor(c)}
-                    style={{
-                      width: 26, height: 26, borderRadius: 6, background: c,
-                      border: brandColor === c ? '2.5px solid var(--fg)' : '2.5px solid transparent',
-                      outline: brandColor === c ? `2px solid ${c}` : 'none',
-                      cursor: 'pointer', flexShrink: 0, padding: 0,
-                    }}
-                  />
+                  <button key={c} onClick={() => setBrandColor(c)} style={{
+                    width: 26, height: 26, borderRadius: 6, background: c, padding: 0,
+                    border: brandColor === c ? '2.5px solid var(--fg)' : '2.5px solid transparent',
+                    outline: brandColor === c ? `2px solid ${c}` : 'none',
+                    cursor: 'pointer', flexShrink: 0,
+                  }} />
                 ))}
-                <input
-                  type="color"
-                  value={brandColor}
-                  onChange={(e) => setBrandColor(e.target.value)}
+                <input type="color" value={brandColor} onChange={(e) => setBrandColor(e.target.value)}
                   title="Custom color"
-                  style={{ width: 26, height: 26, borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', padding: 1, background: 'none' }}
-                />
+                  style={{ width: 26, height: 26, borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', padding: 1, background: 'none' }} />
                 <span style={{ fontSize: '0.72rem', color: 'var(--muted)', fontFamily: "'DM Mono', monospace" }}>{brandColor}</span>
               </div>
             </div>
           </div>
 
           <div style={footerStyle}>
-            <button
-              onClick={onAdvanced}
-              style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.8rem', cursor: 'pointer', padding: 0 }}
-            >
+            <button onClick={onAdvanced} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.8rem', cursor: 'pointer', padding: 0 }}>
               Advanced builder
             </button>
-            <button className="bb bb-primary" disabled={!canGoNext1} onClick={() => setStep(2)}>
+            <button className="bb bb-primary" disabled={!(businessName.trim().length > 1 && serviceType !== null)} onClick={() => setStep(2)}>
               Continue
             </button>
           </div>
@@ -561,36 +476,31 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
 
   // ── STEP 2 ──
   if (step === 2) {
-    const sizeLabels = serviceType ? JOB_SIZE_LABELS[serviceType] : ['Small', 'Medium', 'Large']
     return (
       <div style={pageStyle}>
         <div style={cardStyle}>
-          <ProgressBar current={2} total={TOTAL_STEPS} />
+          <ProgressBar current={2} />
           <div style={bodyStyle}>
-            <div style={stepLabel}>Step 2 of {TOTAL_STEPS}</div>
+            <div style={stepLabelStyle}>Step 2 of {TOTAL_STEPS}</div>
             <div style={headingStyle}>Pricing</div>
-            <div style={subStyle}>Set your rates. You can adjust any of this later in the form builder.</div>
+            <div style={subStyle}>Set your rates. You can fine-tune everything later in the form builder.</div>
 
             <div style={{ marginBottom: 20 }}>
               <label style={fieldLabel}>How do you charge?</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {([
-                  { id: 'job_size', label: 'By job size',        desc: 'Fixed price per size tier — small, medium, large' },
-                  { id: 'hourly',   label: 'By the hour',         desc: 'Customer picks a duration, price scales with time' },
-                  { id: 'skip',     label: 'Set up later',        desc: 'Skip for now and configure manually' },
+                  { id: 'job_size', label: 'By job size',   desc: 'Fixed price per size — add as many tiers as you need' },
+                  { id: 'hourly',   label: 'By the hour',   desc: 'Customer picks a duration, price scales with time' },
+                  { id: 'skip',     label: 'Set up later',  desc: 'Skip for now and configure manually' },
                 ] as { id: PricingModel; label: string; desc: string }[]).map((m) => {
                   const sel = pricingModel === m.id
                   return (
-                    <button
-                      key={m.id}
-                      onClick={() => setPricingModel(m.id)}
-                      style={{
-                        padding: '14px 16px', borderRadius: 10, textAlign: 'left', cursor: 'pointer',
-                        border: `1.5px solid ${sel ? 'var(--accent)' : 'var(--border)'}`,
-                        background: sel ? 'rgba(var(--accent-rgb,26,26,46),0.05)' : 'var(--surface2)',
-                        transition: 'border-color 0.12s, background 0.12s',
-                      }}
-                    >
+                    <button key={m.id} onClick={() => setPricingModel(m.id)} style={{
+                      padding: '13px 16px', borderRadius: 10, textAlign: 'left', cursor: 'pointer',
+                      border: `1.5px solid ${sel ? 'var(--accent)' : 'var(--border)'}`,
+                      background: sel ? 'rgba(var(--accent-rgb,26,26,46),0.05)' : 'var(--surface2)',
+                      transition: 'border-color 0.12s, background 0.12s',
+                    }}>
                       <div style={{ fontSize: '0.88rem', fontWeight: 700, color: sel ? 'var(--accent)' : 'var(--fg)', marginBottom: 2 }}>{m.label}</div>
                       <div style={{ fontSize: '0.74rem', color: 'var(--muted)' }}>{m.desc}</div>
                     </button>
@@ -601,24 +511,43 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
 
             {pricingModel === 'job_size' && (
               <div style={{ marginBottom: 20 }}>
-                <label style={fieldLabel}>Starting prices</label>
+                <label style={fieldLabel}>Size tiers</label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {[
-                    { label: sizeLabels[0], val: smallPrice,  set: setSmallPrice },
-                    { label: sizeLabels[1], val: mediumPrice, set: setMediumPrice },
-                    { label: sizeLabels[2], val: largePrice,  set: setLargePrice },
-                  ].map(({ label, val, set }) => (
-                    <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div style={{ flex: 1, fontSize: '0.84rem', color: 'var(--fg)', fontWeight: 500 }}>{label}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, width: 110 }}>
-                        <span style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>$</span>
-                        <input type="number" min={0} step={5} placeholder="0" value={val}
-                          onChange={(e) => set(e.target.value)}
-                          style={{ ...inputStyle, padding: '8px 10px' }}
+                  {tiers.map((t, i) => (
+                    <div key={t.id} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <input
+                        type="text"
+                        placeholder={`e.g. ${DEFAULT_TIERS[serviceType ?? 'moving'][i]?.label ?? 'Tier ' + (i + 1)}`}
+                        value={t.label}
+                        onChange={(e) => setTierField(t.id, 'label', e.target.value)}
+                        style={{ ...inputStyle, flex: 2, padding: '9px 12px' }}
+                      />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1 }}>
+                        <span style={{ color: 'var(--muted)', fontSize: '0.9rem', flexShrink: 0 }}>$</span>
+                        <input
+                          type="number" min={0} step={5} placeholder="0"
+                          value={t.price}
+                          onChange={(e) => setTierField(t.id, 'price', e.target.value)}
+                          style={{ ...inputStyle, padding: '9px 10px' }}
                         />
                       </div>
+                      {tiers.length > 1 && (
+                        <button onClick={() => removeTier(t.id)} style={{
+                          flexShrink: 0, width: 28, height: 28, borderRadius: 6,
+                          border: '1px solid var(--border)', background: 'none',
+                          color: 'var(--muted)', fontSize: '0.8rem', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>✕</button>
+                      )}
                     </div>
                   ))}
+                  <button onClick={addTier} style={{
+                    marginTop: 2, padding: '8px 0', width: '100%', borderRadius: 8,
+                    border: '1px dashed var(--border)', background: 'none',
+                    color: 'var(--accent)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
+                  }}>
+                    + Add another size
+                  </button>
                 </div>
               </div>
             )}
@@ -630,9 +559,7 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
                   <span style={{ color: 'var(--muted)' }}>$</span>
                   <input type="number" min={0} step={5} placeholder="75" value={hourlyRate}
                     onChange={(e) => setHourlyRate(e.target.value)}
-                    style={{ ...inputStyle, padding: '10px 12px' }}
-                    autoFocus
-                  />
+                    style={{ ...inputStyle, padding: '10px 12px' }} autoFocus />
                   <span style={{ fontSize: '0.84rem', color: 'var(--muted)', whiteSpace: 'nowrap' }}>/hr</span>
                 </div>
               </div>
@@ -645,10 +572,9 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
                   <span style={{ color: 'var(--muted)' }}>$</span>
                   <input type="number" min={0} step={5} placeholder="0" value={minQuote}
                     onChange={(e) => setMinQuote(e.target.value)}
-                    style={{ ...inputStyle, padding: '10px 12px' }}
-                  />
+                    style={{ ...inputStyle, padding: '10px 12px' }} />
                 </div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: 5 }}>We will never quote below this amount.</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: 5, lineHeight: 1.4 }}>We will never quote below this amount.</div>
               </div>
             </div>
 
@@ -659,11 +585,8 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
                   {showPrices ? 'Prices will display as "Jobs start at $X"' : 'Prices are hidden until contact info is submitted'}
                 </div>
               </div>
-              <div
-                className={`toggle${showPrices ? ' on' : ''}`}
-                onClick={() => setShowPrices((v) => !v)}
-                style={{ flexShrink: 0, marginLeft: 16 }}
-              />
+              <div className={`toggle${showPrices ? ' on' : ''}`} onClick={() => setShowPrices((v) => !v)}
+                style={{ flexShrink: 0, marginLeft: 16 }} />
             </div>
           </div>
 
@@ -681,47 +604,41 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
     return (
       <div style={pageStyle}>
         <div style={cardStyle}>
-          <ProgressBar current={3} total={TOTAL_STEPS} />
+          <ProgressBar current={3} />
           <div style={bodyStyle}>
-            <div style={stepLabel}>Step 3 of {TOTAL_STEPS}</div>
+            <div style={stepLabelStyle}>Step 3 of {TOTAL_STEPS}</div>
             <div style={headingStyle}>Hero photo</div>
             <div style={subStyle}>A photo at the top of your form builds trust and improves conversions. You can skip this and add one later.</div>
 
             <input ref={heroFileRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }}
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleHeroFileSelect(f) }}
-            />
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleHeroFileSelect(f) }} />
 
             {heroImageUrl ? (
               <div style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border)' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={heroImageUrl} alt="Hero" style={{ width: '100%', height: 190, objectFit: 'cover', display: 'block' }} />
                 <div style={{ padding: '8px 12px', background: 'var(--surface2)', display: 'flex', gap: 8 }}>
-                  <button onClick={() => heroFileRef.current?.click()}
-                    style={{ flex: 1, padding: '7px 0', borderRadius: 7, border: '1px solid var(--border)', background: 'none', color: 'var(--fg)', fontSize: '0.78rem', cursor: 'pointer' }}>
+                  <button onClick={() => heroFileRef.current?.click()} style={{ flex: 1, padding: '7px 0', borderRadius: 7, border: '1px solid var(--border)', background: 'none', color: 'var(--fg)', fontSize: '0.78rem', cursor: 'pointer' }}>
                     Change photo
                   </button>
-                  <button onClick={() => setHeroImageUrl('')}
-                    style={{ padding: '7px 14px', borderRadius: 7, border: '1px solid var(--border)', background: 'none', color: 'var(--muted)', fontSize: '0.78rem', cursor: 'pointer' }}>
+                  <button onClick={() => setHeroImageUrl('')} style={{ padding: '7px 14px', borderRadius: 7, border: '1px solid var(--border)', background: 'none', color: 'var(--muted)', fontSize: '0.78rem', cursor: 'pointer' }}>
                     Remove
                   </button>
                 </div>
               </div>
             ) : (
-              <button onClick={() => heroFileRef.current?.click()} disabled={heroUploading}
-                style={{
-                  display: 'block', width: '100%', padding: '44px 20px', borderRadius: 10,
-                  border: '1.5px dashed var(--border)', background: 'var(--surface2)',
-                  cursor: heroUploading ? 'wait' : 'pointer', textAlign: 'center',
-                }}
-              >
-                {heroUploading ? (
-                  <div style={{ fontSize: '0.84rem', color: 'var(--muted)' }}>Uploading…</div>
-                ) : (
-                  <>
-                    <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--fg)', marginBottom: 4 }}>Upload a photo</div>
-                    <div style={{ fontSize: '0.76rem', color: 'var(--muted)' }}>JPG, PNG or WebP — max 5 MB</div>
-                  </>
-                )}
+              <button onClick={() => heroFileRef.current?.click()} disabled={heroUploading} style={{
+                display: 'block', width: '100%', padding: '44px 20px', borderRadius: 10,
+                border: '1.5px dashed var(--border)', background: 'var(--surface2)',
+                cursor: heroUploading ? 'wait' : 'pointer', textAlign: 'center',
+              }}>
+                {heroUploading
+                  ? <div style={{ fontSize: '0.84rem', color: 'var(--muted)' }}>Uploading…</div>
+                  : <>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--fg)', marginBottom: 4 }}>Upload a photo</div>
+                      <div style={{ fontSize: '0.76rem', color: 'var(--muted)' }}>JPG, PNG or WebP — max 5 MB</div>
+                    </>
+                }
               </button>
             )}
           </div>
@@ -741,26 +658,19 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced }: Setu
   return (
     <div style={pageStyle}>
       <div style={cardStyle}>
-        <ProgressBar current={4} total={TOTAL_STEPS} />
+        <ProgressBar current={4} />
         <div style={bodyStyle}>
-          <div style={stepLabel}>Step 4 of {TOTAL_STEPS}</div>
+          <div style={stepLabelStyle}>Step 4 of {TOTAL_STEPS}</div>
           <div style={headingStyle}>Ad tracking</div>
           <div style={subStyle}>
-            Connect a Meta Pixel to retarget people who visit your form and measure which ads are driving leads. This is optional — you can add it later in settings.
+            Connect a Meta Pixel to retarget people who visit your form and measure which ads are driving leads. Optional — you can add it later in settings.
           </div>
 
-          <div>
-            <label style={fieldLabel}>Meta Pixel ID (optional)</label>
-            <input
-              style={inputStyle}
-              type="text"
-              placeholder="e.g. 1234567890123456"
-              value={pixelId}
-              onChange={(e) => setPixelId(e.target.value.replace(/\D/g, ''))}
-            />
-            <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: 6 }}>
-              Found in Meta Events Manager under Data Sources.
-            </div>
+          <label style={fieldLabel}>Meta Pixel ID (optional)</label>
+          <input style={inputStyle} type="text" placeholder="e.g. 1234567890123456"
+            value={pixelId} onChange={(e) => setPixelId(e.target.value.replace(/\D/g, ''))} />
+          <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: 6 }}>
+            Found in Meta Events Manager under Data Sources.
           </div>
 
           {saveError && (
