@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Terms of Service — Quote Box by Arctic Reach LLC',
+  title: 'Terms of Service — Quotebox by Arctic Reach LLC',
 }
 
 export default function TermsPage() {
@@ -14,16 +14,16 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">1. Acceptance of Terms</h2>
             <p>
-              By creating an account or using Quote Box (&quot;Service&quot;), a product of Arctic Reach LLC,
+              By creating an account or using Quotebox (&quot;Service&quot;), a product of Arctic Reach LLC,
               you agree to be bound by these Terms of Service. If you do not agree, do not use the Service.
-              These terms apply to all users, including business owners and their end customers who fill out Quote Box forms.
+              These terms apply to all users, including business owners and their end customers who fill out Quotebox forms.
             </p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">2. Description of Service</h2>
             <p>
-              Quote Box is a SaaS platform operated by Arctic Reach LLC that allows businesses to build quote forms,
+              Quotebox is a SaaS platform operated by Arctic Reach LLC that allows businesses to build quote forms,
               capture leads, send automated follow-up messages, and create Meta advertising campaigns using
               AI-generated copy. We provide tools to automate quoting, manage leads, and launch ads —
               we do not provide advertising advisory or guarantee any advertising results.
@@ -46,7 +46,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">4. Subscription and Billing</h2>
             <p className="mb-2">
-              Quote Box offers paid subscription plans. Billing is handled through Stripe. By subscribing,
+              Quotebox offers paid subscription plans. Billing is handled through Stripe. By subscribing,
               you authorize us to charge your payment method on a recurring basis.
             </p>
             <p className="mb-2">
@@ -63,19 +63,19 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">5. SMS Messaging</h2>
             <p className="mb-2">
-              Quote Box enables businesses to send automated SMS messages to leads who have provided
-              their phone number and opted in through a Quote Box form. The following terms apply to
+              Quotebox enables businesses to send automated SMS messages to leads who have provided
+              their phone number and opted in through a Quotebox form. The following terms apply to
               all SMS communications sent through our platform:
             </p>
             <ul className="list-disc pl-5 space-y-2 mb-3">
               <li>
                 <strong>Opt-in consent:</strong> SMS messages are only sent to individuals who have
-                explicitly checked the SMS opt-in checkbox on a Quote Box form. Consent is never assumed
-                or pre-checked. Businesses using Quote Box are responsible for ensuring their forms
+                explicitly checked the SMS opt-in checkbox on a Quotebox form. Consent is never assumed
+                or pre-checked. Businesses using Quotebox are responsible for ensuring their forms
                 display clear opt-in language before collecting phone numbers.
               </li>
               <li>
-                <strong>Message content:</strong> SMS messages sent through Quote Box may include
+                <strong>Message content:</strong> SMS messages sent through Quotebox may include
                 quote follow-ups, booking reminders, appointment confirmations, and promotional offers
                 related to the specific business the recipient contacted.
               </li>
@@ -93,17 +93,17 @@ export default function TermsPage() {
                 Replying <strong>HELP</strong> returns support contact information.
               </li>
               <li>
-                <strong>No sharing:</strong> Phone numbers collected through Quote Box forms are never
+                <strong>No sharing:</strong> Phone numbers collected through Quotebox forms are never
                 sold, rented, or shared with third parties for their own marketing purposes.
               </li>
               <li>
-                <strong>Business responsibility:</strong> Businesses using Quote Box are solely responsible
+                <strong>Business responsibility:</strong> Businesses using Quotebox are solely responsible
                 for ensuring their SMS messaging complies with all applicable laws, including the TCPA
                 (Telephone Consumer Protection Act) and any applicable state regulations.
               </li>
             </ul>
             <p>
-              SMS delivery is powered by Twilio. By using the SMS features of Quote Box, you agree to
+              SMS delivery is powered by Twilio. By using the SMS features of Quotebox, you agree to
               Twilio&apos;s{' '}
               <a href="https://www.twilio.com/en-us/legal/aup" className="text-brand-600 hover:underline" target="_blank" rel="noopener noreferrer">
                 Acceptable Use Policy
@@ -113,7 +113,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">6. Acceptable Use</h2>
-            <p className="mb-2">You agree not to use Quote Box to:</p>
+            <p className="mb-2">You agree not to use Quotebox to:</p>
             <ul className="list-disc pl-5 space-y-1">
               <li>Violate any applicable laws or regulations, including TCPA and CAN-SPAM</li>
               <li>Send SMS messages to individuals who have not opted in</li>
@@ -128,12 +128,12 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">7. Meta Ads Integration</h2>
             <p className="mb-2">
-              By connecting your Meta account, you authorize Quote Box to create campaigns, ad sets,
+              By connecting your Meta account, you authorize Quotebox to create campaigns, ad sets,
               and ads on your behalf using the permissions you grant. You are solely responsible for
               any ad spend incurred in your Meta Ads account.
             </p>
             <p>
-              Quote Box creates all ads in PAUSED status — no spending occurs until you manually
+              Quotebox creates all ads in PAUSED status — no spending occurs until you manually
               activate them in Meta Ads Manager. We are not responsible for ad performance or
               any charges from Meta.
             </p>
@@ -142,7 +142,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">8. AI-Generated Content</h2>
             <p>
-              Quote Box uses AI to generate ad copy, form content, and campaign suggestions. You are
+              Quotebox uses AI to generate ad copy, form content, and campaign suggestions. You are
               responsible for reviewing all AI-generated content before publishing. We do not guarantee
               the accuracy, legality, or effectiveness of any AI-generated output.
             </p>
@@ -151,16 +151,16 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">9. Lead Data</h2>
             <p>
-              Leads collected through your Quote Box forms are your data. You are responsible for
+              Leads collected through your Quotebox forms are your data. You are responsible for
               complying with applicable privacy laws (including GDPR, CCPA, and TCPA) when collecting
-              and using lead data. Quote Box stores this data as a data processor on your behalf.
+              and using lead data. Quotebox stores this data as a data processor on your behalf.
             </p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">10. Intellectual Property</h2>
             <p>
-              Quote Box and its original content, features, and functionality are owned by Arctic Reach LLC and
+              Quotebox and its original content, features, and functionality are owned by Arctic Reach LLC and
               protected by intellectual property laws. You retain ownership of your business data,
               form configurations, and uploaded files.
             </p>
@@ -207,7 +207,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">15. Contact</h2>
-            <p className="mb-1">Arctic Reach LLC — Quote Box</p>
+            <p className="mb-1">Arctic Reach LLC — Quotebox</p>
             <p>
               Email:{' '}
               <a href="mailto:support@quote-box.com" className="text-brand-600 hover:underline">

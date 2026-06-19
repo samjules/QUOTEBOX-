@@ -4,12 +4,12 @@ import PublicNav from '@/components/PublicNav'
 import PublicFooter from '@/components/PublicFooter'
 
 export const metadata: Metadata = {
-  title: 'Quote Box vs Thumbtack — Exclusive Moving & Junk Removal Leads Without the Bidding War',
-  description: 'Thumbtack sends your lead to 5 movers and charges you to bid. Quote Box gives you exclusive moving and junk removal leads for $15 flat — no bidding, no sharing, no monthly fees. See the full comparison.',
+  title: 'Quotebox vs Thumbtack — Exclusive Moving & Junk Removal Leads Without the Bidding War',
+  description: 'Thumbtack sends your lead to 5 movers and charges you to bid. Quotebox gives you exclusive moving and junk removal leads for $15 flat — no bidding, no sharing, no monthly fees. See the full comparison.',
   alternates: { canonical: 'https://quote-box.com/vs-thumbtack' },
   openGraph: {
-    title: 'Quote Box vs Thumbtack | Quote Box',
-    description: 'Thumbtack charges you just to send a bid and shares your lead with 5 competitors. Quote Box: $15 flat, exclusive leads, no bidding.',
+    title: 'Quotebox vs Thumbtack | Quotebox',
+    description: 'Thumbtack charges you just to send a bid and shares your lead with 5 competitors. Quotebox: $15 flat, exclusive leads, no bidding.',
     url: 'https://quote-box.com/vs-thumbtack',
   },
 }
@@ -28,12 +28,12 @@ const faqs = [
     a: 'Thumbtack Pro plans start at $0 but Thumbtack Promote (to appear at the top of search results) runs $119–$200+ per month on top of per-lead fees.',
   },
   {
-    q: 'Are Quote Box leads exclusive?',
-    a: 'Yes. When a customer fills out your Quote Box form they see only your company. No other mover or junk hauler on earth receives that same lead.',
+    q: 'Are Quotebox leads exclusive?',
+    a: 'Yes. When a customer fills out your Quotebox form they see only your company. No other mover or junk hauler on earth receives that same lead.',
   },
   {
     q: "What happens to my Thumbtack customers when I switch?",
-    a: "Thumbtack owns the customer relationship. When you switch away, you lose access to those reviews and contacts. With Quote Box you collect the customer's direct contact info and they become your customer — not the platform's.",
+    a: "Thumbtack owns the customer relationship. When you switch away, you lose access to those reviews and contacts. With Quotebox you collect the customer's direct contact info and they become your customer — not the platform's.",
   },
 ]
 
@@ -86,7 +86,7 @@ export default function VsThumbthackPage() {
             <span style={{ color: '#FFE500' }}>Ditching Thumbtack</span>
           </h1>
           <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.75, marginBottom: 40, maxWidth: 580, margin: '0 auto 40px' }}>
-            Thumbtack sends your lead to five competitors and charges you to bid whether you win or lose. Quote Box gives you the lead exclusively for $15 flat — guaranteed.
+            Thumbtack sends your lead to five competitors and charges you to bid whether you win or lose. Quotebox gives you the lead exclusively for $15 flat — guaranteed.
           </p>
           <Link href="/signup" style={{
             background: '#FFE500', color: '#1a1a2e', fontWeight: 700,
@@ -104,13 +104,13 @@ export default function VsThumbthackPage() {
             fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.7rem, 3vw, 2.4rem)',
             fontWeight: 700, textAlign: 'center', marginBottom: 40,
           }}>
-            Quote Box vs Thumbtack — Full Comparison
+            Quotebox vs Thumbtack — Full Comparison
           </h2>
           <div style={{ background: 'white', borderRadius: 14, overflow: 'hidden', border: '1px solid #e5e7eb', boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>
             {/* Header row */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', background: '#1a1a2e', color: 'white' }}>
               <div style={{ padding: '16px 20px', fontWeight: 600, fontSize: '0.88rem' }}>Feature</div>
-              <div style={{ padding: '16px 20px', fontWeight: 700, fontSize: '0.88rem', color: '#FFE500', textAlign: 'center' }}>Quote Box</div>
+              <div style={{ padding: '16px 20px', fontWeight: 700, fontSize: '0.88rem', color: '#FFE500', textAlign: 'center' }}>Quotebox</div>
               <div style={{ padding: '16px 20px', fontWeight: 600, fontSize: '0.88rem', color: 'rgba(255,255,255,0.55)', textAlign: 'center' }}>Thumbtack</div>
             </div>
             {rows.map(({ feature, qb, tt, qbWin }, i) => (
@@ -145,7 +145,7 @@ export default function VsThumbthackPage() {
             Say you&apos;re a moving company looking for 10 jobs a month. On Thumbtack you might pay $20–$50 per bid — and if five other movers are also bidding, you&apos;re winning roughly one in five. That means you could spend $400–$1,000 in bid fees to land 10 jobs.
           </p>
           <p style={{ color: '#4b5563', lineHeight: 1.75, fontSize: '1rem', marginBottom: 20 }}>
-            On Quote Box those same 10 leads cost <strong>$150 total</strong>. Every single one is yours — no bidding, no competition, no fees for leads you don&apos;t win.
+            On Quotebox those same 10 leads cost <strong>$150 total</strong>. Every single one is yours — no bidding, no competition, no fees for leads you don&apos;t win.
           </p>
           <p style={{ color: '#4b5563', lineHeight: 1.75, fontSize: '1rem', margin: 0 }}>
             And unlike Thumbtack, your customers&apos; contact information is yours. You can follow up, re-market, and build a repeat-client base that no platform can ever take away.

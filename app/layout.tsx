@@ -4,8 +4,8 @@ import './globals.css'
 export const metadata: Metadata = {
   metadataBase: new URL('https://quote-box.com'),
   title: {
-    default: 'Quote Box — Exclusive Contractor Leads from $15',
-    template: '%s | Quote Box',
+    default: 'Quotebox — Exclusive Contractor Leads from $15',
+    template: '%s | Quotebox',
   },
   description: 'Get exclusive contractor leads from Facebook & Instagram ads. Pay only $15 per lead — no monthly fees, no contracts. Build your quote form in minutes and start getting roofing, HVAC, plumbing, and electrician leads today.',
   keywords: [
@@ -26,21 +26,21 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: 'https://quote-box.com',
-    siteName: 'Quote Box',
-    title: 'Quote Box — Exclusive Contractor Leads from $15',
+    siteName: 'Quotebox',
+    title: 'Quotebox — Exclusive Contractor Leads from $15',
     description: 'Stop sharing leads with 5 competitors. Get exclusive contractor leads from Facebook & Instagram. Pay $15 per lead, no monthly fees.',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Quote Box — Exclusive Contractor Leads',
+        alt: 'Quotebox — Exclusive Contractor Leads',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Quote Box — Exclusive Contractor Leads from $15',
+    title: 'Quotebox — Exclusive Contractor Leads from $15',
     description: 'Stop sharing leads with 5 competitors. Get exclusive contractor leads from Facebook & Instagram. Pay $15 per lead.',
     images: ['/og-image.png'],
   },
@@ -76,7 +76,7 @@ export default function RootLayout({
   const orgSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'Quote Box',
+    name: 'Quotebox',
     url: 'https://quote-box.com',
     logo: 'https://quote-box.com/logo.png',
     description: 'Exclusive contractor leads from Facebook & Instagram ads. Pay per lead, no monthly fees.',

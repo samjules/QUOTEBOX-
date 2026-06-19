@@ -8,7 +8,7 @@ export default function PublicNav() {
         textAlign: 'center', fontSize: '0.72rem', padding: '6px 16px',
         letterSpacing: '0.03em',
       }}>
-        Quote Box is a product of{' '}
+        Quotebox is a product of{' '}
         <span style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>Arctic Reach LLC</span>
         {' '}·{' '}
         <Link href="/privacy" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'underline' }}>Privacy Policy</Link>

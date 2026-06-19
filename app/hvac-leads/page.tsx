@@ -4,12 +4,12 @@ import PublicNav from '@/components/PublicNav'
 import PublicFooter from '@/components/PublicFooter'
 
 export const metadata: Metadata = {
-  title: 'Exclusive Junk Removal Leads — $15 Per Lead | Quote Box',
+  title: 'Exclusive Junk Removal Leads — $15 Per Lead | Quotebox',
   description: 'Buy exclusive junk removal leads from Facebook & Instagram ads. Every cleanout, hauling, and junk removal job lead goes only to you — not shared with competitors. $15/lead, no monthly fees.',
   keywords: ['junk removal leads', 'exclusive junk removal leads', 'buy junk removal leads', 'hauling leads', 'cleanout leads', 'junk hauling leads'],
   alternates: { canonical: 'https://quote-box.com/hvac-leads' },
   openGraph: {
-    title: 'Exclusive Junk Removal Leads — $15 Per Lead | Quote Box',
+    title: 'Exclusive Junk Removal Leads — $15 Per Lead | Quotebox',
     description: 'Stop sharing junk removal leads with 5 competitors. $15/lead, exclusive, instant delivery, no monthly fees.',
     url: 'https://quote-box.com/hvac-leads',
   },
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 const faqs = [
   {
-    q: 'How much do junk removal leads cost on Quote Box?',
+    q: 'How much do junk removal leads cost on Quotebox?',
     a: "Every junk removal lead is $15 flat. No monthly fee, no subscription, no bidding. Buy credits when you need them and pause when you don't.",
   },
   {

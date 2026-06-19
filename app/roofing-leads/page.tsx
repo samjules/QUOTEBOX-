@@ -4,12 +4,12 @@ import PublicNav from '@/components/PublicNav'
 import PublicFooter from '@/components/PublicFooter'
 
 export const metadata: Metadata = {
-  title: 'Exclusive Estate Cleanout & Junk Hauling Leads — $15 Per Lead | Quote Box',
+  title: 'Exclusive Estate Cleanout & Junk Hauling Leads — $15 Per Lead | Quotebox',
   description: 'Buy exclusive estate cleanout and junk hauling leads from Facebook & Instagram ads. Every estate cleanout and haul-away lead goes only to you — not shared with competitors. $15/lead, no monthly fees.',
   keywords: ['estate cleanout leads', 'junk hauling leads', 'cleanout leads', 'hoarding cleanup leads', 'property cleanout leads', 'haul away leads'],
   alternates: { canonical: 'https://quote-box.com/roofing-leads' },
   openGraph: {
-    title: 'Exclusive Estate Cleanout Leads — $15 Per Lead | Quote Box',
+    title: 'Exclusive Estate Cleanout Leads — $15 Per Lead | Quotebox',
     description: 'Stop sharing estate cleanout leads with competitors. $15/lead, exclusive, instant delivery, no monthly fees.',
     url: 'https://quote-box.com/roofing-leads',
   },
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 const faqs = [
   {
-    q: 'How much do estate cleanout leads cost on Quote Box?',
+    q: 'How much do estate cleanout leads cost on Quotebox?',
     a: 'Every estate cleanout lead is $15 flat. No monthly fee, no subscription, no minimum spend. Buy credits when you need them.',
   },
   {
@@ -34,7 +34,7 @@ const faqs = [
   },
   {
     q: 'How does this compare to Thumbtack for cleanout companies?',
-    a: 'On Thumbtack you bid against up to five other companies per lead and pay a fee whether you win or lose. On Quote Box you pay $15 only when a real cleanout lead lands in your dashboard — exclusively yours.',
+    a: 'On Thumbtack you bid against up to five other companies per lead and pay a fee whether you win or lose. On Quotebox you pay $15 only when a real cleanout lead lands in your dashboard — exclusively yours.',
   },
 ]
 

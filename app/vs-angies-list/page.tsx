@@ -4,12 +4,12 @@ import PublicNav from '@/components/PublicNav'
 import PublicFooter from '@/components/PublicFooter'
 
 export const metadata: Metadata = {
-  title: "Quote Box vs Angi (Angie's List) — Better Moving & Junk Removal Leads for Less",
-  description: "Angi charges $40–$100/month plus shared lead fees. Quote Box is $15 per exclusive moving or junk removal lead, no monthly subscription. See the full comparison of Angi vs Quote Box.",
+  title: "Quotebox vs Angi (Angie's List) — Better Moving & Junk Removal Leads for Less",
+  description: "Angi charges $40–$100/month plus shared lead fees. Quotebox is $15 per exclusive moving or junk removal lead, no monthly subscription. See the full comparison of Angi vs Quotebox.",
   alternates: { canonical: 'https://quote-box.com/vs-angies-list' },
   openGraph: {
-    title: "Quote Box vs Angi Leads | Quote Box",
-    description: "Angi = monthly fees + shared leads. Quote Box = $15/lead, exclusive, no subscription. The better Angi alternative for movers and junk removal companies.",
+    title: "Quotebox vs Angi Leads | Quotebox",
+    description: "Angi = monthly fees + shared leads. Quotebox = $15/lead, exclusive, no subscription. The better Angi alternative for movers and junk removal companies.",
     url: 'https://quote-box.com/vs-angies-list',
   },
 }
@@ -24,16 +24,16 @@ const faqs = [
     a: "No. Angi sends the same lead to multiple companies. You are competing against other movers or junk haulers every time you receive a lead through Angi.",
   },
   {
-    q: "Does Quote Box have a monthly fee?",
-    a: "No. Quote Box has zero monthly fees. You pay a flat $15 per lead, and only when a real customer submits your form. No subscription, no retainer, no hidden charges.",
+    q: "Does Quotebox have a monthly fee?",
+    a: "No. Quotebox has zero monthly fees. You pay a flat $15 per lead, and only when a real customer submits your form. No subscription, no retainer, no hidden charges.",
   },
   {
     q: "Can I cancel Angi easily?",
-    a: "Angi contracts are notoriously difficult to cancel and many businesses report being billed for months after attempting to cancel. Quote Box has no contract — stop buying credits at any time with no penalty.",
+    a: "Angi contracts are notoriously difficult to cancel and many businesses report being billed for months after attempting to cancel. Quotebox has no contract — stop buying credits at any time with no penalty.",
   },
   {
     q: "What is a better alternative to Angi for movers and junk removal companies?",
-    a: "Quote Box. You get a branded quote form, Facebook & Instagram ad campaigns targeting your exact service area, exclusive leads delivered instantly, and you pay only $15 per lead — no monthly fees.",
+    a: "Quotebox. You get a branded quote form, Facebook & Instagram ad campaigns targeting your exact service area, exclusive leads delivered instantly, and you pay only $15 per lead — no monthly fees.",
   },
 ]
 
@@ -86,7 +86,7 @@ export default function VsAngiesListPage() {
             <span style={{ color: '#FFE500' }}>Every Month for Shared Leads</span>
           </h1>
           <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.75, marginBottom: 40, maxWidth: 580, margin: '0 auto 40px' }}>
-            Angi charges a monthly subscription <em>and</em> per-lead fees for leads shared with competing movers and junk haulers. Quote Box is $15 flat per exclusive lead — no monthly fee, no sharing, no contracts.
+            Angi charges a monthly subscription <em>and</em> per-lead fees for leads shared with competing movers and junk haulers. Quotebox is $15 flat per exclusive lead — no monthly fee, no sharing, no contracts.
           </p>
           <Link href="/signup" style={{
             background: '#FFE500', color: '#1a1a2e', fontWeight: 700,
@@ -101,12 +101,12 @@ export default function VsAngiesListPage() {
       <section id="compare" style={{ padding: '72px 24px', background: '#f9fafb' }}>
         <div style={{ maxWidth: 840, margin: '0 auto' }}>
           <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.7rem, 3vw, 2.4rem)', fontWeight: 700, textAlign: 'center', marginBottom: 40 }}>
-            Quote Box vs Angi — Full Comparison
+            Quotebox vs Angi — Full Comparison
           </h2>
           <div style={{ background: 'white', borderRadius: 14, overflow: 'hidden', border: '1px solid #e5e7eb', boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', background: '#1a1a2e', color: 'white' }}>
               <div style={{ padding: '16px 20px', fontWeight: 600, fontSize: '0.88rem' }}>Feature</div>
-              <div style={{ padding: '16px 20px', fontWeight: 700, fontSize: '0.88rem', color: '#FFE500', textAlign: 'center' }}>Quote Box</div>
+              <div style={{ padding: '16px 20px', fontWeight: 700, fontSize: '0.88rem', color: '#FFE500', textAlign: 'center' }}>Quotebox</div>
               <div style={{ padding: '16px 20px', fontWeight: 600, fontSize: '0.88rem', color: 'rgba(255,255,255,0.55)', textAlign: 'center' }}>Angi Leads</div>
             </div>
             {rows.map(({ feature, qb, angi, qbWin }, i) => (
@@ -134,7 +134,7 @@ export default function VsAngiesListPage() {
             A typical moving company on Angi pays $60/month in subscription fees plus $30–$50 per lead — and shares those leads with two or three competitors. If you receive 15 leads in a month, that&apos;s <strong>$60 + $675 = $735</strong> minimum, and you&apos;re still racing other movers to follow up first.
           </p>
           <p style={{ color: '#4b5563', lineHeight: 1.75, fontSize: '1rem', marginBottom: 20 }}>
-            On Quote Box those same 15 leads cost <strong>$225 total</strong> — and every single one is exclusively yours. No monthly fee, no bidding war.
+            On Quotebox those same 15 leads cost <strong>$225 total</strong> — and every single one is exclusively yours. No monthly fee, no bidding war.
           </p>
           <p style={{ color: '#4b5563', lineHeight: 1.75, fontSize: '1rem', margin: 0 }}>
             And if business slows down, you simply stop buying credits. No cancellation headaches, no 12-month contracts, no calls to a retention team.

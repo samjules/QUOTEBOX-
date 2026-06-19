@@ -20,7 +20,7 @@ const faqs = [
   },
   {
     q: 'How is this different from other lead gen services?',
-    a: 'Most services sell you shared leads — the same contact goes to 5 competitors. With Quote Box, every lead is exclusive to you. They came through your form, saw your prices, and are waiting to hear from your business specifically.',
+    a: 'Most services sell you shared leads — the same contact goes to 5 competitors. With Quotebox, every lead is exclusive to you. They came through your form, saw your prices, and are waiting to hear from your business specifically.',
   },
   {
     q: "What if I'm not happy with lead quality?",
@@ -46,7 +46,7 @@ export default function AgencyPage() {
         textAlign: 'center', fontSize: '0.72rem', padding: '6px 16px',
         letterSpacing: '0.03em',
       }}>
-        Quote Box is a product of{' '}
+        Quotebox is a product of{' '}
         <span style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>Arctic Reach LLC</span>
         {' '}·{' '}
         <Link href="/privacy" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'underline' }}>Privacy Policy</Link>
@@ -146,7 +146,7 @@ export default function AgencyPage() {
             {[
               { n: '1', title: 'You tell us about your business', body: 'Your services, your area, your typical prices. A quick call or a few messages. That\'s all we need from you.' },
               { n: '2', title: 'We build and launch everything', body: 'We create your branded quote form with real pricing, write ad copy, and launch targeted campaigns on Facebook and Instagram.' },
-              { n: '3', title: 'Customers land on your form', body: 'Ads go straight to your Quote Box form. Customers fill it in, see an instant price estimate, and submit their details.' },
+              { n: '3', title: 'Customers land on your form', body: 'Ads go straight to your Quotebox form. Customers fill it in, see an instant price estimate, and submit their details.' },
               { n: '4', title: 'Leads land in your dashboard', body: 'Every submission arrives instantly with the customer\'s name, contact info, and quoted price. Follow up and close the job.' },
             ].map(({ n, title, body }) => (
               <div key={n} style={{ background: 'white', borderRadius: 14, padding: '32px 28px', boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
@@ -349,7 +349,7 @@ export default function AgencyPage() {
           Quote<span style={{ color: '#FFE500' }}>.</span>Box
         </Link>
         <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.35)' }}>
-          © {new Date().getFullYear()} Quote Box. All rights reserved.
+          © {new Date().getFullYear()} Quotebox. All rights reserved.
         </span>
         <div style={{ display: 'flex', gap: 20 }}>
           <Link href="/" style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>Home</Link>

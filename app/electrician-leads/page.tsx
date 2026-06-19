@@ -4,12 +4,12 @@ import PublicNav from '@/components/PublicNav'
 import PublicFooter from '@/components/PublicFooter'
 
 export const metadata: Metadata = {
-  title: 'Exclusive Moving Company Leads — $15 Per Lead | Quote Box',
+  title: 'Exclusive Moving Company Leads — $15 Per Lead | Quotebox',
   description: 'Buy exclusive moving leads from Facebook & Instagram ads. Local moves, long-distance moves, and apartment moves — every lead goes only to your moving company. $15/lead, no monthly fees.',
   keywords: ['moving leads', 'exclusive moving leads', 'buy moving leads', 'moving company leads', 'local moving leads', 'long distance moving leads'],
   alternates: { canonical: 'https://quote-box.com/electrician-leads' },
   openGraph: {
-    title: 'Exclusive Moving Company Leads — $15 Per Lead | Quote Box',
+    title: 'Exclusive Moving Company Leads — $15 Per Lead | Quotebox',
     description: 'Stop sharing moving leads with competitors. $15/lead, exclusive, instant delivery, no monthly fees.',
     url: 'https://quote-box.com/electrician-leads',
   },
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 const faqs = [
   {
     q: 'How much do moving leads cost?',
-    a: 'Every moving lead on Quote Box is $15 flat. No monthly fee, no per-bid charges, no subscription. Only pay when a real customer contacts you.',
+    a: 'Every moving lead on Quotebox is $15 flat. No monthly fee, no per-bid charges, no subscription. Only pay when a real customer contacts you.',
   },
   {
     q: 'Are the moving leads exclusive?',
@@ -33,8 +33,8 @@ const faqs = [
     a: 'Yes. Long-distance moving is one of the highest-value lead types. You can set up a dedicated quote form for long-distance moves and capture customers actively planning an interstate or cross-country relocation.',
   },
   {
-    q: 'How does Quote Box compare to Thumbtack for movers?',
-    a: 'Thumbtack charges you to send each quote, and sends your lead to up to five competing movers. Quote Box: you pay $15 only when a real customer submits your form — and no other moving company gets that lead.',
+    q: 'How does Quotebox compare to Thumbtack for movers?',
+    a: 'Thumbtack charges you to send each quote, and sends your lead to up to five competing movers. Quotebox: you pay $15 only when a real customer submits your form — and no other moving company gets that lead.',
   },
 ]
 
@@ -98,7 +98,7 @@ export default function ElectricianLeadsPage() {
       <section style={{ padding: '72px 24px', background: '#fff' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.8rem, 3.5vw, 2.6rem)', fontWeight: 700, textAlign: 'center', marginBottom: 48 }}>
-            Why moving companies choose Quote Box
+            Why moving companies choose Quotebox
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 24 }}>
             {[

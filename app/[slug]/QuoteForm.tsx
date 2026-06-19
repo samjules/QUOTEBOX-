@@ -1822,7 +1822,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
                     style={{ marginTop: 2, flexShrink: 0, width: 15, height: 15, accentColor: accentBg }}
                   />
                   <span style={{ fontSize: '0.75rem', color: '#64748b', lineHeight: 1.5 }}>
-                    I agree to receive text message notifications from this business, delivered via Quote Box (Arctic Reach LLC).
+                    I agree to receive text message notifications from this business, delivered via Quotebox (Arctic Reach LLC).
                     Message and data rates may apply. Reply <strong>STOP</strong> to unsubscribe at any time.{' '}
                     <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: accentBg, textDecoration: 'underline' }}>Privacy Policy</a>
                     {' '}·{' '}

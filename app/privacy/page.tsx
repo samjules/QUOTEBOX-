@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Privacy Policy — Quote Box by Arctic Reach LLC',
+  title: 'Privacy Policy — Quotebox by Arctic Reach LLC',
 }
 
 export default function PrivacyPage() {
@@ -14,7 +14,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">1. Overview</h2>
             <p>
-              Quote Box is a product of Arctic Reach LLC (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;). We operate the
+              Quotebox is a product of Arctic Reach LLC (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;). We operate the
               website at quote-box.com and provide quote generation, lead capture, automated messaging,
               and Meta Ads management tools for businesses. This Privacy Policy explains what information
               we collect, how we use it, and your rights regarding your data.
@@ -24,8 +24,8 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">2. Information We Collect</h2>
             <p className="mb-3"><strong>Account information:</strong> When you sign up, we collect your email address and any business details you provide during onboarding.</p>
-            <p className="mb-3"><strong>Lead data:</strong> When visitors fill out Quote Box forms, we collect the information they submit — including name, email address, phone number, and quote details — and store it on behalf of the business operating the form.</p>
-            <p className="mb-3"><strong>Phone numbers:</strong> Phone numbers collected through Quote Box forms are used solely to deliver automated service notifications and follow-up messages on behalf of the business that operates the form. We do not use phone numbers for any other purpose.</p>
+            <p className="mb-3"><strong>Lead data:</strong> When visitors fill out Quotebox forms, we collect the information they submit — including name, email address, phone number, and quote details — and store it on behalf of the business operating the form.</p>
+            <p className="mb-3"><strong>Phone numbers:</strong> Phone numbers collected through Quotebox forms are used solely to deliver automated service notifications and follow-up messages on behalf of the business that operates the form. We do not use phone numbers for any other purpose.</p>
             <p className="mb-3"><strong>Payment information:</strong> Billing is handled by Stripe. We do not store your credit card details. We store your Stripe customer ID and subscription status.</p>
             <p className="mb-3"><strong>Meta / Facebook data:</strong> If you connect a Meta Ads account, we store an access token and ad account ID to create campaigns on your behalf. We do not share this data with third parties.</p>
             <p><strong>Usage data:</strong> We may collect standard server logs including IP addresses, browser types, and pages visited for security and performance purposes.</p>
@@ -34,9 +34,9 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">3. How We Use Your Information</h2>
             <ul className="list-disc pl-5 space-y-1">
-              <li>To provide and operate the Quote Box platform</li>
+              <li>To provide and operate the Quotebox platform</li>
               <li>To process payments and manage your subscription</li>
-              <li>To send automated SMS and email follow-up messages to leads on behalf of businesses using Quote Box, where the lead has opted in</li>
+              <li>To send automated SMS and email follow-up messages to leads on behalf of businesses using Quotebox, where the lead has opted in</li>
               <li>To create and manage Meta Ads campaigns on your behalf</li>
               <li>To generate AI-powered ad copy using your business details</li>
               <li>To send transactional emails related to your account</li>
@@ -47,8 +47,8 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">4. SMS Messaging</h2>
             <p className="mb-3">
-              By providing your phone number and checking the SMS opt-in box on a Quote Box form, you consent to receive
-              automated text messages from the business operating that form, delivered through Quote Box (a product of Arctic Reach LLC).
+              By providing your phone number and checking the SMS opt-in box on a Quotebox form, you consent to receive
+              automated text messages from the business operating that form, delivered through Quotebox (a product of Arctic Reach LLC).
             </p>
             <p className="mb-3">
               These messages may include: quote follow-ups, booking confirmations, appointment reminders, and promotional offers
@@ -91,7 +91,7 @@ export default function PrivacyPage() {
               <li><strong>Mapbox</strong> — route calculation in quote forms</li>
               <li><strong>Vercel</strong> — application hosting</li>
             </ul>
-            <p className="mt-3">Each service operates under its own privacy policy. We only share data with these services as necessary to operate Quote Box.</p>
+            <p className="mt-3">Each service operates under its own privacy policy. We only share data with these services as necessary to operate Quotebox.</p>
           </section>
 
           <section>
@@ -121,7 +121,7 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-2">9. Cookies</h2>
             <p>
               We use session cookies to keep you logged in. We do not use tracking or advertising cookies
-              on our platform. Your Quote Box forms may include a Meta Pixel if you configure one — that
+              on our platform. Your Quotebox forms may include a Meta Pixel if you configure one — that
               pixel is controlled by you and subject to Meta&apos;s privacy policy.
             </p>
           </section>
@@ -129,7 +129,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">10. Children&apos;s Privacy</h2>
             <p>
-              Quote Box is not directed at children under 13. We do not knowingly collect personal
+              Quotebox is not directed at children under 13. We do not knowingly collect personal
               information from children.
             </p>
           </section>
@@ -145,7 +145,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">12. Contact</h2>
             <p className="mb-1">
-              Arctic Reach LLC — Quote Box
+              Arctic Reach LLC — Quotebox
             </p>
             <p>
               Email:{' '}

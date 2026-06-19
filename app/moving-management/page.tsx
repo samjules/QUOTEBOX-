@@ -5,12 +5,12 @@ import PublicFooter from '@/components/PublicFooter'
 import QualifyForm from './QualifyForm'
 
 export const metadata: Metadata = {
-  title: 'Moving Company Meta Ads Management — Monthly | Quote Box',
+  title: 'Moving Company Meta Ads Management — Monthly | Quotebox',
   description: 'We manage your Facebook & Instagram ads for your moving company. Exclusive leads delivered to your dashboard. Requires $50+/day ad spend. No long-term contracts.',
   keywords: ['moving company leads', 'moving company ads management', 'Facebook ads for movers', 'Meta ads moving company', 'moving leads'],
   alternates: { canonical: 'https://quote-box.com/moving-management' },
   openGraph: {
-    title: 'Moving Company Meta Ads Management — Monthly | Quote Box',
+    title: 'Moving Company Meta Ads Management — Monthly | Quotebox',
     description: 'We manage your Facebook & Instagram ads for your moving company. Exclusive leads, no long-term contracts.',
     url: 'https://quote-box.com/moving-management',
   },
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 const faqs = [
   {
     q: 'What is included in monthly Meta ads management?',
-    a: 'We handle everything: audience targeting, creative strategy, ad copywriting, campaign setup, ongoing optimization, and lead delivery to your Quote Box dashboard. You focus on booking jobs — we handle the ads.',
+    a: 'We handle everything: audience targeting, creative strategy, ad copywriting, campaign setup, ongoing optimization, and lead delivery to your Quotebox dashboard. You focus on booking jobs — we handle the ads.',
   },
   {
     q: 'Why do you require $50/day in ad spend?',
@@ -119,7 +119,7 @@ export default function MovingManagementPage() {
             {[
               { step: '1', title: 'We build your form', body: 'A branded moving quote form tailored to your services and service area — ready to capture real move requests.' },
               { step: '2', title: 'Ads go live', body: 'We launch targeted Facebook & Instagram campaigns in your market within 48 hours of onboarding.' },
-              { step: '3', title: 'Leads hit your dashboard', body: 'Every submission lands in your Quote Box dashboard in real time — name, phone, move date, origin and destination.' },
+              { step: '3', title: 'Leads hit your dashboard', body: 'Every submission lands in your Quotebox dashboard in real time — name, phone, move date, origin and destination.' },
               { step: '4', title: 'You close jobs', body: 'Call the lead, give a quote, book the move. We keep the pipeline full so you can focus on your crew.' },
             ].map(({ step, title, body }) => (
               <div key={step} style={{ textAlign: 'center', padding: '24px 16px' }}>

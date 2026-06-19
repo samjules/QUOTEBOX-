@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: 'Buy exclusive moving and junk removal leads from Facebook & Instagram ads. Unlike Thumbtack and Angi, you get every lead exclusively — not shared with 5 competitors. Pay $15 per lead, no subscription required.',
   alternates: { canonical: 'https://quote-box.com/contractor-leads' },
   openGraph: {
-    title: 'Exclusive Moving & Junk Removal Leads — $15 Per Lead | Quote Box',
+    title: 'Exclusive Moving & Junk Removal Leads — $15 Per Lead | Quotebox',
     description: 'Stop bidding against competitors. Get exclusive moving and junk removal leads from Facebook & Instagram. $15/lead, no monthly fees.',
     url: 'https://quote-box.com/contractor-leads',
   },
@@ -21,18 +21,18 @@ const faqs = [
   },
   {
     q: 'Are the leads exclusive to me?',
-    a: 'Yes. When someone fills out your Quote Box form, you are the only company who receives that lead. Unlike Thumbtack, which sends the same lead to up to five movers or junk haulers, your Quote Box leads are 100% exclusive.',
+    a: 'Yes. When someone fills out your Quotebox form, you are the only company who receives that lead. Unlike Thumbtack, which sends the same lead to up to five movers or junk haulers, your Quotebox leads are 100% exclusive.',
   },
   {
-    q: 'How does Quote Box compare to Thumbtack?',
-    a: 'On Thumbtack you pay a bid fee just to send a quote — and five other moving companies are doing the same. On Quote Box you have your own branded form, you pay only when you actually receive a lead, and no competitor ever sees that customer.',
+    q: 'How does Quotebox compare to Thumbtack?',
+    a: 'On Thumbtack you pay a bid fee just to send a quote — and five other moving companies are doing the same. On Quotebox you have your own branded form, you pay only when you actually receive a lead, and no competitor ever sees that customer.',
   },
   {
-    q: "How does Quote Box compare to Angi (Angie's List)?",
-    a: "Angi charges $40–$100+ per month plus separate lead fees, and those leads are still shared. Quote Box costs nothing monthly and charges a flat $15 per exclusive lead. You're not on a marketplace — it's your form, your brand, your customers.",
+    q: "How does Quotebox compare to Angi (Angie's List)?",
+    a: "Angi charges $40–$100+ per month plus separate lead fees, and those leads are still shared. Quotebox costs nothing monthly and charges a flat $15 per exclusive lead. You're not on a marketplace — it's your form, your brand, your customers.",
   },
   {
-    q: 'What types of companies use Quote Box?',
+    q: 'What types of companies use Quotebox?',
     a: 'Local movers, long-distance moving companies, junk removal and hauling companies, estate cleanout services, storage companies, and any business that quotes customers before the job.',
   },
   {
@@ -41,7 +41,7 @@ const faqs = [
   },
   {
     q: 'Do I need a website or marketing experience?',
-    a: 'No. Quote Box builds your branded quote form in under five minutes using AI. We then run Facebook and Instagram ads pointing to that form. No website, no agency, no tech skills required.',
+    a: 'No. Quotebox builds your branded quote form in under five minutes using AI. We then run Facebook and Instagram ads pointing to that form. No website, no agency, no tech skills required.',
   },
   {
     q: 'What areas can I target?',
@@ -120,7 +120,7 @@ export default function ContractorLeadsPage() {
         </div>
       </section>
 
-      {/* ── Why Quote Box wins ── */}
+      {/* ── Why Quotebox wins ── */}
       <section style={{ padding: '72px 24px', background: '#fff' }}>
         <div style={{ maxWidth: 1000, margin: '0 auto' }}>
           <h2 style={{
@@ -142,7 +142,7 @@ export default function ContractorLeadsPage() {
               {
                 icon: '💰',
                 title: '$15 flat — pay only when you get a lead',
-                body: "Thumbtack charges you to send a bid even if you don't win the job. With Quote Box you pay $15 only when a real customer contacts you.",
+                body: "Thumbtack charges you to send a bid even if you don't win the job. With Quotebox you pay $15 only when a real customer contacts you.",
               },
               {
                 icon: '🏷️',
@@ -221,7 +221,7 @@ export default function ContractorLeadsPage() {
             Leads for every service
           </h2>
           <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: 40, fontSize: '1rem' }}>
-            If you quote before you work, Quote Box works for you.
+            If you quote before you work, Quotebox works for you.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
             {services.map(({ label, href, icon }) => (

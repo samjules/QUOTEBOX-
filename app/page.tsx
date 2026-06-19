@@ -4,12 +4,12 @@ import PublicFooter from '@/components/PublicFooter'
 
 const faqs = [
   {
-    q: 'What is Quote Box?',
-    a: 'Quote Box lets service businesses create branded quote forms and share them as a simple link — no website required. We run paid Meta ads pointing to your form so customers find you on Facebook and Instagram. When someone fills it out, you get their details and an instant price estimate straight to your dashboard.',
+    q: 'What is Quotebox?',
+    a: 'Quotebox lets service businesses create branded quote forms and share them as a simple link — no website required. We run paid Meta ads pointing to your form so customers find you on Facebook and Instagram. When someone fills it out, you get their details and an instant price estimate straight to your dashboard.',
   },
   {
     q: 'How much does it cost?',
-    a: 'Quote Box is $350/month with a 7-day free trial. No per-lead fees, no hidden charges. Everything — your quote form, Meta ads, and unlimited leads — is included in one flat monthly rate.',
+    a: 'Quotebox is $350/month with a 7-day free trial. No per-lead fees, no hidden charges. Everything — your quote form, Meta ads, and unlimited leads — is included in one flat monthly rate.',
   },
   {
     q: 'Do I need a website or technical skills?',
@@ -17,14 +17,14 @@ const faqs = [
   },
   {
     q: 'How do you drive traffic to my form?',
-    a: 'We run paid advertising on Facebook and Instagram (Meta) targeting people in your area who are actively looking for your type of service. The ads send them directly to your Quote Box form, where they get an instant estimate and you get the lead.',
+    a: 'We run paid advertising on Facebook and Instagram (Meta) targeting people in your area who are actively looking for your type of service. The ads send them directly to your Quotebox form, where they get an instant estimate and you get the lead.',
   },
   {
     q: 'What happens when a customer fills in my form?',
-    a: 'They get an instant quote estimate on screen, and their details land in your Quote Box dashboard immediately. You can see their name, contact info, and exactly what they selected — then follow up in one click.',
+    a: 'They get an instant quote estimate on screen, and their details land in your Quotebox dashboard immediately. You can see their name, contact info, and exactly what they selected — then follow up in one click.',
   },
   {
-    q: 'What types of businesses use Quote Box?',
+    q: 'What types of businesses use Quotebox?',
     a: 'Moving companies and junk removal businesses — local movers, long-distance movers, junk haulers, estate cleanout companies, and any business in the moving or hauling space that quotes customers before the job.',
   },
   {
@@ -51,7 +51,7 @@ export default function LandingPage() {
         textAlign: 'center', fontSize: '0.72rem', padding: '6px 16px',
         letterSpacing: '0.03em',
       }}>
-        Quote Box is a product of{' '}
+        Quotebox is a product of{' '}
         <span style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>Arctic Reach LLC</span>
         {' '}·{' '}
         <Link href="/privacy" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'underline' }}>Privacy Policy</Link>
@@ -116,7 +116,7 @@ export default function LandingPage() {
               Get quality leads.<br />No website needed.
             </h1>
             <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.68)', lineHeight: 1.75, marginBottom: 38, maxWidth: 480 }}>
-              Quote Box deploys a branded instant-quote landing page for your moving or junk removal business and runs paid Meta ads on Facebook &amp; Instagram to fill it with customers. Warm leads, real prices, $350/month.
+              Quotebox deploys a branded instant-quote landing page for your moving or junk removal business and runs paid Meta ads on Facebook &amp; Instagram to fill it with customers. Warm leads, real prices, $350/month.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <Link href="/signup" style={{
@@ -309,7 +309,7 @@ export default function LandingPage() {
                 Your quote form is a<br />live landing page.<br />Share it anywhere.
               </h2>
               <p style={{ color: '#6b7280', fontSize: '1rem', lineHeight: 1.8, marginBottom: 28 }}>
-                Every Quote Box form is a publicly deployed URL that works on any device — no website, no hosting, no setup. Customers fill it in, see an instant price estimate, and submit their details in under two minutes.
+                Every Quotebox form is a publicly deployed URL that works on any device — no website, no hosting, no setup. Customers fill it in, see an instant price estimate, and submit their details in under two minutes.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {[
@@ -622,7 +622,7 @@ export default function LandingPage() {
               We run your paid ads.<br />You just close the jobs.
             </h2>
             <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.97rem', lineHeight: 1.75, marginBottom: 24 }}>
-              Most small business owners don&apos;t have time to manage Facebook campaigns. Quote Box handles your paid advertising on Meta — targeting the right people in your area on Facebook and Instagram — so customers come to you instead of your competitors.
+              Most small business owners don&apos;t have time to manage Facebook campaigns. Quotebox handles your paid advertising on Meta — targeting the right people in your area on Facebook and Instagram — so customers come to you instead of your competitors.
             </p>
             <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.97rem', lineHeight: 1.75 }}>
               No agency retainer. No ad account headaches. We do it, and everything is included in your flat <strong style={{ color: '#FFE500' }}>$350/month</strong> plan.
@@ -631,7 +631,7 @@ export default function LandingPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {[
               { label: 'Targeted local ads', desc: 'We reach people near you who are actively looking for your service on Facebook and Instagram.' },
-              { label: 'Ads go straight to your form', desc: 'No landing page needed. Clicks go directly to your Quote Box form for maximum conversion.' },
+              { label: 'Ads go straight to your form', desc: 'No landing page needed. Clicks go directly to your Quotebox form for maximum conversion.' },
               { label: 'Real-time lead delivery', desc: 'The moment someone submits, the lead appears in your dashboard — name, number, and quote total.' },
               { label: 'Zero ad management on your end', desc: 'We handle the creative, targeting, and optimisation. You just follow up and win the job.' },
             ].map(({ label, desc }) => (
@@ -650,12 +650,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Why Quote Box ── */}
+      {/* ── Why Quotebox ── */}
       <section style={{ padding: '80px 24px', background: 'white' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 52 }}>
             <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '2rem', fontWeight: 700, marginBottom: 10 }}>
-              Why movers and junk haulers choose Quote Box
+              Why movers and junk haulers choose Quotebox
             </h2>
             <p style={{ color: '#6b7280', fontSize: '1rem', maxWidth: 520, margin: '0 auto' }}>
               Traditional lead platforms share your leads with 5 competitors. We give you every lead exclusively.

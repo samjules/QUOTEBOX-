@@ -4,12 +4,12 @@ import PublicNav from '@/components/PublicNav'
 import PublicFooter from '@/components/PublicFooter'
 
 export const metadata: Metadata = {
-  title: 'Exclusive Local Moving Leads — $15 Per Lead | Quote Box',
+  title: 'Exclusive Local Moving Leads — $15 Per Lead | Quotebox',
   description: 'Buy exclusive local moving leads from Facebook & Instagram ads. Every local move, apartment move, and small move lead goes only to you. $15 per lead, no monthly fees, no sharing.',
   keywords: ['local moving leads', 'exclusive local moving leads', 'buy moving leads', 'apartment moving leads', 'residential moving leads', 'same city moving leads'],
   alternates: { canonical: 'https://quote-box.com/plumbing-leads' },
   openGraph: {
-    title: 'Exclusive Local Moving Leads — $15 Per Lead | Quote Box',
+    title: 'Exclusive Local Moving Leads — $15 Per Lead | Quotebox',
     description: 'Stop sharing local moving leads with competitors. $15/lead, exclusive, instant delivery, no monthly fees.',
     url: 'https://quote-box.com/plumbing-leads',
   },
@@ -17,20 +17,20 @@ export const metadata: Metadata = {
 
 const faqs = [
   {
-    q: 'How much do local moving leads cost on Quote Box?',
+    q: 'How much do local moving leads cost on Quotebox?',
     a: 'A flat $15 per lead — regardless of move size or type. No monthly fee, no subscription, no bidding. You only pay when a real customer contacts you.',
   },
   {
     q: 'Are local moving leads exclusive?',
-    a: 'Yes. When a customer fills out your local moving quote form, you are the only mover who receives their details. No other moving company on Quote Box sees that lead.',
+    a: 'Yes. When a customer fills out your local moving quote form, you are the only mover who receives their details. No other moving company on Quotebox sees that lead.',
   },
   {
     q: 'What types of local moves can I get leads for?',
     a: 'Any local move — apartment moves, house moves, studio moves, office relocations, last-minute moves, and more. You customize the form to match the services you offer.',
   },
   {
-    q: 'How does Quote Box compare to HomeAdvisor / Angi for movers?',
-    a: 'HomeAdvisor (now Angi) charges a monthly fee plus $20–$60 per moving lead — and those leads are shared. Quote Box charges $15 per exclusive lead with zero monthly fees.',
+    q: 'How does Quotebox compare to HomeAdvisor / Angi for movers?',
+    a: 'HomeAdvisor (now Angi) charges a monthly fee plus $20–$60 per moving lead — and those leads are shared. Quotebox charges $15 per exclusive lead with zero monthly fees.',
   },
   {
     q: 'Can I get same-day or last-minute moving leads?',
@@ -98,7 +98,7 @@ export default function PlumbingLeadsPage() {
       <section style={{ padding: '72px 24px', background: '#fff' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.8rem, 3.5vw, 2.6rem)', fontWeight: 700, textAlign: 'center', marginBottom: 48 }}>
-            Why local movers choose Quote Box
+            Why local movers choose Quotebox
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 24 }}>
             {[

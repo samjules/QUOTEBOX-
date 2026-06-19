@@ -77,8 +77,8 @@ export default function PublicFooter() {
             <div style={{ ...colTitle, marginTop: 28 }}>Resources</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <Link href="/contractor-leads#faq" style={linkStyle}>Moving & Junk Removal FAQ</Link>
-              <Link href="/vs-thumbtack#compare" style={linkStyle}>Thumbtack vs Quote Box</Link>
-              <Link href="/vs-angies-list#compare" style={linkStyle}>Angi vs Quote Box</Link>
+              <Link href="/vs-thumbtack#compare" style={linkStyle}>Thumbtack vs Quotebox</Link>
+              <Link href="/vs-angies-list#compare" style={linkStyle}>Angi vs Quotebox</Link>
             </div>
           </div>
 
@@ -100,7 +100,7 @@ export default function PublicFooter() {
           flexWrap: 'wrap', gap: 12,
         }}>
           <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.35)' }}>
-            © 2026 Arctic Reach LLC. Quote Box is a product of Arctic Reach LLC. All rights reserved.
+            © 2026 Arctic Reach LLC. Quotebox is a product of Arctic Reach LLC. All rights reserved.
           </span>
           <div style={{ display: 'flex', gap: 20 }}>
             <Link href="/privacy" style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>Privacy</Link>
