@@ -78,11 +78,11 @@ export default function LandingPage() {
           <Link href="/login" style={{ fontSize: '0.88rem', fontWeight: 500, color: '#555', textDecoration: 'none' }}>
             Log in
           </Link>
-          <Link href="/signup" style={{
+          <Link href="/build" style={{
             fontSize: '0.88rem', fontWeight: 600, padding: '8px 18px',
             background: '#1a1a2e', color: '#FFE500', borderRadius: 8, textDecoration: 'none',
           }}>
-            Get started free
+            Build your form free
           </Link>
         </div>
       </nav>
@@ -119,7 +119,7 @@ export default function LandingPage() {
               Quotebox deploys a branded instant-quote landing page for your moving or junk removal business and runs paid Meta ads on Facebook &amp; Instagram to fill it with customers. Warm leads, real prices, $350/month.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <Link href="/signup" style={{
+              <Link href="/build" style={{
                 padding: '15px 32px', background: '#FFE500', color: '#1a1a2e',
                 fontWeight: 700, fontSize: '1rem', borderRadius: 10, textDecoration: 'none',
                 fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
@@ -325,7 +325,7 @@ export default function LandingPage() {
                 ))}
               </div>
               <div style={{ marginTop: 36 }}>
-                <Link href="/signup" style={{
+                <Link href="/build" style={{
                   display: 'inline-block', padding: '13px 28px',
                   background: '#1a1a2e', color: '#FFE500',
                   fontWeight: 700, fontSize: '0.93rem', borderRadius: 10, textDecoration: 'none',
@@ -471,7 +471,7 @@ export default function LandingPage() {
                 ))}
               </div>
               <div style={{ marginTop: 36 }}>
-                <Link href="/signup" style={{
+                <Link href="/build" style={{
                   display: 'inline-block', padding: '13px 28px',
                   background: '#1a1a2e', color: '#FFE500',
                   fontWeight: 700, fontSize: '0.93rem', borderRadius: 10, textDecoration: 'none',
@@ -586,7 +586,7 @@ export default function LandingPage() {
                 ))}
               </div>
               <div style={{ marginTop: 36 }}>
-                <Link href="/signup" style={{
+                <Link href="/build" style={{
                   display: 'inline-block', padding: '13px 28px',
                   background: '#15803d', color: 'white',
                   fontWeight: 700, fontSize: '0.93rem', borderRadius: 10, textDecoration: 'none',

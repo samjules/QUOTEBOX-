@@ -191,7 +191,7 @@ export default async function DashboardPage({
       : txnQuery,
     // Onboarding checklist
     admin.from('vsls').select('id').eq('account_id', account.id).limit(1),
-    admin.from('hosted_forms').select('id').eq('account_id', account.id).limit(1),
+    admin.from('hosted_forms').select('id, form_config').eq('account_id', account.id).limit(1),
     admin.from('meta_campaigns').select('id').eq('account_id', account.id).limit(1),
     admin.from('leads').select('id').eq('account_id', account.id).eq('form_type', 'meta_lead_form').limit(1),
   ])
@@ -296,6 +296,7 @@ export default async function DashboardPage({
   const hasBillingPlan = !!billing?.plan
   const hasCreatives = (vsls?.length ?? 0) > 0
   const hasForm = (forms?.length ?? 0) > 0
+  const firstFormSlug = hasForm ? ((forms![0].form_config as Record<string, unknown> | null)?.slug as string | null) ?? null : null
   const hasCampaign = (campaigns?.length ?? 0) > 0
   const hasMetaLead = (metaLeadsData?.length ?? 0) > 0
   const onboardingComplete = hasMetaLead
@@ -383,6 +384,39 @@ export default async function DashboardPage({
 
           {/* Guaranteed results banner — shown until Meta is connected */}
           {!metaConnected && <GuaranteedResultsBanner />}
+
+          {/* Meta ads nudge — shown when they have a form but haven't run any ads yet */}
+          {hasForm && !hasCampaign && !metaConnected && firstFormSlug && (
+            <div style={{
+              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+              borderRadius: 14, padding: '20px 24px',
+              display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap',
+            }}>
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#FFE500', marginBottom: 6 }}>
+                  Your form is live
+                </div>
+                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>
+                  Get your first customers by running Meta ads
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
+                  Your form is live at{' '}
+                  <span style={{ color: 'rgba(255,255,255,0.8)', fontFamily: 'monospace' }}>quote-box.com/{firstFormSlug}</span>
+                  {' '}— connect Meta to start driving leads from Facebook &amp; Instagram.
+                </div>
+              </div>
+              <a
+                href="/onboarding"
+                style={{
+                  flexShrink: 0, padding: '11px 22px', background: '#FFE500', color: '#1a1a2e',
+                  fontWeight: 700, fontSize: '0.88rem', borderRadius: 9, textDecoration: 'none',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Run Meta ads →
+              </a>
+            </div>
+          )}
 
           {/* Welcome gift banner — shown while onboarding is in progress */}
           {!onboardingComplete && <WelcomeGiftBanner />}
