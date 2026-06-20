@@ -1,3 +1,4 @@
+import { createAdminClient } from '@/lib/supabase/admin'
 import PublicWizard from './PublicWizard'
 
 export const metadata = {
@@ -5,7 +6,23 @@ export const metadata = {
   description: 'Build a free instant-quote form for your moving or junk removal business in under 5 minutes.',
 }
 
-export default function BuildPage() {
+export const revalidate = 3600 // refresh the global stat hourly
+
+export default async function BuildPage() {
+  const admin = createAdminClient()
+
+  // Sum _quote_total across all booked leads globally
+  const { data: bookedLeads } = await admin
+    .from('leads')
+    .select('form_data')
+    .eq('status', 'booked')
+    .not('form_data', 'is', null)
+
+  const totalBookedRevenue = (bookedLeads ?? []).reduce((sum, l) => {
+    const qt = (l.form_data as Record<string, unknown> | null)?._quote_total
+    return sum + (typeof qt === 'number' ? qt : 0)
+  }, 0)
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
       <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
@@ -13,7 +30,7 @@ export default function BuildPage() {
           Quotebox
         </span>
       </div>
-      <PublicWizard />
+      <PublicWizard totalBookedRevenue={totalBookedRevenue} />
     </div>
   )
 }

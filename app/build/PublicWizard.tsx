@@ -105,7 +105,7 @@ const COLOR_PRESETS = ['#F97316', '#374151', '#1a1a2e', '#22C55E', '#3B82F6', '#
 type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
 const TOTAL_STEPS = 8
 
-export default function PublicWizard() {
+export default function PublicWizard({ totalBookedRevenue }: { totalBookedRevenue: number }) {
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
 
@@ -332,8 +332,27 @@ export default function PublicWizard() {
         <div style={cardStyle}>
           <ProgressBar current={1} />
           <div style={bodyStyle}>
-            <div style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: 'var(--muted)', marginBottom: 10 }}>Step 1 of {TOTAL_STEPS}</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: 'var(--muted)' }}>Step 1 of {TOTAL_STEPS}</div>
+              <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#22c55e', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 99, padding: '3px 10px' }}>Live in minutes</div>
+            </div>
             <Q label="Let's build your quote form" sub="Tell us your business name and what you do." />
+            {totalBookedRevenue > 0 && (
+              <div style={{ marginBottom: 20, padding: '11px 14px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', flexShrink: 0, boxShadow: '0 0 0 3px #dcfce7' }} />
+                <div style={{ fontSize: '0.8rem', color: 'var(--muted)', lineHeight: 1.4 }}>
+                  Quotebox businesses have booked{' '}
+                  <strong style={{ color: 'var(--fg)' }}>
+                    ${totalBookedRevenue >= 1_000_000
+                      ? `${(totalBookedRevenue / 1_000_000).toFixed(1)}M`
+                      : totalBookedRevenue >= 1_000
+                      ? `${Math.floor(totalBookedRevenue / 1_000)}k`
+                      : totalBookedRevenue.toLocaleString()}
+                  </strong>
+                  {' '}in jobs from their forms
+                </div>
+              </div>
+            )}
             <div style={{ marginBottom: 20 }}>
               <label style={fieldLabel}>Your business name</label>
               <input style={inputStyle} type="text" placeholder="e.g. Smith's Moving Co." value={businessName} onChange={(e) => setBusinessName(e.target.value)} autoFocus />
