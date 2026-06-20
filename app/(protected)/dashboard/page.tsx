@@ -305,7 +305,7 @@ export default async function DashboardPage({
   const hasBg = !!dashboardBgUrl
 
   return (
-    <div className="min-h-full relative" style={{ background: '#ededf2' }}>
+    <div className="min-h-full relative" style={{ background: '#f5f5f7' }}>
 
       {/* ── Photo zone: top 340px, blurred + scrimmed ── */}
       {hasBg && (
@@ -416,8 +416,8 @@ export default async function DashboardPage({
               <div className="p-5">
                 <div className="flex items-center justify-between mb-3">
                   <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9ca3af' }}>Total Leads</p>
-                  <div className="flex items-center justify-center w-9 h-9 rounded-xl text-white" style={{ background: '#5b5bd6' }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4.5 h-4.5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>
+                  <div className="flex items-center justify-center w-8 h-8 rounded-xl text-gray-400" style={{ background: '#f3f4f6' }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>
                   </div>
                 </div>
                 <p className="tabular-nums" style={{ fontSize: 42, fontWeight: 800, color: '#111', letterSpacing: '-0.03em', lineHeight: 1 }}>{totalLeads}</p>
@@ -469,8 +469,8 @@ export default async function DashboardPage({
             <div className={CARD} style={CARD_STYLE}>
               <div className="p-6">
                 <div className="flex items-center gap-3 mb-5">
-                  <div className="flex items-center justify-center w-9 h-9 rounded-xl text-white" style={{ background: '#5b5bd6' }}>
-                    <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <div className="flex items-center justify-center w-8 h-8 rounded-xl text-gray-400" style={{ background: '#f3f4f6' }}>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6" />
                     </svg>
                   </div>
@@ -522,27 +522,27 @@ export default async function DashboardPage({
 
           {/* QuoteBox Games */}
           {account.games_enrolled && gamesRank !== null && (
-            <div className="overflow-hidden rounded-2xl" style={{ background: 'linear-gradient(135deg, #5b5bd6 0%, #16213e 50%, #0f3460 100%)', boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.12)' }}>
-              <div className="p-6 text-white">
-                <div className="flex items-center gap-3 mb-4">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 002.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 012.916.52 6.003 6.003 0 01-5.395 4.972m0 0a6.726 6.726 0 01-2.749 1.35m0 0a6.772 6.772 0 01-3.044 0" />
-                  </svg>
-                  <h3 className="text-base font-bold">QuoteBox Games</h3>
-                </div>
-                <div className="flex items-baseline gap-6 mb-3">
+            <div className="overflow-hidden rounded-2xl" style={{ background: '#fff', border: '1px solid #e8e8ec', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
                   <div>
-                    <p className="tabular-nums text-3xl font-extrabold">#{gamesRank}</p>
-                    <p className="text-xs text-white/50 mt-1 uppercase tracking-wide">Your rank</p>
+                    <p style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 4 }}>QuoteBox Games</p>
+                    <h3 className="font-bold text-gray-900" style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: 15 }}>Monthly leaderboard</h3>
+                  </div>
+                  <Link href="/games" style={{ fontSize: '0.75rem', fontWeight: 600, color: '#374151', textDecoration: 'none', padding: '6px 12px', border: '1px solid #e5e7eb', borderRadius: 7, background: '#f9fafb' }}>
+                    View →
+                  </Link>
+                </div>
+                <div className="flex items-baseline gap-6">
+                  <div>
+                    <p className="tabular-nums font-extrabold text-gray-900" style={{ fontSize: 32, letterSpacing: '-0.03em', lineHeight: 1 }}>#{gamesRank}</p>
+                    <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 4, letterSpacing: '0.04em' }}>Your rank</p>
                   </div>
                   <div>
-                    <p className="tabular-nums text-3xl font-extrabold">{gamesBookedThisMonth}</p>
-                    <p className="text-xs text-white/50 mt-1 uppercase tracking-wide">Booked this month</p>
+                    <p className="tabular-nums font-extrabold text-gray-900" style={{ fontSize: 32, letterSpacing: '-0.03em', lineHeight: 1 }}>{gamesBookedThisMonth}</p>
+                    <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 4, letterSpacing: '0.04em' }}>Booked this month</p>
                   </div>
                 </div>
-                <Link href="/games" className="inline-block px-4 py-2 bg-white/15 hover:bg-white/25 rounded-lg text-sm font-semibold transition-colors">
-                  View Leaderboard →
-                </Link>
               </div>
             </div>
           )}
@@ -568,11 +568,11 @@ export default async function DashboardPage({
 
 // ── Components ────────────────────────────────────────────────
 
-const CARD = 'overflow-hidden rounded-2xl border backdrop-blur-xl'
+const CARD = 'overflow-hidden rounded-2xl border'
 const CARD_STYLE = {
-  background: 'rgba(255,255,255,0.88)',
-  borderColor: 'rgba(255,255,255,0.7)',
-  boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)',
+  background: '#fff',
+  borderColor: '#e8e8ec',
+  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
 }
 
 function StatCard({
@@ -593,7 +593,7 @@ function StatCard({
       <div className="p-5">
         <div className="flex items-start justify-between mb-3">
           <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9ca3af' }}>{label}</p>
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl text-white flex-shrink-0 ml-2" style={{ background: iconBg }}>
+          <div className="flex items-center justify-center w-8 h-8 rounded-xl flex-shrink-0 ml-2 text-gray-400" style={{ background: '#f3f4f6' }}>
             {icon}
           </div>
         </div>
@@ -619,7 +619,7 @@ function MiniStat({
     <div className={CARD} style={CARD_STYLE}>
       <div className="p-4">
         <div className="flex items-center gap-3">
-          <div className="flex-shrink-0 rounded-xl p-2.5" style={{ background: iconBg }}>
+          <div className="flex-shrink-0 rounded-xl p-2.5 text-gray-400" style={{ background: '#f3f4f6' }}>
             {icon}
           </div>
           <div>
@@ -685,26 +685,30 @@ function QuickAction({
 function MetaAdStrip() {
   return (
     <div style={{
-      background: '#1a1a2e',
+      background: '#fff',
+      border: '1px solid #e8e8ec',
       borderRadius: 10,
       padding: '10px 16px',
       display: 'flex', alignItems: 'center', gap: 12,
+      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
     }}>
       <div style={{ flexShrink: 0 }}>
-        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#ffe500" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#9ca3af" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 2l7 3v6c0 5-3.5 9.5-7 11-3.5-1.5-7-6-7-11V5l7-3z" />
           <path d="M9 12l2 2 4-4" />
         </svg>
       </div>
-      <div style={{ flex: 1, fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1 }}>
-        <span style={{ color: '#ffe500', fontWeight: 700 }}>Guaranteed results</span>
+      <div style={{ flex: 1, fontSize: '0.78rem', color: '#6b7280', lineHeight: 1 }}>
+        <span style={{ color: '#111', fontWeight: 600 }}>Guaranteed results</span>
         {' '}— we run your Meta ads from $50/day and deliver leads straight to this dashboard.
       </div>
       <a
         href="mailto:sales@quote-box.com"
         style={{
-          flexShrink: 0, fontSize: '0.72rem', fontWeight: 700, color: '#ffe500',
-          textDecoration: 'none', whiteSpace: 'nowrap' as const, letterSpacing: '0.01em',
+          flexShrink: 0, fontSize: '0.72rem', fontWeight: 700, color: '#374151',
+          textDecoration: 'none', whiteSpace: 'nowrap' as const,
+          padding: '5px 12px', border: '1px solid #e5e7eb', borderRadius: 7,
+          background: '#f9fafb',
         }}
       >
         Book a call →
@@ -779,27 +783,15 @@ function FormPreviewCard({ slug }: { slug: string }) {
 function WelcomeGiftBanner() {
   return (
     <div style={{
-      border: '2px dashed #1a1a2e',
+      background: '#fff',
+      border: '1px solid #e8e8ec',
       borderRadius: 14,
-      padding: '16px 20px',
-      background: '#fffef0',
-      display: 'flex', alignItems: 'center', gap: 16,
-      position: 'relative' as const,
-      overflow: 'hidden',
+      padding: '18px 22px',
+      display: 'flex', alignItems: 'center', gap: 18,
+      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
     }}>
-      {/* Corner ribbon */}
-      <div style={{
-        position: 'absolute', top: 0, right: 0,
-        width: 0, height: 0,
-        borderStyle: 'solid',
-        borderWidth: '0 44px 44px 0',
-        borderColor: 'transparent #ffe500 transparent transparent',
-        borderRadius: '0 12px 0 0',
-      }} />
-
-      {/* Gift box icon */}
-      <div style={{ flexShrink: 0 }}>
-        <svg width="30" height="30" fill="none" viewBox="0 0 24 24" stroke="#1a1a2e" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <div style={{ flexShrink: 0, width: 36, height: 36, borderRadius: 10, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#374151" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="8" width="18" height="13" rx="1" />
           <path d="M21 8H3V6a1 1 0 011-1h16a1 1 0 011 1v2z" />
           <path d="M12 5v16" />
@@ -807,34 +799,21 @@ function WelcomeGiftBanner() {
           <path d="M12 5c0-1.7 1-2.5 2-2.5S16 3.5 16 5h-4z" />
         </svg>
       </div>
-
-      <div style={{ flex: 1, minWidth: 0, paddingRight: 20 }}>
-        <div style={{
-          display: 'inline-block',
-          background: '#1a1a2e', color: '#ffe500',
-          fontSize: '0.6rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const,
-          padding: '2px 8px', borderRadius: 20, marginBottom: 6,
-        }}>
-          New member offer
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#111', marginBottom: 3 }}>
+          New member offer — first month free
         </div>
-        <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1a1a2e', marginBottom: 4, lineHeight: 1.2 }}>
-          Your first month, on us.
-        </div>
-        <div style={{ fontSize: '0.78rem', color: '#374151', lineHeight: 1.55 }}>
-          Add a payment card and get your first Meta lead within <strong>7 days</strong> — we&apos;ll credit your entire first month free.
-        </div>
-        <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: 5 }}>
-          Card required to activate. Credit applied automatically to your first paid month. New accounts only.
+        <div style={{ fontSize: '0.78rem', color: '#6b7280', lineHeight: 1.5 }}>
+          Add a payment card and get your first Meta lead within 7 days — we&apos;ll credit your entire first month.
         </div>
       </div>
-
       <Link
         href="/billing"
         style={{
-          flexShrink: 0, padding: '10px 18px', borderRadius: 8,
-          background: '#1a1a2e', color: '#ffe500',
-          fontSize: '0.78rem', fontWeight: 800, textDecoration: 'none',
-          whiteSpace: 'nowrap' as const, letterSpacing: '0.01em',
+          flexShrink: 0, padding: '9px 18px', borderRadius: 8,
+          background: '#111', color: '#fff',
+          fontSize: '0.78rem', fontWeight: 700, textDecoration: 'none',
+          whiteSpace: 'nowrap' as const,
         }}
       >
         Add card →
@@ -945,168 +924,88 @@ function LaunchRunway({
   const headline = headlines[Math.min(doneCount - 1, headlines.length - 1)]
 
   return (
-    <div style={{ background: '#1a1a2e', borderRadius: 20, overflow: 'hidden' }}>
-      <style>{`
-        @keyframes runway-pulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(255,229,0,0.45); }
-          50% { box-shadow: 0 0 0 7px rgba(255,229,0,0); }
-        }
-        @keyframes runway-drive {
-          0%   { transform: translateX(-2px); }
-          50%  { transform: translateX(2px); }
-          100% { transform: translateX(-2px); }
-        }
-      `}</style>
+    <div style={{ background: '#fff', border: '1px solid #e8e8ec', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
 
       {/* Header */}
-      <div style={{ padding: '22px 24px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+      <div style={{ padding: '20px 22px 16px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
         <div>
-          <div style={{ fontSize: '0.6rem', fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase' as const, color: '#ffe500', marginBottom: 7 }}>
-            Road to your first paid lead
+          <div style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#9ca3af', marginBottom: 4 }}>
+            Setup checklist
           </div>
-          <div style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', lineHeight: 1.35, maxWidth: 380 }}>
-            {waitingForLead
-              ? 'Ads are running. Your first job request is on the way — sit tight.'
-              : headline}
+          <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#111', lineHeight: 1.3 }}>
+            {waitingForLead ? 'Ads are running — first lead is on the way.' : headline}
           </div>
         </div>
-        <div style={{
-          flexShrink: 0, background: 'rgba(255,229,0,0.1)', border: '1px solid rgba(255,229,0,0.2)',
-          borderRadius: 10, padding: '6px 12px', textAlign: 'center' as const,
-        }}>
-          <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#ffe500', lineHeight: 1 }}>{doneCount}</div>
-          <div style={{ fontSize: '0.58rem', fontWeight: 600, color: 'rgba(255,229,0,0.6)', letterSpacing: '0.06em', textTransform: 'uppercase' as const, marginTop: 2 }}>of {milestones.length}</div>
+        <div style={{ flexShrink: 0, background: '#f3f4f6', borderRadius: 8, padding: '6px 12px', textAlign: 'center' as const }}>
+          <div style={{ fontSize: '1rem', fontWeight: 800, color: '#111', lineHeight: 1 }}>{doneCount}</div>
+          <div style={{ fontSize: '0.58rem', fontWeight: 600, color: '#9ca3af', letterSpacing: '0.06em', textTransform: 'uppercase' as const, marginTop: 2 }}>of {milestones.length}</div>
         </div>
       </div>
 
-      {/* Progress track */}
-      <div style={{ padding: '4px 24px 20px', overflowX: 'auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', minWidth: 430 }}>
-          {milestones.map((m, i) => {
-            const isNext = m === milestones.find((x) => !x.done)
-            const isLast = i === milestones.length - 1
-            return (
-              <div key={m.key} style={{ display: 'flex', alignItems: 'center', flex: isLast ? 'none' : 1 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
-                  {/* Node circle */}
-                  <div style={{
-                    width: 38, height: 38, borderRadius: '50%',
-                    background: m.done
-                      ? '#ffe500'
-                      : m.isGoal
-                        ? 'rgba(255,229,0,0.07)'
-                        : isNext
-                          ? 'rgba(255,229,0,0.13)'
-                          : 'rgba(255,255,255,0.06)',
-                    border: m.isGoal
-                      ? '2px dashed rgba(255,229,0,0.3)'
-                      : isNext
-                        ? '2px solid #ffe500'
-                        : 'none',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    animation: isNext ? 'runway-pulse 2s ease-in-out infinite' : 'none',
-                    transition: 'all 0.3s',
-                  }}>
-                    {m.done && !m.isGoal && <IconCheck />}
-                    {m.isGoal && (
-                      <div style={{ animation: waitingForLead ? 'runway-drive 1.4s ease-in-out infinite' : 'none' }}>
-                        <IconTruck color={waitingForLead ? '#ffe500' : 'rgba(255,229,0,0.35)'} />
-                      </div>
-                    )}
-                    {!m.done && !m.isGoal && (
-                      <span style={{ fontSize: '0.72rem', fontWeight: 800, color: isNext ? '#ffe500' : 'rgba(255,255,255,0.22)' }}>
-                        {i + 1}
-                      </span>
-                    )}
-                  </div>
-                  {/* Label */}
-                  <div style={{
-                    marginTop: 6, fontSize: '0.58rem', fontWeight: 700,
-                    color: m.done
-                      ? '#ffe500'
-                      : isNext
-                        ? 'rgba(255,229,0,0.75)'
-                        : m.isGoal
-                          ? 'rgba(255,229,0,0.38)'
-                          : 'rgba(255,255,255,0.22)',
-                    letterSpacing: '0.03em', textAlign: 'center' as const,
-                    whiteSpace: 'pre-line' as const, lineHeight: 1.3, maxWidth: 56,
-                  }}>
-                    {m.label}
-                  </div>
-                </div>
-                {/* Connector — dashed road line */}
-                {!isLast && (
-                  <div style={{ flex: 1, position: 'relative', marginBottom: 26, height: 6, margin: '0 4px 26px' }}>
-                    <div style={{
-                      position: 'absolute', top: '50%', left: 0, right: 0,
-                      height: 3, transform: 'translateY(-50%)',
-                      background: m.done ? '#ffe500' : 'rgba(255,255,255,0.07)',
-                      transition: 'background 0.4s',
-                    }} />
-                    {!m.done && (
-                      <div style={{
-                        position: 'absolute', top: '50%', left: 0, right: 0,
-                        height: 3, transform: 'translateY(-50%)',
-                        backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.13) 0px, rgba(255,255,255,0.13) 6px, transparent 6px, transparent 14px)',
-                      }} />
-                    )}
-                  </div>
+      {/* Step list */}
+      <div style={{ padding: '8px 0' }}>
+        {milestones.filter(m => !m.isGoal).map((m) => {
+          const isNext = !m.done && milestones.find(x => !x.done && !x.isGoal) === m
+          return (
+            <div key={m.key} style={{
+              display: 'flex', alignItems: 'center', gap: 14,
+              padding: '10px 22px',
+              background: isNext ? '#f9fafb' : 'transparent',
+              borderLeft: isNext ? '2px solid #111' : '2px solid transparent',
+            }}>
+              {/* Check / ring */}
+              <div style={{
+                width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+                background: m.done ? '#111' : '#f3f4f6',
+                border: m.done ? 'none' : isNext ? '2px solid #d1d5db' : '2px solid #e5e7eb',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {m.done && (
+                  <svg width="11" height="11" fill="none" viewBox="0 0 16 16" stroke="#fff" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 8l3 3 7-7" />
+                  </svg>
                 )}
               </div>
-            )
-          })}
-        </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '0.85rem', fontWeight: m.done ? 500 : isNext ? 700 : 500, color: m.done ? '#9ca3af' : '#111', textDecoration: m.done ? 'line-through' : 'none' }}>
+                  {m.label.replace('\n', ' ')}
+                </div>
+                {isNext && m.cta && (
+                  <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: 2, lineHeight: 1.4 }}>{m.cta.desc}</div>
+                )}
+              </div>
+              {isNext && m.cta && (
+                <Link href={m.cta.href} style={{
+                  flexShrink: 0, padding: '7px 14px', borderRadius: 8,
+                  background: '#111', color: '#fff',
+                  fontSize: '0.75rem', fontWeight: 700, textDecoration: 'none',
+                  whiteSpace: 'nowrap' as const,
+                }}>
+                  {m.cta.label} →
+                </Link>
+              )}
+            </div>
+          )
+        })}
       </div>
 
-      {/* Next step callout */}
-      {nextStep?.cta && !waitingForLead && (
-        <div style={{ margin: '0 16px 16px' }}>
-          <div style={{
-            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 12, padding: '14px 16px',
-            display: 'flex', alignItems: 'center', gap: 14,
-          }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#fff', marginBottom: 3 }}>
-                Next: {nextStep.cta.label}
-              </div>
-              <div style={{ fontSize: '0.73rem', color: 'rgba(255,255,255,0.42)', lineHeight: 1.5 }}>
-                {nextStep.cta.desc}
-              </div>
-            </div>
-            <Link
-              href={nextStep.cta.href}
-              style={{
-                flexShrink: 0, padding: '9px 16px', borderRadius: 8,
-                background: '#ffe500', color: '#1a1a2e',
-                fontSize: '0.78rem', fontWeight: 800, textDecoration: 'none',
-                whiteSpace: 'nowrap' as const, letterSpacing: '0.01em',
-              }}
-            >
-              {nextStep.cta.label} →
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* Waiting for lead — truck is rolling state */}
+      {/* Waiting for lead — ads running state */}
       {waitingForLead && (
         <div style={{ margin: '0 16px 16px' }}>
           <div style={{
-            background: 'rgba(255,229,0,0.06)', border: '1px solid rgba(255,229,0,0.14)',
-            borderRadius: 12, padding: '14px 16px',
-            display: 'flex', alignItems: 'center', gap: 14,
+            background: '#f9fafb', border: '1px solid #e8e8ec',
+            borderRadius: 10, padding: '12px 16px',
+            display: 'flex', alignItems: 'center', gap: 12,
           }}>
             <div style={{ flexShrink: 0 }}>
-              <IconSignal color="rgba(255,229,0,0.8)" />
+              <IconSignal color="#9ca3af" />
             </div>
             <div>
-              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#ffe500', marginBottom: 3 }}>
-                Truck is rolling — leads incoming
+              <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#111', marginBottom: 3 }}>
+                Ads are live — leads incoming
               </div>
-              <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.42)', lineHeight: 1.5 }}>
-                Your ad is live and targeting homeowners in your area. This disappears the moment your first Meta lead lands.
+              <div style={{ fontSize: '0.72rem', color: '#6b7280', lineHeight: 1.5 }}>
+                Your ad is targeting homeowners in your area. This disappears the moment your first Meta lead lands.
               </div>
             </div>
           </div>
