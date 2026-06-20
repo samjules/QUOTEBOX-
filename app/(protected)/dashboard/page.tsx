@@ -382,40 +382,12 @@ export default async function DashboardPage({
         {/* ── Main content (below photo zone) ── */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 pb-10 space-y-5" style={{ marginTop: hasBg ? 0 : 8 }}>
 
-          {/* Guaranteed results banner — shown until Meta is connected */}
-          {!metaConnected && <GuaranteedResultsBanner />}
+          {/* Slim Meta ads strip — discreet, always shown until Meta connected */}
+          {!metaConnected && <MetaAdStrip />}
 
-          {/* Meta ads nudge — shown when they have a form but haven't run any ads yet */}
-          {hasForm && !hasCampaign && !metaConnected && firstFormSlug && (
-            <div style={{
-              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-              borderRadius: 14, padding: '20px 24px',
-              display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap',
-            }}>
-              <div style={{ flex: 1, minWidth: 200 }}>
-                <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#FFE500', marginBottom: 6 }}>
-                  Your form is live
-                </div>
-                <div style={{ fontSize: '1rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>
-                  Get your first customers by running Meta ads
-                </div>
-                <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
-                  Your form is live at{' '}
-                  <span style={{ color: 'rgba(255,255,255,0.8)', fontFamily: 'monospace' }}>quote-box.com/{firstFormSlug}</span>
-                  {' '}— connect Meta to start driving leads from Facebook &amp; Instagram.
-                </div>
-              </div>
-              <a
-                href="/onboarding"
-                style={{
-                  flexShrink: 0, padding: '11px 22px', background: '#FFE500', color: '#1a1a2e',
-                  fontWeight: 700, fontSize: '0.88rem', borderRadius: 9, textDecoration: 'none',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Run Meta ads →
-              </a>
-            </div>
+          {/* Form preview card — shown until they get their first lead */}
+          {hasForm && totalLeads === 0 && firstFormSlug && (
+            <FormPreviewCard slug={firstFormSlug} />
           )}
 
           {/* Welcome gift banner — shown while onboarding is in progress */}
@@ -710,39 +682,94 @@ function QuickAction({
 
 // ── Guaranteed Results Banner ────────────────────────────────
 
-function GuaranteedResultsBanner() {
+function MetaAdStrip() {
   return (
     <div style={{
-      background: '#1a1a2e', borderRadius: 14,
-      padding: '14px 20px',
-      display: 'flex', alignItems: 'center', gap: 14,
+      background: '#1a1a2e',
+      borderRadius: 10,
+      padding: '10px 16px',
+      display: 'flex', alignItems: 'center', gap: 12,
     }}>
-      {/* Shield icon */}
       <div style={{ flexShrink: 0 }}>
-        <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#ffe500" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#ffe500" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 2l7 3v6c0 5-3.5 9.5-7 11-3.5-1.5-7-6-7-11V5l7-3z" />
           <path d="M9 12l2 2 4-4" />
         </svg>
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#ffe500', letterSpacing: '0.01em', marginBottom: 2 }}>
-          Guaranteed results — hands-off marketing from $350/month
-        </div>
-        <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
-          We build your ads, manage your campaigns, and deliver leads directly to your dashboard. You just answer the calls.
-        </div>
+      <div style={{ flex: 1, fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1 }}>
+        <span style={{ color: '#ffe500', fontWeight: 700 }}>Guaranteed results</span>
+        {' '}— we run your Meta ads from $50/day and deliver leads straight to this dashboard.
       </div>
       <a
         href="mailto:sales@quote-box.com"
         style={{
-          flexShrink: 0, padding: '9px 18px', borderRadius: 8,
-          background: '#ffe500', color: '#1a1a2e',
-          fontSize: '0.78rem', fontWeight: 800, textDecoration: 'none',
-          whiteSpace: 'nowrap' as const, letterSpacing: '0.01em',
+          flexShrink: 0, fontSize: '0.72rem', fontWeight: 700, color: '#ffe500',
+          textDecoration: 'none', whiteSpace: 'nowrap' as const, letterSpacing: '0.01em',
         }}
       >
         Book a call →
       </a>
+    </div>
+  )
+}
+
+function FormPreviewCard({ slug }: { slug: string }) {
+  const url = `https://quote-box.com/${slug}`
+  return (
+    <div style={{
+      background: '#fff',
+      border: '1.5px solid #e5e7eb',
+      borderRadius: 16,
+      overflow: 'hidden',
+    }}>
+      {/* Green top bar */}
+      <div style={{ height: 4, background: 'linear-gradient(90deg, #22c55e, #16a34a)' }} />
+      <div style={{ padding: '22px 24px', display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' as const }}>
+        {/* Pulse dot + text */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flex: 1, minWidth: 240 }}>
+          <div style={{ marginTop: 3, flexShrink: 0, position: 'relative' as const, width: 12, height: 12 }}>
+            <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#22c55e' }} />
+            <div style={{
+              position: 'absolute' as const, inset: -3,
+              borderRadius: '50%', border: '2px solid #22c55e', opacity: 0.4,
+              animation: 'ping 1.5s cubic-bezier(0,0,0.2,1) infinite',
+            }} />
+          </div>
+          <div>
+            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#111', marginBottom: 4, lineHeight: 1.2 }}>
+              Your quote form is live!
+            </div>
+            <div style={{ fontSize: '0.82rem', color: '#6b7280', lineHeight: 1.5, marginBottom: 10 }}>
+              Go click it — fill it out like a customer would. You&apos;ll see exactly what they see, and your first lead will show up right here.
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: '8px 12px', maxWidth: 380 }}>
+              <span style={{ flex: 1, fontSize: '0.78rem', fontFamily: 'monospace', color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+                quote-box.com/{slug}
+              </span>
+            </div>
+          </div>
+        </div>
+        <a
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            flexShrink: 0,
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            padding: '13px 24px',
+            background: '#111', color: '#fff',
+            fontWeight: 700, fontSize: '0.88rem', borderRadius: 10,
+            textDecoration: 'none', whiteSpace: 'nowrap' as const,
+          }}
+        >
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+            <path d="M15 3h6v6" /><path d="M10 14L21 3" />
+          </svg>
+          Submit a test lead
+        </a>
+      </div>
+      <style>{`@keyframes ping { 75%,100% { transform: scale(1.8); opacity: 0; } }`}</style>
     </div>
   )
 }
