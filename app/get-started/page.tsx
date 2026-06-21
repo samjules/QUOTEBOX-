@@ -80,7 +80,7 @@ export default function GetStartedPage() {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    fontFamily: "'Brraelyn', sans-serif",
+    fontFamily: "'Sanguard', sans-serif",
     color: 'white',
     padding: '40px 20px',
   }
@@ -117,7 +117,7 @@ export default function GetStartedPage() {
     color: 'white',
     outline: 'none',
     boxSizing: 'border-box',
-    fontFamily: "'Brraelyn', sans-serif",
+    fontFamily: "'Sanguard', sans-serif",
   }
 
   const dots = (

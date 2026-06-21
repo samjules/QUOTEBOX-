@@ -725,7 +725,7 @@ function CanvasPreview({
             onChange={onChangeFormName}
             placeholder="My Quote Form"
             style={{
-              fontFamily: "'Brraelyn', sans-serif",
+              fontFamily: "'Sanguard', sans-serif",
               fontSize: '1.35rem', fontWeight: 800,
               lineHeight: 1.2, color: textPrimary,
             }}

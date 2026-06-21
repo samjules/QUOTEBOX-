@@ -19,25 +19,10 @@
   font-display: swap;
 }
 
-@font-face {
-  font-family: 'Brraelyn';
-  src: url('/fonts/Brraelyn.otf') format('opentype');
-  font-weight: 400 900;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Brraelyn';
-  src: url('/fonts/Brraelyn-Italic.otf') format('opentype');
-  font-weight: 400 900;
-  font-style: italic;
-  font-display: swap;
-}
 
 /* ── Global typography ───────────────────────────── */
 body {
-  font-family: 'Brraelyn', sans-serif;
+  font-family: 'Sanguard', sans-serif;
 }
 
 h1, h2, h3, h4, h5, h6,
@@ -90,7 +75,7 @@ button {
 }
 
 .builder-wrap {
-  font-family: 'Brraelyn', sans-serif;
+  font-family: 'Sanguard', sans-serif;
   background: var(--bg);
   color: var(--text);
   height: 100%;
@@ -349,7 +334,7 @@ button {
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text);
-  font-family: 'Brraelyn', sans-serif;
+  font-family: 'Sanguard', sans-serif;
   font-size: 0.83rem;
   padding: 8px 11px;
   margin-bottom: 7px;
@@ -837,7 +822,7 @@ button {
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text);
-  font-family: 'Brraelyn', sans-serif;
+  font-family: 'Sanguard', sans-serif;
   font-size: 0.83rem;
   padding: 8px 11px;
   outline: none;
@@ -1038,7 +1023,7 @@ button {
 .hero-upload-zone:hover .hero-upload-overlay { opacity: 1; }
 .hero-upload-prompt { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px; color: var(--muted); font-size: .78rem; text-align: center; }
 .hero-upload-spinner { width: 22px; height: 22px; border: 2.5px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
-.hero-upload-clear { background: none; border: none; color: var(--danger); font-size: .73rem; cursor: pointer; text-decoration: underline; padding: 2px 0; font-family: 'Brraelyn', sans-serif; }
+.hero-upload-clear { background: none; border: none; color: var(--danger); font-size: .73rem; cursor: pointer; text-decoration: underline; padding: 2px 0; font-family: 'Sanguard', sans-serif; }
 
 /* ── Image Field Canvas Preview ── */
 .fprev-image-placeholder { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 16px; border: 2px dashed var(--border); border-radius: 8px; margin-top: 8px; background: var(--bg); text-align: center; }
