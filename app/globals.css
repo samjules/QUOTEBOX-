@@ -179,8 +179,8 @@ button {
 
 .b-sidebar {
   background-color: var(--sidebar-bg);
-  background-image: url('/maze-pattern.png');
-  background-size: 200px;
+  background-image: url('/patterns/map-pattern-3.jpg');
+  background-size: 300px;
   background-repeat: repeat;
   background-blend-mode: soft-light;
   border-right: 1px solid var(--sidebar-border);
@@ -1142,10 +1142,10 @@ div:hover .media-copy-btn { opacity: 1 !important; }
   content: '';
   position: absolute;
   inset: 0;
-  background: url('/maze-pattern.png') repeat;
-  background-size: 220px;
+  background: url('/patterns/map-pattern-1.jpg') repeat;
+  background-size: 280px;
   filter: invert(1);
-  opacity: 0.07;
+  opacity: 0.08;
   pointer-events: none;
   z-index: 0;
 }
@@ -1163,9 +1163,9 @@ div:hover .media-copy-btn { opacity: 1 !important; }
   content: '';
   position: absolute;
   inset: 0;
-  background: url('/maze-pattern.png') repeat;
-  background-size: 280px;
-  opacity: 0.04;
+  background: url('/patterns/map-pattern-4.jpg') repeat;
+  background-size: 320px;
+  opacity: 0.05;
   pointer-events: none;
   z-index: 0;
 }
@@ -1183,9 +1183,9 @@ div:hover .media-copy-btn { opacity: 1 !important; }
   content: '';
   position: absolute;
   inset: 0;
-  background: url('/maze-pattern.png') repeat;
-  background-size: 200px;
-  opacity: 0.06;
+  background: url('/patterns/map-pattern-6.jpg') repeat;
+  background-size: 260px;
+  opacity: 0.07;
   mix-blend-mode: multiply;
   pointer-events: none;
   z-index: 0;
