@@ -226,7 +226,7 @@ function TemplatePicker({
 
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
-          <div style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.6rem', fontWeight: 700, color: 'var(--fg)', marginBottom: 8 }}>
+          <div style={{ fontFamily: "'Brraelyn', sans-serif", fontSize: '1.6rem', fontWeight: 700, color: 'var(--fg)', marginBottom: 8 }}>
             Start with a template
           </div>
           <div style={{ fontSize: '0.88rem', color: 'var(--muted)', lineHeight: 1.55, maxWidth: 420, margin: '0 auto' }}>
@@ -725,7 +725,7 @@ function CanvasPreview({
             onChange={onChangeFormName}
             placeholder="My Quote Form"
             style={{
-              fontFamily: "'Instrument Sans', sans-serif",
+              fontFamily: "'Brraelyn', sans-serif",
               fontSize: '1.35rem', fontWeight: 800,
               lineHeight: 1.2, color: textPrimary,
             }}
@@ -1032,7 +1032,7 @@ function CanvasPreview({
                   placeholder="Estimated Total"
                   style={{ fontSize: '0.8rem', color: 'var(--muted)' }}
                 />
-                <span style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)' }}>{currency}0</span>
+                <span style={{ fontFamily: "'Brraelyn', sans-serif", fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)' }}>{currency}0</span>
               </div>
             )}
             {hasPricing && quoteDisplay === 'after_submit' && (
@@ -1047,13 +1047,13 @@ function CanvasPreview({
                   placeholder="Estimated Total"
                   style={{ fontSize: '0.8rem', color: 'var(--muted)' }}
                 />
-                <span style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.25rem', fontWeight: 800, color: 'var(--muted)' }}>{currency}–</span>
+                <span style={{ fontFamily: "'Brraelyn', sans-serif", fontSize: '1.25rem', fontWeight: 800, color: 'var(--muted)' }}>{currency}–</span>
               </div>
             )}
 
             <div style={{
               width: '100%', padding: '13px 16px',
-              fontFamily: "'Instrument Sans', sans-serif", fontWeight: 800, fontSize: '0.95rem',
+              fontFamily: "'Brraelyn', sans-serif", fontWeight: 800, fontSize: '0.95rem',
               letterSpacing: '0.04em', border: 'none', borderRadius: 12,
               background: brandColor, color: textPrimary, textAlign: 'center',
             }}>
@@ -1124,13 +1124,13 @@ function CanvasPreview({
                   placeholder="Estimated Total"
                   style={{ fontSize: '0.8rem', color: 'var(--muted)' }}
                 />
-                <span style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)' }}>{currency}0</span>
+                <span style={{ fontFamily: "'Brraelyn', sans-serif", fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)' }}>{currency}0</span>
               </div>
             )}
 
             <div style={{
               width: '100%', padding: '13px 16px',
-              fontFamily: "'Instrument Sans', sans-serif", fontWeight: 800, fontSize: '0.95rem',
+              fontFamily: "'Brraelyn', sans-serif", fontWeight: 800, fontSize: '0.95rem',
               letterSpacing: '0.04em', border: 'none', borderRadius: 12,
               background: brandColor, color: textPrimary, textAlign: 'center',
             }}>
@@ -1167,7 +1167,7 @@ function CanvasPreview({
               value={confirmTitle}
               onChange={onChangeConfirmTitle}
               placeholder="You're all set!"
-              style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.2rem', fontWeight: 800, color: '#111827', lineHeight: 1.2 }}
+              style={{ fontFamily: "'Brraelyn', sans-serif", fontSize: '1.2rem', fontWeight: 800, color: '#111827', lineHeight: 1.2 }}
             />
             <EditableText
               tag="div"
@@ -1191,7 +1191,7 @@ function CanvasPreview({
                   placeholder="Estimated Total"
                   style={{ fontSize: '0.8rem', color: 'var(--muted)' }}
                 />
-                <span style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.3rem', fontWeight: 800, color: 'var(--accent)' }}>{currency}–</span>
+                <span style={{ fontFamily: "'Brraelyn', sans-serif", fontSize: '1.3rem', fontWeight: 800, color: 'var(--accent)' }}>{currency}–</span>
               </div>
             )}
           </div>
@@ -1367,7 +1367,7 @@ function TestPanel({ fields, currency, minQuote, onClose }: {
     <aside style={panelStyle}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px 10px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
         <div>
-          <div style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '0.88rem', fontWeight: 700, color: 'var(--text)' }}>Quote Tester</div>
+          <div style={{ fontFamily: "'Brraelyn', sans-serif", fontSize: '0.88rem', fontWeight: 700, color: 'var(--text)' }}>Quote Tester</div>
           <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginTop: 1 }}>Test pricing without publishing</div>
         </div>
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1rem', padding: 4, lineHeight: 1 }}>✕</button>
@@ -1452,7 +1452,7 @@ function TestPanel({ fields, currency, minQuote, onClose }: {
         )}
         <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Estimated Total</span>
-          <span style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--accent)', fontFamily: "'Instrument Sans', sans-serif" }}>
+          <span style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--accent)', fontFamily: "'Brraelyn', sans-serif" }}>
             {breakdown.length === 0 ? '—' : `${currency}${total.toFixed(2)}`}
           </span>
         </div>
@@ -2887,7 +2887,7 @@ export default function FormBuilderPage() {
         </div>
         {screen === 'builder' && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-            <div style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '0.88rem', fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>
+            <div style={{ fontFamily: "'Brraelyn', sans-serif", fontSize: '0.88rem', fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>
               {formName || 'Untitled Form'}
             </div>
             <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '0.68rem', color: 'var(--muted)', marginTop: 2 }}>
@@ -2970,7 +2970,7 @@ export default function FormBuilderPage() {
               {(existingForms.length > 0 || existingFormsLoading) && (
                 <div style={{ maxWidth: 960, margin: '0 auto', padding: '28px 28px 0' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                    <h2 style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1.05rem', fontWeight: 700, color: 'var(--fg)', margin: 0 }}>
+                    <h2 style={{ fontFamily: "'Brraelyn', sans-serif", fontSize: '1.05rem', fontWeight: 700, color: 'var(--fg)', margin: 0 }}>
                       Your Forms
                     </h2>
                   </div>
@@ -3621,7 +3621,7 @@ export default function FormBuilderPage() {
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 22px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
               <div>
-                <div style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: '1rem', fontWeight: 700 }}>Media Library</div>
+                <div style={{ fontFamily: "'Brraelyn', sans-serif", fontSize: '1rem', fontWeight: 700 }}>Media Library</div>
                 <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: 2 }}>
                   {heroMediaFiles.length} image{heroMediaFiles.length !== 1 ? 's' : ''} · click one to select
                 </div>

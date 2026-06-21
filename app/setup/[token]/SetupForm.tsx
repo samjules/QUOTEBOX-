@@ -59,7 +59,7 @@ export default function SetupForm({ token, email }: { token: string; email: stri
     color: 'white',
     outline: 'none',
     boxSizing: 'border-box',
-    fontFamily: "'Inter', sans-serif",
+    fontFamily: "'Brraelyn', sans-serif",
   }
 
   return (
@@ -91,7 +91,7 @@ export default function SetupForm({ token, email }: { token: string; email: stri
           borderRadius: 10,
           border: 'none',
           cursor: loading ? 'not-allowed' : 'pointer',
-          fontFamily: "'Inter', sans-serif",
+          fontFamily: "'Brraelyn', sans-serif",
           width: '100%',
           marginTop: 8,
           opacity: loading ? 0.6 : 1,

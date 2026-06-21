@@ -136,7 +136,7 @@ export default function CrmDashboard({ leads: initialLeads }: { leads: SalesLead
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0d0d1a', fontFamily: "'Inter', sans-serif", color: 'white' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0d0d1a', fontFamily: "'Brraelyn', sans-serif", color: 'white' }}>
 
       {/* Top bar */}
       <div style={{ height: 56, background: '#1a1a2e', display: 'flex', alignItems: 'center', padding: '0 24px', gap: 16, flexShrink: 0 }}>
@@ -184,7 +184,7 @@ export default function CrmDashboard({ leads: initialLeads }: { leads: SalesLead
               style={{
                 padding: '10px 16px', fontSize: '0.85rem', borderRadius: 8,
                 border: '1px solid rgba(255,255,255,0.1)', background: '#1a1a2e', color: 'white',
-                outline: 'none', width: 260, fontFamily: "'Inter', sans-serif",
+                outline: 'none', width: 260, fontFamily: "'Brraelyn', sans-serif",
               }}
             />
             <div style={{ display: 'flex', gap: 4 }}>
@@ -198,7 +198,7 @@ export default function CrmDashboard({ leads: initialLeads }: { leads: SalesLead
                     background: filter === tab ? '#FFE500' : 'rgba(255,255,255,0.06)',
                     color: filter === tab ? '#0d0d1a' : 'rgba(255,255,255,0.5)',
                     textTransform: 'capitalize',
-                    fontFamily: "'Inter', sans-serif",
+                    fontFamily: "'Brraelyn', sans-serif",
                   }}
                 >
                   {tab}
@@ -250,7 +250,7 @@ export default function CrmDashboard({ leads: initialLeads }: { leads: SalesLead
                                 style={{
                                   width: '100%', padding: '8px 10px', fontSize: '0.82rem', borderRadius: 6,
                                   border: '1px solid rgba(255,255,255,0.1)', background: '#0d0d1a', color: 'white',
-                                  outline: 'none', resize: 'vertical', fontFamily: "'Inter', sans-serif", boxSizing: 'border-box',
+                                  outline: 'none', resize: 'vertical', fontFamily: "'Brraelyn', sans-serif", boxSizing: 'border-box',
                                 }}
                               />
                               <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }}>
@@ -262,7 +262,7 @@ export default function CrmDashboard({ leads: initialLeads }: { leads: SalesLead
                                     borderRadius: 6, border: 'none', cursor: 'pointer',
                                     background: '#FFE500', color: '#0d0d1a',
                                     opacity: saving === lead.id ? 0.5 : 1,
-                                    fontFamily: "'Inter', sans-serif",
+                                    fontFamily: "'Brraelyn', sans-serif",
                                   }}
                                 >
                                   {saving === lead.id ? 'Saving...' : 'Save Notes'}
@@ -276,7 +276,7 @@ export default function CrmDashboard({ leads: initialLeads }: { leads: SalesLead
                                     borderRadius: 6, border: '1px solid rgba(239,68,68,0.3)', cursor: 'pointer',
                                     background: 'transparent', color: '#ef4444',
                                     opacity: saving === lead.id ? 0.5 : 1,
-                                    fontFamily: "'Inter', sans-serif",
+                                    fontFamily: "'Brraelyn', sans-serif",
                                   }}
                                 >
                                   Delete Lead
@@ -314,7 +314,7 @@ export default function CrmDashboard({ leads: initialLeads }: { leads: SalesLead
                                 background: sc.bg,
                                 color: sc.text,
                                 textTransform: 'capitalize',
-                                fontFamily: "'Inter', sans-serif",
+                                fontFamily: "'Brraelyn', sans-serif",
                                 outline: 'none',
                               }}
                             >
@@ -338,7 +338,7 @@ export default function CrmDashboard({ leads: initialLeads }: { leads: SalesLead
                               background: lead.status === 'closed' ? 'rgba(255,255,255,0.06)' : '#FFE500',
                               color: lead.status === 'closed' ? 'rgba(255,255,255,0.3)' : '#0d0d1a',
                               opacity: sendingLink === lead.id ? 0.5 : 1,
-                              fontFamily: "'Inter', sans-serif",
+                              fontFamily: "'Brraelyn', sans-serif",
                             }}
                           >
                             {sendingLink === lead.id ? 'Sending...' : 'Send Link'}

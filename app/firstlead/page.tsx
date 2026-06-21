@@ -48,7 +48,7 @@ export default function FirstLeadPage() {
   }
 
   return (
-    <div style={{ fontFamily: "'Inter', sans-serif", color: '#1a1a2e', background: '#fff', minHeight: '100vh' }}>
+    <div style={{ fontFamily: "'Brraelyn', sans-serif", color: '#1a1a2e', background: '#fff', minHeight: '100vh' }}>
 
       {/* Nav */}
       <nav style={{

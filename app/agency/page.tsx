@@ -38,7 +38,7 @@ const faqs = [
 
 export default function AgencyPage() {
   return (
-    <div style={{ fontFamily: "'Inter', sans-serif", color: '#1a1a2e', background: '#fff' }}>
+    <div style={{ fontFamily: "'Brraelyn', sans-serif", color: '#1a1a2e', background: '#fff' }}>
 
       {/* ── Arctic Reach banner ── */}
       <div style={{

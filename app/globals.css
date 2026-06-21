@@ -2,13 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Custom fonts ────────────────────────────────── */
+@font-face {
+  font-family: 'Sanguard';
+  src: url('/fonts/SANGUARD.otf') format('opentype');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Sanguard';
+  src: url('/fonts/SANGUARD-Italic.otf') format('opentype');
+  font-weight: 400 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Brraelyn';
+  src: url('/fonts/Brraelyn.otf') format('opentype');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Brraelyn';
+  src: url('/fonts/Brraelyn-Italic.otf') format('opentype');
+  font-weight: 400 900;
+  font-style: italic;
+  font-display: swap;
+}
+
 /* ── Global typography ───────────────────────────── */
 body {
-  font-family: 'Inter', 'Work Sans', sans-serif;
+  font-family: 'Brraelyn', sans-serif;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Sanguard', sans-serif;
   letter-spacing: 0.01em;
 }
 
@@ -55,7 +88,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .builder-wrap {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Brraelyn', sans-serif;
   background: var(--bg);
   color: var(--text);
   height: 100%;
@@ -76,7 +109,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .builder-logo {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Brraelyn', sans-serif;
   font-weight: 800;
   font-size: 1.1rem;
   letter-spacing: -0.02em;
@@ -94,7 +127,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .bb {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Brraelyn', sans-serif;
   font-size: 0.83rem;
   font-weight: 600;
   padding: 7px 16px;
@@ -175,7 +208,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .sidebar-label {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Brraelyn', sans-serif;
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -201,7 +234,7 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--sidebar-hover);
 }
 .sidebar-cat-title {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Brraelyn', sans-serif;
   font-size: 0.66rem;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -232,7 +265,7 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text);
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Brraelyn', sans-serif;
   font-size: 0.83rem;
   cursor: pointer;
   margin-bottom: 5px;
@@ -310,7 +343,7 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text);
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Brraelyn', sans-serif;
   font-size: 0.83rem;
   padding: 8px 11px;
   margin-bottom: 7px;
@@ -478,7 +511,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .pv-title {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Brraelyn', sans-serif;
   font-size: 1.4rem;
   font-weight: 800;
   line-height: 1.2;
@@ -663,7 +696,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .total-prev-val {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Brraelyn', sans-serif;
   font-size: 1.25rem;
   font-weight: 800;
   color: var(--accent);
@@ -673,7 +706,7 @@ h1, h2, h3, h4, h5, h6 {
   width: 100%;
   margin-top: 10px;
   padding: 12px;
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Brraelyn', sans-serif;
   font-weight: 800;
   font-size: 0.92rem;
   border: none;
@@ -734,7 +767,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .email-notice-txt {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Brraelyn', sans-serif;
   font-size: 1rem;
   font-weight: 700;
 }
@@ -768,7 +801,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .props-title {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Brraelyn', sans-serif;
   font-size: 0.65rem;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -798,7 +831,7 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text);
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Brraelyn', sans-serif;
   font-size: 0.83rem;
   padding: 8px 11px;
   outline: none;
@@ -883,7 +916,7 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px dashed var(--border);
   border-radius: 8px;
   color: var(--muted);
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Brraelyn', sans-serif;
   font-size: 0.78rem;
   cursor: pointer;
   transition: all 0.15s;
@@ -999,7 +1032,7 @@ h1, h2, h3, h4, h5, h6 {
 .hero-upload-zone:hover .hero-upload-overlay { opacity: 1; }
 .hero-upload-prompt { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px; color: var(--muted); font-size: .78rem; text-align: center; }
 .hero-upload-spinner { width: 22px; height: 22px; border: 2.5px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
-.hero-upload-clear { background: none; border: none; color: var(--danger); font-size: .73rem; cursor: pointer; text-decoration: underline; padding: 2px 0; font-family: 'Instrument Sans', sans-serif; }
+.hero-upload-clear { background: none; border: none; color: var(--danger); font-size: .73rem; cursor: pointer; text-decoration: underline; padding: 2px 0; font-family: 'Brraelyn', sans-serif; }
 
 /* ── Image Field Canvas Preview ── */
 .fprev-image-placeholder { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 16px; border: 2px dashed var(--border); border-radius: 8px; margin-top: 8px; background: var(--bg); text-align: center; }
@@ -1058,7 +1091,7 @@ h1, h2, h3, h4, h5, h6 {
   flex-shrink: 0;
 }
 .crop-modal-title {
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Brraelyn', sans-serif;
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -1077,7 +1110,7 @@ h1, h2, h3, h4, h5, h6 {
   cursor: pointer;
   color: var(--muted);
   transition: all 0.12s;
-  font-family: 'Instrument Sans', sans-serif;
+  font-family: 'Brraelyn', sans-serif;
 }
 .crop-aspect-btn:hover { border-color: var(--accent); color: var(--fg); }
 .crop-aspect-btn.active { background: var(--accent); border-color: var(--accent); color: white; }

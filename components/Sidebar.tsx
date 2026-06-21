@@ -222,7 +222,7 @@ export default function Sidebar() {
           />
           <span
             className="text-white font-bold text-[15px] leading-none tracking-tight"
-            style={{ fontFamily: "'Instrument Sans', sans-serif" }}
+            style={{ fontFamily: "'Brraelyn', sans-serif" }}
           >
             QuoteBox
           </span>
