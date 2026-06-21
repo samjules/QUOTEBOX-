@@ -193,7 +193,11 @@ button {
 }
 
 .b-sidebar {
-  background: var(--sidebar-bg);
+  background-color: var(--sidebar-bg);
+  background-image: url('/maze-pattern.png');
+  background-size: 200px;
+  background-repeat: repeat;
+  background-blend-mode: soft-light;
   border-right: 1px solid var(--sidebar-border);
   overflow-y: auto;
   padding: 18px 14px;
@@ -1142,3 +1146,66 @@ button {
 /* show copy btn on media tile hover */
 div:hover > div > .media-copy-btn,
 div:hover .media-copy-btn { opacity: 1 !important; }
+
+/* ── Maze pattern utilities ───────────────────────── */
+/* Dark sections (Deep Focus bg): white maze lines at low opacity */
+.maze-dark {
+  position: relative;
+  overflow: hidden;
+}
+.maze-dark::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('/maze-pattern.png') repeat;
+  background-size: 220px;
+  filter: invert(1);
+  opacity: 0.07;
+  pointer-events: none;
+  z-index: 0;
+}
+.maze-dark > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Light sections: dark maze lines at very low opacity */
+.maze-light {
+  position: relative;
+  overflow: hidden;
+}
+.maze-light::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('/maze-pattern.png') repeat;
+  background-size: 280px;
+  opacity: 0.04;
+  pointer-events: none;
+  z-index: 0;
+}
+.maze-light > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Purple-tinted maze for accent sections */
+.maze-purple {
+  position: relative;
+  overflow: hidden;
+}
+.maze-purple::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('/maze-pattern.png') repeat;
+  background-size: 200px;
+  opacity: 0.06;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  z-index: 0;
+}
+.maze-purple > * {
+  position: relative;
+  z-index: 1;
+}

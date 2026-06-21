@@ -46,7 +46,7 @@ export default function LandingPage() {
     <div style={{ fontFamily: "'Brraelyn', sans-serif", color: '#0e0020', background: '#fff' }}>
 
       {/* ── Arctic Reach banner ── */}
-      <div style={{
+      <div className="maze-dark" style={{
         background: '#0e0020', color: 'rgba(255,255,255,0.55)',
         textAlign: 'center', fontSize: '0.72rem', padding: '6px 16px',
         letterSpacing: '0.03em',
@@ -88,7 +88,7 @@ export default function LandingPage() {
       </nav>
 
       {/* ── Hero ── */}
-      <section style={{
+      <section className="maze-dark" style={{
         background: '#0e0020', color: 'white',
         padding: '80px 24px 0', overflow: 'hidden',
       }}>
@@ -602,7 +602,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Meta Ads callout ── */}
-      <section style={{ padding: '72px 24px', background: '#0e0020' }}>
+      <section className="maze-dark" style={{ padding: '72px 24px', background: '#0e0020' }}>
         <div style={{ maxWidth: 860, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 48, alignItems: 'center' }}>
           <div>
             <div style={{

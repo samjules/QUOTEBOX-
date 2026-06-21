@@ -3,7 +3,7 @@ import Link from 'next/link'
 export default function PublicNav() {
   return (
     <>
-      <div style={{
+      <div className="maze-dark" style={{
         background: '#0e0020', color: 'rgba(255,255,255,0.55)',
         textAlign: 'center', fontSize: '0.72rem', padding: '6px 16px',
         letterSpacing: '0.03em',

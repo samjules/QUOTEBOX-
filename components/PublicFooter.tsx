@@ -34,7 +34,7 @@ const linkStyle: React.CSSProperties = {
 
 export default function PublicFooter() {
   return (
-    <footer style={{ background: '#0e0020', color: 'white', padding: '60px 32px 32px' }}>
+    <footer className="maze-dark" style={{ background: '#0e0020', color: 'white', padding: '60px 32px 32px' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
         <div style={{
           display: 'grid',
