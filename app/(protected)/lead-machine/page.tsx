@@ -1001,7 +1001,7 @@ export default function LeadMachinePage() {
             </div>
             <h1
               className="text-3xl font-bold text-gray-900 mb-2"
-              style={{ fontFamily: "'Brraelyn', sans-serif", letterSpacing: '-0.02em' }}
+              style={{ fontFamily: "'Sanguard', sans-serif", letterSpacing: '-0.02em' }}
             >
               Campaigns
             </h1>
@@ -1061,7 +1061,7 @@ export default function LeadMachinePage() {
         <div className="max-w-xl mx-auto px-4 py-12">
           <h1
             className="text-2xl font-bold text-gray-900 mb-2"
-            style={{ fontFamily: "'Brraelyn', sans-serif", letterSpacing: '-0.02em' }}
+            style={{ fontFamily: "'Sanguard', sans-serif", letterSpacing: '-0.02em' }}
           >
             Select Ad Account
           </h1>
@@ -1123,7 +1123,7 @@ export default function LeadMachinePage() {
         <div className="mb-6">
           <h1
             className="text-2xl font-bold text-gray-900"
-            style={{ fontFamily: "'Brraelyn', sans-serif", letterSpacing: '-0.02em' }}
+            style={{ fontFamily: "'Sanguard', sans-serif", letterSpacing: '-0.02em' }}
           >
             Campaigns
           </h1>
