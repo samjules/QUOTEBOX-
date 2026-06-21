@@ -133,7 +133,7 @@ const addrInputStyle: React.CSSProperties = {
   boxSizing: 'border-box',
   background: 'white',
   fontFamily: 'inherit',
-  color: '#1a1a2e',
+  color: '#0e0020',
 }
 
 const suggestionBoxStyle: React.CSSProperties = {
@@ -377,7 +377,7 @@ function DrawAreaField({
           value={addressQuery}
           autoComplete="off"
           onChange={(e) => setAddressQuery(e.target.value)}
-          style={{ width: '100%', padding: '11px 13px', borderRadius: 8, border: '1.5px solid #e5e4e0', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', color: '#1a1a2e', background: 'white' }}
+          style={{ width: '100%', padding: '11px 13px', borderRadius: 8, border: '1.5px solid #e5e4e0', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', color: '#0e0020', background: 'white' }}
         />
         {suggestions.length > 0 && (
           <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'white', border: '1px solid #e5e4e0', borderRadius: 8, boxShadow: '0 4px 18px rgba(0,0,0,0.11)', zIndex: 30, marginTop: 3, overflow: 'hidden' }}>
@@ -396,7 +396,7 @@ function DrawAreaField({
 
       {/* Instructions */}
       <div style={{ fontSize: '0.78rem', color: '#64748b', lineHeight: 1.5 }}>
-        Zoom in then click <strong style={{ color: accentColor === '#ffe500' ? '#1a1a2e' : accentColor }}>✎ draw</strong> to trace the area. Click each corner of the lawn or roof — double-click to close.
+        Zoom in then click <strong style={{ color: accentColor === '#ffe500' ? '#0e0020' : accentColor }}>✎ draw</strong> to trace the area. Click each corner of the lawn or roof — double-click to close.
       </div>
 
       {/* Map */}
@@ -758,7 +758,7 @@ function RouteField({
             source: 'route',
             layout: { 'line-join': 'round', 'line-cap': 'round' },
             paint: {
-              'line-color': accentColor === '#ffe500' ? '#1a1a2e' : accentColor,
+              'line-color': accentColor === '#ffe500' ? '#0e0020' : accentColor,
               'line-width': 4,
               'line-opacity': 0.85,
             },
@@ -1051,7 +1051,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
   const legacyColorMap: Record<string, string> = { yellow: '#FFE500', blue: '#1A56FF' }
   const accentBg = legacyColorMap[config.brand_color] ?? config.brand_color ?? '#FFE500'
   const isDark = isColorDark(accentBg)
-  const accentFg = isDark ? '#ffffff' : '#1a1a2e'
+  const accentFg = isDark ? '#ffffff' : '#0e0020'
   const accentTint = accentBg + '18'
   const currency = config.currency ?? '$'
 

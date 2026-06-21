@@ -58,7 +58,7 @@ export default function QualifyForm() {
         border: '1px solid #e5e7eb', maxWidth: 520, margin: '0 auto', textAlign: 'center',
       }}>
         <div style={{ fontSize: '2rem', marginBottom: 16 }}>📋</div>
-        <h3 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: 12, color: '#1a1a2e' }}>
+        <h3 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: 12, color: '#0e0020' }}>
           Not quite the right fit — yet
         </h3>
         <p style={{ color: '#6b7280', lineHeight: 1.7, marginBottom: 24, fontSize: '0.93rem' }}>
@@ -66,7 +66,7 @@ export default function QualifyForm() {
           $15/lead option — no monthly commitment required.
         </p>
         <Link href="/signup" style={{
-          display: 'inline-block', background: '#1a1a2e', color: '#FFE500',
+          display: 'inline-block', background: '#0e0020', color: '#FFE500',
           fontWeight: 700, padding: '12px 28px', borderRadius: 10, textDecoration: 'none',
           fontSize: '0.95rem',
         }}>
@@ -83,7 +83,7 @@ export default function QualifyForm() {
         border: '1px solid #e5e7eb', maxWidth: 520, margin: '0 auto', textAlign: 'center',
       }}>
         <div style={{ fontSize: '2rem', marginBottom: 16 }}>✅</div>
-        <h3 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: 12, color: '#1a1a2e' }}>
+        <h3 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: 12, color: '#0e0020' }}>
           You're on the list!
         </h3>
         <p style={{ color: '#6b7280', lineHeight: 1.7, fontSize: '0.93rem' }}>
@@ -96,7 +96,7 @@ export default function QualifyForm() {
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '11px 14px', borderRadius: 8,
     border: '1px solid #d1d5db', fontSize: '0.95rem', outline: 'none',
-    boxSizing: 'border-box', color: '#1a1a2e',
+    boxSizing: 'border-box', color: '#0e0020',
   }
 
   const labelStyle: React.CSSProperties = {
@@ -108,7 +108,7 @@ export default function QualifyForm() {
       background: 'white', borderRadius: 14, padding: '36px 32px',
       border: '1px solid #e5e7eb', maxWidth: 520, margin: '0 auto',
     }}>
-      <h3 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: 24, color: '#1a1a2e', textAlign: 'center' }}>
+      <h3 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: 24, color: '#0e0020', textAlign: 'center' }}>
         See if we're a good fit
       </h3>
 
@@ -157,7 +157,7 @@ export default function QualifyForm() {
         type="submit"
         disabled={status === 'loading'}
         style={{
-          marginTop: 24, width: '100%', background: '#1a1a2e', color: '#FFE500',
+          marginTop: 24, width: '100%', background: '#0e0020', color: '#FFE500',
           fontWeight: 700, fontSize: '1rem', padding: '14px', borderRadius: 10,
           border: 'none', cursor: status === 'loading' ? 'not-allowed' : 'pointer',
           opacity: status === 'loading' ? 0.7 : 1,

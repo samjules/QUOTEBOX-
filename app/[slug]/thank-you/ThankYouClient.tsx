@@ -24,7 +24,7 @@ export default function ThankYouClient({ form }: { form: HostedForm }) {
   const legacyColorMap: Record<string, string> = { yellow: '#FFE500', blue: '#1A56FF' }
   const accentBg = legacyColorMap[config.brand_color] ?? config.brand_color ?? '#FFE500'
   const isDark = isColorDark(accentBg)
-  const accentFg = isDark ? '#ffffff' : '#1a1a2e'
+  const accentFg = isDark ? '#ffffff' : '#0e0020'
 
   const isTestMode = searchParams.get('pixel_test') === '1'
   const [pixelStatus, setPixelStatus] = useState<'loading' | 'fired' | 'no_pixel'>('loading')

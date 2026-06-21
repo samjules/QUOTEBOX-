@@ -7,11 +7,11 @@ const TRADES = ['Plumbing', 'HVAC', 'Roofing', 'Lawn Care', 'Moving', 'Cleaning'
 
 const input: React.CSSProperties = {
   width: '100%', padding: '12px 14px', borderRadius: 10, border: '1.5px solid #e5e4e0',
-  fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', color: '#1a1a2e', background: 'white',
+  fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', color: '#0e0020', background: 'white',
 }
 const label: React.CSSProperties = { display: 'block', fontSize: '0.88rem', fontWeight: 600, color: '#334155', marginBottom: 8 }
 const btn: React.CSSProperties = {
-  width: '100%', padding: '14px', borderRadius: 10, border: 'none', background: '#1a1a2e',
+  width: '100%', padding: '14px', borderRadius: 10, border: 'none', background: '#0e0020',
   color: '#ffe500', fontSize: '1rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
 }
 
@@ -52,7 +52,7 @@ export default function StepBusiness({ data, onNext, saving }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-      <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#1a1a2e', margin: 0 }}>Your Business</h2>
+      <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#0e0020', margin: 0 }}>Your Business</h2>
 
       {/* Business name */}
       <div>
@@ -69,8 +69,8 @@ export default function StepBusiness({ data, onNext, saving }: Props) {
             <button key={t} type="button" onClick={() => u({ trade: t, tradeOther: t === 'Other' ? form.tradeOther : null })}
               style={{
                 padding: '11px 8px', borderRadius: 8, fontSize: '0.84rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
-                border: form.trade === t ? '2px solid #1a1a2e' : errors.trade ? '1.5px solid #fca5a5' : '1.5px solid #e5e4e0',
-                background: form.trade === t ? '#1a1a2e' : 'white',
+                border: form.trade === t ? '2px solid #0e0020' : errors.trade ? '1.5px solid #fca5a5' : '1.5px solid #e5e4e0',
+                background: form.trade === t ? '#0e0020' : 'white',
                 color: form.trade === t ? '#ffe500' : '#334155',
               }}>
               {t}
@@ -92,7 +92,7 @@ export default function StepBusiness({ data, onNext, saving }: Props) {
               style={{
                 flex: 1, padding: '10px', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
                 fontSize: '0.82rem', fontWeight: 600,
-                background: form.serviceArea.type === t ? '#1a1a2e' : 'white',
+                background: form.serviceArea.type === t ? '#0e0020' : 'white',
                 color: form.serviceArea.type === t ? '#ffe500' : '#64748b',
               }}>
               {t === 'radius' ? 'Radius from address' : 'Specific zip codes'}

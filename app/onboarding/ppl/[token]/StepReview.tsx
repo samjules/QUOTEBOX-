@@ -5,7 +5,7 @@ import type { PPLBusiness, PPLService, PPLTravel, PPLAvailability } from '@/lib/
 const DAYS: Array<[string, string]> = [['mon', 'Monday'], ['tue', 'Tuesday'], ['wed', 'Wednesday'], ['thu', 'Thursday'], ['fri', 'Friday'], ['sat', 'Saturday'], ['sun', 'Sunday']]
 
 const btn: React.CSSProperties = {
-  width: '100%', padding: '14px', borderRadius: 10, border: 'none', background: '#1a1a2e',
+  width: '100%', padding: '14px', borderRadius: 10, border: 'none', background: '#0e0020',
   color: '#ffe500', fontSize: '1rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
 }
 const card: React.CSSProperties = { border: '1.5px solid #e5e4e0', borderRadius: 14, overflow: 'hidden', marginBottom: 12 }
@@ -71,7 +71,7 @@ export default function StepReview({ form, onSubmit, onEdit, saving }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#1a1a2e', margin: '0 0 4px' }}>Here&apos;s what we&apos;ll build</h2>
+      <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#0e0020', margin: '0 0 4px' }}>Here&apos;s what we&apos;ll build</h2>
       <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '0 0 16px', lineHeight: 1.55 }}>
         Check everything looks right. Tap Edit on any section to make changes.
       </p>

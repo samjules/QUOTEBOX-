@@ -55,7 +55,7 @@ function SignupForm() {
   if (hype) {
     return (
       <div style={{
-        minHeight: '100vh', background: '#1a1a2e',
+        minHeight: '100vh', background: '#0e0020',
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
         padding: '40px 24px', textAlign: 'center',
@@ -130,7 +130,7 @@ function SignupForm() {
   return (
     <div className="min-h-screen flex">
       {/* Left branding panel */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-center px-12 py-16" style={{ background: '#1a1a2e' }}>
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-center px-12 py-16" style={{ background: '#0e0020' }}>
         <div className="max-w-sm">
           <div style={{ width: 44, height: 44, background: '#ffe500', borderRadius: 10, marginBottom: 28 }} />
           <h1 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', marginBottom: 10, lineHeight: 1.1 }}>
@@ -164,7 +164,7 @@ function SignupForm() {
       {/* Right form panel */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '48px 24px', background: '#fff' }}>
         <div style={{ width: '100%', maxWidth: 420 }}>
-          <h2 style={{ fontSize: '1.7rem', fontWeight: 800, color: '#1a1a2e', marginBottom: 6 }}>
+          <h2 style={{ fontSize: '1.7rem', fontWeight: 800, color: '#0e0020', marginBottom: 6 }}>
             Create your account
           </h2>
           <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: 32 }}>
@@ -186,7 +186,7 @@ function SignupForm() {
                 style={{
                   width: '100%', padding: '11px 14px', borderRadius: 9,
                   border: '1.5px solid #e2e8f0', fontSize: '0.95rem', outline: 'none',
-                  boxSizing: 'border-box' as const, color: '#1a1a2e', fontFamily: 'inherit',
+                  boxSizing: 'border-box' as const, color: '#0e0020', fontFamily: 'inherit',
                 }}
               />
             </div>
@@ -205,7 +205,7 @@ function SignupForm() {
                 style={{
                   width: '100%', padding: '11px 14px', borderRadius: 9,
                   border: '1.5px solid #e2e8f0', fontSize: '0.95rem', outline: 'none',
-                  boxSizing: 'border-box' as const, color: '#1a1a2e', fontFamily: 'inherit',
+                  boxSizing: 'border-box' as const, color: '#0e0020', fontFamily: 'inherit',
                 }}
               />
             </div>
@@ -224,7 +224,7 @@ function SignupForm() {
                 style={{
                   width: '100%', padding: '11px 14px', borderRadius: 9,
                   border: '1.5px solid #e2e8f0', fontSize: '0.95rem', outline: 'none',
-                  boxSizing: 'border-box' as const, color: '#1a1a2e', fontFamily: 'inherit',
+                  boxSizing: 'border-box' as const, color: '#0e0020', fontFamily: 'inherit',
                 }}
               />
             </div>
@@ -240,7 +240,7 @@ function SignupForm() {
               disabled={loading}
               style={{
                 width: '100%', padding: '13px', borderRadius: 9, border: 'none',
-                background: '#1a1a2e', color: '#ffe500', fontSize: '0.95rem', fontWeight: 700,
+                background: '#0e0020', color: '#ffe500', fontSize: '0.95rem', fontWeight: 700,
                 cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
                 opacity: loading ? 0.6 : 1, letterSpacing: '0.01em', marginTop: 4,
               }}
@@ -250,7 +250,7 @@ function SignupForm() {
 
             <p style={{ textAlign: 'center', fontSize: '0.84rem', color: '#94a3b8', margin: 0 }}>
               Already have an account?{' '}
-              <Link href="/login" style={{ color: '#1a1a2e', fontWeight: 600, textDecoration: 'underline' }}>
+              <Link href="/login" style={{ color: '#0e0020', fontWeight: 600, textDecoration: 'underline' }}>
                 Sign in
               </Link>
             </p>

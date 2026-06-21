@@ -206,7 +206,7 @@ export default function PPLWizard({ token, initialStep, initialData, businessNam
     return (
       <Shell hideProgress>
         <div style={{ padding: '32px' }}>
-          <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1a1a2e', lineHeight: 1.25, marginBottom: 8 }}>
+          <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0e0020', lineHeight: 1.25, marginBottom: 8 }}>
             Let&apos;s build your quote form.
           </h1>
           <p style={{ color: '#64748b', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: 24 }}>
@@ -237,7 +237,7 @@ export default function PPLWizard({ token, initialStep, initialData, businessNam
             </div>
           </div>
 
-          <button onClick={handleStart} style={{ width: '100%', padding: '16px', borderRadius: 10, border: 'none', background: '#1a1a2e', color: '#ffe500', fontSize: '1rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 10 }}>
+          <button onClick={handleStart} style={{ width: '100%', padding: '16px', borderRadius: 10, border: 'none', background: '#0e0020', color: '#ffe500', fontSize: '1rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 10 }}>
             Let&apos;s get started →
           </button>
           <div style={{ textAlign: 'center', fontSize: '0.78rem', color: '#94a3b8' }}>
@@ -267,7 +267,7 @@ export default function PPLWizard({ token, initialStep, initialData, businessNam
                   flex: 1, padding: '8px 2px', borderRadius: 8, border: 'none',
                   cursor: clickable ? 'pointer' : 'default',
                   fontSize: '0.72rem', fontWeight: 700, fontFamily: 'inherit', letterSpacing: '0.02em',
-                  background: active ? '#1a1a2e' : completed ? 'rgba(26,26,46,0.15)' : 'rgba(26,26,46,0.06)',
+                  background: active ? '#0e0020' : completed ? 'rgba(26,26,46,0.15)' : 'rgba(26,26,46,0.06)',
                   color: active ? '#ffe500' : completed ? 'rgba(26,26,46,0.7)' : 'rgba(26,26,46,0.3)',
                   transition: 'all 0.2s',
                 }}
@@ -279,7 +279,7 @@ export default function PPLWizard({ token, initialStep, initialData, businessNam
         </div>
         {/* Progress bar */}
         <div style={{ height: 3, background: 'rgba(26,26,46,0.12)', borderRadius: 2, marginTop: 12, overflow: 'hidden' }}>
-          <div style={{ height: '100%', background: '#1a1a2e', borderRadius: 2, width: `${(step / 6) * 100}%`, transition: 'width 0.35s ease' }} />
+          <div style={{ height: '100%', background: '#0e0020', borderRadius: 2, width: `${(step / 6) * 100}%`, transition: 'width 0.35s ease' }} />
         </div>
       </div>
 

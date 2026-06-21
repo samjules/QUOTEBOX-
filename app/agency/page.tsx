@@ -38,11 +38,11 @@ const faqs = [
 
 export default function AgencyPage() {
   return (
-    <div style={{ fontFamily: "'Brraelyn', sans-serif", color: '#1a1a2e', background: '#fff' }}>
+    <div style={{ fontFamily: "'Brraelyn', sans-serif", color: '#0e0020', background: '#fff' }}>
 
       {/* ── Arctic Reach banner ── */}
       <div style={{
-        background: '#1a1a2e', color: 'rgba(255,255,255,0.55)',
+        background: '#0e0020', color: 'rgba(255,255,255,0.55)',
         textAlign: 'center', fontSize: '0.72rem', padding: '6px 16px',
         letterSpacing: '0.03em',
       }}>
@@ -60,8 +60,8 @@ export default function AgencyPage() {
         padding: '0 32px', height: 60, borderBottom: '1px solid #f0f0f0',
         position: 'sticky', top: 0, background: 'white', zIndex: 50,
       }}>
-        <Link href="/" style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.35rem', fontWeight: 700, letterSpacing: '0.01em', textDecoration: 'none', color: '#1a1a2e' }}>
-          Quote<span style={{ color: '#FFE500', WebkitTextStroke: '1px #1a1a2e' }}>.</span>Box
+        <Link href="/" style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.35rem', fontWeight: 700, letterSpacing: '0.01em', textDecoration: 'none', color: '#0e0020' }}>
+          Quote<span style={{ color: '#FFE500', WebkitTextStroke: '1px #0e0020' }}>.</span>Box
         </Link>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <Link href="/" style={{ fontSize: '0.88rem', fontWeight: 500, color: '#555', textDecoration: 'none' }}>
@@ -72,7 +72,7 @@ export default function AgencyPage() {
           </Link>
           <a href="mailto:sales@quote-box.com?subject=Fully%20Managed%20Inquiry" style={{
             fontSize: '0.88rem', fontWeight: 600, padding: '8px 18px',
-            background: '#1a1a2e', color: '#FFE500', borderRadius: 8, textDecoration: 'none',
+            background: '#0e0020', color: '#FFE500', borderRadius: 8, textDecoration: 'none',
           }}>
             Get started
           </a>
@@ -81,12 +81,12 @@ export default function AgencyPage() {
 
       {/* ── Hero ── */}
       <section style={{
-        background: '#1a1a2e', color: 'white',
+        background: '#0e0020', color: 'white',
         padding: '90px 24px 80px', textAlign: 'center',
       }}>
         <div style={{ maxWidth: 760, margin: '0 auto' }}>
           <div style={{
-            display: 'inline-block', background: '#FFE500', color: '#1a1a2e',
+            display: 'inline-block', background: '#FFE500', color: '#0e0020',
             fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em',
             textTransform: 'uppercase', padding: '5px 14px', borderRadius: 99, marginBottom: 28,
           }}>
@@ -103,7 +103,7 @@ export default function AgencyPage() {
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <a href="mailto:sales@quote-box.com?subject=Fully%20Managed%20Inquiry" style={{
-              padding: '15px 32px', background: '#FFE500', color: '#1a1a2e',
+              padding: '15px 32px', background: '#FFE500', color: '#0e0020',
               fontWeight: 700, fontSize: '1rem', borderRadius: 10, textDecoration: 'none',
               fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
             }}>
@@ -126,7 +126,7 @@ export default function AgencyPage() {
       {/* ── Social proof strip ── */}
       <div style={{
         background: '#FFE500', padding: '14px 24px', textAlign: 'center',
-        fontSize: '0.88rem', fontWeight: 600, color: '#1a1a2e', letterSpacing: '0.01em',
+        fontSize: '0.88rem', fontWeight: 600, color: '#0e0020', letterSpacing: '0.01em',
       }}>
         Running done-for-you campaigns for cleaners, movers, landscapers, painters, photographers &amp; more
       </div>
@@ -151,7 +151,7 @@ export default function AgencyPage() {
             ].map(({ n, title, body }) => (
               <div key={n} style={{ background: 'white', borderRadius: 14, padding: '32px 28px', boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
                 <div style={{
-                  width: 40, height: 40, borderRadius: '50%', background: '#1a1a2e',
+                  width: 40, height: 40, borderRadius: '50%', background: '#0e0020',
                   color: '#FFE500', fontFamily: "'Oswald', sans-serif", fontSize: '1.1rem',
                   fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18,
                 }}>
@@ -166,7 +166,7 @@ export default function AgencyPage() {
       </section>
 
       {/* ── We handle the hard part ── */}
-      <section style={{ padding: '72px 24px', background: '#1a1a2e' }}>
+      <section style={{ padding: '72px 24px', background: '#0e0020' }}>
         <div style={{ maxWidth: 860, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 48, alignItems: 'center' }}>
           <div>
             <div style={{
@@ -246,13 +246,13 @@ export default function AgencyPage() {
       {/* ── Pricing callout ── */}
       <section style={{ padding: '72px 24px', background: '#f9fafb', textAlign: 'center' }}>
         <div style={{ maxWidth: 520, margin: '0 auto' }}>
-          <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '2rem', fontWeight: 700, color: '#1a1a2e', marginBottom: 14 }}>
+          <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '2rem', fontWeight: 700, color: '#0e0020', marginBottom: 14 }}>
             Simple, performance-based pricing
           </h2>
           <p style={{ color: '#6b7280', fontSize: '1rem', lineHeight: 1.7, marginBottom: 36 }}>
             No retainer. No ad spend. No surprises. Just $15 per lead — only when a real customer submits your form.
           </p>
-          <div style={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '36px 32px', marginBottom: 32 }}>
+          <div style={{ background: '#0e0020', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '36px 32px', marginBottom: 32 }}>
             <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: '3.5rem', fontWeight: 800, color: '#FFE500', lineHeight: 1 }}>$15</div>
             <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.88rem', marginTop: 6, marginBottom: 24 }}>per lead received</div>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10, textAlign: 'left' }}>
@@ -272,7 +272,7 @@ export default function AgencyPage() {
             </ul>
           </div>
           <a href="mailto:sales@quote-box.com?subject=Fully%20Managed%20Inquiry" style={{
-            display: 'inline-block', padding: '15px 36px', background: '#1a1a2e',
+            display: 'inline-block', padding: '15px 36px', background: '#0e0020',
             color: '#FFE500', fontWeight: 700, fontSize: '1rem', borderRadius: 10,
             textDecoration: 'none', fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
           }}>
@@ -318,14 +318,14 @@ export default function AgencyPage() {
       {/* ── Final CTA ── */}
       <section style={{ padding: '80px 24px', background: '#FFE500', textAlign: 'center' }}>
         <div style={{ maxWidth: 600, margin: '0 auto' }}>
-          <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '2.2rem', fontWeight: 800, color: '#1a1a2e', marginBottom: 14 }}>
+          <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '2.2rem', fontWeight: 800, color: '#0e0020', marginBottom: 14 }}>
             Ready for your first lead?
           </h2>
           <p style={{ fontSize: '1rem', color: 'rgba(26,26,46,0.7)', lineHeight: 1.7, marginBottom: 36 }}>
             Get in touch today. We&apos;ll be live within 48 hours — no website, no ad account, no setup fee required.
           </p>
           <a href="mailto:sales@quote-box.com?subject=Fully%20Managed%20Inquiry" style={{
-            display: 'inline-block', padding: '16px 40px', background: '#1a1a2e',
+            display: 'inline-block', padding: '16px 40px', background: '#0e0020',
             color: '#FFE500', fontWeight: 700, fontSize: '1.05rem', borderRadius: 10,
             textDecoration: 'none', fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
           }}>
@@ -333,7 +333,7 @@ export default function AgencyPage() {
           </a>
           <p style={{ marginTop: 16, fontSize: '0.82rem', color: 'rgba(26,26,46,0.5)' }}>
             Or email us at{' '}
-            <a href="mailto:sales@quote-box.com" style={{ color: '#1a1a2e', fontWeight: 600 }}>
+            <a href="mailto:sales@quote-box.com" style={{ color: '#0e0020', fontWeight: 600 }}>
               sales@quote-box.com
             </a>
           </p>
@@ -344,7 +344,7 @@ export default function AgencyPage() {
       <DealNotificationBanner />
 
       {/* ── Footer ── */}
-      <footer style={{ background: '#1a1a2e', padding: '28px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+      <footer style={{ background: '#0e0020', padding: '28px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <Link href="/" style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1rem', fontWeight: 700, color: 'white', textDecoration: 'none' }}>
           Quote<span style={{ color: '#FFE500' }}>.</span>Box
         </Link>

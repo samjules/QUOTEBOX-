@@ -139,7 +139,7 @@ export default function CrmDashboard({ leads: initialLeads }: { leads: SalesLead
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0d0d1a', fontFamily: "'Brraelyn', sans-serif", color: 'white' }}>
 
       {/* Top bar */}
-      <div style={{ height: 56, background: '#1a1a2e', display: 'flex', alignItems: 'center', padding: '0 24px', gap: 16, flexShrink: 0 }}>
+      <div style={{ height: 56, background: '#0e0020', display: 'flex', alignItems: 'center', padding: '0 24px', gap: 16, flexShrink: 0 }}>
         <span style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: '1.1rem', color: 'white', letterSpacing: '0.02em' }}>
           Quote<span style={{ color: '#FFE500' }}>.</span>Box
         </span>
@@ -167,7 +167,7 @@ export default function CrmDashboard({ leads: initialLeads }: { leads: SalesLead
               { label: "This Week's Calls", value: stats.thisWeekCalls },
               { label: 'Pipeline Value', value: `$${stats.pipelineValue.toLocaleString()}/mo` },
             ].map(({ label, value }) => (
-              <div key={label} style={{ background: '#1a1a2e', borderRadius: 10, padding: '18px 20px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div key={label} style={{ background: '#0e0020', borderRadius: 10, padding: '18px 20px', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{label}</div>
                 <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#FFE500', lineHeight: 1 }}>{value}</div>
               </div>
@@ -183,7 +183,7 @@ export default function CrmDashboard({ leads: initialLeads }: { leads: SalesLead
               onChange={(e) => setSearch(e.target.value)}
               style={{
                 padding: '10px 16px', fontSize: '0.85rem', borderRadius: 8,
-                border: '1px solid rgba(255,255,255,0.1)', background: '#1a1a2e', color: 'white',
+                border: '1px solid rgba(255,255,255,0.1)', background: '#0e0020', color: 'white',
                 outline: 'none', width: 260, fontFamily: "'Brraelyn', sans-serif",
               }}
             />
@@ -208,7 +208,7 @@ export default function CrmDashboard({ leads: initialLeads }: { leads: SalesLead
           </div>
 
           {/* Table */}
-          <div style={{ background: '#1a1a2e', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ background: '#0e0020', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)' }}>
             {filtered.length === 0 ? (
               <div style={{ padding: 40, textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: '0.9rem' }}>
                 No leads found

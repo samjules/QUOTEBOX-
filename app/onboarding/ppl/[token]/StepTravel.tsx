@@ -5,11 +5,11 @@ import type { PPLTravel } from '@/lib/types'
 
 const input: React.CSSProperties = {
   width: '100%', padding: '12px 14px', borderRadius: 10, border: '1.5px solid #e5e4e0',
-  fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', color: '#1a1a2e', background: 'white',
+  fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', color: '#0e0020', background: 'white',
 }
 const label: React.CSSProperties = { display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: 6 }
 const btn: React.CSSProperties = {
-  width: '100%', padding: '14px', borderRadius: 10, border: 'none', background: '#1a1a2e',
+  width: '100%', padding: '14px', borderRadius: 10, border: 'none', background: '#0e0020',
   color: '#ffe500', fontSize: '1rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
 }
 
@@ -43,7 +43,7 @@ export default function StepTravel({ travel: initTravel, minimumJobPrice: initMi
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#1a1a2e', margin: 0 }}>Travel & Minimums</h2>
+      <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#0e0020', margin: 0 }}>Travel & Minimums</h2>
 
       {/* Travel */}
       <div>
@@ -53,10 +53,10 @@ export default function StepTravel({ travel: initTravel, minimumJobPrice: initMi
             <button key={String(val)} type="button" onClick={() => uTravel({ chargesForTravel: val, travelMethod: val ? travel.travelMethod : null, travelRate: val ? travel.travelRate : null })}
               style={{
                 padding: '14px 12px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
-                border: travel.chargesForTravel === val ? '2px solid #1a1a2e' : '1.5px solid #e5e4e0',
+                border: travel.chargesForTravel === val ? '2px solid #0e0020' : '1.5px solid #e5e4e0',
                 background: travel.chargesForTravel === val ? '#fafaf8' : 'white',
               }}>
-              <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#1a1a2e', marginBottom: 2 }}>{val ? 'Yes' : 'No'}</div>
+              <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0e0020', marginBottom: 2 }}>{val ? 'Yes' : 'No'}</div>
               <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{val ? 'I charge for travel' : 'Travel is included'}</div>
             </button>
           ))}
@@ -83,7 +83,7 @@ export default function StepTravel({ travel: initTravel, minimumJobPrice: initMi
                 <button key={id} type="button" onClick={() => uTravel({ travelMethod: id as PPLTravel['travelMethod'], travelRate: null })}
                   style={{
                     padding: '14px 12px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
-                    border: travel.travelMethod === id ? '2px solid #1a1a2e' : '1.5px solid #e5e4e0',
+                    border: travel.travelMethod === id ? '2px solid #0e0020' : '1.5px solid #e5e4e0',
                     background: travel.travelMethod === id ? '#fafaf8' : 'white',
                   }}>
                   <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: 2 }}>{lbl}</div>
@@ -123,7 +123,7 @@ export default function StepTravel({ travel: initTravel, minimumJobPrice: initMi
             <button key={String(val)} type="button" onClick={() => { setHasMin(val); if (!val) setMinPrice(null) }}
               style={{
                 padding: '12px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit',
-                border: hasMin === val ? '2px solid #1a1a2e' : '1.5px solid #e5e4e0',
+                border: hasMin === val ? '2px solid #0e0020' : '1.5px solid #e5e4e0',
                 background: hasMin === val ? '#fafaf8' : 'white',
                 fontSize: '0.85rem', fontWeight: 600, color: '#334155',
               }}>

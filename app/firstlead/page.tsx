@@ -48,7 +48,7 @@ export default function FirstLeadPage() {
   }
 
   return (
-    <div style={{ fontFamily: "'Brraelyn', sans-serif", color: '#1a1a2e', background: '#fff', minHeight: '100vh' }}>
+    <div style={{ fontFamily: "'Brraelyn', sans-serif", color: '#0e0020', background: '#fff', minHeight: '100vh' }}>
 
       {/* Nav */}
       <nav style={{
@@ -57,8 +57,8 @@ export default function FirstLeadPage() {
         position: 'sticky', top: 0, background: 'white', zIndex: 50,
       }}>
         <Link href="/" style={{ textDecoration: 'none' }}>
-          <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.35rem', fontWeight: 700, letterSpacing: '0.01em', color: '#1a1a2e' }}>
-            Quote<span style={{ color: '#FFE500', WebkitTextStroke: '1px #1a1a2e' }}>.</span>Box
+          <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.35rem', fontWeight: 700, letterSpacing: '0.01em', color: '#0e0020' }}>
+            Quote<span style={{ color: '#FFE500', WebkitTextStroke: '1px #0e0020' }}>.</span>Box
           </span>
         </Link>
         <Link href="/login" style={{ fontSize: '0.88rem', fontWeight: 500, color: '#555', textDecoration: 'none' }}>
@@ -67,10 +67,10 @@ export default function FirstLeadPage() {
       </nav>
 
       {/* Hero */}
-      <section style={{ background: '#1a1a2e', color: '#fff', padding: '72px 24px 80px' }}>
+      <section style={{ background: '#0e0020', color: '#fff', padding: '72px 24px 80px' }}>
         <div style={{ maxWidth: 760, margin: '0 auto', textAlign: 'center' }}>
           <div style={{
-            display: 'inline-block', background: '#FFE500', color: '#1a1a2e',
+            display: 'inline-block', background: '#FFE500', color: '#0e0020',
             fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em',
             textTransform: 'uppercase', padding: '6px 16px', borderRadius: 100, marginBottom: 24,
           }}>
@@ -93,7 +93,7 @@ export default function FirstLeadPage() {
             background: '#fff', borderRadius: 16, padding: '36px 32px',
             maxWidth: 440, margin: '0 auto', boxShadow: '0 24px 60px rgba(0,0,0,0.25)',
           }}>
-            <p style={{ fontSize: '1rem', fontWeight: 700, color: '#1a1a2e', margin: '0 0 6px' }}>
+            <p style={{ fontSize: '1rem', fontWeight: 700, color: '#0e0020', margin: '0 0 6px' }}>
               Get the course + software free
             </p>
             <p style={{ fontSize: '0.84rem', color: '#777', margin: '0 0 24px' }}>
@@ -108,10 +108,10 @@ export default function FirstLeadPage() {
                 required
                 style={{
                   padding: '12px 16px', borderRadius: 8, border: '1.5px solid #e5e7eb',
-                  fontSize: '0.95rem', color: '#1a1a2e', outline: 'none',
+                  fontSize: '0.95rem', color: '#0e0020', outline: 'none',
                   transition: 'border-color 0.15s',
                 }}
-                onFocus={(e) => (e.target.style.borderColor = '#1a1a2e')}
+                onFocus={(e) => (e.target.style.borderColor = '#0e0020')}
                 onBlur={(e) => (e.target.style.borderColor = '#e5e7eb')}
               />
               <input
@@ -122,10 +122,10 @@ export default function FirstLeadPage() {
                 required
                 style={{
                   padding: '12px 16px', borderRadius: 8, border: '1.5px solid #e5e7eb',
-                  fontSize: '0.95rem', color: '#1a1a2e', outline: 'none',
+                  fontSize: '0.95rem', color: '#0e0020', outline: 'none',
                   transition: 'border-color 0.15s',
                 }}
-                onFocus={(e) => (e.target.style.borderColor = '#1a1a2e')}
+                onFocus={(e) => (e.target.style.borderColor = '#0e0020')}
                 onBlur={(e) => (e.target.style.borderColor = '#e5e7eb')}
               />
               <input
@@ -135,10 +135,10 @@ export default function FirstLeadPage() {
                 onChange={(e) => setPhone(e.target.value)}
                 style={{
                   padding: '12px 16px', borderRadius: 8, border: '1.5px solid #e5e7eb',
-                  fontSize: '0.95rem', color: '#1a1a2e', outline: 'none',
+                  fontSize: '0.95rem', color: '#0e0020', outline: 'none',
                   transition: 'border-color 0.15s',
                 }}
-                onFocus={(e) => (e.target.style.borderColor = '#1a1a2e')}
+                onFocus={(e) => (e.target.style.borderColor = '#0e0020')}
                 onBlur={(e) => (e.target.style.borderColor = '#e5e7eb')}
               />
               {error && (
@@ -149,7 +149,7 @@ export default function FirstLeadPage() {
                 disabled={loading}
                 style={{
                   marginTop: 4, padding: '14px 24px', borderRadius: 8, border: 'none',
-                  background: loading ? '#ccc' : '#FFE500', color: '#1a1a2e',
+                  background: loading ? '#ccc' : '#FFE500', color: '#0e0020',
                   fontSize: '0.95rem', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
                   transition: 'opacity 0.15s',
                 }}
@@ -210,7 +210,7 @@ export default function FirstLeadPage() {
               }}>
                 <span style={{
                   flexShrink: 0, fontFamily: "'Oswald', sans-serif", fontSize: '1.4rem',
-                  fontWeight: 700, color: '#FFE500', WebkitTextStroke: '1.5px #1a1a2e',
+                  fontWeight: 700, color: '#FFE500', WebkitTextStroke: '1.5px #0e0020',
                   lineHeight: 1,
                 }}>
                   {l.num}
@@ -239,7 +239,7 @@ export default function FirstLeadPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
             {['Contractors', 'Roofers', 'Plumbers', 'HVAC', 'Movers', 'Landscapers'].map((t) => (
               <div key={t} style={{
-                background: '#1a1a2e', color: '#fff', borderRadius: 10,
+                background: '#0e0020', color: '#fff', borderRadius: 10,
                 padding: '14px 20px', fontWeight: 600, fontSize: '0.9rem',
               }}>
                 {t}
@@ -250,7 +250,7 @@ export default function FirstLeadPage() {
       </section>
 
       {/* Bottom CTA */}
-      <section style={{ background: '#1a1a2e', color: '#fff', padding: '72px 24px', textAlign: 'center' }}>
+      <section style={{ background: '#0e0020', color: '#fff', padding: '72px 24px', textAlign: 'center' }}>
         <div style={{ maxWidth: 560, margin: '0 auto' }}>
           <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: 800, margin: '0 0 16px' }}>
             The course and the software. Both free.
@@ -259,7 +259,7 @@ export default function FirstLeadPage() {
             No credit card. No marketing experience. No catch. Sign up in 30 seconds and start getting leads today.
           </p>
           <a href="#top" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }} style={{
-            display: 'inline-block', background: '#FFE500', color: '#1a1a2e',
+            display: 'inline-block', background: '#FFE500', color: '#0e0020',
             fontWeight: 700, fontSize: '0.95rem', padding: '14px 32px', borderRadius: 8,
             textDecoration: 'none',
           }}>

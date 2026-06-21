@@ -14,7 +14,7 @@ const PLAN_LABELS: Record<string, string> = {
 const PLAN_COLORS: Record<string, { bg: string; text: string }> = {
   starter: { bg: '#f3f4f6', text: '#374151' },
   growth: { bg: '#ede9fe', text: '#6d28d9' },
-  fully_managed: { bg: '#1a1a2e', text: '#FFE500' },
+  fully_managed: { bg: '#0e0020', text: '#FFE500' },
   pay_per_lead: { bg: '#dcfce7', text: '#15803d' },
   none: { bg: '#fef9c3', text: '#92400e' },
 }
@@ -272,7 +272,7 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#f1f5f9', fontFamily: "'Brraelyn', sans-serif" }}>
 
       {/* ── Top bar ── */}
-      <div style={{ height: 56, background: '#1a1a2e', display: 'flex', alignItems: 'center', padding: '0 24px', gap: 16, flexShrink: 0 }}>
+      <div style={{ height: 56, background: '#0e0020', display: 'flex', alignItems: 'center', padding: '0 24px', gap: 16, flexShrink: 0 }}>
         <span style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: '1.1rem', color: 'white', letterSpacing: '0.02em' }}>
           Quote<span style={{ color: '#FFE500' }}>.</span>Box
         </span>
@@ -317,7 +317,7 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
                 onClick={() => setPlanFilter(val)}
                 style={{
                   padding: '3px 10px', fontSize: '0.72rem', fontWeight: 600, borderRadius: 99, border: 'none', cursor: 'pointer',
-                  background: planFilter === val ? '#1a1a2e' : '#f1f5f9',
+                  background: planFilter === val ? '#0e0020' : '#f1f5f9',
                   color: planFilter === val ? '#FFE500' : '#64748b',
                 }}
               >
@@ -466,7 +466,7 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
               {/* PPL Tool Tabs */}
               {selected.plan === 'pay_per_lead' && (
                 <div style={{
-                  background: '#1a1a2e', borderRadius: 10, display: 'flex', gap: 0, overflow: 'hidden',
+                  background: '#0e0020', borderRadius: 10, display: 'flex', gap: 0, overflow: 'hidden',
                 }}>
                   {([
                     { label: 'Form Builder', path: '/form-builder' },
@@ -542,7 +542,7 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
                         disabled={planSaving || planEdit === (selected.plan ?? '')}
                         style={{
                           padding: '8px 16px', fontSize: '0.82rem', fontWeight: 600, borderRadius: 8, border: 'none', cursor: 'pointer',
-                          background: '#1a1a2e', color: '#FFE500', opacity: planSaving || planEdit === (selected.plan ?? '') ? 0.5 : 1,
+                          background: '#0e0020', color: '#FFE500', opacity: planSaving || planEdit === (selected.plan ?? '') ? 0.5 : 1,
                         }}
                       >
                         {planSaving ? '…' : 'Save'}
@@ -785,7 +785,7 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
                               <button
                                 onClick={handleMarkFormBuilt}
                                 disabled={markingBuilt}
-                                style={{ padding: '7px 16px', fontSize: '0.82rem', fontWeight: 600, borderRadius: 8, border: 'none', background: '#1a1a2e', color: '#ffe500', cursor: 'pointer', opacity: markingBuilt ? 0.6 : 1 }}
+                                style={{ padding: '7px 16px', fontSize: '0.82rem', fontWeight: 600, borderRadius: 8, border: 'none', background: '#0e0020', color: '#ffe500', cursor: 'pointer', opacity: markingBuilt ? 0.6 : 1 }}
                               >
                                 {markingBuilt ? 'Marking…' : 'Mark Form Built'}
                               </button>

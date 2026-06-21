@@ -51,7 +51,7 @@ export default function StepMeta({ token, metaConnected, onNext, onSkip, onBack,
             type="button"
             onClick={onNext}
             disabled={saving}
-            style={{ flex: 1, padding: '14px', borderRadius: 10, border: 'none', background: '#1a1a2e', color: '#ffe500', fontSize: '0.95rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: saving ? 0.6 : 1 }}
+            style={{ flex: 1, padding: '14px', borderRadius: 10, border: 'none', background: '#0e0020', color: '#ffe500', fontSize: '0.95rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: saving ? 0.6 : 1 }}
           >
             {saving ? 'Saving…' : 'Continue →'}
           </button>

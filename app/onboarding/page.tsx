@@ -39,7 +39,7 @@ function StepDots({ current }: { current: Step }) {
               <div style={{
                 width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '0.72rem', fontWeight: 700,
-                background: done ? '#1a1a2e' : active ? '#1a1a2e' : 'rgba(26,26,46,0.1)',
+                background: done ? '#0e0020' : active ? '#0e0020' : 'rgba(26,26,46,0.1)',
                 color: done ? '#ffe500' : active ? '#ffe500' : 'rgba(26,26,46,0.4)',
                 boxShadow: active ? '0 0 0 4px rgba(26,26,46,0.12)' : 'none',
                 transition: 'all 0.25s',
@@ -61,7 +61,7 @@ function StepDots({ current }: { current: Step }) {
             {i < steps.length - 1 && (
               <div style={{
                 flex: 1, height: 2, margin: '0 6px', marginBottom: 18,
-                background: done ? '#1a1a2e' : 'rgba(26,26,46,0.1)',
+                background: done ? '#0e0020' : 'rgba(26,26,46,0.1)',
                 transition: 'background 0.25s',
               }} />
             )}
@@ -235,7 +235,7 @@ function OnboardingWizard() {
         {/* Thin onboarding context bar */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '10px 24px', background: '#1a1a2e', flexShrink: 0,
+          padding: '10px 24px', background: '#0e0020', flexShrink: 0,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ffe500' }} />
@@ -297,7 +297,7 @@ function OnboardingWizard() {
           {step !== 'done' && (
             <StepDots current={step} />
           )}
-          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1a1a2e', lineHeight: 1.2, marginBottom: 6 }}>
+          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0e0020', lineHeight: 1.2, marginBottom: 6 }}>
             {stepTitles[step]}
           </div>
           <div style={{ fontSize: '0.86rem', color: 'rgba(26,26,46,0.6)', lineHeight: 1.55 }}>
@@ -331,7 +331,7 @@ function OnboardingWizard() {
                 onClick={() => setStep(2)}
                 style={{
                   width: '100%', padding: '13px', borderRadius: 9, border: 'none',
-                  background: '#1a1a2e', color: '#ffe500', fontSize: '0.95rem', fontWeight: 700,
+                  background: '#0e0020', color: '#ffe500', fontSize: '0.95rem', fontWeight: 700,
                   cursor: 'pointer', fontFamily: 'inherit',
                 }}
               >
@@ -363,7 +363,7 @@ function OnboardingWizard() {
                 onClick={() => setStep(3)}
                 style={{
                   width: '100%', padding: '13px', borderRadius: 9, border: 'none',
-                  background: '#1a1a2e', color: '#ffe500', fontSize: '0.95rem', fontWeight: 700,
+                  background: '#0e0020', color: '#ffe500', fontSize: '0.95rem', fontWeight: 700,
                   cursor: 'pointer', fontFamily: 'inherit',
                 }}
               >
@@ -449,7 +449,7 @@ function OnboardingWizard() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1a1a2e', marginBottom: 10 }}>
+              <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0e0020', marginBottom: 10 }}>
                 Dashboard is ready
               </div>
               <div style={{ fontSize: '0.88rem', color: '#64748b', lineHeight: 1.65, marginBottom: 28 }}>
@@ -459,7 +459,7 @@ function OnboardingWizard() {
                 onClick={() => router.push('/dashboard')}
                 style={{
                   width: '100%', padding: '13px', borderRadius: 9, border: 'none',
-                  background: '#1a1a2e', color: '#ffe500', fontSize: '0.95rem', fontWeight: 700,
+                  background: '#0e0020', color: '#ffe500', fontSize: '0.95rem', fontWeight: 700,
                   cursor: 'pointer', fontFamily: 'inherit',
                 }}
               >

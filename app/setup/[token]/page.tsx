@@ -32,7 +32,7 @@ export default async function SetupPage({ params }: { params: Promise<{ token: s
       </div>
 
       <div style={{
-        background: '#1a1a2e',
+        background: '#0e0020',
         borderRadius: 16,
         padding: '40px 36px',
         maxWidth: 440,

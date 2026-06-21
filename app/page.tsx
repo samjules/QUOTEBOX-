@@ -43,11 +43,11 @@ const faqs = [
 
 export default function LandingPage() {
   return (
-    <div style={{ fontFamily: "'Brraelyn', sans-serif", color: '#1a1a2e', background: '#fff' }}>
+    <div style={{ fontFamily: "'Brraelyn', sans-serif", color: '#0e0020', background: '#fff' }}>
 
       {/* ── Arctic Reach banner ── */}
       <div style={{
-        background: '#1a1a2e', color: 'rgba(255,255,255,0.55)',
+        background: '#0e0020', color: 'rgba(255,255,255,0.55)',
         textAlign: 'center', fontSize: '0.72rem', padding: '6px 16px',
         letterSpacing: '0.03em',
       }}>
@@ -66,7 +66,7 @@ export default function LandingPage() {
         position: 'sticky', top: 0, background: 'white', zIndex: 50,
       }}>
         <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.35rem', fontWeight: 700, letterSpacing: '0.01em' }}>
-          Quote<span style={{ color: '#FFE500', WebkitTextStroke: '1px #1a1a2e' }}>.</span>Box
+          Quote<span style={{ color: '#FFE500', WebkitTextStroke: '1px #0e0020' }}>.</span>Box
         </span>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <Link href="/contractor-leads" style={{ fontSize: '0.88rem', fontWeight: 500, color: '#555', textDecoration: 'none' }}>
@@ -80,7 +80,7 @@ export default function LandingPage() {
           </Link>
           <Link href="/build" style={{
             fontSize: '0.88rem', fontWeight: 600, padding: '8px 18px',
-            background: '#1a1a2e', color: '#FFE500', borderRadius: 8, textDecoration: 'none',
+            background: '#0e0020', color: '#FFE500', borderRadius: 8, textDecoration: 'none',
           }}>
             Build your form free
           </Link>
@@ -89,7 +89,7 @@ export default function LandingPage() {
 
       {/* ── Hero ── */}
       <section style={{
-        background: '#1a1a2e', color: 'white',
+        background: '#0e0020', color: 'white',
         padding: '80px 24px 0', overflow: 'hidden',
       }}>
         <div style={{
@@ -103,7 +103,7 @@ export default function LandingPage() {
           {/* Left — copy */}
           <div style={{ paddingBottom: 80 }}>
             <div style={{
-              display: 'inline-block', background: '#FFE500', color: '#1a1a2e',
+              display: 'inline-block', background: '#FFE500', color: '#0e0020',
               fontSize: '0.73rem', fontWeight: 700, letterSpacing: '0.08em',
               textTransform: 'uppercase', padding: '5px 14px', borderRadius: 99, marginBottom: 28,
             }}>
@@ -120,7 +120,7 @@ export default function LandingPage() {
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <Link href="/build" style={{
-                padding: '15px 32px', background: '#FFE500', color: '#1a1a2e',
+                padding: '15px 32px', background: '#FFE500', color: '#0e0020',
                 fontWeight: 700, fontSize: '1rem', borderRadius: 10, textDecoration: 'none',
                 fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
               }}>
@@ -205,7 +205,7 @@ export default function LandingPage() {
                 flexShrink: 0, fontSize: '1rem',
               }}>🔔</div>
               <div>
-                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#1a1a2e', lineHeight: 1.2 }}>New lead received</div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#0e0020', lineHeight: 1.2 }}>New lead received</div>
                 <div style={{ fontSize: '0.65rem', color: '#10b981', fontWeight: 600 }}>Quote: $216.29 · Just now</div>
               </div>
             </div>
@@ -218,7 +218,7 @@ export default function LandingPage() {
       {/* ── Social proof strip ── */}
       <div style={{
         background: '#FFE500', padding: '14px 24px', textAlign: 'center',
-        fontSize: '0.88rem', fontWeight: 600, color: '#1a1a2e', letterSpacing: '0.01em',
+        fontSize: '0.88rem', fontWeight: 600, color: '#0e0020', letterSpacing: '0.01em',
       }}>
         Built for moving companies and junk removal businesses — get exclusive leads from Facebook &amp; Instagram for $350/month
       </div>
@@ -243,7 +243,7 @@ export default function LandingPage() {
             ].map(({ n, title, body }) => (
               <div key={n} style={{ background: 'white', borderRadius: 14, padding: '32px 28px', boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
                 <div style={{
-                  width: 40, height: 40, borderRadius: '50%', background: '#1a1a2e',
+                  width: 40, height: 40, borderRadius: '50%', background: '#0e0020',
                   color: '#FFE500', fontFamily: "'Oswald', sans-serif", fontSize: '1.1rem',
                   fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18,
                 }}>
@@ -296,7 +296,7 @@ export default function LandingPage() {
             {/* Copy */}
             <div>
               <div style={{
-                display: 'inline-block', background: '#FFE500', color: '#1a1a2e',
+                display: 'inline-block', background: '#FFE500', color: '#0e0020',
                 fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.1em',
                 textTransform: 'uppercase', padding: '5px 14px', borderRadius: 99, marginBottom: 22,
               }}>
@@ -304,7 +304,7 @@ export default function LandingPage() {
               </div>
               <h2 style={{
                 fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
-                fontWeight: 800, lineHeight: 1.15, color: '#1a1a2e', marginBottom: 20,
+                fontWeight: 800, lineHeight: 1.15, color: '#0e0020', marginBottom: 20,
               }}>
                 Your quote form is a<br />live landing page.<br />Share it anywhere.
               </h2>
@@ -327,7 +327,7 @@ export default function LandingPage() {
               <div style={{ marginTop: 36 }}>
                 <Link href="/build" style={{
                   display: 'inline-block', padding: '13px 28px',
-                  background: '#1a1a2e', color: '#FFE500',
+                  background: '#0e0020', color: '#FFE500',
                   fontWeight: 700, fontSize: '0.93rem', borderRadius: 10, textDecoration: 'none',
                   fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
                 }}>
@@ -358,7 +358,7 @@ export default function LandingPage() {
               </div>
               <h2 style={{
                 fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
-                fontWeight: 800, lineHeight: 1.15, color: '#1a1a2e', marginBottom: 20,
+                fontWeight: 800, lineHeight: 1.15, color: '#0e0020', marginBottom: 20,
               }}>
                 Run Meta ads with<br />Robert — your built-in<br />AI ad expert.
               </h2>
@@ -442,7 +442,7 @@ export default function LandingPage() {
             {/* Copy */}
             <div>
               <div style={{
-                display: 'inline-block', background: '#1a1a2e', color: '#FFE500',
+                display: 'inline-block', background: '#0e0020', color: '#FFE500',
                 fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.1em',
                 textTransform: 'uppercase', padding: '5px 14px', borderRadius: 99, marginBottom: 22,
               }}>
@@ -450,7 +450,7 @@ export default function LandingPage() {
               </div>
               <h2 style={{
                 fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
-                fontWeight: 800, lineHeight: 1.15, color: '#1a1a2e', marginBottom: 20,
+                fontWeight: 800, lineHeight: 1.15, color: '#0e0020', marginBottom: 20,
               }}>
                 Build your perfect<br />quote form in minutes.<br />No code required.
               </h2>
@@ -473,7 +473,7 @@ export default function LandingPage() {
               <div style={{ marginTop: 36 }}>
                 <Link href="/build" style={{
                   display: 'inline-block', padding: '13px 28px',
-                  background: '#1a1a2e', color: '#FFE500',
+                  background: '#0e0020', color: '#FFE500',
                   fontWeight: 700, fontSize: '0.93rem', borderRadius: 10, textDecoration: 'none',
                   fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
                 }}>
@@ -565,7 +565,7 @@ export default function LandingPage() {
               </div>
               <h2 style={{
                 fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
-                fontWeight: 800, lineHeight: 1.15, color: '#1a1a2e', marginBottom: 20,
+                fontWeight: 800, lineHeight: 1.15, color: '#0e0020', marginBottom: 20,
               }}>
                 Every lead lands<br />in your dashboard<br />with the quote attached.
               </h2>
@@ -602,7 +602,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Meta Ads callout ── */}
-      <section style={{ padding: '72px 24px', background: '#1a1a2e' }}>
+      <section style={{ padding: '72px 24px', background: '#0e0020' }}>
         <div style={{ maxWidth: 860, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 48, alignItems: 'center' }}>
           <div>
             <div style={{
@@ -684,7 +684,7 @@ export default function LandingPage() {
       <section id="pricing" style={{ padding: '72px 24px', background: '#f9fafb' }}>
         <div style={{ maxWidth: 680, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 52 }}>
-            <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '2rem', fontWeight: 700, color: '#1a1a2e', marginBottom: 14 }}>
+            <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '2rem', fontWeight: 700, color: '#0e0020', marginBottom: 14 }}>
               Simple, honest pricing
             </h2>
             <p style={{ color: '#6b7280', fontSize: '1rem', lineHeight: 1.7, maxWidth: 500, margin: '0 auto' }}>
@@ -694,13 +694,13 @@ export default function LandingPage() {
 
           {/* Pro plan — single card */}
           <div style={{
-            background: '#1a1a2e', borderRadius: 20, padding: '40px 40px',
+            background: '#0e0020', borderRadius: 20, padding: '40px 40px',
             border: '2px solid #FFE500', display: 'flex', flexDirection: 'column',
             gap: 0, position: 'relative', maxWidth: 480, margin: '0 auto',
           }}>
             <div style={{
               position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)',
-              background: '#FFE500', color: '#1a1a2e',
+              background: '#FFE500', color: '#0e0020',
               fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.08em',
               textTransform: 'uppercase', padding: '5px 20px', borderRadius: 99, whiteSpace: 'nowrap',
             }}>
@@ -743,7 +743,7 @@ export default function LandingPage() {
             </ul>
             <Link href="/signup" style={{
               display: 'block', textAlign: 'center', padding: '14px 24px',
-              background: '#FFE500', color: '#1a1a2e',
+              background: '#FFE500', color: '#0e0020',
               fontWeight: 700, fontSize: '1rem', borderRadius: 10, textDecoration: 'none',
               fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
             }}>
@@ -793,14 +793,14 @@ export default function LandingPage() {
       {/* ── Final CTA ── */}
       <section style={{ padding: '80px 24px', background: '#FFE500', textAlign: 'center' }}>
         <div style={{ maxWidth: 600, margin: '0 auto' }}>
-          <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '2.2rem', fontWeight: 800, color: '#1a1a2e', marginBottom: 14 }}>
+          <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '2.2rem', fontWeight: 800, color: '#0e0020', marginBottom: 14 }}>
             Ready to fill your moving or junk removal schedule?
           </h2>
           <p style={{ fontSize: '1rem', color: 'rgba(26,26,46,0.7)', lineHeight: 1.7, marginBottom: 36 }}>
             Build your quote form in minutes. We&apos;ll run your Meta ads. Start receiving exclusive customers today — $350/month, 7-day free trial.
           </p>
           <Link href="/signup" style={{
-            display: 'inline-block', padding: '16px 40px', background: '#1a1a2e',
+            display: 'inline-block', padding: '16px 40px', background: '#0e0020',
             color: '#FFE500', fontWeight: 700, fontSize: '1.05rem', borderRadius: 10,
             textDecoration: 'none', fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
           }}>
@@ -817,7 +817,7 @@ export default function LandingPage() {
         <div style={{
           maxWidth: 860,
           margin: '0 auto',
-          background: '#1a1a2e',
+          background: '#0e0020',
           borderRadius: 24,
           padding: '48px 48px',
           display: 'grid',
@@ -901,7 +901,7 @@ export default function LandingPage() {
                 alignItems: 'center',
                 gap: 10,
                 background: 'white',
-                color: '#1a1a2e',
+                color: '#0e0020',
                 borderRadius: 12,
                 padding: '10px 20px',
                 textDecoration: 'none',
@@ -909,7 +909,7 @@ export default function LandingPage() {
                 boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
                 transition: 'opacity 0.15s',
               }}>
-                <svg width="20" height="24" viewBox="0 0 814 1000" fill="#1a1a2e" xmlns="http://www.w3.org/2000/svg">
+                <svg width="20" height="24" viewBox="0 0 814 1000" fill="#0e0020" xmlns="http://www.w3.org/2000/svg">
                   <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-42.3-150.3-110.7c-67.5-98.2-120-252.6-120-398.7 0-138.9 48.4-207.5 96.8-253.5 57.3-54.5 138.4-86.1 213.3-86.1 81.6 0 132.2 39.5 189.5 39.5 55.4 0 115.7-42.3 207.8-42.3zm-156.5-252c32.5-50 56.7-119 56.7-188C688.3 24.6 549.8 0 476.5 0c-2 0-4 0-6.1.1 -2.3 30.5-1.2 96 22.7 158.6 23.2 61.5 56.8 99.2 138.4 130.2z"/>
                 </svg>
                 <div>
@@ -958,17 +958,17 @@ export default function LandingPage() {
               }}>
                 {/* Status bar */}
                 <div style={{ padding: '6px 16px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.55rem', fontWeight: 700, color: '#1a1a2e' }}>9:41</span>
+                  <span style={{ fontSize: '0.55rem', fontWeight: 700, color: '#0e0020' }}>9:41</span>
                   <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                    <div style={{ width: 10, height: 6, border: '1px solid #1a1a2e', borderRadius: 1, position: 'relative' }}>
-                      <div style={{ position: 'absolute', inset: 1, background: '#1a1a2e', borderRadius: 0.5, width: '70%' }} />
+                    <div style={{ width: 10, height: 6, border: '1px solid #0e0020', borderRadius: 1, position: 'relative' }}>
+                      <div style={{ position: 'absolute', inset: 1, background: '#0e0020', borderRadius: 0.5, width: '70%' }} />
                     </div>
                   </div>
                 </div>
 
                 {/* App header */}
                 <div style={{ padding: '12px 14px 8px', borderBottom: '1px solid #e5e7eb' }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1a1a2e' }}>My Business</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0e0020' }}>My Business</div>
                 </div>
 
                 {/* Stats row */}
@@ -1023,7 +1023,7 @@ export default function LandingPage() {
                         {name[0]}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: '0.62rem', fontWeight: 600, color: '#1a1a2e', lineHeight: 1.2 }}>{name}</div>
+                        <div style={{ fontSize: '0.62rem', fontWeight: 600, color: '#0e0020', lineHeight: 1.2 }}>{name}</div>
                         <div style={{ fontSize: '0.52rem', color: '#9ca3af' }}>{type}</div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
@@ -1054,7 +1054,7 @@ export default function LandingPage() {
         <div style={{
           maxWidth: 860,
           margin: '0 auto',
-          background: '#1a1a2e',
+          background: '#0e0020',
           borderRadius: 24,
           padding: '48px 48px',
           display: 'grid',
@@ -1114,9 +1114,9 @@ export default function LandingPage() {
               }}>
                 {/* Status bar */}
                 <div style={{ padding: '6px 16px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.55rem', fontWeight: 700, color: '#1a1a2e' }}>12:30</span>
+                  <span style={{ fontSize: '0.55rem', fontWeight: 700, color: '#0e0020' }}>12:30</span>
                   <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                    <div style={{ width: 10, height: 6, border: '1px solid #1a1a2e', borderRadius: 1, position: 'relative' }}>
+                    <div style={{ width: 10, height: 6, border: '1px solid #0e0020', borderRadius: 1, position: 'relative' }}>
                       <div style={{ position: 'absolute', inset: 1, background: '#10b981', borderRadius: 0.5, width: '85%' }} />
                     </div>
                   </div>
@@ -1124,7 +1124,7 @@ export default function LandingPage() {
 
                 {/* App header */}
                 <div style={{ padding: '12px 14px 8px', borderBottom: '1px solid #e5e7eb' }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1a1a2e' }}>My Business</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0e0020' }}>My Business</div>
                 </div>
 
                 {/* Stats row */}
@@ -1179,7 +1179,7 @@ export default function LandingPage() {
                         {name[0]}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: '0.62rem', fontWeight: 600, color: '#1a1a2e', lineHeight: 1.2 }}>{name}</div>
+                        <div style={{ fontSize: '0.62rem', fontWeight: 600, color: '#0e0020', lineHeight: 1.2 }}>{name}</div>
                         <div style={{ fontSize: '0.52rem', color: '#9ca3af' }}>{type}</div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
@@ -1264,7 +1264,7 @@ export default function LandingPage() {
                 alignItems: 'center',
                 gap: 10,
                 background: 'white',
-                color: '#1a1a2e',
+                color: '#0e0020',
                 borderRadius: 12,
                 padding: '10px 20px',
                 textDecoration: 'none',

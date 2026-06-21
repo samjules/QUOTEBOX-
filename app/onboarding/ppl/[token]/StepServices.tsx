@@ -5,11 +5,11 @@ import type { PPLService } from '@/lib/types'
 
 const input: React.CSSProperties = {
   width: '100%', padding: '12px 14px', borderRadius: 10, border: '1.5px solid #e5e4e0',
-  fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', color: '#1a1a2e', background: 'white',
+  fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', color: '#0e0020', background: 'white',
 }
 const label: React.CSSProperties = { display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: 6 }
 const btn: React.CSSProperties = {
-  width: '100%', padding: '14px', borderRadius: 10, border: 'none', background: '#1a1a2e',
+  width: '100%', padding: '14px', borderRadius: 10, border: 'none', background: '#0e0020',
   color: '#ffe500', fontSize: '1rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
 }
 
@@ -70,7 +70,7 @@ export default function StepServices({ data, onNext, onBack, saving }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#1a1a2e', margin: '0 0 6px' }}>Your Services</h2>
+        <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#0e0020', margin: '0 0 6px' }}>Your Services</h2>
         <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: 0, lineHeight: 1.55 }}>
           Add each service you offer. You can set a different pricing method for each one.
         </p>
@@ -149,13 +149,13 @@ function ServiceCard({ service, index, error, canRemove, isRemoving, onUpdate, o
                 <button key={m.id} type="button" onClick={() => onUpdate({ pricingMethod: m.id, pricingRate: null, pricingUnit: null })}
                   style={{
                     padding: '14px 12px', borderRadius: 10, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
-                    border: sel ? '2px solid #1a1a2e' : error === 'pricing' ? '1.5px solid #fca5a5' : '1.5px solid #e5e4e0',
+                    border: sel ? '2px solid #0e0020' : error === 'pricing' ? '1.5px solid #fca5a5' : '1.5px solid #e5e4e0',
                     background: sel ? '#fafaf8' : 'white',
                     display: 'flex', flexDirection: 'column', gap: 4, minHeight: 80,
                   }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <svg width="16" height="16" fill="none" stroke={sel ? '#1a1a2e' : '#94a3b8'} viewBox="0 0 24 24" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d={m.icon} /></svg>
-                    <span style={{ fontSize: '0.88rem', fontWeight: 700, color: sel ? '#1a1a2e' : '#334155' }}>{m.label}</span>
+                    <svg width="16" height="16" fill="none" stroke={sel ? '#0e0020' : '#94a3b8'} viewBox="0 0 24 24" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"><path d={m.icon} /></svg>
+                    <span style={{ fontSize: '0.88rem', fontWeight: 700, color: sel ? '#0e0020' : '#334155' }}>{m.label}</span>
                   </div>
                   <span style={{ fontSize: '0.75rem', color: '#94a3b8', lineHeight: 1.4 }}>{m.sub}</span>
                 </button>
@@ -239,7 +239,7 @@ function ServiceCard({ service, index, error, canRemove, isRemoving, onUpdate, o
             <button type="button" onClick={() => onUpdate({ photoUploadEnabled: !service.photoUploadEnabled, photoUploadPrompt: service.photoUploadEnabled ? null : service.photoUploadPrompt })}
               style={{
                 width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer', position: 'relative', flexShrink: 0,
-                background: service.photoUploadEnabled ? '#1a1a2e' : '#d1d5db', transition: 'background 0.2s',
+                background: service.photoUploadEnabled ? '#0e0020' : '#d1d5db', transition: 'background 0.2s',
               }}>
               <span style={{
                 position: 'absolute', top: 2, left: service.photoUploadEnabled ? 22 : 2, width: 20, height: 20,

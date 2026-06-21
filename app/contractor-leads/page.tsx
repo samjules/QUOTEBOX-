@@ -76,16 +76,16 @@ export default function ContractorLeadsPage() {
   }
 
   return (
-    <div style={{ fontFamily: "'Brraelyn', sans-serif", color: '#1a1a2e', background: '#fff' }}>
+    <div style={{ fontFamily: "'Brraelyn', sans-serif", color: '#0e0020', background: '#fff' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <PublicNav />
 
       {/* ── Hero ── */}
-      <section style={{ background: '#1a1a2e', color: 'white', padding: '80px 24px 72px' }}>
+      <section style={{ background: '#0e0020', color: 'white', padding: '80px 24px 72px' }}>
         <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center' }}>
           <div style={{
-            display: 'inline-block', background: '#FFE500', color: '#1a1a2e',
+            display: 'inline-block', background: '#FFE500', color: '#0e0020',
             fontSize: '0.73rem', fontWeight: 700, letterSpacing: '0.08em',
             textTransform: 'uppercase', padding: '5px 14px', borderRadius: 99, marginBottom: 28,
           }}>
@@ -104,7 +104,7 @@ export default function ContractorLeadsPage() {
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/signup" style={{
-              background: '#FFE500', color: '#1a1a2e', fontWeight: 700,
+              background: '#FFE500', color: '#0e0020', fontWeight: 700,
               padding: '14px 32px', borderRadius: 10, textDecoration: 'none', fontSize: '1rem',
             }}>
               Start getting leads — free
@@ -196,7 +196,7 @@ export default function ContractorLeadsPage() {
               <div key={step} style={{ textAlign: 'center' }}>
                 <div style={{
                   width: 56, height: 56, borderRadius: '50%',
-                  background: '#1a1a2e', color: '#FFE500',
+                  background: '#0e0020', color: '#FFE500',
                   fontFamily: "'Oswald', sans-serif", fontSize: '1.6rem', fontWeight: 700,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   margin: '0 auto 16px',
@@ -228,7 +228,7 @@ export default function ContractorLeadsPage() {
               <Link key={label} href={href} style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
                 background: '#f9fafb', borderRadius: 12, padding: '20px 12px',
-                border: '1px solid #e5e7eb', textDecoration: 'none', color: '#1a1a2e',
+                border: '1px solid #e5e7eb', textDecoration: 'none', color: '#0e0020',
                 transition: 'border-color 0.15s',
               }}>
                 <span style={{ fontSize: '1.8rem' }}>{icon}</span>
@@ -240,7 +240,7 @@ export default function ContractorLeadsPage() {
       </section>
 
       {/* ── Social proof ── */}
-      <section style={{ padding: '72px 24px', background: '#1a1a2e', color: 'white' }}>
+      <section style={{ padding: '72px 24px', background: '#0e0020', color: 'white' }}>
         <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 32 }}>
             {[
@@ -297,21 +297,21 @@ export default function ContractorLeadsPage() {
         <div style={{ maxWidth: 640, margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{
             fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(2rem, 4vw, 3rem)',
-            fontWeight: 800, color: '#1a1a2e', marginBottom: 16,
+            fontWeight: 800, color: '#0e0020', marginBottom: 16,
           }}>
             Stop bidding. Start booking.
           </h2>
-          <p style={{ color: '#1a1a2e', opacity: 0.7, marginBottom: 32, fontSize: '1.05rem', lineHeight: 1.65 }}>
+          <p style={{ color: '#0e0020', opacity: 0.7, marginBottom: 32, fontSize: '1.05rem', lineHeight: 1.65 }}>
             Sign up free, build your quote form in 5 minutes, and get your first exclusive moving or junk removal lead for $15.
           </p>
           <Link href="/signup" style={{
-            display: 'inline-block', background: '#1a1a2e', color: '#FFE500',
+            display: 'inline-block', background: '#0e0020', color: '#FFE500',
             fontWeight: 700, padding: '16px 40px', borderRadius: 10,
             textDecoration: 'none', fontSize: '1.05rem',
           }}>
             Get started — it&apos;s free
           </Link>
-          <p style={{ marginTop: 16, fontSize: '0.82rem', color: '#1a1a2e', opacity: 0.55 }}>
+          <p style={{ marginTop: 16, fontSize: '0.82rem', color: '#0e0020', opacity: 0.55 }}>
             No credit card required to sign up. $15 per lead when you&apos;re ready.
           </p>
         </div>

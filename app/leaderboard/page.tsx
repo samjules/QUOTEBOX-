@@ -65,7 +65,7 @@ export default async function PublicGamesPage() {
       <main style={{ flex: 1, maxWidth: 800, margin: '0 auto', padding: '48px 24px', width: '100%' }}>
         {/* Hero */}
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#1a1a2e', marginBottom: 8 }}>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#0e0020', marginBottom: 8 }}>
             QuoteBox Games
           </h1>
           <p style={{ fontSize: '1.1rem', color: '#666', maxWidth: 500, margin: '0 auto' }}>
@@ -102,7 +102,7 @@ export default async function PublicGamesPage() {
           overflow: 'hidden',
         }}>
           <div style={{ padding: '16px 24px', borderBottom: '1px solid #f0f0f0' }}>
-            <h2 style={{ fontSize: '1rem', fontWeight: 600, color: '#1a1a2e', margin: 0 }}>
+            <h2 style={{ fontSize: '1rem', fontWeight: 600, color: '#0e0020', margin: 0 }}>
               Leaderboard — {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
             </h2>
           </div>
@@ -120,13 +120,13 @@ export default async function PublicGamesPage() {
                 const tier = getAwardTier(entry.booked)
                 return (
                   <tr key={entry.id} style={{ borderTop: '1px solid #f5f5f5' }}>
-                    <td style={{ padding: '12px 24px', fontSize: '0.9rem', fontWeight: 700, color: '#1a1a2e' }}>
+                    <td style={{ padding: '12px 24px', fontSize: '0.9rem', fontWeight: 700, color: '#0e0020' }}>
                       #{i + 1}
                     </td>
                     <td style={{ padding: '12px 24px', fontSize: '0.9rem', color: '#333' }}>
                       {entry.name}
                     </td>
-                    <td style={{ padding: '12px 24px', fontSize: '0.9rem', fontWeight: 600, color: '#1a1a2e', textAlign: 'right' }}>
+                    <td style={{ padding: '12px 24px', fontSize: '0.9rem', fontWeight: 600, color: '#0e0020', textAlign: 'right' }}>
                       {entry.booked}
                     </td>
                     <td style={{ padding: '12px 24px', textAlign: 'right' }}>
@@ -163,13 +163,13 @@ export default async function PublicGamesPage() {
 
         {/* CTA */}
         <div style={{ textAlign: 'center', marginTop: 48 }}>
-          <p style={{ fontSize: '1.1rem', fontWeight: 600, color: '#1a1a2e', marginBottom: 12 }}>
+          <p style={{ fontSize: '1.1rem', fontWeight: 600, color: '#0e0020', marginBottom: 12 }}>
             Want to compete?
           </p>
           <Link href="/signup" style={{
             display: 'inline-block',
             padding: '12px 32px',
-            background: '#1a1a2e',
+            background: '#0e0020',
             color: '#FFE500',
             borderRadius: 8,
             fontSize: '0.95rem',

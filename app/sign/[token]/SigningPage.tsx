@@ -38,7 +38,7 @@ export default function SigningPage({
     if (!ctx) return
     ctx.lineWidth = 2
     ctx.lineCap = 'round'
-    ctx.strokeStyle = '#1a1a2e'
+    ctx.strokeStyle = '#0e0020'
   }, [])
 
   function clearCanvas() {
@@ -98,7 +98,7 @@ export default function SigningPage({
     canvas.height = 100
     const ctx = canvas.getContext('2d')
     if (!ctx) return null
-    ctx.fillStyle = '#1a1a2e'
+    ctx.fillStyle = '#0e0020'
     ctx.font = 'italic 36px "Dancing Script", "Brush Script MT", cursive'
     ctx.fillText(typedName, 20, 60)
     return canvas.toDataURL('image/png')
@@ -160,7 +160,7 @@ export default function SigningPage({
       <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet" />
 
       {/* Header */}
-      <div className="bg-[#1a1a2e] text-white py-6 px-4 text-center">
+      <div className="bg-[#0e0020] text-white py-6 px-4 text-center">
         <h1 className="text-lg font-bold">{businessName}</h1>
         <p className="text-sm text-gray-300 mt-1">{title}</p>
       </div>
@@ -277,7 +277,7 @@ export default function SigningPage({
                 <div className="mt-3 p-4 border border-gray-200 rounded-xl bg-gray-50 text-center">
                   <span
                     style={{ fontFamily: "'Dancing Script', 'Brush Script MT', cursive", fontSize: '2rem' }}
-                    className="text-[#1a1a2e]"
+                    className="text-[#0e0020]"
                   >
                     {typedName}
                   </span>

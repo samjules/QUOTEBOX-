@@ -171,7 +171,7 @@ const TEMPLATES: TemplateConfig[] = [
     icon: '🗑️',
     name: 'Junk Removal',
     tagline: 'Flat rate + drive time hours × load rate',
-    brandColor: '#1a1a2e',
+    brandColor: '#0e0020',
     formName: 'Junk Removal Quote',
     formDesc: 'Get an instant estimate for junk removal.',
     submitLabel: 'Get My Quote →',
@@ -235,7 +235,7 @@ function TemplatePicker({
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 20 }}>
             <button
               className="bb bb-primary"
-              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg,#1a1a2e,#2a2a3e)', border: 'none', color: '#fff' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg,#0e0020,#2a2a3e)', border: 'none', color: '#fff' }}
               onClick={onAi}
             >
               <img src="/icons/logo-1772578089154.jpg" alt="Robert" style={{ width: 18, height: 18, borderRadius: '50%', objectFit: 'cover' }} />
@@ -654,7 +654,7 @@ function CanvasPreview({
 }) {
   const [dropIdx, setDropIdx] = useState<number | null>(null)
   const isDark = isColorDark(brandColor)
-  const textPrimary = isDark ? 'white' : '#1a1a2e'
+  const textPrimary = isDark ? 'white' : '#0e0020'
   const textSecondary = isDark ? 'rgba(255,255,255,0.72)' : 'rgba(26,26,46,0.62)'
   const progressBarBg = isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.15)'
   const progressBarFill = isDark ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.45)'
@@ -2215,7 +2215,7 @@ export default function FormBuilderPage() {
   const [emailIntro, setEmailIntro] = useState('')
   const [emailOutro, setEmailOutro] = useState('')
   const [emailHeaderImage, setEmailHeaderImage] = useState('')
-  const [emailAccentColor, setEmailAccentColor] = useState('#1a1a2e')
+  const [emailAccentColor, setEmailAccentColor] = useState('#0e0020')
 
   function showToast(
     msg: string,
@@ -2416,7 +2416,7 @@ export default function FormBuilderPage() {
     setEmailIntro(c.email_template?.intro ?? '')
     setEmailOutro(c.email_template?.outro ?? '')
     setEmailHeaderImage(c.email_template?.header_image ?? '')
-    setEmailAccentColor(c.email_template?.accent_color ?? '#1a1a2e')
+    setEmailAccentColor(c.email_template?.accent_color ?? '#0e0020')
   }
 
   // ── Template apply ──
@@ -2757,7 +2757,7 @@ export default function FormBuilderPage() {
           intro: emailIntro || '',
           outro: emailOutro || '',
           header_image: emailHeaderImage || '',
-          accent_color: emailAccentColor || '#1a1a2e',
+          accent_color: emailAccentColor || '#0e0020',
         },
       },
       is_active: true,
@@ -2867,7 +2867,7 @@ export default function FormBuilderPage() {
   }
 
   // ── Email preview derived values ──
-  const emailPreviewBg = emailAccentColor || '#1a1a2e'
+  const emailPreviewBg = emailAccentColor || '#0e0020'
   const emailPreviewFg = isColorDark(emailPreviewBg) ? '#ffffff' : '#0f172a'
   const emailPreviewTotalColor = isColorDark(emailPreviewBg) ? '#FFE500' : '#0f172a'
 
@@ -2996,7 +2996,7 @@ export default function FormBuilderPage() {
                               setScreen('builder')
                             }}
                             style={{
-                              marginTop: 4, background: '#1a1a2e', color: 'white',
+                              marginTop: 4, background: '#0e0020', color: 'white',
                               border: 'none', borderRadius: 8, padding: '8px 0',
                               fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
                             }}

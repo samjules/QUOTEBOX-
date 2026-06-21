@@ -86,7 +86,7 @@ export default function GetStartedPage() {
   }
 
   const cardStyle: React.CSSProperties = {
-    background: '#1a1a2e',
+    background: '#0e0020',
     borderRadius: 16,
     padding: '40px 36px',
     maxWidth: 640,

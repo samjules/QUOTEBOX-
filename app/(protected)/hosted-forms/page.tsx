@@ -243,7 +243,7 @@ export default function HostedFormsPage() {
                 : `/${slug}`
 
               const isBlue = color === 'blue'
-              const headerBg = isBlue ? '#1a56ff' : '#ffe500'
+              const headerBg = isBlue ? '#6422A8' : '#ffe500'
               const headerFg = isBlue ? '#ffffff' : '#5b5bd6'
               const progressBg = isBlue ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.14)'
               const progressFill = isBlue ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.38)'

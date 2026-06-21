@@ -100,7 +100,7 @@ function toSlug(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-').replace(/-+/g, '-').slice(0, 40)
 }
 
-const COLOR_PRESETS = ['#F97316', '#374151', '#1a1a2e', '#22C55E', '#3B82F6', '#8B5CF6', '#EF4444', '#0EA5E9']
+const COLOR_PRESETS = ['#F97316', '#374151', '#0e0020', '#22C55E', '#3B82F6', '#8B5CF6', '#EF4444', '#0EA5E9']
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
 const TOTAL_STEPS = 8

@@ -70,22 +70,23 @@ button {
 
 /* ── Form Builder custom styles ─────────────────── */
 :root {
-  --bg: #f9fafb;
+  --bg: #f9f7ff;
   --surface: #ffffff;
-  --surface2: #f3f4f6;
-  --border: #e5e7eb;
-  --accent: #5b5bd6;
-  --accent2: #10b981;
-  --text: #1a1a2e;
-  --muted: #6b7280;
+  --surface2: #f3f0fa;
+  --border: #e5dff5;
+  --accent: #6422A8;
+  --accent2: #A855F7;
+  --fg: #0d0020;
+  --text: #0d0020;
+  --muted: #7a6b8a;
   --danger: #dc2626;
   --radius: 10px;
   --yellow: #FFE500;
-  --sidebar-bg: #1a1a2e;
+  --sidebar-bg: #0e0020;
   --sidebar-text: #ffffff;
-  --sidebar-muted: rgba(255,255,255,0.5);
-  --sidebar-border: rgba(255,255,255,0.08);
-  --sidebar-hover: rgba(255,255,255,0.06);
+  --sidebar-muted: rgba(168, 85, 247, 0.5);
+  --sidebar-border: rgba(168, 85, 247, 0.12);
+  --sidebar-hover: rgba(168, 85, 247, 0.08);
 }
 
 .builder-wrap {
@@ -152,15 +153,15 @@ button {
 }
 
 .bb-primary {
-  background: #1a1a2e;
+  background: #6422A8;
   color: #FFE500;
   font-weight: 700;
 }
 
 .bb-primary:hover {
-  background: #2a2a4e;
+  background: #541890;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(26,26,46,0.2);
+  box-shadow: 0 4px 12px rgba(100, 34, 168, 0.35);
 }
 
 .bb-primary:disabled {
@@ -276,7 +277,7 @@ button {
 
 .ftype-btn:hover {
   border-color: var(--accent);
-  background: rgba(26, 26, 46, 0.06);
+  background: rgba(100, 34, 168, 0.06);
 }
 
 .ftype-btn .icon {
@@ -299,8 +300,8 @@ button {
   border-radius: 9px;
 }
 .b-sidebar .ftype-btn:hover {
-  background: rgba(255,229,0,0.1);
-  border-color: rgba(255,229,0,0.3);
+  background: rgba(168, 85, 247, 0.12);
+  border-color: rgba(168, 85, 247, 0.35);
   color: #fff;
 }
 .b-sidebar .ftype-btn .icon {
@@ -396,7 +397,7 @@ button {
 
 .cswatch.active {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(26, 26, 46, 0.15);
+  box-shadow: 0 0 0 3px rgba(100, 34, 168, 0.2);
 }
 
 .cswatch.yellow {
@@ -443,7 +444,7 @@ button {
 }
 
 .step-tab.active {
-  background: #1a1a2e;
+  background: #6422A8;
   color: #fff;
   box-shadow: 0 1px 4px rgba(0,0,0,0.18);
   font-weight: 600;
@@ -519,7 +520,7 @@ button {
 }
 
 .yellow-bg .pv-title {
-  color: #1a1a2e;
+  color: #0d0020;
 }
 
 .blue-bg .pv-title {
@@ -532,7 +533,7 @@ button {
 }
 
 .yellow-bg .pv-desc {
-  color: rgba(26, 26, 46, 0.65);
+  color: rgba(13, 0, 32, 0.6);
 }
 
 .blue-bg .pv-desc {
@@ -555,12 +556,12 @@ button {
 }
 
 .field-card:hover {
-  border-color: rgba(26,26,46,0.3);
+  border-color: rgba(100, 34, 168, 0.35);
 }
 
 .field-card.selected {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(26, 26, 46, 0.1);
+  box-shadow: 0 0 0 3px rgba(100, 34, 168, 0.12);
 }
 
 .field-card-hdr {
@@ -679,10 +680,10 @@ button {
 .total-prev {
   background: linear-gradient(
     135deg,
-    rgba(26, 26, 46, 0.06),
-    rgba(16, 185, 129, 0.04)
+    rgba(100, 34, 168, 0.06),
+    rgba(168, 85, 247, 0.04)
   );
-  border: 1px solid rgba(26, 26, 46, 0.15);
+  border: 1px solid rgba(100, 34, 168, 0.2);
   border-radius: 8px;
   padding: 12px 16px;
   display: flex;
@@ -717,7 +718,7 @@ button {
 
 .sub-btn-prev.yellow-bg {
   background: #ffe500;
-  color: #1a1a2e;
+  color: #0d0020;
 }
 
 .sub-btn-prev.blue-bg {
@@ -774,7 +775,7 @@ button {
 }
 
 .yellow-bg .email-notice-txt {
-  color: #1a1a2e;
+  color: #0d0020;
 }
 
 .blue-bg .email-notice-txt {
@@ -787,7 +788,7 @@ button {
 }
 
 .yellow-bg .email-notice-sub {
-  color: rgba(26, 26, 46, 0.6);
+  color: rgba(13, 0, 32, 0.55);
 }
 
 .blue-bg .email-notice-sub {
@@ -841,7 +842,7 @@ button {
 
 .prop-input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(91, 91, 214, 0.1);
+  box-shadow: 0 0 0 3px rgba(100, 34, 168, 0.15);
 }
 
 .prop-toggle {
@@ -968,7 +969,7 @@ button {
   font-size: 0.72rem;
   color: var(--accent2);
   padding: 5px 9px;
-  background: rgba(16, 185, 129, 0.08);
+  background: rgba(168, 85, 247, 0.08);
   border-radius: 6px;
   margin-top: -4px;
   margin-bottom: 7px;
@@ -978,9 +979,9 @@ button {
 
 .plan-badge {
   font-size: 0.68rem;
-  background: rgba(26, 26, 46, 0.08);
+  background: rgba(100, 34, 168, 0.08);
   color: var(--accent);
-  border: 1px solid rgba(26, 26, 46, 0.2);
+  border: 1px solid rgba(100, 34, 168, 0.2);
   padding: 3px 8px;
   border-radius: 20px;
   font-weight: 600;
@@ -990,7 +991,7 @@ button {
   position: fixed;
   bottom: 24px;
   right: 24px;
-  background: #1a1a2e;
+  background: #6422A8;
   border: none;
   color: #fff;
   padding: 12px 20px;

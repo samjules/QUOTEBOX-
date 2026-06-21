@@ -826,7 +826,7 @@ function WelcomeGiftBanner() {
 
 function IconCheck() {
   return (
-    <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="#1a1a2e" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+    <svg width="14" height="14" fill="none" viewBox="0 0 16 16" stroke="#0e0020" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
       <path d="M3 8l3 3 7-7" />
     </svg>
   )

@@ -5,11 +5,11 @@ import type { PPLAvailability } from '@/lib/types'
 
 const input: React.CSSProperties = {
   width: '100%', padding: '12px 14px', borderRadius: 10, border: '1.5px solid #e5e4e0',
-  fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', color: '#1a1a2e', background: 'white',
+  fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', color: '#0e0020', background: 'white',
 }
 const label: React.CSSProperties = { display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: 6 }
 const btn: React.CSSProperties = {
-  width: '100%', padding: '14px', borderRadius: 10, border: 'none', background: '#1a1a2e',
+  width: '100%', padding: '14px', borderRadius: 10, border: 'none', background: '#0e0020',
   color: '#ffe500', fontSize: '1rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
 }
 
@@ -36,7 +36,7 @@ export default function StepAvailability({ data, onNext, onBack, saving }: Props
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
       <div>
-        <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#1a1a2e', margin: '0 0 6px' }}>Availability</h2>
+        <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#0e0020', margin: '0 0 6px' }}>Availability</h2>
         <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: 0, lineHeight: 1.55 }}>
           When are you open for new jobs? This controls when your quote form accepts requests.
         </p>
@@ -54,7 +54,7 @@ export default function StepAvailability({ data, onNext, onBack, saving }: Props
                   style={{
                     width: 22, height: 22, borderRadius: 5, flexShrink: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     border: h.open ? 'none' : '1.5px solid #d1d5db',
-                    background: h.open ? '#1a1a2e' : 'white', color: 'white', fontSize: '0.72rem', fontWeight: 700,
+                    background: h.open ? '#0e0020' : 'white', color: 'white', fontSize: '0.72rem', fontWeight: 700,
                   }}>
                   {h.open ? '✓' : ''}
                 </button>

@@ -40,7 +40,7 @@ const lessons = [
 
 export default function CourseHomePage() {
   return (
-    <div style={{ fontFamily: "'Brraelyn', sans-serif", color: '#1a1a2e', background: '#fff', minHeight: '100vh' }}>
+    <div style={{ fontFamily: "'Brraelyn', sans-serif", color: '#0e0020', background: '#fff', minHeight: '100vh' }}>
 
       {/* Nav */}
       <nav style={{
@@ -49,20 +49,20 @@ export default function CourseHomePage() {
         position: 'sticky', top: 0, background: 'white', zIndex: 50,
       }}>
         <Link href="/" style={{ textDecoration: 'none' }}>
-          <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.35rem', fontWeight: 700, letterSpacing: '0.01em', color: '#1a1a2e' }}>
-            Quote<span style={{ color: '#FFE500', WebkitTextStroke: '1px #1a1a2e' }}>.</span>Box
+          <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.35rem', fontWeight: 700, letterSpacing: '0.01em', color: '#0e0020' }}>
+            Quote<span style={{ color: '#FFE500', WebkitTextStroke: '1px #0e0020' }}>.</span>Box
           </span>
         </Link>
         <Link href="/signup" style={{
           fontSize: '0.88rem', fontWeight: 600, padding: '8px 18px',
-          background: '#1a1a2e', color: '#FFE500', borderRadius: 8, textDecoration: 'none',
+          background: '#0e0020', color: '#FFE500', borderRadius: 8, textDecoration: 'none',
         }}>
           Get started free
         </Link>
       </nav>
 
       {/* Welcome banner */}
-      <section style={{ background: '#1a1a2e', color: '#fff', padding: '56px 24px 64px', textAlign: 'center' }}>
+      <section style={{ background: '#0e0020', color: '#fff', padding: '56px 24px 64px', textAlign: 'center' }}>
         <div style={{ maxWidth: 640, margin: '0 auto' }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -103,7 +103,7 @@ export default function CourseHomePage() {
                 </div>
               ) : (
                 <div style={{
-                  background: '#1a1a2e', aspectRatio: '16/9', display: 'flex',
+                  background: '#0e0020', aspectRatio: '16/9', display: 'flex',
                   alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12,
                 }}>
                   <div style={{
@@ -121,7 +121,7 @@ export default function CourseHomePage() {
               <div style={{ padding: '20px 24px', display: 'flex', gap: 16, alignItems: 'flex-start' }}>
                 <span style={{
                   flexShrink: 0, fontFamily: "'Oswald', sans-serif", fontSize: '1.3rem',
-                  fontWeight: 700, color: '#FFE500', WebkitTextStroke: '1.5px #1a1a2e', lineHeight: 1,
+                  fontWeight: 700, color: '#FFE500', WebkitTextStroke: '1.5px #0e0020', lineHeight: 1,
                 }}>
                   {lesson.num}
                 </span>
@@ -157,14 +157,14 @@ export default function CourseHomePage() {
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/signup" style={{
-              display: 'inline-block', background: '#1a1a2e', color: '#FFE500',
+              display: 'inline-block', background: '#0e0020', color: '#FFE500',
               fontWeight: 700, fontSize: '0.95rem', padding: '14px 28px', borderRadius: 8,
               textDecoration: 'none',
             }}>
               Start getting leads →
             </Link>
             <Link href="/agency" style={{
-              display: 'inline-block', background: '#fff', color: '#1a1a2e',
+              display: 'inline-block', background: '#fff', color: '#0e0020',
               fontWeight: 600, fontSize: '0.95rem', padding: '14px 28px', borderRadius: 8,
               textDecoration: 'none', border: '1.5px solid #e5e7eb',
             }}>
