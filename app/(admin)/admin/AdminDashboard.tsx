@@ -269,7 +269,7 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
   }, [localAccounts])
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#f1f5f9', fontFamily: "'Sanguard', sans-serif" }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#f1f5f9', fontFamily: "'Nautic', sans-serif" }}>
 
       {/* ── Top bar ── */}
       <div style={{ height: 56, background: '#0e0020', display: 'flex', alignItems: 'center', padding: '0 24px', gap: 16, flexShrink: 0 }}>

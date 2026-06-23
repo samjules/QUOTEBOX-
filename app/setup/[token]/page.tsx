@@ -22,7 +22,7 @@ export default async function SetupPage({ params }: { params: Promise<{ token: s
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      fontFamily: "'Sanguard', sans-serif",
+      fontFamily: "'Nautic', sans-serif",
       padding: '40px 20px',
     }}>
       <div style={{ marginBottom: 32 }}>

@@ -26,7 +26,7 @@ export default async function BuildPage() {
   return (
     <div className="maze-light" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
       <div className="maze-dark" style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', background: '#0e0020' }}>
-        <span style={{ fontSize: '1.1rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#FFE500', fontFamily: "'Sanguard', sans-serif" }}>
+        <span style={{ fontSize: '1.1rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#FFE500', fontFamily: "'Nautic', sans-serif" }}>
           Quotebox
         </span>
       </div>

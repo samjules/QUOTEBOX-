@@ -62,7 +62,7 @@ export default function VsAngiesListPage() {
   }
 
   return (
-    <div style={{ fontFamily: "'Sanguard', sans-serif", color: '#0e0020', background: '#fff' }}>
+    <div style={{ fontFamily: "'Nautic', sans-serif", color: '#0e0020', background: '#fff' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <PublicNav />

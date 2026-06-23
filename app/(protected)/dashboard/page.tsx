@@ -334,7 +334,7 @@ export default async function DashboardPage({
               <h1
                 className="font-extrabold tracking-tight"
                 style={{
-                  fontFamily: "'Sanguard', sans-serif",
+                  fontFamily: "'Nautic', sans-serif",
                   fontSize: 28,
                   letterSpacing: '-0.03em',
                   color: hasBg ? '#fff' : '#111',
@@ -475,7 +475,7 @@ export default async function DashboardPage({
                     </svg>
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900" style={{ fontFamily: "'Sanguard', sans-serif", fontSize: 15 }}>LTV Calculator</h3>
+                    <h3 className="font-bold text-gray-900" style={{ fontFamily: "'Nautic', sans-serif", fontSize: 15 }}>LTV Calculator</h3>
                     <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 2, letterSpacing: '0.03em' }}>
                       {periodLabel} · {bookedLeads} booked lead{bookedLeads !== 1 ? 's' : ''}
                     </p>
@@ -527,7 +527,7 @@ export default async function DashboardPage({
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 4 }}>QuoteBox Games</p>
-                    <h3 className="font-bold text-gray-900" style={{ fontFamily: "'Sanguard', sans-serif", fontSize: 15 }}>Monthly leaderboard</h3>
+                    <h3 className="font-bold text-gray-900" style={{ fontFamily: "'Nautic', sans-serif", fontSize: 15 }}>Monthly leaderboard</h3>
                   </div>
                   <Link href="/games" style={{ fontSize: '0.75rem', fontWeight: 600, color: '#374151', textDecoration: 'none', padding: '6px 12px', border: '1px solid #e5e7eb', borderRadius: 7, background: '#f9fafb' }}>
                     View →
@@ -549,7 +549,7 @@ export default async function DashboardPage({
 
           {/* Quick Actions */}
           <div className={`${CARD} p-6`} style={CARD_STYLE}>
-            <h3 className="font-bold text-gray-900 mb-4" style={{ fontFamily: "'Sanguard', sans-serif", fontSize: 15 }}>
+            <h3 className="font-bold text-gray-900 mb-4" style={{ fontFamily: "'Nautic', sans-serif", fontSize: 15 }}>
               Quick Actions
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1050,7 +1050,7 @@ function DailyView({
       {/* Header */}
       <div className="px-6 pt-5 pb-4 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
         <div>
-          <h3 className="font-bold text-gray-900" style={{ fontFamily: "'Sanguard', sans-serif", fontSize: 15 }}>Today</h3>
+          <h3 className="font-bold text-gray-900" style={{ fontFamily: "'Nautic', sans-serif", fontSize: 15 }}>Today</h3>
           <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>{dateLabel}</p>
         </div>
         <div className="flex gap-5 text-right">

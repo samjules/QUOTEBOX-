@@ -310,7 +310,7 @@ export default function PublicWizard({ totalBookedRevenue }: { totalBookedRevenu
         background: selected ? `${brandColor}0e` : 'var(--surface2)',
         transition: 'border-color 0.12s, background 0.12s', marginBottom: 10,
       }}>
-        <div style={{ fontSize: '1rem', fontWeight: 700, color: selected ? brandColor : 'var(--fg)', fontFamily: "'Sanguard', sans-serif" }}>{label}</div>
+        <div style={{ fontSize: '1rem', fontWeight: 700, color: selected ? brandColor : 'var(--fg)', fontFamily: "'Nautic', sans-serif" }}>{label}</div>
         {desc && <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginTop: 4, lineHeight: 1.4 }}>{desc}</div>}
       </button>
     )
@@ -319,7 +319,7 @@ export default function PublicWizard({ totalBookedRevenue }: { totalBookedRevenu
   function Q({ label, sub }: { label: string; sub?: string }) {
     return (
       <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--fg)', lineHeight: 1.2, marginBottom: sub ? 8 : 0, fontFamily: "'Sanguard', sans-serif" }}>{label}</div>
+        <div style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--fg)', lineHeight: 1.2, marginBottom: sub ? 8 : 0, fontFamily: "'Nautic', sans-serif" }}>{label}</div>
         {sub && <div style={{ fontSize: '0.86rem', color: 'var(--muted)', lineHeight: 1.55 }}>{sub}</div>}
       </div>
     )

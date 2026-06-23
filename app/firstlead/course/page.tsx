@@ -40,7 +40,7 @@ const lessons = [
 
 export default function CourseHomePage() {
   return (
-    <div style={{ fontFamily: "'Sanguard', sans-serif", color: '#0e0020', background: '#fff', minHeight: '100vh' }}>
+    <div style={{ fontFamily: "'Nautic', sans-serif", color: '#0e0020', background: '#fff', minHeight: '100vh' }}>
 
       {/* Nav */}
       <nav style={{

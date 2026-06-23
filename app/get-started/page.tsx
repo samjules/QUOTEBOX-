@@ -80,7 +80,7 @@ export default function GetStartedPage() {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    fontFamily: "'Sanguard', sans-serif",
+    fontFamily: "'Nautic', sans-serif",
     color: 'white',
     padding: '40px 20px',
   }
@@ -102,7 +102,7 @@ export default function GetStartedPage() {
     borderRadius: 10,
     border: 'none',
     cursor: 'pointer',
-    fontFamily: "'Sanguard', sans-serif",
+    fontFamily: "'Nautic', sans-serif",
     width: '100%',
     marginTop: 24,
   }
@@ -117,7 +117,7 @@ export default function GetStartedPage() {
     color: 'white',
     outline: 'none',
     boxSizing: 'border-box',
-    fontFamily: "'Sanguard', sans-serif",
+    fontFamily: "'Nautic', sans-serif",
   }
 
   const dots = (
@@ -221,7 +221,7 @@ export default function GetStartedPage() {
                       fontSize: '0.72rem',
                       fontWeight: 600,
                       textAlign: 'center',
-                      fontFamily: "'Sanguard', sans-serif",
+                      fontFamily: "'Nautic', sans-serif",
                     }}
                   >
                     <div style={{ fontSize: '0.65rem', color: isSel ? 'rgba(255,229,0,0.7)' : 'rgba(255,255,255,0.4)' }}>
@@ -255,7 +255,7 @@ export default function GetStartedPage() {
                       cursor: 'pointer',
                       fontSize: '0.82rem',
                       fontWeight: 600,
-                      fontFamily: "'Sanguard', sans-serif",
+                      fontFamily: "'Nautic', sans-serif",
                     }}
                   >
                     {t}
@@ -288,7 +288,7 @@ export default function GetStartedPage() {
             )}
 
             <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
-              <button onClick={() => setStep(0)} style={{ flex: 1, padding: '14px 24px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'white', fontWeight: 600, cursor: 'pointer', fontSize: '0.95rem', fontFamily: "'Sanguard', sans-serif" }}>
+              <button onClick={() => setStep(0)} style={{ flex: 1, padding: '14px 24px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'white', fontWeight: 600, cursor: 'pointer', fontSize: '0.95rem', fontFamily: "'Nautic', sans-serif" }}>
                 Back
               </button>
               <button

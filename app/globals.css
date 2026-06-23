@@ -4,30 +4,25 @@
 
 /* ── Custom fonts ────────────────────────────────── */
 @font-face {
-  font-family: 'Sanguard';
-  src: url('/fonts/SANGUARD.otf') format('opentype');
+  font-family: 'Nautic';
+  src: url('/fonts/Nautic.woff2') format('woff2'),
+       url('/fonts/Nautic.woff') format('woff'),
+       url('/fonts/Nautic.otf') format('opentype'),
+       url('/fonts/Nautic.ttf') format('truetype');
   font-weight: 400 900;
   font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Sanguard';
-  src: url('/fonts/SANGUARD-Italic.otf') format('opentype');
-  font-weight: 400 900;
-  font-style: italic;
   font-display: swap;
 }
 
 
 /* ── Global typography ───────────────────────────── */
 body {
-  font-family: 'Sanguard', sans-serif;
+  font-family: 'Nautic', sans-serif;
 }
 
 h1, h2, h3, h4, h5, h6,
 button {
-  font-family: 'Sanguard', sans-serif;
+  font-family: 'Nautic', sans-serif;
   letter-spacing: 0.01em;
 }
 
@@ -75,7 +70,7 @@ button {
 }
 
 .builder-wrap {
-  font-family: 'Sanguard', sans-serif;
+  font-family: 'Nautic', sans-serif;
   background: var(--bg);
   color: var(--text);
   height: 100%;
@@ -96,7 +91,7 @@ button {
 }
 
 .builder-logo {
-  font-family: 'Sanguard', sans-serif;
+  font-family: 'Nautic', sans-serif;
   font-weight: 800;
   font-size: 1.1rem;
   letter-spacing: -0.02em;
@@ -114,7 +109,7 @@ button {
 }
 
 .bb {
-  font-family: 'Sanguard', sans-serif;
+  font-family: 'Nautic', sans-serif;
   font-size: 0.83rem;
   font-weight: 600;
   padding: 7px 16px;
@@ -199,7 +194,7 @@ button {
 }
 
 .sidebar-label {
-  font-family: 'Sanguard', sans-serif;
+  font-family: 'Nautic', sans-serif;
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -225,7 +220,7 @@ button {
   background: var(--sidebar-hover);
 }
 .sidebar-cat-title {
-  font-family: 'Sanguard', sans-serif;
+  font-family: 'Nautic', sans-serif;
   font-size: 0.66rem;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -256,7 +251,7 @@ button {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text);
-  font-family: 'Sanguard', sans-serif;
+  font-family: 'Nautic', sans-serif;
   font-size: 0.83rem;
   cursor: pointer;
   margin-bottom: 5px;
@@ -334,7 +329,7 @@ button {
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text);
-  font-family: 'Sanguard', sans-serif;
+  font-family: 'Nautic', sans-serif;
   font-size: 0.83rem;
   padding: 8px 11px;
   margin-bottom: 7px;
@@ -502,7 +497,7 @@ button {
 }
 
 .pv-title {
-  font-family: 'Sanguard', sans-serif;
+  font-family: 'Nautic', sans-serif;
   font-size: 1.4rem;
   font-weight: 800;
   line-height: 1.2;
@@ -687,7 +682,7 @@ button {
 }
 
 .total-prev-val {
-  font-family: 'Sanguard', sans-serif;
+  font-family: 'Nautic', sans-serif;
   font-size: 1.25rem;
   font-weight: 800;
   color: var(--accent);
@@ -697,7 +692,7 @@ button {
   width: 100%;
   margin-top: 10px;
   padding: 12px;
-  font-family: 'Sanguard', sans-serif;
+  font-family: 'Nautic', sans-serif;
   font-weight: 800;
   font-size: 0.92rem;
   border: none;
@@ -758,7 +753,7 @@ button {
 }
 
 .email-notice-txt {
-  font-family: 'Sanguard', sans-serif;
+  font-family: 'Nautic', sans-serif;
   font-size: 1rem;
   font-weight: 700;
 }
@@ -792,7 +787,7 @@ button {
 }
 
 .props-title {
-  font-family: 'Sanguard', sans-serif;
+  font-family: 'Nautic', sans-serif;
   font-size: 0.65rem;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -822,7 +817,7 @@ button {
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text);
-  font-family: 'Sanguard', sans-serif;
+  font-family: 'Nautic', sans-serif;
   font-size: 0.83rem;
   padding: 8px 11px;
   outline: none;
@@ -907,7 +902,7 @@ button {
   border: 1px dashed var(--border);
   border-radius: 8px;
   color: var(--muted);
-  font-family: 'Sanguard', sans-serif;
+  font-family: 'Nautic', sans-serif;
   font-size: 0.78rem;
   cursor: pointer;
   transition: all 0.15s;
@@ -1023,7 +1018,7 @@ button {
 .hero-upload-zone:hover .hero-upload-overlay { opacity: 1; }
 .hero-upload-prompt { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px; color: var(--muted); font-size: .78rem; text-align: center; }
 .hero-upload-spinner { width: 22px; height: 22px; border: 2.5px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
-.hero-upload-clear { background: none; border: none; color: var(--danger); font-size: .73rem; cursor: pointer; text-decoration: underline; padding: 2px 0; font-family: 'Sanguard', sans-serif; }
+.hero-upload-clear { background: none; border: none; color: var(--danger); font-size: .73rem; cursor: pointer; text-decoration: underline; padding: 2px 0; font-family: 'Nautic', sans-serif; }
 
 /* ── Image Field Canvas Preview ── */
 .fprev-image-placeholder { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 16px; border: 2px dashed var(--border); border-radius: 8px; margin-top: 8px; background: var(--bg); text-align: center; }
@@ -1082,7 +1077,7 @@ button {
   flex-shrink: 0;
 }
 .crop-modal-title {
-  font-family: 'Sanguard', sans-serif;
+  font-family: 'Nautic', sans-serif;
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -1101,7 +1096,7 @@ button {
   cursor: pointer;
   color: var(--muted);
   transition: all 0.12s;
-  font-family: 'Sanguard', sans-serif;
+  font-family: 'Nautic', sans-serif;
 }
 .crop-aspect-btn:hover { border-color: var(--accent); color: var(--fg); }
 .crop-aspect-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
