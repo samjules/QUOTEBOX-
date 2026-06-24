@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getAccountForUser } from '@/lib/account'
 import DealNotificationBanner from '@/components/DealNotificationBanner'
 import TimeframeBar from '@/components/TimeframeBar'
+import AppDownloadBanner from '@/components/AppDownloadBanner'
 import LtvDefaultValueInput from './LtvDefaultValueInput'
 import type { ReactNode } from 'react'
 
@@ -346,7 +347,10 @@ export default async function DashboardPage({
                 {periodLabel}
               </p>
             </div>
-            <TimeframeBar active={timeframe} />
+            <div className="flex items-center gap-3">
+              <TimeframeBar active={timeframe} />
+              <AppDownloadBanner />
+            </div>
           </div>
         </div>
 

@@ -20,6 +20,7 @@
     "next": "14.2.30",
     "nodemailer": "^8.0.1",
     "openai": "^4.97.0",
+    "qrcode.react": "^4.2.0",
     "react": "^18",
     "react-dom": "^18",
     "react-image-crop": "^11.0.10",
