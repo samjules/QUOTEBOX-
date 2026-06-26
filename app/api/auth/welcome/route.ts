@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
   }
 
   await scheduleOwnerOnboarding(accountId)
-  processDueOwnerSteps().catch(console.error)
+  await processDueOwnerSteps()
 
   return NextResponse.json({ ok: true })
 }
