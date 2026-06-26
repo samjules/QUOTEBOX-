@@ -5,16 +5,24 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '11px 14px', borderRadius: 9,
+  border: '1.5px solid #e2e8f0', fontSize: '0.95rem', outline: 'none',
+  boxSizing: 'border-box', color: '#0e0020', fontFamily: 'inherit',
+}
+
 function SignupForm() {
   const router = useRouter()
+  const [step, setStep] = useState<'account' | 'phone'>('account')
   const [businessName, setBusinessName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [phone, setPhone] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [hype, setHype] = useState(false)
 
-  async function handleSubmit() {
+  async function handleAccountSubmit() {
     setError('')
     if (!businessName.trim()) { setError('Business name is required'); return }
     if (!email.trim()) { setError('Email is required'); return }
@@ -44,12 +52,30 @@ function SignupForm() {
       .insert([{ account_id: newAccount.id, credit_balance: 0, total_spent: 0 }])
 
     setLoading(false)
+    setStep('phone')
+  }
+
+  async function handlePhoneSubmit() {
+    setLoading(true)
+    try {
+      await fetch('/api/auth/welcome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phone.trim() || null }),
+      })
+    } catch {
+      // non-fatal — continue to onboarding regardless
+    }
+    setLoading(false)
     setHype(true)
     setTimeout(() => router.push('/onboarding'), 2200)
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') handleSubmit()
+    if (e.key === 'Enter') {
+      if (step === 'account') handleAccountSubmit()
+      else handlePhoneSubmit()
+    }
   }
 
   if (hype) {
@@ -75,7 +101,6 @@ function SignupForm() {
           }
         `}</style>
 
-        {/* Truck SVG */}
         <div style={{ marginBottom: 32, animation: 'hype-in 0.5s ease both' }}>
           <svg width="72" height="52" viewBox="0 0 36 26" fill="none" stroke="#ffe500" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <rect x="1" y="2" width="19" height="15" rx="2" />
@@ -85,7 +110,6 @@ function SignupForm() {
           </svg>
         </div>
 
-        {/* Headline */}
         <div style={{
           fontSize: 'clamp(2rem, 6vw, 3.2rem)', fontWeight: 900,
           color: '#ffe500', lineHeight: 1.05, letterSpacing: '-0.03em',
@@ -95,7 +119,6 @@ function SignupForm() {
           Account created.
         </div>
 
-        {/* Hype line */}
         <div style={{
           fontSize: 'clamp(1rem, 3vw, 1.35rem)', fontWeight: 600,
           color: 'rgba(255,255,255,0.85)', lineHeight: 1.4,
@@ -111,7 +134,6 @@ function SignupForm() {
           Setting up your dashboard now…
         </div>
 
-        {/* Progress bar */}
         <div style={{
           marginTop: 40, width: 200, height: 3,
           background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden',
@@ -164,97 +186,157 @@ function SignupForm() {
       {/* Right form panel */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '48px 24px', background: '#fff' }}>
         <div style={{ width: '100%', maxWidth: 420 }}>
-          <h2 style={{ fontSize: '1.7rem', fontWeight: 800, color: '#0e0020', marginBottom: 6 }}>
-            Create your account
-          </h2>
-          <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: 32 }}>
-            Get set up in minutes — no credit card required.
-          </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#374151', marginBottom: 6 }}>
-                Business Name <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <input
-                type="text"
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Smith Moving Co."
-                autoFocus
-                style={{
-                  width: '100%', padding: '11px 14px', borderRadius: 9,
-                  border: '1.5px solid #e2e8f0', fontSize: '0.95rem', outline: 'none',
-                  boxSizing: 'border-box' as const, color: '#0e0020', fontFamily: 'inherit',
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#374151', marginBottom: 6 }}>
-                Email address <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <input
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="you@example.com"
-                style={{
-                  width: '100%', padding: '11px 14px', borderRadius: 9,
-                  border: '1.5px solid #e2e8f0', fontSize: '0.95rem', outline: 'none',
-                  boxSizing: 'border-box' as const, color: '#0e0020', fontFamily: 'inherit',
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#374151', marginBottom: 6 }}>
-                Password <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <input
-                type="password"
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="At least 6 characters"
-                style={{
-                  width: '100%', padding: '11px 14px', borderRadius: 9,
-                  border: '1.5px solid #e2e8f0', fontSize: '0.95rem', outline: 'none',
-                  boxSizing: 'border-box' as const, color: '#0e0020', fontFamily: 'inherit',
-                }}
-              />
-            </div>
-
-            {error && (
-              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px' }}>
-                <p style={{ fontSize: '0.84rem', color: '#dc2626', margin: 0 }}>{error}</p>
+          {step === 'account' ? (
+            <>
+              {/* Step indicator */}
+              <div style={{ display: 'flex', gap: 6, marginBottom: 28 }}>
+                <div style={{ height: 3, flex: 1, borderRadius: 2, background: '#0e0020' }} />
+                <div style={{ height: 3, flex: 1, borderRadius: 2, background: '#e2e8f0' }} />
               </div>
-            )}
 
-            <button
-              onClick={handleSubmit}
-              disabled={loading}
-              style={{
-                width: '100%', padding: '13px', borderRadius: 9, border: 'none',
-                background: '#0e0020', color: '#ffe500', fontSize: '0.95rem', fontWeight: 700,
-                cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
-                opacity: loading ? 0.6 : 1, letterSpacing: '0.01em', marginTop: 4,
-              }}
-            >
-              {loading ? 'Creating account…' : 'Create account →'}
-            </button>
+              <h2 style={{ fontSize: '1.7rem', fontWeight: 800, color: '#0e0020', marginBottom: 6 }}>
+                Create your account
+              </h2>
+              <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: 32 }}>
+                Get set up in minutes — no credit card required.
+              </p>
 
-            <p style={{ textAlign: 'center', fontSize: '0.84rem', color: '#94a3b8', margin: 0 }}>
-              Already have an account?{' '}
-              <Link href="/login" style={{ color: '#0e0020', fontWeight: 600, textDecoration: 'underline' }}>
-                Sign in
-              </Link>
-            </p>
-          </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+                    Business Name <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={businessName}
+                    onChange={(e) => setBusinessName(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Smith Moving Co."
+                    autoFocus
+                    style={inputStyle}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+                    Email address <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <input
+                    type="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="you@example.com"
+                    style={inputStyle}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+                    Password <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <input
+                    type="password"
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="At least 6 characters"
+                    style={inputStyle}
+                  />
+                </div>
+
+                {error && (
+                  <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px' }}>
+                    <p style={{ fontSize: '0.84rem', color: '#dc2626', margin: 0 }}>{error}</p>
+                  </div>
+                )}
+
+                <button
+                  onClick={handleAccountSubmit}
+                  disabled={loading}
+                  style={{
+                    width: '100%', padding: '13px', borderRadius: 9, border: 'none',
+                    background: '#0e0020', color: '#ffe500', fontSize: '0.95rem', fontWeight: 700,
+                    cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+                    opacity: loading ? 0.6 : 1, letterSpacing: '0.01em', marginTop: 4,
+                  }}
+                >
+                  {loading ? 'Creating account…' : 'Continue →'}
+                </button>
+
+                <p style={{ textAlign: 'center', fontSize: '0.84rem', color: '#94a3b8', margin: 0 }}>
+                  Already have an account?{' '}
+                  <Link href="/login" style={{ color: '#0e0020', fontWeight: 600, textDecoration: 'underline' }}>
+                    Sign in
+                  </Link>
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Step indicator */}
+              <div style={{ display: 'flex', gap: 6, marginBottom: 28 }}>
+                <div style={{ height: 3, flex: 1, borderRadius: 2, background: '#0e0020' }} />
+                <div style={{ height: 3, flex: 1, borderRadius: 2, background: '#0e0020' }} />
+              </div>
+
+              <h2 style={{ fontSize: '1.7rem', fontWeight: 800, color: '#0e0020', marginBottom: 6 }}>
+                One more thing
+              </h2>
+              <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: 32 }}>
+                Add your phone number so we can send you lead alerts and updates via SMS.
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+                    Phone number
+                  </label>
+                  <input
+                    type="tel"
+                    autoComplete="tel"
+                    autoFocus
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="(555) 867-5309"
+                    style={inputStyle}
+                  />
+                  <p style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 6 }}>
+                    Optional — you can add this later in settings.
+                  </p>
+                </div>
+
+                <button
+                  onClick={handlePhoneSubmit}
+                  disabled={loading}
+                  style={{
+                    width: '100%', padding: '13px', borderRadius: 9, border: 'none',
+                    background: '#0e0020', color: '#ffe500', fontSize: '0.95rem', fontWeight: 700,
+                    cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+                    opacity: loading ? 0.6 : 1, letterSpacing: '0.01em',
+                  }}
+                >
+                  {loading ? 'Finishing up…' : 'Finish setup →'}
+                </button>
+
+                <button
+                  onClick={() => handlePhoneSubmit()}
+                  disabled={loading}
+                  style={{
+                    width: '100%', padding: '11px', borderRadius: 9, border: '1.5px solid #e2e8f0',
+                    background: 'transparent', color: '#64748b', fontSize: '0.88rem', fontWeight: 600,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  Skip for now
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
