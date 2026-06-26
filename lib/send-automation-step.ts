@@ -27,13 +27,16 @@ export function buildAutomationEmail(params: {
   trackedFormUrl?: string | null
   accentColor?: string | null
   customCopy?: StepCopy | null
+  hideCta?: boolean
 }): { subject: string; html: string } {
   const { name, businessName, formUrl, step, discountPercent, heroImageUrl, trackingPixelUrl, trackedFormUrl } = params
   const accentColor = params.accentColor || '#5b50d6'
   const btnStyle = `display:inline-block;background:${accentColor};color:#fff;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:700;text-decoration:none;`
 
   const ctaUrl = trackedFormUrl ?? formUrl
-  const ctaBlock = ctaUrl
+  const ctaBlock = params.hideCta
+    ? ''
+    : ctaUrl
     ? `<div style="text-align:center;margin:28px 0;">
         <a href="${esc(ctaUrl)}" style="${btnStyle}">Get My Free Estimate →</a>
        </div>`
@@ -48,12 +51,19 @@ export function buildAutomationEmail(params: {
     : ''
 
   const configs = {
-    initial_contact: {
-      subject: `Hi ${name}, get your free estimate from ${businessName}`,
-      heading: `We'd love to give you a free quote!`,
-      body: `Thanks for reaching out to <strong>${esc(businessName)}</strong>! We saw your inquiry and want to make it easy for you to get an instant estimate — no phone calls needed, just answer a few quick questions.`,
-      outro: `We'll follow up once you submit. Takes less than 2 minutes!`,
-    },
+    initial_contact: params.hideCta
+      ? {
+          subject: `Thanks for booking with ${businessName}!`,
+          heading: `You're all set!`,
+          body: `We've received your details at <strong>${esc(businessName)}</strong> and will be in touch with you shortly.`,
+          outro: `Looking forward to working with you!`,
+        }
+      : {
+          subject: `Hi ${name}, get your free estimate from ${businessName}`,
+          heading: `We'd love to give you a free quote!`,
+          body: `Thanks for reaching out to <strong>${esc(businessName)}</strong>! We saw your inquiry and want to make it easy for you to get an instant estimate — no phone calls needed, just answer a few quick questions.`,
+          outro: `We'll follow up once you submit. Takes less than 2 minutes!`,
+        },
     day1_followup: {
       subject: `Still need a quote? We're here, ${name}`,
       heading: `Just checking in!`,
@@ -135,11 +145,15 @@ export function buildSmsText(params: {
   formUrl: string | null
   step: 'initial_contact' | 'day1_followup' | 'discount_offer'
   discountPercent: number
+  isFormLead?: boolean
 }): string {
   const { name, businessName, formUrl, step, discountPercent } = params
   const link = formUrl ? ` ${formUrl}` : ''
-  if (step === 'initial_contact')
+  if (step === 'initial_contact') {
+    if (params.isFormLead)
+      return `Hi ${name}! Thanks for booking with ${businessName}. We'll be in touch with you shortly.`
     return `Hi ${name}! ${businessName} would love to give you a free instant estimate. Get yours here:${link}`
+  }
   if (step === 'day1_followup')
     return `Hey ${name}, still need a quote from ${businessName}? We're here whenever you're ready.${link}`
   return `Hi ${name}! ${businessName} is offering you ${discountPercent}% off your first booking. Mention this text when you reach out.${link}`
@@ -159,6 +173,7 @@ export async function sendAutomationStep(params: {
   accentColor?: string | null
   customCopy?: StepCopy | null
   smsOptIn?: boolean
+  formType?: string | null
 }) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://quote-box.com'
   const trackBase = `${siteUrl}/api/automations/track`
@@ -177,6 +192,9 @@ export async function sendAutomationStep(params: {
     ? `${trackBase}?e=c&a=${params.accountId}&l=${params.leadId}&s=${params.step}&r=${encodeURIComponent(destinationUrl)}`
     : null
 
+  const isFormLead = params.formType !== 'meta_lead_form' && params.formType != null
+  const hideCta = isFormLead && params.step === 'initial_contact'
+
   const emailParams = {
     name: params.name,
     businessName: params.businessName,
@@ -188,6 +206,7 @@ export async function sendAutomationStep(params: {
     customCopy: params.customCopy ?? null,
     trackingPixelUrl,
     trackedFormUrl,
+    hideCta,
   }
 
   if (params.email) {
@@ -208,7 +227,7 @@ export async function sendAutomationStep(params: {
   }
 
   if (params.phone && params.smsOptIn) {
-    const smsText = buildSmsText(emailParams)
+    const smsText = buildSmsText({ ...emailParams, isFormLead })
     await sendSms(params.phone, smsText)
   }
 }

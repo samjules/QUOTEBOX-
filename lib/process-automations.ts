@@ -41,7 +41,7 @@ export async function processDueSteps(accountId?: string): Promise<number> {
 
     const { data: lead } = await admin
       .from('leads')
-      .select('name, email, phone, status, form_data, hosted_form_id')
+      .select('name, email, phone, status, form_data, hosted_form_id, form_type')
       .eq('id', step.lead_id)
       .single()
 
@@ -123,6 +123,7 @@ export async function processDueSteps(accountId?: string): Promise<number> {
       accentColor: automationConfig?.accent_color ?? null,
       customCopy: (automationConfig?.email_copy as Record<string, unknown> | null)?.[step.step as string] as import('@/lib/send-automation-step').StepCopy ?? null,
       smsOptIn: (lead.form_data as Record<string, unknown> | null)?._sms_opt_in === true,
+      formType: lead.form_type ?? null,
     })
 
     processed++
