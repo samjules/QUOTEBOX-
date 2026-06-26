@@ -394,13 +394,7 @@ export default async function DashboardPage({
             <FormPreviewCard slug={firstFormSlug} />
           )}
 
-          {/* Welcome gift banner — shown while onboarding is in progress */}
-          {!onboardingComplete && <WelcomeGiftBanner />}
-
-          {/* Lead usage banner */}
-          {!blessed && <LeadUsageBanner plan={plan} monthlyLeads={monthlyLeads} />}
-
-          {/* Launch runway */}
+          {/* Onboarding checklist — single consolidated card */}
           {!onboardingComplete && (
             <LaunchRunway
               hasForm={hasForm}
@@ -409,6 +403,9 @@ export default async function DashboardPage({
               hasCampaign={hasCampaign}
             />
           )}
+
+          {/* Lead usage banner — only shown when on a paid plan */}
+          {!blessed && plan && <LeadUsageBanner plan={plan} monthlyLeads={monthlyLeads} />}
 
           {/* Today at a Glance */}
           <DailyView todayLeads={todayLeads} todayAppointments={todayAppointments} />
@@ -784,48 +781,6 @@ function FormPreviewCard({ slug }: { slug: string }) {
 
 // ── Welcome Gift Banner ───────────────────────────────────────
 
-function WelcomeGiftBanner() {
-  return (
-    <div style={{
-      background: '#fff',
-      border: '1px solid #e8e8ec',
-      borderRadius: 14,
-      padding: '18px 22px',
-      display: 'flex', alignItems: 'center', gap: 18,
-      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-    }}>
-      <div style={{ flexShrink: 0, width: 36, height: 36, borderRadius: 10, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#374151" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="8" width="18" height="13" rx="1" />
-          <path d="M21 8H3V6a1 1 0 011-1h16a1 1 0 011 1v2z" />
-          <path d="M12 5v16" />
-          <path d="M12 5c0-1.7-1-2.5-2-2.5S8 3.5 8 5h4z" />
-          <path d="M12 5c0-1.7 1-2.5 2-2.5S16 3.5 16 5h-4z" />
-        </svg>
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#111', marginBottom: 3 }}>
-          New member offer — first month free
-        </div>
-        <div style={{ fontSize: '0.78rem', color: '#6b7280', lineHeight: 1.5 }}>
-          Add a payment card and get your first Meta lead within 7 days — we&apos;ll credit your entire first month.
-        </div>
-      </div>
-      <Link
-        href="/billing"
-        style={{
-          flexShrink: 0, padding: '9px 18px', borderRadius: 8,
-          background: '#111', color: '#fff',
-          fontSize: '0.78rem', fontWeight: 700, textDecoration: 'none',
-          whiteSpace: 'nowrap' as const,
-        }}
-      >
-        Add card →
-      </Link>
-    </div>
-  )
-}
-
 // ── Launch Runway ─────────────────────────────────────────────
 
 function IconCheck() {
@@ -1145,28 +1100,9 @@ function LeadUsageBanner({
   plan,
   monthlyLeads,
 }: {
-  plan: string | null
+  plan: string
   monthlyLeads: number
 }) {
-  if (!plan) {
-    return (
-      <div className="rounded-lg p-5 flex items-center justify-between bg-yellow-50 border border-yellow-300">
-        <div className="flex items-center gap-3">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-yellow-500 flex-shrink-0">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-          </svg>
-          <div>
-            <p className="font-semibold text-sm text-yellow-800">No active subscription</p>
-            <p className="text-sm text-yellow-700">Subscribe to a plan to start receiving leads.</p>
-          </div>
-        </div>
-        <Link href="/billing" className="ml-4 flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold bg-yellow-500 text-white hover:bg-yellow-600 transition">
-          View Plans
-        </Link>
-      </div>
-    )
-  }
-
   if (plan === 'fully_managed' || plan === 'pay_per_lead') {
     const accrued = monthlyLeads * 15
     const label = plan === 'pay_per_lead' ? 'Pay Per Lead' : 'Fully Managed'

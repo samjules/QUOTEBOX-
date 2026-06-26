@@ -223,7 +223,7 @@ export default function PublicWizard({ totalBookedRevenue }: { totalBookedRevenu
     fetch('/api/auth/welcome', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: phone.trim() || null }),
+      body: JSON.stringify({ account_id: accountId, phone: phone.trim() || null }),
     }).catch(() => {})
 
     // 5. Upload hero image if provided

@@ -18,6 +18,7 @@ function SignupForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [phone, setPhone] = useState('')
+  const [accountId, setAccountId] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [hype, setHype] = useState(false)
@@ -51,6 +52,7 @@ function SignupForm() {
       .from('billing')
       .insert([{ account_id: newAccount.id, credit_balance: 0, total_spent: 0 }])
 
+    setAccountId(newAccount.id)
     setLoading(false)
     setStep('phone')
   }
@@ -61,7 +63,7 @@ function SignupForm() {
       await fetch('/api/auth/welcome', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: phone.trim() || null }),
+        body: JSON.stringify({ account_id: accountId, phone: phone.trim() || null }),
       })
     } catch {
       // non-fatal — continue to onboarding regardless
