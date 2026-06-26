@@ -141,6 +141,7 @@ export default function PublicWizard({ totalBookedRevenue }: { totalBookedRevenu
 
   // Step 8 — signup gate
   const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
@@ -218,7 +219,14 @@ export default function PublicWizard({ totalBookedRevenue }: { totalBookedRevenu
     // 3. Seed billing
     await supabase.from('billing').insert([{ account_id: accountId, credit_balance: 0, total_spent: 0 }])
 
-    // 4. Upload hero image if provided
+    // 4. Save phone + trigger welcome automation
+    fetch('/api/auth/welcome', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: phone.trim() || null }),
+    }).catch(() => {})
+
+    // 5. Upload hero image if provided
     let heroImageUrl = ''
     if (heroFile) {
       const ext = heroFile.name.split('.').pop()?.toLowerCase() ?? 'jpg'
@@ -656,6 +664,13 @@ export default function PublicWizard({ totalBookedRevenue }: { totalBookedRevenu
               />
             </div>
             <div>
+              <label style={fieldLabel}>Phone number</label>
+              <input
+                style={inputStyle} type="tel" placeholder="(555) 867-5309"
+                value={phone} onChange={(e) => setPhone(e.target.value)}
+              />
+            </div>
+            <div>
               <label style={fieldLabel}>Password</label>
               <input
                 style={inputStyle} type="password" placeholder="At least 6 characters"
@@ -674,6 +689,9 @@ export default function PublicWizard({ totalBookedRevenue }: { totalBookedRevenu
             <a href="/terms" target="_blank" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>Terms of Service</a>
             {' '}and{' '}
             <a href="/privacy" target="_blank" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>Privacy Policy</a>.
+            {phone.trim() && (
+              <span> By providing your phone number you consent to receive SMS messages from QuoteBox about your account. Message &amp; data rates may apply. Reply STOP to opt out.</span>
+            )}
           </div>
         </div>
         <div style={footerStyle}>
