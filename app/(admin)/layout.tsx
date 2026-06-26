@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import AdminSidebar from '@/components/AdminSidebar'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
@@ -15,5 +16,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect('/dashboard')
   }
 
-  return <>{children}</>
+  return (
+    <div className="flex h-screen overflow-hidden" style={{ background: '#f4f4f6' }}>
+      <AdminSidebar />
+      <div className="flex-1 overflow-auto flex flex-col">{children}</div>
+    </div>
+  )
 }
