@@ -45,10 +45,11 @@ export default function LoginPage() {
         <div>
           <div className="flex justify-center">
             <Image
-              src="/lead-machine.png"
-              alt="Log into the Lead Machine"
-              width={300}
-              height={300}
+              src="/quotebox_icon.png"
+              alt="QuoteBox"
+              width={96}
+              height={96}
+              className="rounded-2xl"
             />
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
