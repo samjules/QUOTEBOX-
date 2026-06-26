@@ -105,9 +105,7 @@ export async function processDueSteps(accountId?: string): Promise<number> {
       if (slug) formUrl = `${siteUrl}/${slug}`
     }
 
-    const heroImageUrl = automationConfig?.hero_image_url
-      ? `${siteUrl}${automationConfig.hero_image_url}`
-      : null
+    const heroImageUrl = automationConfig?.hero_image_url ?? null
 
     await sendAutomationStep({
       email: lead.email,

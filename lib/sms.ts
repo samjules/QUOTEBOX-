@@ -1,4 +1,4 @@
-export async function sendSms(to: string, body: string): Promise<boolean> {
+export async function sendSms(to: string, body: string, mediaUrl?: string | null): Promise<boolean> {
   const accountSid = process.env.TWILIO_ACCOUNT_SID
   const authToken = process.env.TWILIO_AUTH_TOKEN
   const from = process.env.TWILIO_PHONE_NUMBER
@@ -10,6 +10,9 @@ export async function sendSms(to: string, body: string): Promise<boolean> {
   const e164 = digits.startsWith('1') ? `+${digits}` : `+1${digits}`
 
   try {
+    const params: Record<string, string> = { From: from, To: e164, Body: body }
+    if (mediaUrl) params.MediaUrl = mediaUrl
+
     const res = await fetch(
       `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
       {
@@ -18,7 +21,7 @@ export async function sendSms(to: string, body: string): Promise<boolean> {
           Authorization: 'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64'),
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({ From: from, To: e164, Body: body }).toString(),
+        body: new URLSearchParams(params).toString(),
       }
     )
     return res.ok

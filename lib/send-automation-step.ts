@@ -228,6 +228,6 @@ export async function sendAutomationStep(params: {
 
   if (params.phone && params.smsOptIn) {
     const smsText = buildSmsText({ ...emailParams, isFormLead })
-    await sendSms(params.phone, smsText)
+    await sendSms(params.phone, smsText, params.heroImageUrl ?? null)
   }
 }

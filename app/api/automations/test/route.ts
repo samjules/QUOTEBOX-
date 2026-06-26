@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
   // Fetch lead — verify it belongs to this account
   const { data: lead } = await admin
     .from('leads')
-    .select('id, name, email, phone, hosted_form_id')
+    .select('id, name, email, phone, hosted_form_id, form_type, form_data')
     .eq('id', lead_id)
     .eq('account_id', accountId)
     .single()
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
   const [{ data: account }, { data: automationConfig }] = await Promise.all([
     admin.from('accounts').select('business_name').eq('id', accountId).single(),
-    admin.from('lead_automations').select('discount_percent, hero_image_url').eq('account_id', accountId).single(),
+    admin.from('lead_automations').select('discount_percent, hero_image_url, accent_color').eq('account_id', accountId).single(),
   ])
 
   // Get form URL — prefer the lead's own form, fall back to the account's first active form
@@ -67,9 +67,7 @@ export async function POST(request: NextRequest) {
   const slug = (formData?.form_config as { slug?: string } | null)?.slug
   if (slug) formUrl = `${siteUrl}/${slug}`
 
-  const heroImageUrl = automationConfig?.hero_image_url
-    ? `${siteUrl}${automationConfig.hero_image_url}`
-    : null
+  const heroImageUrl = automationConfig?.hero_image_url ?? null
 
   const commonParams = {
     email: lead.email,
@@ -79,8 +77,11 @@ export async function POST(request: NextRequest) {
     formUrl,
     discountPercent: automationConfig?.discount_percent ?? 10,
     heroImageUrl,
+    accentColor: automationConfig?.accent_color ?? null,
     leadId: lead_id,
     accountId,
+    formType: lead.form_type ?? null,
+    smsOptIn: (lead.form_data as Record<string, unknown> | null)?._sms_opt_in === true,
   }
 
   const results: { step: string; ok: boolean; error?: string }[] = []
