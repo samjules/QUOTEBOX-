@@ -349,7 +349,6 @@ export default async function DashboardPage({
             </div>
             <div className="flex items-center gap-3">
               <TimeframeBar active={timeframe} />
-              <AppDownloadBanner />
             </div>
           </div>
         </div>
@@ -866,6 +865,14 @@ function LaunchRunway({
         desc: 'Truck\'s loaded, route\'s set. Hit launch and the calls start coming in.',
       },
     },
+    {
+      key: 'consult', label: 'Book a\nConsultation', done: false,
+      cta: {
+        label: 'Book a call',
+        href: '/get-started',
+        desc: 'Hop on a free 15-min call with us — we\'ll set up your ads and get leads flowing.',
+      },
+    },
     { key: 'lead', label: 'First Job\nRequest', done: false, isGoal: true },
   ]
 
@@ -889,7 +896,7 @@ function LaunchRunway({
       <div style={{ padding: '20px 22px 16px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
         <div>
           <div style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#9ca3af', marginBottom: 4 }}>
-            Setup checklist
+            Checklist to start getting leads
           </div>
           <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#111', lineHeight: 1.3 }}>
             {waitingForLead ? 'Ads are running — first lead is on the way.' : headline}
