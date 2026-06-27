@@ -252,9 +252,9 @@ export default function PublicWizard({ totalBookedRevenue }: { totalBookedRevenu
     const formConfig = {
       slug,
       description: `Get an instant quote for your ${SERVICE_TYPES.find(s => s.id === serviceType)!.label.toLowerCase()} job.`,
-      submit_label: 'Get My Instant Quote',
+      submit_label: 'Get My Quote →',
       currency: '$', brand_color: brandColor,
-      show_total: true, quote_display: 'live',
+      show_total: true, quote_display: 'after_submit',
       hero_image_url: heroImageUrl, fields,
       min_quote: minVal,
       disclaimer_enabled: true,

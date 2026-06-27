@@ -1926,7 +1926,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
                   textAlign: 'left',
                 }}>
                   <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    {config.total_label || (effectiveDisplay === 'after_submit' ? 'Your Estimated Quote' : 'Estimated Total')}
+                    {config.total_label || (effectiveDisplay === 'after_submit' ? 'Your Quote' : 'Estimated Total')}
                   </div>
 
                   {/* Line-item breakdown */}
@@ -1963,7 +1963,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
                     borderTop: lineItems.length > 0 ? '2px solid rgba(0,0,0,0.08)' : 'none',
                   }}>
                     <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      Total
+                      {effectiveDisplay === 'after_submit' ? 'Starting at' : 'Total'}
                     </span>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>

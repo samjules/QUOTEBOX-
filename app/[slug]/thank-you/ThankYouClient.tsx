@@ -156,7 +156,7 @@ export default function ThankYouClient({ form }: { form: HostedForm }) {
               textAlign: 'left',
             }}>
               <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                {config.total_label || 'Your Estimated Quote'}
+                {config.total_label || (effectiveDisplay === 'after_submit' ? 'Starting at' : 'Your Estimated Quote')}
               </div>
               <div style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>
                 {currency}{total.toFixed(2)}
