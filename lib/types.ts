@@ -89,6 +89,7 @@ export interface QuizResult {
   body: string
   discount: string
   cta_label: string
+  image_url?: string
 }
 
 export interface QuizConfig {

@@ -461,7 +461,19 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced, onDone
               </div>
             </div>
             <div style={{ height: 480, overflow: 'hidden' }}>
-              <QuizBuilder config={quizConfig} onChange={setQuizConfig} brandColor={brandColor} />
+              <QuizBuilder
+                config={quizConfig}
+                onChange={setQuizConfig}
+                brandColor={brandColor}
+                onUploadImage={async (file) => {
+                  const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+                  const path = `${accountId}/${Date.now()}-${fid()}.${ext}`
+                  const { data, error } = await supabase.storage.from('vsls').upload(path, file, { contentType: file.type, upsert: false })
+                  if (error || !data) throw error
+                  const { data: { publicUrl } } = supabase.storage.from('vsls').getPublicUrl(data.path)
+                  return publicUrl
+                }}
+              />
             </div>
           </div>
           <div style={footerStyle}>

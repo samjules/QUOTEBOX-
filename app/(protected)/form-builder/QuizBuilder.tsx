@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import type { QuizConfig, QuizNode, QuizAnswer, QuizResult } from '@/lib/types'
 
 function uid() {
@@ -51,12 +51,16 @@ export default function QuizBuilder({
   config,
   onChange,
   brandColor,
+  onUploadImage,
 }: {
   config: QuizConfig
   onChange: (c: QuizConfig) => void
   brandColor: string
+  onUploadImage?: (file: File) => Promise<string>
 }) {
   const [selectedId, setSelectedId] = useState<string>(config.start)
+  const [imageUploading, setImageUploading] = useState(false)
+  const imageFileRef = useRef<HTMLInputElement>(null)
 
   const nodeIds = Object.keys(config.nodes)
   const resultIds = Object.keys(config.results)
@@ -136,6 +140,19 @@ export default function QuizBuilder({
   const updateResult = useCallback((id: string, updates: Partial<QuizResult>) => {
     onChange({ ...config, results: { ...config.results, [id]: { ...config.results[id], ...updates } } })
   }, [config, onChange])
+
+  async function handleImageFile(resultId: string, file: File) {
+    if (!onUploadImage) return
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+    if (!['jpg', 'jpeg', 'png', 'webp'].includes(ext) || file.size > 5 * 1024 * 1024) return
+    setImageUploading(true)
+    try {
+      const url = await onUploadImage(file)
+      updateResult(resultId, { image_url: url })
+    } finally {
+      setImageUploading(false)
+    }
+  }
 
   const accent = brandColor || '#FFE500'
   const selectedNode = selectedId && !selectedId.startsWith('result_') ? config.nodes[selectedId] : null
@@ -296,6 +313,60 @@ export default function QuizBuilder({
             <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 20 }}>Result card</div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {onUploadImage && (
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
+                    Card image <span style={{ fontWeight: 400, color: '#94a3b8' }}>(optional)</span>
+                  </label>
+                  <input
+                    ref={imageFileRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    style={{ display: 'none' }}
+                    onChange={e => {
+                      const f = e.target.files?.[0]
+                      if (f) handleImageFile(selectedResultId, f)
+                      e.target.value = ''
+                    }}
+                  />
+                  {selectedResult.image_url ? (
+                    <div style={{ borderRadius: 10, overflow: 'hidden', border: '1.5px solid #e2e8f0' }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={selectedResult.image_url} alt="Card" style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block' }} />
+                      <div style={{ display: 'flex', gap: 6, padding: '7px 10px', background: '#f8fafc' }}>
+                        <button
+                          onClick={() => imageFileRef.current?.click()}
+                          disabled={imageUploading}
+                          style={{ flex: 1, padding: '6px 0', borderRadius: 6, border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.75rem', cursor: 'pointer', color: '#374151' }}
+                        >
+                          Change
+                        </button>
+                        <button
+                          onClick={() => updateResult(selectedResultId, { image_url: '' })}
+                          style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.75rem', cursor: 'pointer', color: '#94a3b8' }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => imageFileRef.current?.click()}
+                      disabled={imageUploading}
+                      style={{ display: 'block', width: '100%', padding: '28px 16px', borderRadius: 10, border: '1.5px dashed #cbd5e1', background: '#f8fafc', cursor: imageUploading ? 'wait' : 'pointer', textAlign: 'center' as const, boxSizing: 'border-box' }}
+                    >
+                      {imageUploading ? (
+                        <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Uploading…</div>
+                      ) : (
+                        <>
+                          <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#374151', marginBottom: 3 }}>Upload an image</div>
+                          <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>JPG, PNG or WebP — max 5 MB</div>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              )}
               <div>
                 <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Headline</label>
                 <input
@@ -341,16 +412,22 @@ export default function QuizBuilder({
             {/* Preview */}
             <div style={{ marginTop: 28, padding: '20px', background: '#f8fafc', borderRadius: 14, border: '1px solid #e2e8f0' }}>
               <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Preview</div>
-              <div style={{ background: '#fff', borderRadius: 12, padding: '20px', border: '1px solid #e2e8f0' }}>
-                <div style={{ fontWeight: 800, fontSize: '1.1rem', color: '#0f172a', marginBottom: 8 }}>{selectedResult.headline || '(headline)'}</div>
-                <div style={{ fontSize: '0.85rem', color: '#475569', lineHeight: 1.6, marginBottom: selectedResult.discount ? 14 : 16 }}>{selectedResult.body || '(body text)'}</div>
-                {selectedResult.discount && (
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: `${accent}18`, border: `1.5px solid ${accent}50`, borderRadius: 8, padding: '7px 12px', marginBottom: 14 }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0f172a' }}>{selectedResult.discount}</span>
-                  </div>
+              <div style={{ background: '#fff', borderRadius: 12, overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+                {selectedResult.image_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={selectedResult.image_url} alt="Card" style={{ width: '100%', height: 130, objectFit: 'cover', display: 'block' }} />
                 )}
-                <div style={{ padding: '10px', background: accent, borderRadius: 8, textAlign: 'center', fontSize: '0.85rem', fontWeight: 700, color: '#0f172a' }}>
-                  {selectedResult.cta_label || 'Book My Free Estimate →'}
+                <div style={{ padding: '20px' }}>
+                  <div style={{ fontWeight: 800, fontSize: '1.1rem', color: '#0f172a', marginBottom: 8 }}>{selectedResult.headline || '(headline)'}</div>
+                  <div style={{ fontSize: '0.85rem', color: '#475569', lineHeight: 1.6, marginBottom: selectedResult.discount ? 14 : 16 }}>{selectedResult.body || '(body text)'}</div>
+                  {selectedResult.discount && (
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: `${accent}18`, border: `1.5px solid ${accent}50`, borderRadius: 8, padding: '7px 12px', marginBottom: 14 }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0f172a' }}>{selectedResult.discount}</span>
+                    </div>
+                  )}
+                  <div style={{ padding: '10px', background: accent, borderRadius: 8, textAlign: 'center', fontSize: '0.85rem', fontWeight: 700, color: '#0f172a' }}>
+                    {selectedResult.cta_label || 'Book My Free Estimate →'}
+                  </div>
                 </div>
               </div>
             </div>

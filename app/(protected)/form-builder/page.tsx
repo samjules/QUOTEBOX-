@@ -3462,7 +3462,20 @@ export default function FormBuilderPage() {
         {/* ── CANVAS ── */}
         <main className="canvas">
           {quizMode && quizConfig ? (
-            <QuizBuilder config={quizConfig} onChange={setQuizConfig} brandColor={brandColor} />
+            <QuizBuilder
+              config={quizConfig}
+              onChange={setQuizConfig}
+              brandColor={brandColor}
+              onUploadImage={async (file) => {
+                if (!accountId) throw new Error('Not logged in')
+                const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+                const storagePath = `${accountId}/${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${ext}`
+                const { data, error } = await supabase.storage.from('vsls').upload(storagePath, file, { contentType: file.type, upsert: false })
+                if (error || !data) throw error
+                const { data: { publicUrl } } = supabase.storage.from('vsls').getPublicUrl(data.path)
+                return publicUrl
+              }}
+            />
           ) : null}
           <div className="canvas-inner" style={quizMode ? { display: 'none' } : undefined}>
             {/* Step tabs */}
