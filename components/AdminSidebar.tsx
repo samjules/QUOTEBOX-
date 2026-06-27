@@ -25,6 +25,10 @@ const navItems: NavItem[] = [
     icon: <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
   },
   {
+    href: '/admin/meta-mockup', label: 'Meta Mockup', group: 1,
+    icon: <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 18.5A2.5 2.5 0 1012 13.5 2.5 2.5 0 0012 18.5zM12 13.5V7m0 0l-3 3m3-3l3 3" /><rect x="3" y="3" width="18" height="18" rx="3" strokeWidth={1.75}/></svg>,
+  },
+  {
     href: '/dashboard', label: 'Back to App', group: 2,
     icon: <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
   },
