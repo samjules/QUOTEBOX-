@@ -62,26 +62,12 @@ export default async function LeadsPage({ searchParams }: { searchParams: { tab?
     return <div className="p-8 text-red-600">No account found. Please contact support.</div>
   }
 
-  const { data: billingData } = await admin
-    .from('billing')
-    .select('plan, trial_ends_at, blessed')
+  await admin
+    .from('leads')
+    .update({ status: 'new' })
     .eq('account_id', account.id)
-    .single()
-
-  const plan = billingData?.plan ?? null
-  const trialEndsAt = billingData?.trial_ends_at ?? null
-  const isOnTrial = trialEndsAt ? new Date(trialEndsAt) > new Date() : false
-  const blessed = billingData?.blessed === true
-  const hasAccess = blessed || plan !== null
-
-  if (hasAccess) {
-    await admin
-      .from('leads')
-      .update({ status: 'new' })
-      .eq('account_id', account.id)
-      .eq('status', 'held')
-      .select('id')
-  }
+    .eq('status', 'held')
+    .select('id')
 
   const { data: allLeads } = await admin
     .from('leads')
@@ -91,15 +77,13 @@ export default async function LeadsPage({ searchParams }: { searchParams: { tab?
 
   const leads: Lead[] = allLeads ?? []
 
-  if (hasAccess) {
-    try {
-      const enrolled = await enrollPendingLeads(account.id)
-      if (enrolled > 0) {
-        await processDueSteps(account.id)
-      }
-    } catch {
-      // silent — automation errors shouldn't break the leads page
+  try {
+    const enrolled = await enrollPendingLeads(account.id)
+    if (enrolled > 0) {
+      await processDueSteps(account.id)
     }
+  } catch {
+    // silent — automation errors shouldn't break the leads page
   }
 
   const { data: forms } = await admin
@@ -121,10 +105,6 @@ export default async function LeadsPage({ searchParams }: { searchParams: { tab?
   const totalLeads = leads.length
   const newLeads = leads.filter((l) => l.status === 'new').length
   const bookedLeads = leads.filter((l) => l.status === 'booked').length
-
-  const trialDaysLeft = isOnTrial
-    ? Math.ceil((new Date(trialEndsAt!).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    : 0
 
   const dashboardBgUrl: string | null = account.dashboard_bg_url ?? null
   const hasBg = !!dashboardBgUrl
@@ -163,23 +143,6 @@ export default async function LeadsPage({ searchParams }: { searchParams: { tab?
               {account.business_name ?? 'Your business'}
             </p>
           </div>
-
-          {/* Banners */}
-          {isOnTrial && (
-            <div className="mb-6 rounded-2xl p-4 flex items-center justify-between" style={{ background: 'rgba(91,91,214,0.1)', border: '1px solid rgba(91,91,214,0.25)' }}>
-              <div className="flex items-center gap-3">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 flex-shrink-0" style={{ color: '#5b5bd6' }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p className="text-sm font-semibold" style={{ color: '#5b5bd6' }}>
-                  Free trial — {trialDaysLeft} day{trialDaysLeft !== 1 ? 's' : ''} remaining
-                </p>
-              </div>
-              <Link href="/billing" className="text-xs font-semibold hover:underline" style={{ color: '#5b5bd6' }}>
-                Manage plan
-              </Link>
-            </div>
-          )}
 
           {/* Stat cards */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-6">
