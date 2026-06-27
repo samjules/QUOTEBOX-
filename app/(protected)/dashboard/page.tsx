@@ -389,13 +389,9 @@ export default async function DashboardPage({
           {/* Slim Meta ads strip — discreet, always shown until Meta connected */}
           {!metaConnected && <MetaAdStrip />}
 
-          {/* Form preview card — shown until they get their first lead */}
-          {hasForm && totalLeads === 0 && firstFormSlug && (
-            <FormPreviewCard
-              slug={firstFormSlug}
-              metaConnected={metaConnected}
-              hasCampaign={hasCampaign}
-            />
+          {/* Form preview card — always shown when a form exists */}
+          {hasForm && firstFormSlug && (
+            <FormPreviewCard slug={firstFormSlug} />
           )}
 
           {/* Onboarding checklist — single consolidated card */}
@@ -722,23 +718,16 @@ function MetaAdStrip() {
   )
 }
 
-function FormPreviewCard({ slug, metaConnected, hasCampaign }: { slug: string; metaConnected: boolean; hasCampaign: boolean }) {
+function FormPreviewCard({ slug }: { slug: string }) {
   const url = `https://quote-box.com/${slug}`
-
-  const steps = [
-    { label: 'Submit a test lead through your form', done: false, href: url, external: true },
-    { label: 'Share your form link with customers', done: false, href: `https://quote-box.com/${slug}`, external: true },
-    { label: 'Connect Meta Ads to start getting leads', done: metaConnected, href: '/api/meta/connect', external: false },
-    { label: 'Launch your first ad campaign', done: hasCampaign, href: '/meta-ads', external: false },
-  ]
 
   return (
     <div style={{ background: '#fff', border: '1.5px solid #e5e7eb', borderRadius: 16, overflow: 'hidden' }}>
       {/* Green top bar */}
       <div style={{ height: 4, background: 'linear-gradient(90deg, #22c55e, #16a34a)' }} />
 
-      {/* Header row */}
-      <div style={{ padding: '22px 24px 18px', display: 'flex', alignItems: 'flex-start', gap: 20, flexWrap: 'wrap' as const }}>
+      <div style={{ padding: '22px 24px', display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' as const }}>
+        {/* Pulse dot + text */}
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flex: 1, minWidth: 240 }}>
           <div style={{ marginTop: 4, flexShrink: 0, position: 'relative' as const, width: 12, height: 12 }}>
             <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#22c55e' }} />
@@ -749,7 +738,7 @@ function FormPreviewCard({ slug, metaConnected, hasCampaign }: { slug: string; m
             }} />
           </div>
           <div>
-            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#111', marginBottom: 4, lineHeight: 1.2 }}>
+            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#111', marginBottom: 6, lineHeight: 1.2 }}>
               Your quote form is live!
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: '8px 12px', maxWidth: 360 }}>
@@ -759,6 +748,11 @@ function FormPreviewCard({ slug, metaConnected, hasCampaign }: { slug: string; m
             </div>
           </div>
         </div>
+
+        {/* App Store card */}
+        <AppDownloadBanner />
+
+        {/* Test lead button */}
         <a
           href={url}
           target="_blank"
@@ -778,47 +772,6 @@ function FormPreviewCard({ slug, metaConnected, hasCampaign }: { slug: string; m
           </svg>
           Submit a test lead
         </a>
-      </div>
-
-      {/* Divider */}
-      <div style={{ height: 1, background: '#f3f4f6', margin: '0 24px' }} />
-
-      {/* Checklist + App Store row */}
-      <div style={{ padding: '18px 24px 22px', display: 'flex', gap: 24, flexWrap: 'wrap' as const, alignItems: 'flex-start' }}>
-        {/* Checklist */}
-        <div style={{ flex: 1, minWidth: 220 }}>
-          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>
-            Steps to your first lead
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 10 }}>
-            {steps.map((step, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{
-                  width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: step.done ? '#dcfce7' : '#f9fafb',
-                  border: step.done ? '1.5px solid #86efac' : '1.5px solid #e5e7eb',
-                }}>
-                  {step.done
-                    ? <svg width="10" height="10" fill="none" viewBox="0 0 16 16" stroke="#16a34a" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M3 8l3 3 7-7" /></svg>
-                    : <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#d1d5db', display: 'block' }} />
-                  }
-                </div>
-                {step.external
-                  ? <a href={step.href} target="_blank" rel="noreferrer" style={{ fontSize: '0.82rem', color: step.done ? '#9ca3af' : '#111', fontWeight: step.done ? 400 : 600, textDecoration: 'none', lineHeight: 1.3, textDecorationLine: step.done ? 'line-through' as const : 'none' as const }}>
-                      {step.label}
-                    </a>
-                  : <Link href={step.href} style={{ fontSize: '0.82rem', color: step.done ? '#9ca3af' : '#111', fontWeight: step.done ? 400 : 600, textDecoration: 'none', lineHeight: 1.3, textDecorationLine: step.done ? 'line-through' as const : 'none' as const }}>
-                      {step.label}
-                    </Link>
-                }
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* App Store card */}
-        <AppDownloadBanner />
       </div>
 
       <style>{`@keyframes ping { 75%,100% { transform: scale(1.8); opacity: 0; } }`}</style>
