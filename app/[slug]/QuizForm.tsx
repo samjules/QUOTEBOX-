@@ -279,7 +279,15 @@ export default function QuizForm({ form, businessName }: { form: HostedForm; bus
 
         {/* CONTACT SCREEN */}
         {screen === 'contact' && (
-          <div>
+          <div style={{
+            background: 'rgba(255,255,255,0.65)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            borderRadius: 20,
+            padding: '28px 24px',
+            border: '1px solid rgba(255,255,255,0.85)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.07)',
+          }}>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0f172a', marginBottom: 6, letterSpacing: '-0.03em' }}>
               Almost there — lock in your {currentResult?.discount ? 'discount' : 'estimate'}
             </h2>
