@@ -469,8 +469,9 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced, onDone
                   const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
                   const path = `${accountId}/${Date.now()}-${fid()}.${ext}`
                   const { data, error } = await supabase.storage.from('vsls').upload(path, file, { contentType: file.type, upsert: false })
-                  if (error || !data) throw error
+                  if (error || !data) throw new Error(error?.message || 'Upload failed')
                   const { data: { publicUrl } } = supabase.storage.from('vsls').getPublicUrl(data.path)
+                  if (!publicUrl) throw new Error('Could not get public URL for uploaded image')
                   return publicUrl
                 }}
               />

@@ -3471,8 +3471,9 @@ export default function FormBuilderPage() {
                 const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
                 const storagePath = `${accountId}/${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${ext}`
                 const { data, error } = await supabase.storage.from('vsls').upload(storagePath, file, { contentType: file.type, upsert: false })
-                if (error || !data) throw error
+                if (error || !data) throw new Error(error?.message || 'Upload failed')
                 const { data: { publicUrl } } = supabase.storage.from('vsls').getPublicUrl(data.path)
+                if (!publicUrl) throw new Error('Could not get public URL for uploaded image')
                 return publicUrl
               }}
             />

@@ -60,6 +60,7 @@ export default function QuizBuilder({
 }) {
   const [selectedId, setSelectedId] = useState<string>(config.start)
   const [imageUploading, setImageUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const imageFileRef = useRef<HTMLInputElement>(null)
 
   const nodeIds = Object.keys(config.nodes)
@@ -141,14 +142,30 @@ export default function QuizBuilder({
     onChange({ ...config, results: { ...config.results, [id]: { ...config.results[id], ...updates } } })
   }, [config, onChange])
 
+  // Keep a ref so the async upload closure always gets the latest updateResult
+  const updateResultRef = useRef(updateResult)
+  updateResultRef.current = updateResult
+
   async function handleImageFile(resultId: string, file: File) {
     if (!onUploadImage) return
     const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
-    if (!['jpg', 'jpeg', 'png', 'webp'].includes(ext) || file.size > 5 * 1024 * 1024) return
+    if (!['jpg', 'jpeg', 'png', 'webp'].includes(ext)) {
+      setUploadError('Please upload a JPG, PNG, or WebP image')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('Image must be under 5 MB')
+      return
+    }
     setImageUploading(true)
+    setUploadError(null)
     try {
       const url = await onUploadImage(file)
-      updateResult(resultId, { image_url: url })
+      if (!url) throw new Error('No URL returned from upload')
+      updateResultRef.current(resultId, { image_url: url })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Upload failed — please try again'
+      setUploadError(msg)
     } finally {
       setImageUploading(false)
     }
@@ -364,6 +381,11 @@ export default function QuizBuilder({
                         </>
                       )}
                     </button>
+                  )}
+                  {uploadError && (
+                    <div style={{ marginTop: 8, padding: '8px 10px', borderRadius: 8, background: '#fef2f2', border: '1px solid #fecaca', fontSize: '0.75rem', color: '#dc2626' }}>
+                      {uploadError}
+                    </div>
                   )}
                 </div>
               )}
