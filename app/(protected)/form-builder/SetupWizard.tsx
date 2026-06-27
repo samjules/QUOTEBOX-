@@ -2,7 +2,8 @@
 
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { FormField } from '@/lib/types'
+import type { FormField, QuizConfig } from '@/lib/types'
+import QuizBuilder, { makeDefaultQuizConfig } from './QuizBuilder'
 
 const SERVICE_TYPES = [
   { id: 'moving',       label: 'Moving',       desc: 'Local & long-distance residential moves', color: '#F97316' },
@@ -111,7 +112,7 @@ interface SetupWizardProps {
 }
 
 // Steps: 1=service, 2=hourly rate, 3=different trucks?, 4=drive time?, 5=extras, 6=minimum, 7=hero, 8=pixel
-type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 'success'
+type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 'quiz' | 'success'
 const TOTAL_STEPS = 8
 
 export default function SetupWizard({ accountId, onCustomize, onAdvanced, onDone }: SetupWizardProps) {
@@ -119,9 +120,11 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced, onDone
   const [step, setStep] = useState<Step>(1)
 
   // Step 1
+  const [formCategory, setFormCategory] = useState<'quote' | 'quiz'>('quote')
   const [businessName, setBusinessName] = useState('')
   const [serviceType, setServiceType] = useState<ServiceId | null>(null)
   const [brandColor, setBrandColor] = useState('#F97316')
+  const [quizConfig, setQuizConfig] = useState<QuizConfig>(() => makeDefaultQuizConfig())
 
   // Step 2 — hourly rate
   const [hourlyRate, setHourlyRate] = useState('120')
@@ -212,40 +215,69 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced, onDone
 
   // Launch
   async function handleLaunch() {
-    if (!serviceType || !businessName.trim()) return
+    if (!businessName.trim()) return
+    if (formCategory === 'quote' && !serviceType) return
     setSaving(true); setSaveError('')
 
-    const minVal = hasMinimum ? (parseFloat(minQuote) || 0) : 0
-    const driveOn = chargeDrive === true
-    const fields = generateFields(serviceType, tiers, driveOn, radiusTiers, extras)
-    const formName = `${businessName.trim()} Quote`
     const baseSlug = toSlug(businessName.trim())
     let slug = baseSlug
     const { data: conflicts } = await supabase.from('hosted_forms').select('id').eq('form_config->>slug', slug)
     if ((conflicts ?? []).length > 0) slug = `${baseSlug}-${Math.random().toString(36).slice(2, 5)}`
 
-    const formConfig = {
-      slug,
-      description: `Get an instant quote for your ${SERVICE_TYPES.find(s => s.id === serviceType)!.label.toLowerCase()} job.`,
-      submit_label: 'Get My Instant Quote',
-      currency: '$', brand_color: brandColor,
-      show_total: true, quote_display: 'live',
-      hero_image_url: heroImageUrl, fields,
-      min_quote: minVal,
-      disclaimer_enabled: true,
-      disclaimer_text: 'This is a minimum estimate. Final price is confirmed once our crew assesses the job on-site.',
-      send_email_estimate: true,
-      confirm_title: "You're all set!",
-      confirm_message: "We've received your details and will be in touch shortly.",
-      next_step_label: 'Next Step',
-      total_label: minVal > 0 ? `Starts at $${minVal} — minimum estimate` : 'Minimum estimate',
-      ...(pixelId.trim() ? { meta_pixel_id: pixelId.trim() } : {}),
-      email_template: { subject: '', intro: '', outro: '', header_image: '', accent_color: brandColor },
+    let formConfig: Record<string, unknown>
+    let formName: string
+    let formType: string
+
+    if (formCategory === 'quiz') {
+      formName = `${businessName.trim()} Quiz`
+      formType = 'quiz'
+      formConfig = {
+        slug,
+        description: `Take our quiz to find the right solution for you.`,
+        submit_label: 'See My Results →',
+        currency: '$', brand_color: brandColor,
+        show_total: false, quote_display: 'hidden',
+        hero_image_url: heroImageUrl, fields: [],
+        quiz: quizConfig,
+        disclaimer_enabled: false,
+        disclaimer_text: '',
+        send_email_estimate: false,
+        confirm_title: "You're all set!",
+        confirm_message: "We've received your info and will be in touch shortly.",
+        next_step_label: 'Next Step',
+        total_label: '',
+        ...(pixelId.trim() ? { meta_pixel_id: pixelId.trim() } : {}),
+        email_template: { subject: '', intro: '', outro: '', header_image: '', accent_color: brandColor },
+      }
+    } else {
+      const minVal = hasMinimum ? (parseFloat(minQuote) || 0) : 0
+      const driveOn = chargeDrive === true
+      const fields = generateFields(serviceType!, tiers, driveOn, radiusTiers, extras)
+      formName = `${businessName.trim()} Quote`
+      formType = 'quote'
+      formConfig = {
+        slug,
+        description: `Get an instant quote for your ${SERVICE_TYPES.find(s => s.id === serviceType)!.label.toLowerCase()} job.`,
+        submit_label: 'Get My Instant Quote',
+        currency: '$', brand_color: brandColor,
+        show_total: true, quote_display: 'live',
+        hero_image_url: heroImageUrl, fields,
+        min_quote: minVal,
+        disclaimer_enabled: true,
+        disclaimer_text: 'This is a minimum estimate. Final price is confirmed once our crew assesses the job on-site.',
+        send_email_estimate: true,
+        confirm_title: "You're all set!",
+        confirm_message: "We've received your details and will be in touch shortly.",
+        next_step_label: 'Next Step',
+        total_label: minVal > 0 ? `Starts at $${minVal} — minimum estimate` : 'Minimum estimate',
+        ...(pixelId.trim() ? { meta_pixel_id: pixelId.trim() } : {}),
+        email_template: { subject: '', intro: '', outro: '', header_image: '', accent_color: brandColor },
+      }
     }
 
     try {
       const { data, error } = await supabase.from('hosted_forms')
-        .insert({ account_id: accountId, form_name: formName, form_type: 'quote', form_config: formConfig, is_active: true, updated_at: new Date().toISOString() })
+        .insert({ account_id: accountId, form_name: formName, form_type: formType, form_config: formConfig, is_active: true, updated_at: new Date().toISOString() })
         .select().single()
       if (error) throw error
       setLiveSlug(slug); setSavedFormId(data.id); setStep('success')
@@ -337,7 +369,7 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced, onDone
             <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
               {onDone && <button onClick={() => onDone(savedFormId)} style={{ width: '100%', padding: '12px 0', borderRadius: 10, background: brandColor, color: '#fff', border: 'none', fontSize: '0.88rem', fontWeight: 700, cursor: 'pointer' }}>Continue to next step →</button>}
               <a href={`https://quote-box.com/${liveSlug}`} target="_blank" rel="noreferrer" style={{ display: 'block', textAlign: 'center', padding: '12px 0', background: onDone ? 'none' : brandColor, color: onDone ? 'var(--fg)' : '#fff', border: onDone ? '1px solid var(--border)' : 'none', borderRadius: 10, fontWeight: onDone ? 600 : 700, fontSize: '0.88rem', textDecoration: 'none' }}>Preview form</a>
-              {!onDone && <button onClick={() => onCustomize(savedFormId, businessName.trim() + ' Quote', liveSlug)} style={{ width: '100%', padding: '12px 0', borderRadius: 10, background: 'none', border: '1px solid var(--border)', color: 'var(--fg)', fontSize: '0.88rem', fontWeight: 600, cursor: 'pointer' }}>Customize your form</button>}
+              {!onDone && <button onClick={() => onCustomize(savedFormId, businessName.trim() + (formCategory === 'quiz' ? ' Quiz' : ' Quote'), liveSlug)} style={{ width: '100%', padding: '12px 0', borderRadius: 10, background: 'none', border: '1px solid var(--border)', color: 'var(--fg)', fontSize: '0.88rem', fontWeight: 600, cursor: 'pointer' }}>Customize your form</button>}
             </div>
           </div>
         </div>
@@ -353,19 +385,45 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced, onDone
           <ProgressBar current={1} />
           <div style={bodyStyle}>
             <div style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: 'var(--muted)', marginBottom: 10 }}>Step 1 of {TOTAL_STEPS}</div>
-            <Q label="Let's build your quote form" sub="Tell us your business name and what you do." />
+            <Q label="What do you want to build?" sub="Choose the type of form for your business." />
+
+            {/* Form category picker */}
+            <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+              {([
+                { id: 'quote', label: 'Quote Form', desc: 'Instant price estimates', icon: '💲' },
+                { id: 'quiz',  label: 'Quiz Form',  desc: 'Answer-based recommendations', icon: '✦' },
+              ] as const).map(opt => (
+                <button
+                  key={opt.id}
+                  onClick={() => setFormCategory(opt.id)}
+                  style={{
+                    flex: 1, padding: '12px 10px', borderRadius: 10,
+                    border: `2px solid ${formCategory === opt.id ? brandColor : 'var(--border)'}`,
+                    background: formCategory === opt.id ? `${brandColor}14` : 'var(--surface)',
+                    cursor: 'pointer', textAlign: 'left' as const, transition: 'all 0.15s',
+                  }}
+                >
+                  <div style={{ fontSize: '1.1rem', marginBottom: 4 }}>{opt.icon}</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--fg)', marginBottom: 2 }}>{opt.label}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)' }}>{opt.desc}</div>
+                </button>
+              ))}
+            </div>
+
             <div style={{ marginBottom: 20 }}>
               <label style={fieldLabel}>Your business name</label>
               <input style={inputStyle} type="text" placeholder="e.g. Smith's Moving Co." value={businessName} onChange={(e) => setBusinessName(e.target.value)} autoFocus />
             </div>
-            <div>
-              <label style={fieldLabel}>What service do you offer?</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                {SERVICE_TYPES.map((s) => (
-                  <BigChoice key={s.id} label={s.label} desc={s.desc} selected={serviceType === s.id} onClick={() => selectService(s.id, s.color)} />
-                ))}
+            {formCategory === 'quote' && (
+              <div>
+                <label style={fieldLabel}>What service do you offer?</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                  {SERVICE_TYPES.map((s) => (
+                    <BigChoice key={s.id} label={s.label} desc={s.desc} selected={serviceType === s.id} onClick={() => selectService(s.id, s.color)} />
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
             <div style={{ marginTop: 4 }}>
               <label style={fieldLabel}>Brand color</label>
               <div style={{ display: 'flex', gap: 7, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -378,7 +436,37 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced, onDone
           </div>
           <div style={footerStyle}>
             <button onClick={onAdvanced} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.8rem', cursor: 'pointer', padding: 0 }}>Advanced builder</button>
-            <button className="bb bb-primary" disabled={!(businessName.trim().length > 1 && serviceType !== null)} onClick={() => setStep(2)}>Continue</button>
+            <button
+              className="bb bb-primary"
+              disabled={!(businessName.trim().length > 1 && (formCategory === 'quiz' || serviceType !== null))}
+              onClick={() => setStep(formCategory === 'quiz' ? 'quiz' : 2)}
+            >Continue</button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── QUIZ STEP ────────────────────────────────────────────────────
+  if (step === 'quiz') {
+    return (
+      <div style={pageStyle}>
+        <div style={{ ...cardStyle, maxWidth: 740, width: '100%', maxHeight: 'none' }}>
+          <ProgressBar current={2} />
+          <div style={{ ...bodyStyle, padding: '20px 0 0' }}>
+            <div style={{ padding: '0 24px 16px', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: 'var(--muted)', marginBottom: 6 }}>Build your quiz</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--muted)', lineHeight: 1.45 }}>
+                Add questions and answers. Each answer leads to the next question or a result card.
+              </div>
+            </div>
+            <div style={{ height: 480, overflow: 'hidden' }}>
+              <QuizBuilder config={quizConfig} onChange={setQuizConfig} brandColor={brandColor} />
+            </div>
+          </div>
+          <div style={footerStyle}>
+            <button className="bb bb-ghost" onClick={() => setStep(1)}>Back</button>
+            <button className="bb bb-primary" onClick={() => setStep(8)}>Continue →</button>
           </div>
         </div>
       </div>
