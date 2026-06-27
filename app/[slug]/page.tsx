@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import type { HostedForm } from '@/lib/types'
 import QuoteForm from './QuoteForm'
+import QuizForm from './QuizForm'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 // Never cache — always fetch fresh form data so edits/deletes are instant
@@ -35,5 +36,10 @@ export default async function PublicFormPage({
   const hasCredits = billing?.plan === 'pay_per_lead' || (billing?.credit_balance ?? 0) >= 15
   const businessName = account?.business_name ?? ''
 
-  return <QuoteForm form={form as HostedForm} hasCredits={hasCredits} businessName={businessName} />
+  const typedForm = form as HostedForm
+  if (typedForm.form_config?.quiz) {
+    return <QuizForm form={typedForm} businessName={businessName} />
+  }
+
+  return <QuoteForm form={typedForm} hasCredits={hasCredits} businessName={businessName} />
 }

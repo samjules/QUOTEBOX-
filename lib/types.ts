@@ -71,6 +71,32 @@ export interface FormField {
   ratePerSqFt?: number
 }
 
+export interface QuizAnswer {
+  id: string
+  label: string
+  next: string  // node id or 'result_XXX'
+}
+
+export interface QuizNode {
+  id: string
+  question: string
+  answers: QuizAnswer[]
+}
+
+export interface QuizResult {
+  id: string
+  headline: string
+  body: string
+  discount: string
+  cta_label: string
+}
+
+export interface QuizConfig {
+  start: string
+  nodes: Record<string, QuizNode>
+  results: Record<string, QuizResult>
+}
+
 export interface FormConfig {
   slug: string
   description: string
@@ -97,6 +123,7 @@ export interface FormConfig {
     header_image?: string
     accent_color?: string
   }
+  quiz?: QuizConfig
 }
 
 export interface HostedForm {

@@ -4,7 +4,8 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import SetupWizard from './SetupWizard'
-import type { FormField, FieldOption, ConditionalRule, RuleCondition, RadiusTier } from '@/lib/types'
+import QuizBuilder, { makeDefaultQuizConfig } from './QuizBuilder'
+import type { FormField, FieldOption, ConditionalRule, RuleCondition, RadiusTier, QuizConfig } from '@/lib/types'
 import { computeBreakdown } from '@/lib/pricing'
 import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
@@ -2185,6 +2186,8 @@ export default function FormBuilderPage() {
   const [accountId, setAccountId] = useState<string | null>(null)
   const [existingForms, setExistingForms] = useState<Array<{ id: string; form_name: string; form_config: { slug?: string } }>>([])
   const [existingFormsLoading, setExistingFormsLoading] = useState(false)
+  const [quizConfig, setQuizConfig] = useState<QuizConfig | null>(null)
+  const quizMode = quizConfig !== null
   const [planBadge, setPlanBadge] = useState('Loading…')
   const [isSaving, setIsSaving] = useState(false)
   const [toast, setToast] = useState<{
@@ -2396,6 +2399,7 @@ export default function FormBuilderPage() {
     setSubmitLabel(c.submit_label ?? 'Get My Quote →')
     setCurrency(c.currency ?? '$')
     setFields(c.fields ?? [])
+    setQuizConfig(c.quiz ?? null)
     const legacyColors: Record<string, string> = { yellow: '#FFE500', blue: '#1A56FF' }
     setBrandColor(legacyColors[c.brand_color] ?? c.brand_color ?? '#FFE500')
     setMinQuote(c.min_quote ?? 0)
@@ -2704,7 +2708,7 @@ export default function FormBuilderPage() {
 
     if (!name) { showToast('Enter a form name', 'error'); return }
     if (!slug) { showToast('Set a URL slug', 'error'); return }
-    if (!fields.length) { showToast('Add at least one field', 'error'); return }
+    if (!fields.length && !quizMode) { showToast('Add at least one field', 'error'); return }
     if (!accountId) { showToast('Not logged in', 'error'); return }
 
     // Check plan limit
@@ -2759,6 +2763,7 @@ export default function FormBuilderPage() {
           header_image: emailHeaderImage || '',
           accent_color: emailAccentColor || '#0e0020',
         },
+        ...(quizConfig ? { quiz: quizConfig } : {}),
       },
       is_active: true,
       updated_at: new Date().toISOString(),
@@ -3396,6 +3401,39 @@ export default function FormBuilderPage() {
             )}
           </div>
 
+          {/* ── QUIZ MODE ── */}
+          <div className="sidebar-section">
+            <div className="sidebar-cat-header" onClick={() => toggleSection('quiz')}>
+              <span className="sidebar-cat-title">Quiz Mode</span>
+              <span className={`sidebar-cat-chevron${openSections.quiz ? ' open' : ''}`}>▼</span>
+            </div>
+            {openSections.quiz && (
+              <div className="sidebar-cat-body">
+                <div style={{ fontSize: '0.72rem', color: 'var(--muted)', lineHeight: 1.45, marginBottom: 10 }}>
+                  Replace the quote form with an interactive quiz that recommends a service and captures a lead.
+                </div>
+                <div className="prop-toggle">
+                  <span className="prop-toggle-lbl">Enable quiz mode</span>
+                  <div
+                    className={`toggle${quizMode ? ' on' : ''}`}
+                    onClick={() => {
+                      if (quizMode) {
+                        setQuizConfig(null)
+                      } else {
+                        setQuizConfig(makeDefaultQuizConfig())
+                      }
+                    }}
+                  />
+                </div>
+                {quizMode && (
+                  <div style={{ marginTop: 8, fontSize: '0.72rem', color: 'var(--muted)', lineHeight: 1.4 }}>
+                    Edit your quiz in the canvas area →
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* ── HOSTING ── */}
           <div className="sidebar-section">
             <div className="sidebar-cat-header" onClick={() => toggleSection('hosting')}>
@@ -3423,7 +3461,10 @@ export default function FormBuilderPage() {
 
         {/* ── CANVAS ── */}
         <main className="canvas">
-          <div className="canvas-inner">
+          {quizMode && quizConfig ? (
+            <QuizBuilder config={quizConfig} onChange={setQuizConfig} brandColor={brandColor} />
+          ) : null}
+          <div className="canvas-inner" style={quizMode ? { display: 'none' } : undefined}>
             {/* Step tabs */}
             <div className="step-tabs">
               {(['Step 1 · Quote', 'Step 2 · Contact', 'Step 3 · Confirm', '✉ Email'] as const).map(
@@ -3581,7 +3622,7 @@ export default function FormBuilderPage() {
         </main>
 
         {/* ── RIGHT PANEL: Test or Props ── */}
-        {testMode ? (
+        {quizMode ? null : testMode ? (
           <TestPanel
             fields={fields}
             currency={currency}
