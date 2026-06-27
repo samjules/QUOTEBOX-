@@ -88,7 +88,7 @@ export default function VsAngiesListPage() {
           <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.75, marginBottom: 40, maxWidth: 580, margin: '0 auto 40px' }}>
             Angi charges a monthly subscription <em>and</em> per-lead fees for leads shared with competing movers and junk haulers. Quotebox is $15 flat per exclusive lead — no monthly fee, no sharing, no contracts.
           </p>
-          <Link href="/signup" style={{
+          <Link href="/build" style={{
             background: '#FFE500', color: '#0e0020', fontWeight: 700,
             padding: '14px 32px', borderRadius: 10, textDecoration: 'none', fontSize: '1rem',
           }}>
@@ -171,7 +171,7 @@ export default function VsAngiesListPage() {
           <p style={{ color: '#0e0020', opacity: 0.7, marginBottom: 32, fontSize: '1.05rem', lineHeight: 1.65 }}>
             Sign up free, build your form in 5 minutes, and replace your Angi spend with $15 exclusive moving and junk removal leads.
           </p>
-          <Link href="/signup" style={{
+          <Link href="/build" style={{
             display: 'inline-block', background: '#0e0020', color: '#FFE500',
             fontWeight: 700, padding: '16px 40px', borderRadius: 10,
             textDecoration: 'none', fontSize: '1.05rem',

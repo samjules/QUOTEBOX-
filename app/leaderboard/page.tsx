@@ -166,7 +166,7 @@ export default async function PublicGamesPage() {
           <p style={{ fontSize: '1.1rem', fontWeight: 600, color: '#0e0020', marginBottom: 12 }}>
             Want to compete?
           </p>
-          <Link href="/signup" style={{
+          <Link href="/build" style={{
             display: 'inline-block',
             padding: '12px 32px',
             background: '#0e0020',

@@ -103,7 +103,7 @@ export default function ContractorLeadsPage() {
             Pay $15 per lead from Facebook & Instagram ads. No monthly fees. No bidding against five other movers or junk haulers. You get the customer — exclusively.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/signup" style={{
+            <Link href="/build" style={{
               background: '#FFE500', color: '#0e0020', fontWeight: 700,
               padding: '14px 32px', borderRadius: 10, textDecoration: 'none', fontSize: '1rem',
             }}>
@@ -304,7 +304,7 @@ export default function ContractorLeadsPage() {
           <p style={{ color: '#0e0020', opacity: 0.7, marginBottom: 32, fontSize: '1.05rem', lineHeight: 1.65 }}>
             Sign up free, build your quote form in 5 minutes, and get your first exclusive moving or junk removal lead for $15.
           </p>
-          <Link href="/signup" style={{
+          <Link href="/build" style={{
             display: 'inline-block', background: '#0e0020', color: '#FFE500',
             fontWeight: 700, padding: '16px 40px', borderRadius: 10,
             textDecoration: 'none', fontSize: '1.05rem',

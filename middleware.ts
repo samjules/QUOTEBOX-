@@ -33,7 +33,14 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
-  const isAuthPage = pathname === '/login' || pathname === '/signup'
+  // /signup redirects to /build
+  if (pathname === '/signup') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/build'
+    return NextResponse.redirect(url)
+  }
+
+  const isAuthPage = pathname === '/login'
   const isProtectedPage = [
     '/dashboard', '/leads', '/hosted-forms', '/billing', '/settings', '/form-builder', '/meta-ads', '/admin', '/time-clock',
   ].some((p) => pathname.startsWith(p))

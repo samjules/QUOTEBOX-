@@ -35,7 +35,7 @@ export default function PublicNav() {
         <Link href="/login" style={{ fontSize: '0.88rem', fontWeight: 500, color: '#555', textDecoration: 'none' }}>
           Log in
         </Link>
-        <Link href="/signup" style={{
+        <Link href="/build" style={{
           fontSize: '0.88rem', fontWeight: 600, padding: '8px 18px',
           background: '#0e0020', color: '#FFE500', borderRadius: 8, textDecoration: 'none',
         }}>

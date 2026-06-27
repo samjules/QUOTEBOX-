@@ -65,7 +65,7 @@ export default function QualifyForm() {
           We specialize in accounts spending $50+/day on Meta. For smaller budgets, try our self-serve
           $15/lead option — no monthly commitment required.
         </p>
-        <Link href="/signup" style={{
+        <Link href="/build" style={{
           display: 'inline-block', background: '#0e0020', color: '#FFE500',
           fontWeight: 700, padding: '12px 28px', borderRadius: 10, textDecoration: 'none',
           fontSize: '0.95rem',

@@ -88,7 +88,7 @@ export default function VsThumbthackPage() {
           <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.75, marginBottom: 40, maxWidth: 580, margin: '0 auto 40px' }}>
             Thumbtack sends your lead to five competitors and charges you to bid whether you win or lose. Quotebox gives you the lead exclusively for $15 flat — guaranteed.
           </p>
-          <Link href="/signup" style={{
+          <Link href="/build" style={{
             background: '#FFE500', color: '#0e0020', fontWeight: 700,
             padding: '14px 32px', borderRadius: 10, textDecoration: 'none', fontSize: '1rem',
           }}>
@@ -182,7 +182,7 @@ export default function VsThumbthackPage() {
           <p style={{ color: '#0e0020', opacity: 0.7, marginBottom: 32, fontSize: '1.05rem', lineHeight: 1.65 }}>
             Sign up free and get exclusive moving and junk removal leads for $15 each — without ever competing against five other companies for the same job.
           </p>
-          <Link href="/signup" style={{
+          <Link href="/build" style={{
             display: 'inline-block', background: '#0e0020', color: '#FFE500',
             fontWeight: 700, padding: '16px 40px', borderRadius: 10,
             textDecoration: 'none', fontSize: '1.05rem',

@@ -77,7 +77,7 @@ export default function HvacLeadsPage() {
             Estate cleanouts, garage haul-aways, appliance removal — your branded junk removal quote form captures customers from Facebook & Instagram and delivers them only to you. $15 per lead, zero monthly fees.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/signup" style={{
+            <Link href="/build" style={{
               background: '#FFE500', color: '#0e0020', fontWeight: 700,
               padding: '14px 32px', borderRadius: 10, textDecoration: 'none', fontSize: '1rem',
             }}>
@@ -166,7 +166,7 @@ export default function HvacLeadsPage() {
           <p style={{ color: '#0e0020', opacity: 0.7, marginBottom: 32, fontSize: '1rem', lineHeight: 1.65 }}>
             Build your branded junk removal quote form in 5 minutes. $15 per exclusive lead. Free to sign up.
           </p>
-          <Link href="/signup" style={{
+          <Link href="/build" style={{
             display: 'inline-block', background: '#0e0020', color: '#FFE500',
             fontWeight: 700, padding: '16px 40px', borderRadius: 10,
             textDecoration: 'none', fontSize: '1.05rem',

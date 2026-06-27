@@ -53,7 +53,7 @@ export default function CourseHomePage() {
             Quote<span style={{ color: '#FFE500', WebkitTextStroke: '1px #0e0020' }}>.</span>Box
           </span>
         </Link>
-        <Link href="/signup" style={{
+        <Link href="/build" style={{
           fontSize: '0.88rem', fontWeight: 600, padding: '8px 18px',
           background: '#0e0020', color: '#FFE500', borderRadius: 8, textDecoration: 'none',
         }}>
@@ -156,7 +156,7 @@ export default function CourseHomePage() {
             You just close the jobs. Starting at $15 per lead.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/signup" style={{
+            <Link href="/build" style={{
               display: 'inline-block', background: '#0e0020', color: '#FFE500',
               fontWeight: 700, fontSize: '0.95rem', padding: '14px 28px', borderRadius: 8,
               textDecoration: 'none',
