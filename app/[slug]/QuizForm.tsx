@@ -130,72 +130,91 @@ export default function QuizForm({ form, businessName }: { form: HostedForm; bus
         {/* QUIZ SCREEN */}
         {screen === 'quiz' && currentNode && (
           <div>
-            {/* Progress */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
+            {/* Status bar */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16,
+              background: 'rgba(255,255,255,0.65)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              borderRadius: 14,
+              padding: '10px 14px',
+              border: '1px solid rgba(255,255,255,0.85)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+            }}>
               {history.length > 1 && (
                 <button
                   onClick={handleBack}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px 4px 0', color: '#64748b', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 4 }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px 4px 0', color: '#64748b', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}
                 >
                   ← Back
                 </button>
               )}
-              <div style={{ flex: 1, height: 4, background: '#e2e8f0', borderRadius: 99, overflow: 'hidden' }}>
+              <div style={{ flex: 1, height: 4, background: 'rgba(0,0,0,0.1)', borderRadius: 99, overflow: 'hidden' }}>
                 <div style={{ height: '100%', background: accent, borderRadius: 99, width: `${(questionIndex / totalQuestions) * 100}%`, transition: 'width 0.4s ease' }} />
               </div>
-              <span style={{ fontSize: '0.75rem', color: '#94a3b8', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: '0.75rem', color: '#64748b', whiteSpace: 'nowrap', flexShrink: 0 }}>
                 {questionIndex} of {totalQuestions}
               </span>
             </div>
 
-            {/* Question */}
-            <h1 style={{ fontSize: '1.55rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.25, marginBottom: 28, letterSpacing: '-0.03em' }}>
-              {currentNode.question}
-            </h1>
+            {/* Question card */}
+            <div style={{
+              background: 'rgba(255,255,255,0.65)',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              borderRadius: 20,
+              padding: '28px 24px',
+              border: '1px solid rgba(255,255,255,0.85)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.07)',
+            }}>
+              <h1 style={{ fontSize: '1.55rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.25, marginBottom: 24, letterSpacing: '-0.03em' }}>
+                {currentNode.question}
+              </h1>
 
-            {/* Answer buttons */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {currentNode.answers.map((answer) => (
-                <button
-                  key={answer.id}
-                  onClick={() => handleAnswer(answer.id, answer.next)}
-                  style={{
-                    width: '100%',
-                    padding: '16px 20px',
-                    background: '#fff',
-                    border: `2px solid #e2e8f0`,
-                    borderRadius: 14,
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                    color: '#0f172a',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'all 0.15s ease',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 12,
-                  }}
-                  onMouseEnter={e => {
-                    const el = e.currentTarget as HTMLButtonElement
-                    el.style.borderColor = accent
-                    el.style.background = `${accent}12`
-                    el.style.transform = 'translateY(-1px)'
-                    el.style.boxShadow = `0 4px 12px ${accent}30`
-                  }}
-                  onMouseLeave={e => {
-                    const el = e.currentTarget as HTMLButtonElement
-                    el.style.borderColor = '#e2e8f0'
-                    el.style.background = '#fff'
-                    el.style.transform = 'none'
-                    el.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)'
-                  }}
-                >
-                  <span>{answer.label}</span>
-                  <span style={{ fontSize: '1.1rem', opacity: 0.4 }}>→</span>
-                </button>
-              ))}
+              {/* Answer buttons */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {currentNode.answers.map((answer) => (
+                  <button
+                    key={answer.id}
+                    onClick={() => handleAnswer(answer.id, answer.next)}
+                    style={{
+                      width: '100%',
+                      padding: '16px 20px',
+                      background: 'rgba(255,255,255,0.7)',
+                      border: `2px solid rgba(255,255,255,0.9)`,
+                      borderRadius: 14,
+                      fontSize: '1rem',
+                      fontWeight: 600,
+                      color: '#0f172a',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 0.15s ease',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                    onMouseEnter={e => {
+                      const el = e.currentTarget as HTMLButtonElement
+                      el.style.borderColor = accent
+                      el.style.background = `${accent}18`
+                      el.style.transform = 'translateY(-1px)'
+                      el.style.boxShadow = `0 4px 12px ${accent}30`
+                    }}
+                    onMouseLeave={e => {
+                      const el = e.currentTarget as HTMLButtonElement
+                      el.style.borderColor = 'rgba(255,255,255,0.9)'
+                      el.style.background = 'rgba(255,255,255,0.7)'
+                      el.style.transform = 'none'
+                      el.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)'
+                    }}
+                  >
+                    <span>{answer.label}</span>
+                    <span style={{ fontSize: '1.1rem', opacity: 0.4 }}>→</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
