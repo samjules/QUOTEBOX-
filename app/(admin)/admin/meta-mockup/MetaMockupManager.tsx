@@ -10,6 +10,7 @@ type Mockup = {
   page_name: string
   page_avatar_url: string | null
   ad_image_url: string | null
+  ad_headline: string
   ad_body: string
   cta_label: string
   target_form_slug: string
@@ -23,6 +24,7 @@ const defaultDraft = {
   page_name: '',
   page_avatar_url: '',
   ad_image_url: '',
+  ad_headline: '',
   ad_body: '',
   cta_label: 'Get Quote',
   target_form_slug: '',
@@ -59,6 +61,7 @@ export default function MetaMockupManager({
       page_name: m.page_name,
       page_avatar_url: m.page_avatar_url ?? '',
       ad_image_url: m.ad_image_url ?? '',
+      ad_headline: m.ad_headline ?? '',
       ad_body: m.ad_body,
       cta_label: m.cta_label,
       target_form_slug: m.target_form_slug,
@@ -271,6 +274,11 @@ export default function MetaMockupManager({
           </div>
 
           <div>
+            <label style={labelStyle}>Ad Headline</label>
+            <input style={inputStyle} placeholder="e.g. Get a Free Instant Quote Today" value={draft.ad_headline} onChange={e => setDraft(d => ({ ...d, ad_headline: e.target.value }))} />
+          </div>
+
+          <div>
             <label style={labelStyle}>Ad Caption / Body</label>
             <textarea
               style={{ ...inputStyle, height: 80, resize: 'vertical' as const }}
@@ -322,6 +330,7 @@ export default function MetaMockupManager({
           pageName={draft.page_name || 'Your Business'}
           pageAvatarUrl={draft.page_avatar_url || null}
           adImageUrl={draft.ad_image_url || null}
+          adHeadline={draft.ad_headline || ''}
           adBody={draft.ad_body || 'Your ad copy will appear here…'}
           ctaLabel={draft.cta_label || 'Get Quote'}
           destinationUrl={draft.target_form_slug ? previewUrl : '#'}

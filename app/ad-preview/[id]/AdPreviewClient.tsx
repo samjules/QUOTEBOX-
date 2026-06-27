@@ -8,6 +8,7 @@ type Mockup = {
   page_name: string
   page_avatar_url: string | null
   ad_image_url: string | null
+  ad_headline: string
   ad_body: string
   cta_label: string
   target_form_slug: string
@@ -60,6 +61,7 @@ export default function AdPreviewClient({ mockup }: { mockup: Mockup }) {
           pageName={mockup.page_name}
           pageAvatarUrl={mockup.page_avatar_url}
           adImageUrl={mockup.ad_image_url}
+          adHeadline={mockup.ad_headline ?? ''}
           adBody={mockup.ad_body}
           ctaLabel={mockup.cta_label}
           destinationUrl={destinationUrl}

@@ -5,6 +5,7 @@ export default function InstagramPhonePreview({
   pageName,
   pageAvatarUrl,
   adImageUrl,
+  adHeadline,
   adBody,
   ctaLabel,
   destinationUrl,
@@ -13,6 +14,7 @@ export default function InstagramPhonePreview({
   pageName: string
   pageAvatarUrl: string | null
   adImageUrl: string | null
+  adHeadline: string
   adBody: string
   ctaLabel: string
   destinationUrl: string
@@ -112,9 +114,9 @@ export default function InstagramPhonePreview({
             </div>
 
             {/* CTA strip */}
-            <div style={{ padding: '10px 12px', borderTop: '0.5px solid #efefef', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#262626' }}>{pageName}</div>
+            <div style={{ padding: '10px 12px', borderTop: '0.5px solid #efefef', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 800, color: '#262626', lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{adHeadline || pageName}</div>
                 <div style={{ fontSize: 10, color: '#8e8e8e' }}>quote-box.com</div>
               </div>
               <a
