@@ -222,44 +222,57 @@ export default function QuizForm({ form, businessName }: { form: HostedForm; bus
         {/* RESULT SCREEN */}
         {screen === 'result' && currentResult && (
           <div>
-            <div style={{ background: '#fff', borderRadius: 20, padding: '32px 28px', boxShadow: '0 4px 24px rgba(0,0,0,0.08)', border: '1px solid #e2e8f0' }}>
-              {/* Icon */}
-              <div style={{ width: 56, height: 56, borderRadius: 16, background: accent, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={textOnAccent} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
-                  <path d="M22 4L12 14.01l-3-3"/>
-                </svg>
+            <div style={{ background: '#fff', borderRadius: 20, overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.08)', border: '1px solid #e2e8f0' }}>
+              {currentResult.image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={currentResult.image_url}
+                  alt={currentResult.headline}
+                  style={{ width: '100%', height: 200, objectFit: 'cover', display: 'block' }}
+                />
+              ) : null}
+
+              <div style={{ padding: '28px 28px 28px' }}>
+                {/* Icon — only show when there's no image */}
+                {!currentResult.image_url && (
+                  <div style={{ width: 56, height: 56, borderRadius: 16, background: accent, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={textOnAccent} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                      <path d="M22 4L12 14.01l-3-3"/>
+                    </svg>
+                  </div>
+                )}
+
+                <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.2, marginBottom: 12, letterSpacing: '-0.03em' }}>
+                  {currentResult.headline}
+                </h2>
+                <p style={{ fontSize: '0.95rem', color: '#475569', lineHeight: 1.65, marginBottom: currentResult.discount ? 20 : 28 }}>
+                  {currentResult.body}
+                </p>
+
+                {currentResult.discount && (
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: `${accent}18`, border: `1.5px solid ${accent}50`, borderRadius: 10, padding: '10px 16px', marginBottom: 28 }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill={accent} stroke="none">
+                      <path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+                    </svg>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a' }}>{currentResult.discount}</span>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => setScreen('contact')}
+                  style={{ width: '100%', padding: '14px', background: accent, color: textOnAccent, border: 'none', borderRadius: 12, fontSize: '1rem', fontWeight: 700, cursor: 'pointer', letterSpacing: '-0.01em' }}
+                >
+                  {currentResult.cta_label || 'Book My Free Estimate →'}
+                </button>
+
+                <button
+                  onClick={handleBack}
+                  style={{ width: '100%', marginTop: 10, padding: '10px', background: 'none', color: '#94a3b8', border: 'none', fontSize: '0.85rem', cursor: 'pointer' }}
+                >
+                  ← Go back
+                </button>
               </div>
-
-              <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.2, marginBottom: 12, letterSpacing: '-0.03em' }}>
-                {currentResult.headline}
-              </h2>
-              <p style={{ fontSize: '0.95rem', color: '#475569', lineHeight: 1.65, marginBottom: currentResult.discount ? 20 : 28 }}>
-                {currentResult.body}
-              </p>
-
-              {currentResult.discount && (
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: `${accent}18`, border: `1.5px solid ${accent}50`, borderRadius: 10, padding: '10px 16px', marginBottom: 28 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill={accent} stroke="none">
-                    <path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
-                  </svg>
-                  <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a' }}>{currentResult.discount}</span>
-                </div>
-              )}
-
-              <button
-                onClick={() => setScreen('contact')}
-                style={{ width: '100%', padding: '14px', background: accent, color: textOnAccent, border: 'none', borderRadius: 12, fontSize: '1rem', fontWeight: 700, cursor: 'pointer', letterSpacing: '-0.01em' }}
-              >
-                {currentResult.cta_label || 'Book My Free Estimate →'}
-              </button>
-
-              <button
-                onClick={handleBack}
-                style={{ width: '100%', marginTop: 10, padding: '10px', background: 'none', color: '#94a3b8', border: 'none', fontSize: '0.85rem', cursor: 'pointer' }}
-              >
-                ← Go back
-              </button>
             </div>
           </div>
         )}
