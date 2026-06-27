@@ -1366,8 +1366,9 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
     <div style={{
       minHeight: '100vh',
       background: isDark
-        ? 'linear-gradient(135deg, #f0f4ff 0%, #e8eeff 60%, #f0f4ff 100%)'
-        : `linear-gradient(135deg, ${accentBg}22 0%, ${accentBg}18 60%, ${accentBg}22 100%)`,
+        ? `linear-gradient(135deg, rgba(240,244,255,0.88) 0%, rgba(232,238,255,0.85) 60%, rgba(240,244,255,0.88) 100%), url('/map-tiles/map_1_tile.svg') center / 600px auto`
+        : `linear-gradient(135deg, rgba(255,255,255,0.86) 0%, rgba(255,255,255,0.83) 60%, rgba(255,255,255,0.86) 100%), url('/map-tiles/map_1_tile.svg') center / 600px auto`,
+      backgroundColor: isDark ? '#e8eeff' : `${accentBg}22`,
       display: 'flex',
       alignItems: 'flex-start',
       justifyContent: 'center',
