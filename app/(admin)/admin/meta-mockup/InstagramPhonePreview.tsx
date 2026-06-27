@@ -70,56 +70,11 @@ export default function InstagramPhonePreview({
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth={1.8}><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
         </div>
 
-        {/* Scrollable feed */}
-        <div style={{ flex: 1, overflowY: 'auto', background: '#fafafa' }}>
-
-          {/* Stories row */}
-          <div style={{ background: '#fff', padding: '10px 12px', display: 'flex', gap: 12, overflowX: 'auto', borderBottom: '0.5px solid #efefef', scrollbarWidth: 'none' }}>
-            {['You', 'sarah_m', 'jdev23', 'movers_co', 'cleanup'].map((name, i) => (
-              <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, flexShrink: 0 }}>
-                <div style={{
-                  width: 54, height: 54, borderRadius: '50%',
-                  background: i === 0 ? '#f3f4f6' : 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
-                  padding: i === 0 ? 0 : 2.5, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <div style={{ width: i === 0 ? 54 : 46, height: i === 0 ? 54 : 46, borderRadius: '50%', background: `hsl(${i * 60},50%,75%)`, border: i === 0 ? 'none' : '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {i === 0
-                      ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth={1.5}><path d="M12 13a4 4 0 100-8 4 4 0 000 8z"/><path d="M6 21v-1a6 6 0 0112 0v1"/></svg>
-                      : <span style={{ fontSize: 10, fontWeight: 700, color: '#fff' }}>{name[0].toUpperCase()}</span>
-                    }
-                  </div>
-                </div>
-                <span style={{ fontSize: 9.5, color: '#262626', maxWidth: 54, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Generic post above the ad */}
-          <div style={{ background: '#fff', marginBottom: 8 }}>
-            <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg, #667eea, #764ba2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>A</span>
-              </div>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#262626', flex: 1 }}>alexsmith_real</span>
-              <svg width="16" height="4" viewBox="0 0 16 4" fill="#262626"><circle cx="2" cy="2" r="2"/><circle cx="8" cy="2" r="2"/><circle cx="14" cy="2" r="2"/></svg>
-            </div>
-            <div style={{ height: 130, background: 'linear-gradient(135deg, #e2e8f0, #cbd5e0)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth={1.5}><path d="M3 9l4-4 4 4 4-4 4 4M3 15l4-4 4 4 4-4 4 4"/></svg>
-              </div>
-            </div>
-            <div style={{ padding: '6px 12px 10px' }}>
-              <div style={{ display: 'flex', gap: 12, marginBottom: 5 }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#262626" strokeWidth={1.6}><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#262626" strokeWidth={1.6}><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-              </div>
-              <div style={{ height: 9, width: 120, background: '#f3f4f6', borderRadius: 4, marginBottom: 5 }} />
-              <div style={{ height: 9, width: 180, background: '#f3f4f6', borderRadius: 4 }} />
-            </div>
-          </div>
+        {/* Feed — ad post only */}
+        <div style={{ flex: 1, overflowY: 'auto', background: '#fff' }}>
 
           {/* ── THE AD POST ── */}
-          <div style={{ background: '#fff', border: '0.5px solid #efefef', marginBottom: 8 }}>
+          <div style={{ background: '#fff' }}>
             {/* Ad header */}
             <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 9 }}>
               {pageAvatarUrl
@@ -194,31 +149,6 @@ export default function InstagramPhonePreview({
             </div>
           </div>
 
-          {/* Generic post below */}
-          <div style={{ background: '#fff' }}>
-            <div style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg, #f093fb, #f5576c)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>T</span>
-              </div>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#262626', flex: 1 }}>tasha.designs</span>
-            </div>
-            <div style={{ height: 100, background: 'linear-gradient(135deg, #ffecd2, #fcb69f)' }} />
-            <div style={{ padding: '6px 12px 14px' }}>
-              <div style={{ height: 9, width: 90, background: '#f3f4f6', borderRadius: 4, marginBottom: 5 }} />
-              <div style={{ height: 9, width: 160, background: '#f3f4f6', borderRadius: 4 }} />
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom nav */}
-        <div style={{ background: '#fff', borderTop: '0.5px solid #efefef', padding: '8px 20px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="#262626"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8e8e8e" strokeWidth={1.8}><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-          <div style={{ width: 22, height: 22, border: '2px solid #8e8e8e', borderRadius: 6 }} />
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8e8e8e" strokeWidth={1.8}><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-          <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#8e8e8e', overflow: 'hidden' }}>
-            <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #667eea, #764ba2)' }} />
-          </div>
         </div>
       </div>
     </div>
