@@ -31,9 +31,14 @@ function emailShell(businessName: string, content: string): string {
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f7f6f3;padding:32px 16px;">
     <tr><td align="center">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
-        <tr><td style="background:#0e0020;border-radius:14px 14px 0 0;padding:24px 28px;">
-          <div style="font-size:20px;font-weight:800;color:#ffe500;letter-spacing:-0.01em;">QuoteBox</div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:5px;">Your leads. On autopilot.</div>
+        <tr><td style="background:#0e0020;border-radius:14px 14px 0 0;padding:20px 28px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <img src="${esc(SITE_URL)}/quotebox-icon.png" alt="QuoteBox" width="44" height="44" style="border-radius:10px;display:block;" />
+            <div>
+              <div style="font-size:18px;font-weight:800;color:#ffe500;letter-spacing:-0.01em;">QuoteBox</div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px;">Your leads. On autopilot.</div>
+            </div>
+          </div>
         </td></tr>
         <tr><td style="background:white;padding:32px 32px 28px;border-radius:0 0 14px 14px;">
           ${content}
