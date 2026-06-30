@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { cancelOwnerSequence } from '@/lib/owner-automations'
 
 const VALID_REVENUES = [
   'Under $10k/mo',
@@ -33,6 +34,18 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    // If this email belongs to a QuoteBox account owner, stop their nurture sequence
+    const { data: authUsers } = await supabase.auth.admin.listUsers()
+    const match = authUsers?.users?.find((u) => u.email?.toLowerCase() === email.toLowerCase())
+    if (match) {
+      const { data: account } = await supabase
+        .from('accounts')
+        .select('id')
+        .eq('owner_id', match.id)
+        .single()
+      if (account) await cancelOwnerSequence(account.id)
     }
 
     return NextResponse.json({ success: true, id: data.id })
