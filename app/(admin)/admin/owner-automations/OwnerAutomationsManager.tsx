@@ -51,6 +51,38 @@ const STEP_LABELS: Record<string, string> = {
   no_leads_followup: 'No-Leads Follow-up',
 }
 
+// All 22 steps in the 30-day sequence
+const SEQUENCE_STEPS: { step: string; label: string; channel: 'email' | 'sms' | 'both' }[] = [
+  { step: 'welcome',             label: 'Welcome (Day 0)',           channel: 'both'  },
+  { step: 'day1_sms_2h',        label: 'Day 1 · +2h',              channel: 'sms'   },
+  { step: 'day2_email',         label: 'Day 2',                     channel: 'email' },
+  { step: 'day3_sms',           label: 'Day 3',                     channel: 'sms'   },
+  { step: 'day4_email',         label: 'Day 4',                     channel: 'email' },
+  { step: 'day5_morning_email', label: 'Day 5 Morning',             channel: 'email' },
+  { step: 'day5_afternoon_sms', label: 'Day 5 Afternoon',           channel: 'sms'   },
+  { step: 'day7_email',         label: 'Day 7',                     channel: 'email' },
+  { step: 'day9_sms',           label: 'Day 9',                     channel: 'sms'   },
+  { step: 'day10_email',        label: 'Day 10',                    channel: 'email' },
+  { step: 'day12_email',        label: 'Day 12',                    channel: 'email' },
+  { step: 'day13_sms',          label: 'Day 13',                    channel: 'sms'   },
+  { step: 'day14_email',        label: 'Day 14',                    channel: 'email' },
+  { step: 'day14_sms',          label: 'Day 14 · +2h',             channel: 'sms'   },
+  { step: 'day15_email',        label: 'Day 15',                    channel: 'email' },
+  { step: 'day17_email',        label: 'Day 17',                    channel: 'email' },
+  { step: 'day19_sms',          label: 'Day 19',                    channel: 'sms'   },
+  { step: 'day21_email',        label: 'Day 21',                    channel: 'email' },
+  { step: 'day23_sms',          label: 'Day 23',                    channel: 'sms'   },
+  { step: 'day25_email',        label: 'Day 25',                    channel: 'email' },
+  { step: 'day28_email',        label: 'Day 28',                    channel: 'email' },
+  { step: 'day30_sms',          label: 'Day 30',                    channel: 'sms'   },
+]
+
+const CHANNEL_BADGE: Record<string, { label: string; bg: string; color: string }> = {
+  email: { label: '✉ Email',    bg: '#eff6ff', color: '#1d4ed8' },
+  sms:   { label: '💬 SMS',     bg: '#f0fdf4', color: '#15803d' },
+  both:  { label: '✉ + 💬',    bg: '#faf5ff', color: '#7e22ce' },
+}
+
 function fmt(iso: string) {
   return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 }
@@ -279,6 +311,7 @@ export default function OwnerAutomationsManager({ steps: initialSteps }: { steps
   const [statusFilter, setStatusFilter] = useState('all')
 
   const [testPhone, setTestPhone] = useState('')
+  const [testStep, setTestStep] = useState('all')
   const [testing, setTesting] = useState(false)
   const [testResults, setTestResults] = useState<{ step: string; channel: string; ok: boolean; error?: string }[] | null>(null)
 
@@ -305,7 +338,7 @@ export default function OwnerAutomationsManager({ steps: initialSteps }: { steps
     const res = await fetch('/api/admin/owner-automations/test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: testPhone.trim() || null }),
+      body: JSON.stringify({ phone: testPhone.trim() || null, step: testStep }),
     })
     const data = await res.json()
     setTestResults(data.results ?? [])
@@ -354,45 +387,89 @@ export default function OwnerAutomationsManager({ steps: initialSteps }: { steps
         </div>
 
         {/* Test panel */}
-        <div style={{ background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: 12, padding: '16px 18px', minWidth: 280 }}>
-          <p style={{ margin: '0 0 10px', fontSize: '0.8rem', fontWeight: 700, color: '#374151' }}>Send Test</p>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+        <div style={{ background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: 12, padding: '16px 18px', minWidth: 300, maxWidth: 360 }}>
+          <p style={{ margin: '0 0 12px', fontSize: '0.8rem', fontWeight: 700, color: '#374151' }}>Send Test</p>
+
+          {/* Step picker */}
+          <div style={{ marginBottom: 8 }}>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', marginBottom: 4 }}>
+              Step
+            </label>
+            <select
+              value={testStep}
+              onChange={(e) => setTestStep(e.target.value)}
+              style={{ width: '100%', padding: '9px 10px', borderRadius: 8, border: '1.5px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'inherit', color: '#0e0020', background: '#fff' }}
+            >
+              <option value="all">All 22 steps</option>
+              {SEQUENCE_STEPS.map(({ step, label, channel }) => (
+                <option key={step} value={step}>
+                  {label} · {channel === 'both' ? 'Email + SMS' : channel === 'email' ? 'Email' : 'SMS'}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Channel hint */}
+          {testStep !== 'all' && (() => {
+            const info = SEQUENCE_STEPS.find((s) => s.step === testStep)
+            const badge = info ? CHANNEL_BADGE[info.channel] : null
+            return badge ? (
+              <div style={{ marginBottom: 8 }}>
+                <span style={{ display: 'inline-block', fontSize: '0.72rem', fontWeight: 600, padding: '2px 8px', borderRadius: 99, background: badge.bg, color: badge.color }}>
+                  {badge.label}
+                </span>
+              </div>
+            ) : null
+          })()}
+
+          {/* Phone field */}
+          <div style={{ marginBottom: 10 }}>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', marginBottom: 4 }}>
+              Test phone (for SMS steps)
+            </label>
             <input
               type="tel"
-              placeholder="Test phone (optional)"
+              placeholder="+1 555 000 0000"
               value={testPhone}
               onChange={(e) => setTestPhone(e.target.value)}
-              style={{ ...inputStyle, flex: 1 }}
+              style={inputStyle}
             />
-            <button
-              onClick={runTest}
-              disabled={testing}
-              style={{
-                padding: '9px 16px', borderRadius: 8, border: 'none',
-                background: '#0e0020', color: '#ffe500', fontSize: '0.82rem',
-                fontWeight: 700, cursor: testing ? 'not-allowed' : 'pointer',
-                fontFamily: 'inherit', opacity: testing ? 0.6 : 1, whiteSpace: 'nowrap',
-              }}
-            >
-              {testing ? 'Sending…' : '▶ Test all'}
-            </button>
           </div>
-          <p style={{ margin: 0, fontSize: '0.72rem', color: '#94a3b8' }}>
-            Sends both steps to your admin email. Add a phone to also test SMS.
+
+          <button
+            onClick={runTest}
+            disabled={testing}
+            style={{
+              width: '100%', padding: '9px 16px', borderRadius: 8, border: 'none',
+              background: '#0e0020', color: '#ffe500', fontSize: '0.84rem',
+              fontWeight: 700, cursor: testing ? 'not-allowed' : 'pointer',
+              fontFamily: 'inherit', opacity: testing ? 0.6 : 1,
+            }}
+          >
+            {testing ? 'Sending…' : testStep === 'all' ? '▶ Send all 22 steps' : '▶ Send test'}
+          </button>
+
+          <p style={{ margin: '8px 0 0', fontSize: '0.72rem', color: '#94a3b8' }}>
+            Email goes to your admin address. Phone required for SMS steps.
           </p>
+
           {testResults && (
-            <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {testResults.map((r, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem' }}>
-                  <span style={{ color: r.ok ? '#16a34a' : '#dc2626', fontWeight: 700 }}>
-                    {r.ok ? '✓' : '✗'}
-                  </span>
-                  <span style={{ color: '#374151' }}>
-                    {STEP_LABELS[r.step] ?? r.step} · {r.channel}
-                  </span>
-                  {r.error && <span style={{ color: '#dc2626' }}>— {r.error}</span>}
-                </div>
-              ))}
+            <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 200, overflowY: 'auto' }}>
+              {testResults.map((r, i) => {
+                const info = SEQUENCE_STEPS.find((s) => s.step === r.step)
+                const label = info?.label ?? STEP_LABELS[r.step] ?? r.step
+                return (
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: '0.78rem' }}>
+                    <span style={{ color: r.ok ? '#16a34a' : '#dc2626', fontWeight: 700, flexShrink: 0 }}>
+                      {r.ok ? '✓' : '✗'}
+                    </span>
+                    <span style={{ color: '#374151' }}>
+                      {label} · {r.channel}
+                    </span>
+                    {r.error && <span style={{ color: '#dc2626', fontSize: '0.72rem' }}>— {r.error}</span>}
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>

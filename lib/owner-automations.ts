@@ -97,7 +97,7 @@ export const ONBOARDING_STEPS: { step: string; delay_ms: number }[] = [
   { step: 'day30_sms',          delay_ms: 30 * DAY },
 ]
 
-const SMS_STEPS = new Set([
+export const SMS_STEPS = new Set([
   'day1_sms_2h', 'day3_sms', 'day5_afternoon_sms', 'day9_sms',
   'day13_sms', 'day14_sms', 'day19_sms', 'day23_sms', 'day30_sms',
 ])
