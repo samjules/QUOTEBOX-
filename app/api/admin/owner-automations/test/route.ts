@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json().catch(() => ({}))
   const testPhone: string | null = body.phone ?? null
+  const testEmail: string = body.email?.trim() || user.email!
   const stepFilter: string = body.step ?? 'all'
 
   const admin = createAdminClient()
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
     const isWelcome = step === 'welcome'
 
     // Email (for email steps and the welcome step which is both)
-    if (!isSmsOnly && apiKey && user.email) {
+    if (!isSmsOnly && apiKey) {
       try {
         const resend = new Resend(apiKey)
         const customCopy = step === 'welcome' ? (cfg?.welcome_email ?? null) : null
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
         if (result) {
           const { error } = await resend.emails.send({
             from,
-            to: user.email,
+            to: testEmail,
             subject: `[TEST] ${result.subject}`,
             html: result.html,
           })

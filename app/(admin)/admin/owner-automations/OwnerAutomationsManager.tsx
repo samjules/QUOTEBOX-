@@ -301,6 +301,12 @@ function StepNode({
 
 // ── main component ────────────────────────────────────────────────────────
 
+interface PreviewData {
+  subject: string | null
+  html: string | null
+  sms: string | null
+}
+
 export default function OwnerAutomationsManager({ steps: initialSteps }: { steps: OwnerStep[] }) {
   const [steps] = useState(initialSteps)
   const [config, setConfig] = useState<Config>({ welcome_email: null, welcome_sms: null, no_leads_email: null, no_leads_sms: null })
@@ -310,10 +316,15 @@ export default function OwnerAutomationsManager({ steps: initialSteps }: { steps
   const [stepFilter, setStepFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
 
+  const [testEmail, setTestEmail] = useState('')
   const [testPhone, setTestPhone] = useState('')
   const [testStep, setTestStep] = useState('all')
   const [testing, setTesting] = useState(false)
   const [testResults, setTestResults] = useState<{ step: string; channel: string; ok: boolean; error?: string }[] | null>(null)
+
+  const [preview, setPreview] = useState<PreviewData | null>(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const [previewTab, setPreviewTab] = useState<'email' | 'sms'>('email')
 
   useEffect(() => {
     fetch('/api/admin/owner-automations/config')
@@ -321,6 +332,20 @@ export default function OwnerAutomationsManager({ steps: initialSteps }: { steps
       .then((d) => { setConfig(d); setConfigLoaded(true) })
       .catch(() => setConfigLoaded(true))
   }, [])
+
+  useEffect(() => {
+    if (testStep === 'all') { setPreview(null); return }
+    setPreviewLoading(true)
+    setPreview(null)
+    fetch(`/api/admin/owner-automations/preview?step=${testStep}`)
+      .then((r) => r.json())
+      .then((d: PreviewData) => {
+        setPreview(d)
+        setPreviewTab(d.html ? 'email' : 'sms')
+      })
+      .catch(() => setPreview(null))
+      .finally(() => setPreviewLoading(false))
+  }, [testStep])
 
   async function saveConfig(patch: Partial<Config>) {
     const next = { ...config, ...patch }
@@ -338,7 +363,11 @@ export default function OwnerAutomationsManager({ steps: initialSteps }: { steps
     const res = await fetch('/api/admin/owner-automations/test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: testPhone.trim() || null, step: testStep }),
+      body: JSON.stringify({
+        email: testEmail.trim() || null,
+        phone: testPhone.trim() || null,
+        step: testStep,
+      }),
     })
     const data = await res.json()
     setTestResults(data.results ?? [])
@@ -387,14 +416,12 @@ export default function OwnerAutomationsManager({ steps: initialSteps }: { steps
         </div>
 
         {/* Test panel */}
-        <div style={{ background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: 12, padding: '16px 18px', minWidth: 300, maxWidth: 360 }}>
+        <div style={{ background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: 12, padding: '16px 18px', minWidth: 300, maxWidth: 380 }}>
           <p style={{ margin: '0 0 12px', fontSize: '0.8rem', fontWeight: 700, color: '#374151' }}>Send Test</p>
 
           {/* Step picker */}
           <div style={{ marginBottom: 8 }}>
-            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', marginBottom: 4 }}>
-              Step
-            </label>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', marginBottom: 4 }}>Step</label>
             <select
               value={testStep}
               onChange={(e) => setTestStep(e.target.value)}
@@ -409,12 +436,12 @@ export default function OwnerAutomationsManager({ steps: initialSteps }: { steps
             </select>
           </div>
 
-          {/* Channel hint */}
+          {/* Channel badge */}
           {testStep !== 'all' && (() => {
             const info = SEQUENCE_STEPS.find((s) => s.step === testStep)
             const badge = info ? CHANNEL_BADGE[info.channel] : null
             return badge ? (
-              <div style={{ marginBottom: 8 }}>
+              <div style={{ marginBottom: 10 }}>
                 <span style={{ display: 'inline-block', fontSize: '0.72rem', fontWeight: 600, padding: '2px 8px', borderRadius: 99, background: badge.bg, color: badge.color }}>
                   {badge.label}
                 </span>
@@ -422,11 +449,21 @@ export default function OwnerAutomationsManager({ steps: initialSteps }: { steps
             ) : null
           })()}
 
+          {/* Email field */}
+          <div style={{ marginBottom: 8 }}>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', marginBottom: 4 }}>Test email</label>
+            <input
+              type="email"
+              placeholder="Leave blank to use your admin email"
+              value={testEmail}
+              onChange={(e) => setTestEmail(e.target.value)}
+              style={inputStyle}
+            />
+          </div>
+
           {/* Phone field */}
           <div style={{ marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', marginBottom: 4 }}>
-              Test phone (for SMS steps)
-            </label>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 600, color: '#64748b', marginBottom: 4 }}>Test phone (SMS steps)</label>
             <input
               type="tel"
               placeholder="+1 555 000 0000"
@@ -449,23 +486,15 @@ export default function OwnerAutomationsManager({ steps: initialSteps }: { steps
             {testing ? 'Sending…' : testStep === 'all' ? '▶ Send all 22 steps' : '▶ Send test'}
           </button>
 
-          <p style={{ margin: '8px 0 0', fontSize: '0.72rem', color: '#94a3b8' }}>
-            Email goes to your admin address. Phone required for SMS steps.
-          </p>
-
           {testResults && (
-            <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 200, overflowY: 'auto' }}>
+            <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 180, overflowY: 'auto' }}>
               {testResults.map((r, i) => {
                 const info = SEQUENCE_STEPS.find((s) => s.step === r.step)
                 const label = info?.label ?? STEP_LABELS[r.step] ?? r.step
                 return (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: '0.78rem' }}>
-                    <span style={{ color: r.ok ? '#16a34a' : '#dc2626', fontWeight: 700, flexShrink: 0 }}>
-                      {r.ok ? '✓' : '✗'}
-                    </span>
-                    <span style={{ color: '#374151' }}>
-                      {label} · {r.channel}
-                    </span>
+                    <span style={{ color: r.ok ? '#16a34a' : '#dc2626', fontWeight: 700, flexShrink: 0 }}>{r.ok ? '✓' : '✗'}</span>
+                    <span style={{ color: '#374151' }}>{label} · {r.channel}</span>
                     {r.error && <span style={{ color: '#dc2626', fontSize: '0.72rem' }}>— {r.error}</span>}
                   </div>
                 )
@@ -474,6 +503,73 @@ export default function OwnerAutomationsManager({ steps: initialSteps }: { steps
           )}
         </div>
       </div>
+
+      {/* Preview panel */}
+      {testStep !== 'all' && (
+        <div style={{ background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: 14, marginBottom: 28, overflow: 'hidden' }}>
+          {/* Preview header */}
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#374151' }}>
+                Preview — {SEQUENCE_STEPS.find((s) => s.step === testStep)?.label ?? testStep}
+              </span>
+              {preview?.subject && previewTab === 'email' && (
+                <span style={{ fontSize: '0.78rem', color: '#64748b' }}>· {preview.subject}</span>
+              )}
+            </div>
+            {/* Tabs */}
+            {preview && preview.html && preview.sms && (
+              <div style={{ display: 'flex', gap: 4, background: '#f8fafc', borderRadius: 8, padding: 3 }}>
+                {(['email', 'sms'] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setPreviewTab(t)}
+                    style={{
+                      padding: '5px 12px', borderRadius: 6, border: 'none', fontFamily: 'inherit',
+                      fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer',
+                      background: previewTab === t ? '#fff' : 'transparent',
+                      color: previewTab === t ? '#0e0020' : '#94a3b8',
+                      boxShadow: previewTab === t ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                    }}
+                  >
+                    {t === 'email' ? '✉ Email' : '💬 SMS'}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Preview body */}
+          {previewLoading ? (
+            <div style={{ padding: '40px 20px', textAlign: 'center', color: '#94a3b8', fontSize: '0.84rem' }}>Loading preview…</div>
+          ) : preview ? (
+            <>
+              {/* Email iframe */}
+              {(previewTab === 'email' || !preview.sms) && preview.html && (
+                <iframe
+                  srcDoc={preview.html}
+                  title="Email preview"
+                  style={{ width: '100%', height: 540, border: 'none', display: 'block' }}
+                  sandbox="allow-same-origin"
+                />
+              )}
+
+              {/* SMS bubble */}
+              {(previewTab === 'sms' || !preview.html) && preview.sms && (
+                <div style={{ padding: '24px 28px', background: '#f8fafc' }}>
+                  <p style={{ margin: '0 0 10px', fontSize: '0.72rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>SMS message</p>
+                  <div style={{ display: 'inline-block', maxWidth: 420, background: '#0e0020', color: '#fff', padding: '12px 16px', borderRadius: '16px 16px 16px 4px', fontSize: '0.92rem', lineHeight: 1.55, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    {preview.sms}
+                  </div>
+                  <p style={{ margin: '10px 0 0', fontSize: '0.72rem', color: '#94a3b8' }}>{preview.sms.length} chars</p>
+                </div>
+              )}
+            </>
+          ) : (
+            <div style={{ padding: '40px 20px', textAlign: 'center', color: '#94a3b8', fontSize: '0.84rem' }}>No preview available for this step.</div>
+          )}
+        </div>
+      )}
 
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 32 }}>
