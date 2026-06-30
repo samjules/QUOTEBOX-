@@ -327,20 +327,22 @@ export function buildEmailForStep(
 // SMS builders — keyed by step name
 // ---------------------------------------------------------------------------
 
+const STOP = `\n\nReply STOP to opt out.`
+
 export function buildSmsForStep(step: string, firstName: string, businessName: string): string | null {
   const link = CALENDAR_URL
   const greet = `Hey ${firstName}`
 
   const msgs: Record<string, string> = {
-    day1_sms_2h: `${greet} — your Quotebox CRM is live 🎉 Got 5 min? Log in and grab your free lead capture link: ${SITE_URL}/dashboard`,
-    day3_sms: `Quick tip: businesses that follow up within 5 min book 8x more jobs. Your Quotebox does that automatically. Want us to show you how? ${link}`,
-    day5_afternoon_sms: `${greet} — did you get a chance to finish your CRM setup? Takes 10 min and your first lead could come in today: ${SITE_URL}/dashboard`,
-    day9_sms: `Most junk removal owners don't know this: automated follow-up can recover 30–40% of leads who didn't book the first time. Want to see how your CRM handles it? ${link}`,
-    day13_sms: `${greet} — we helped a moving company go from 4 to 20 jobs/month with their Quotebox setup. Want to see how? 15-min call, no pressure: ${link}`,
-    day14_sms: `Hey — sent you a quick question by email. Would love your answer, it helps us help you better. Takes 30 seconds: ${link}`,
-    day19_sms: `${greet}, only a few spots left for our free strategy calls this month. We go through your lead setup and build a 90-day plan together. Grab yours: ${link}`,
-    day23_sms: `Last chance for this month's free strategy sessions, ${firstName}. Spots fill up fast — book here: ${link}. Takes 30 sec.`,
-    day30_sms: `${greet} — wrapping up our onboarding series. Your CRM is still ready to generate leads. If you ever want to talk strategy, we're here: ${link}. No rush at all.`,
+    day1_sms_2h: `${greet} — your Quotebox CRM is live 🎉 Got 5 min? Log in and grab your free lead capture link: ${SITE_URL}/dashboard${STOP}`,
+    day3_sms: `Quick tip: businesses that follow up within 5 min book 8x more jobs. Your Quotebox does that automatically. Want us to show you how? ${link}${STOP}`,
+    day5_afternoon_sms: `${greet} — did you get a chance to finish your CRM setup? Takes 10 min and your first lead could come in today: ${SITE_URL}/dashboard${STOP}`,
+    day9_sms: `Most junk removal owners don't know this: automated follow-up can recover 30–40% of leads who didn't book the first time. Want to see how your CRM handles it? ${link}${STOP}`,
+    day13_sms: `${greet} — we helped a moving company go from 4 to 20 jobs/month with their Quotebox setup. Want to see how? 15-min call, no pressure: ${link}${STOP}`,
+    day14_sms: `Hey — sent you a quick question by email. Would love your answer, it helps us help you better. Takes 30 seconds: ${link}${STOP}`,
+    day19_sms: `${greet}, only a few spots left for our free strategy calls this month. We go through your lead setup and build a 90-day plan together. Grab yours: ${link}${STOP}`,
+    day23_sms: `Last chance for this month's free strategy sessions, ${firstName}. Spots fill up fast — book here: ${link}. Takes 30 sec.${STOP}`,
+    day30_sms: `${greet} — wrapping up our onboarding series. Your CRM is still ready to generate leads. If you ever want to talk strategy, we're here: ${link}. No rush at all.${STOP}`,
     // Backward-compatible
     no_leads_followup: buildNoLeadsSms(null),
   }
@@ -366,8 +368,8 @@ const NO_LEADS_DEFAULTS: EmailCopy = {
   outro: 'No obligation — I just want to make sure QuoteBox is working for you.',
 }
 
-const WELCOME_SMS_DEFAULT = `Welcome to QuoteBox! 🎉 Your account is live. Book your free ad setup call and let's get leads coming in: ${CALENDAR_URL}`
-const NO_LEADS_SMS_DEFAULT = `Hey! I noticed you haven't gotten any leads yet on QuoteBox. Need help? Book a free consulting call here: ${CALENDAR_URL}`
+const WELCOME_SMS_DEFAULT = `Welcome to QuoteBox! 🎉 Your account is live. Book your free ad setup call and let's get leads coming in: ${CALENDAR_URL}\n\nReply STOP to opt out.`
+const NO_LEADS_SMS_DEFAULT = `Hey! I noticed you haven't gotten any leads yet on QuoteBox. Need help? Book a free consulting call here: ${CALENDAR_URL}\n\nReply STOP to opt out.`
 
 function interpolate(str: string, businessName: string) {
   return str.replace(/\{\{business\}\}/g, esc(businessName))
