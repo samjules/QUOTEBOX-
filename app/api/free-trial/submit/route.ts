@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { Resend } from 'resend'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { alaskaWallTimeToUTC, isQualified } from '@/lib/free-trial'
+import { alaskaWallTimeToUTC, isQualified, buildBookingConfirmationEmail, buildBookingConfirmationSms } from '@/lib/free-trial'
+import { sendSms } from '@/lib/sms'
 
 export async function POST(req: NextRequest) {
   try {
@@ -47,6 +49,27 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    // Best-effort instant confirmation — don't fail the booking if these error out
+    const firstName = name.trim().split(/\s+/)[0] || 'there'
+    const dateLabel = new Date(scheduled_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+
+    const apiKey = process.env.RESEND_API_KEY
+    const from = process.env.RESEND_FROM_EMAIL || 'Sam at QuoteBox <sam@quote-box.com>'
+    if (apiKey) {
+      try {
+        const resend = new Resend(apiKey)
+        const { subject, html } = buildBookingConfirmationEmail(firstName, dateLabel, scheduled_time)
+        await resend.emails.send({ from, to: email, subject, html })
+      } catch (err) {
+        console.error('Free trial booking confirmation email error:', err)
+      }
+    }
+    try {
+      await sendSms(phone, buildBookingConfirmationSms(firstName, dateLabel, scheduled_time))
+    } catch (err) {
+      console.error('Free trial booking confirmation SMS error:', err)
     }
 
     return NextResponse.json({ success: true, id: data.id })

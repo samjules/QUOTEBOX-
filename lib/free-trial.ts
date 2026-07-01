@@ -127,6 +127,27 @@ export function buildReminderSms(firstName: string, timeLabel: string): string {
   return `Hey ${firstName} — reminder: your free QuoteBox strategy call is tomorrow at ${timeLabel} (Alaska Time). Reply Y to confirm or N to cancel. If we don't hear back your spot will be released.`
 }
 
+export function buildBookingConfirmationEmail(firstName: string, dateLabel: string, timeLabel: string): { subject: string; html: string } {
+  const subject = `You're booked — ${dateLabel} at ${timeLabel} (QuoteBox free trial)`
+  const html = emailShell(`
+    <h2 style="margin:0 0 16px;font-size:22px;color:#0e0020;">You're in, ${esc(firstName)}!</h2>
+    <p style="margin:0 0 12px;font-size:15px;color:#334155;line-height:1.6;">
+      Your free strategy call is booked for <strong>${esc(dateLabel)} at ${esc(timeLabel)} (Alaska Time)</strong>. We'll send a reminder the day before.
+    </p>
+    <div style="text-align:center;margin:24px 0;">
+      <a href="${esc(ZOOM_MEETING_URL)}" style="display:inline-block;background:#0e0020;color:#ffe500;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:700;text-decoration:none;">Save Your Zoom Link →</a>
+    </div>
+    <p style="margin:0;font-size:14px;color:#64748b;line-height:1.6;">
+      The day before your call, we'll text you to confirm — reply <strong>Y</strong> to keep your spot or <strong>N</strong> to cancel.
+    </p>
+  `)
+  return { subject, html }
+}
+
+export function buildBookingConfirmationSms(firstName: string, dateLabel: string, timeLabel: string): string {
+  return `You're booked, ${firstName}! Free QuoteBox strategy call on ${dateLabel} at ${timeLabel} (Alaska Time). We'll text you a reminder the day before to confirm.`
+}
+
 export function buildCancelledEmail(firstName: string): { subject: string; html: string } {
   const subject = `Your QuoteBox call has been released`
   const html = emailShell(`
