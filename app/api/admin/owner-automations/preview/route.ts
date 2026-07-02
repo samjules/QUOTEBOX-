@@ -6,6 +6,13 @@ import {
   buildWelcomeSms,
   SMS_STEPS,
 } from '@/lib/owner-automations'
+import {
+  buildBookingConfirmationEmail,
+  buildBookingConfirmationSms,
+  buildReminderEmail,
+  buildReminderSms,
+  buildCancelledEmail,
+} from '@/lib/free-trial'
 
 async function assertAdmin() {
   const supabase = createClient()
@@ -15,12 +22,37 @@ async function assertAdmin() {
   return adminEmails.includes((user.email ?? '').toLowerCase()) ? user : null
 }
 
+const FT_PREVIEW_DATE = 'Monday, January 12'
+const FT_PREVIEW_TIME = '11:00 AM'
+const FT_PREVIEW_ZOOM = 'https://zoom.us/j/PREVIEW'
+
 export async function GET(request: NextRequest) {
   const user = await assertAdmin()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const step = request.nextUrl.searchParams.get('step')
   if (!step) return NextResponse.json({ error: 'step required' }, { status: 400 })
+
+  if (step.startsWith('ft_')) {
+    let subject: string | null = null
+    let html: string | null = null
+    let sms: string | null = null
+
+    if (step === 'ft_confirmation') {
+      const r = buildBookingConfirmationEmail('Mike', FT_PREVIEW_DATE, FT_PREVIEW_TIME, FT_PREVIEW_ZOOM, null)
+      subject = r.subject; html = r.html
+      sms = buildBookingConfirmationSms('Mike', FT_PREVIEW_DATE, FT_PREVIEW_TIME, null)
+    } else if (step === 'ft_reminder') {
+      const r = buildReminderEmail('Mike', FT_PREVIEW_DATE, FT_PREVIEW_TIME, FT_PREVIEW_ZOOM, null)
+      subject = r.subject; html = r.html
+      sms = buildReminderSms('Mike', FT_PREVIEW_TIME, null)
+    } else if (step === 'ft_cancelled') {
+      const r = buildCancelledEmail('Mike', null)
+      subject = r.subject; html = r.html
+    }
+
+    return NextResponse.json({ subject, html, sms })
+  }
 
   const isSmsOnly = SMS_STEPS.has(step)
   const isWelcome = step === 'welcome'

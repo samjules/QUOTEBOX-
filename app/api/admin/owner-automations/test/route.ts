@@ -8,8 +8,20 @@ import {
   SMS_STEPS,
   ONBOARDING_STEPS,
 } from '@/lib/owner-automations'
+import {
+  buildBookingConfirmationEmail,
+  buildBookingConfirmationSms,
+  buildReminderEmail,
+  buildReminderSms,
+  buildCancelledEmail,
+} from '@/lib/free-trial'
 import { Resend } from 'resend'
 import { sendSms } from '@/lib/sms'
+
+const FT_STEPS = ['ft_confirmation', 'ft_reminder', 'ft_cancelled']
+const FT_PREVIEW_DATE = 'Monday, January 12'
+const FT_PREVIEW_TIME = '11:00 AM'
+const FT_PREVIEW_ZOOM = 'https://zoom.us/j/PREVIEW'
 
 async function assertAdmin() {
   const supabase = createClient()
@@ -36,6 +48,42 @@ export async function POST(request: NextRequest) {
   const from = process.env.RESEND_FROM_EMAIL || 'Sam at QuoteBox <sam@quote-box.com>'
   const testBiz = 'Test Business'
   const testFirstName = 'Test'
+
+  if (FT_STEPS.includes(stepFilter)) {
+    if (apiKey) {
+      try {
+        const resend = new Resend(apiKey)
+        let result: { subject: string; html: string } | null = null
+        if (stepFilter === 'ft_confirmation') {
+          result = buildBookingConfirmationEmail(testFirstName, FT_PREVIEW_DATE, FT_PREVIEW_TIME, FT_PREVIEW_ZOOM, cfg?.ft_confirmation_email ?? null)
+        } else if (stepFilter === 'ft_reminder') {
+          result = buildReminderEmail(testFirstName, FT_PREVIEW_DATE, FT_PREVIEW_TIME, FT_PREVIEW_ZOOM, cfg?.ft_reminder_email ?? null)
+        } else if (stepFilter === 'ft_cancelled') {
+          result = buildCancelledEmail(testFirstName, cfg?.ft_cancelled_email ?? null)
+        }
+        if (result) {
+          const { error } = await resend.emails.send({ from, to: testEmail, subject: `[TEST] ${result.subject}`, html: result.html })
+          results.push({ step: stepFilter, channel: 'email', ok: !error, error: error?.message })
+        }
+      } catch (err) {
+        results.push({ step: stepFilter, channel: 'email', ok: false, error: err instanceof Error ? err.message : String(err) })
+      }
+    }
+
+    if (testPhone && stepFilter !== 'ft_cancelled') {
+      try {
+        const msg = stepFilter === 'ft_confirmation'
+          ? buildBookingConfirmationSms(testFirstName, FT_PREVIEW_DATE, FT_PREVIEW_TIME, cfg?.ft_confirmation_sms ?? null)
+          : buildReminderSms(testFirstName, FT_PREVIEW_TIME, cfg?.ft_reminder_sms ?? null)
+        const ok = await sendSms(testPhone, `[TEST] ${msg}`)
+        results.push({ step: stepFilter, channel: 'sms', ok })
+      } catch (err) {
+        results.push({ step: stepFilter, channel: 'sms', ok: false, error: err instanceof Error ? err.message : String(err) })
+      }
+    }
+
+    return NextResponse.json({ results })
+  }
 
   const allStepNames = ONBOARDING_STEPS.map((s) => s.step)
   const stepsToTest = stepFilter === 'all' ? allStepNames : [stepFilter]

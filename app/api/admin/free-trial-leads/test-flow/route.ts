@@ -67,6 +67,8 @@ export async function POST() {
   }
   steps.push({ name: 'Create test lead', ok: true })
 
+  const { data: cfg } = await admin.from('owner_automation_config').select('*').eq('id', 1).single()
+
   // 2. Zoom meeting
   let zoomJoinUrl: string | undefined
   try {
@@ -84,7 +86,7 @@ export async function POST() {
   if (apiKey) {
     try {
       const resend = new Resend(apiKey)
-      const { subject, html } = buildBookingConfirmationEmail(firstName, dateLabel, scheduled_time, zoomJoinUrl)
+      const { subject, html } = buildBookingConfirmationEmail(firstName, dateLabel, scheduled_time, zoomJoinUrl, cfg?.ft_confirmation_email ?? null)
       await resend.emails.send({ from, to: testEmail, subject, html })
       steps.push({ name: 'Send confirmation email', ok: true })
     } catch (err) {
@@ -95,7 +97,7 @@ export async function POST() {
   }
 
   try {
-    const smsOk = await sendSms(testPhone, buildBookingConfirmationSms(firstName, dateLabel, scheduled_time))
+    const smsOk = await sendSms(testPhone, buildBookingConfirmationSms(firstName, dateLabel, scheduled_time, cfg?.ft_confirmation_sms ?? null))
     steps.push({ name: 'Send confirmation SMS', ok: smsOk, error: smsOk ? undefined : 'sendSms returned false — check Twilio env vars' })
   } catch (err) {
     steps.push({ name: 'Send confirmation SMS', ok: false, error: err instanceof Error ? err.message : String(err) })
@@ -113,7 +115,7 @@ export async function POST() {
   if (apiKey) {
     try {
       const resend = new Resend(apiKey)
-      const { subject, html } = buildReminderEmail(firstName, dateLabel, scheduled_time, zoomJoinUrl)
+      const { subject, html } = buildReminderEmail(firstName, dateLabel, scheduled_time, zoomJoinUrl, cfg?.ft_reminder_email ?? null)
       await resend.emails.send({ from, to: testEmail, subject, html })
       steps.push({ name: 'Send reminder email', ok: true })
     } catch (err) {
@@ -124,7 +126,7 @@ export async function POST() {
   }
 
   try {
-    const smsOk = await sendSms(testPhone, buildReminderSms(firstName, scheduled_time))
+    const smsOk = await sendSms(testPhone, buildReminderSms(firstName, scheduled_time, cfg?.ft_reminder_sms ?? null))
     steps.push({ name: 'Send reminder SMS (reply Y or N to test confirm/cancel)', ok: smsOk, error: smsOk ? undefined : 'sendSms returned false — check Twilio env vars' })
   } catch (err) {
     steps.push({ name: 'Send reminder SMS', ok: false, error: err instanceof Error ? err.message : String(err) })

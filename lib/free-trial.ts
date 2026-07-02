@@ -107,62 +107,113 @@ function emailShell(content: string): string {
 </html>`
 }
 
-export function buildReminderEmail(firstName: string, dateLabel: string, timeLabel: string, zoomUrl: string = FALLBACK_ZOOM_URL): { subject: string; html: string } {
-  const subject = `Reminder: your QuoteBox Zoom call is tomorrow at ${timeLabel}`
+export interface EmailCopy {
+  subject?: string
+  heading?: string
+  body?: string
+  outro?: string
+}
+
+function interpolate(str: string, name: string, date: string, time: string) {
+  return str
+    .replace(/\{\{name\}\}/g, esc(name))
+    .replace(/\{\{date\}\}/g, esc(date))
+    .replace(/\{\{time\}\}/g, esc(time))
+}
+
+function interpolatePlain(str: string, name: string, date: string, time: string) {
+  return str.replace(/\{\{name\}\}/g, name).replace(/\{\{date\}\}/g, date).replace(/\{\{time\}\}/g, time)
+}
+
+function mergeCopy<T extends EmailCopy>(defaults: T, custom: EmailCopy | null): T {
+  return { ...defaults, ...Object.fromEntries(Object.entries(custom ?? {}).filter(([, v]) => v)) }
+}
+
+export const FT_REMINDER_EMAIL_DEFAULTS: EmailCopy = {
+  subject: `Reminder: your QuoteBox Zoom call is tomorrow at {{time}}`,
+  heading: `See you tomorrow, {{name}}!`,
+  body: `Quick reminder — your free strategy call is scheduled for <strong>{{date}} at {{time}} (Alaska Time)</strong>.`,
+  outro: `We just texted you too — reply <strong>Y</strong> to confirm you'll be there, or <strong>N</strong> if you need to reschedule. If we don't hear back, the spot will be released to another business.`,
+}
+
+export const FT_REMINDER_SMS_DEFAULT = `Hey {{name}} — reminder: your free QuoteBox strategy call is tomorrow at {{time}} (Alaska Time). Reply Y to confirm or N to cancel. If we don't hear back your spot will be released.`
+
+export const FT_CONFIRMATION_EMAIL_DEFAULTS: EmailCopy = {
+  subject: `You're booked — {{date}} at {{time}} (QuoteBox free trial)`,
+  heading: `You're in, {{name}}!`,
+  body: `Your free strategy call is booked for <strong>{{date}} at {{time}} (Alaska Time)</strong>. We'll send a reminder the day before.`,
+  outro: `The day before your call, we'll text you to confirm — reply <strong>Y</strong> to keep your spot or <strong>N</strong> to cancel.`,
+}
+
+export const FT_CONFIRMATION_SMS_DEFAULT = `You're booked, {{name}}! Free QuoteBox strategy call on {{date}} at {{time}} (Alaska Time). We'll text you a reminder the day before to confirm.`
+
+export const FT_CANCELLED_EMAIL_DEFAULTS: EmailCopy = {
+  subject: `Your QuoteBox call has been released`,
+  heading: `We released your spot, {{name}}`,
+  body: `We didn't hear back to confirm your call, so we opened the spot up to another business. If you still want in on the free 14-day trial, grab a new time whenever works for you.`,
+  outro: '',
+}
+
+export function buildReminderEmail(firstName: string, dateLabel: string, timeLabel: string, zoomUrl: string = FALLBACK_ZOOM_URL, custom: EmailCopy | null = null): { subject: string; html: string } {
+  const c = mergeCopy(FT_REMINDER_EMAIL_DEFAULTS, custom)
+  const subject = interpolate(c.subject!, firstName, dateLabel, timeLabel)
   const html = emailShell(`
-    <h2 style="margin:0 0 16px;font-size:22px;color:#0e0020;">See you tomorrow, ${esc(firstName)}!</h2>
+    <h2 style="margin:0 0 16px;font-size:22px;color:#0e0020;">${interpolate(c.heading!, firstName, dateLabel, timeLabel)}</h2>
     <p style="margin:0 0 12px;font-size:15px;color:#334155;line-height:1.6;">
-      Quick reminder — your free strategy call is scheduled for <strong>${esc(dateLabel)} at ${esc(timeLabel)} (Alaska Time)</strong>.
+      ${interpolate(c.body!, firstName, dateLabel, timeLabel)}
     </p>
     <div style="text-align:center;margin:24px 0;">
       <a href="${esc(zoomUrl)}" style="display:inline-block;background:#0e0020;color:#ffe500;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:700;text-decoration:none;">Join Zoom Call →</a>
     </div>
     <p style="margin:0;font-size:14px;color:#64748b;line-height:1.6;">
-      We just texted you too — reply <strong>Y</strong> to confirm you'll be there, or <strong>N</strong> if you need to reschedule. If we don't hear back, the spot will be released to another business.
+      ${interpolate(c.outro!, firstName, dateLabel, timeLabel)}
     </p>
   `)
   return { subject, html }
 }
 
-export function buildReminderSms(firstName: string, timeLabel: string): string {
-  return `Hey ${firstName} — reminder: your free QuoteBox strategy call is tomorrow at ${timeLabel} (Alaska Time). Reply Y to confirm or N to cancel. If we don't hear back your spot will be released.`
+export function buildReminderSms(firstName: string, timeLabel: string, custom: string | null = null): string {
+  return interpolatePlain(custom || FT_REMINDER_SMS_DEFAULT, firstName, '', timeLabel)
 }
 
-export function buildBookingConfirmationEmail(firstName: string, dateLabel: string, timeLabel: string, zoomUrl: string = FALLBACK_ZOOM_URL): { subject: string; html: string } {
-  const subject = `You're booked — ${dateLabel} at ${timeLabel} (QuoteBox free trial)`
+export function buildBookingConfirmationEmail(firstName: string, dateLabel: string, timeLabel: string, zoomUrl: string = FALLBACK_ZOOM_URL, custom: EmailCopy | null = null): { subject: string; html: string } {
+  const c = mergeCopy(FT_CONFIRMATION_EMAIL_DEFAULTS, custom)
+  const subject = interpolate(c.subject!, firstName, dateLabel, timeLabel)
   const html = emailShell(`
-    <h2 style="margin:0 0 16px;font-size:22px;color:#0e0020;">You're in, ${esc(firstName)}!</h2>
+    <h2 style="margin:0 0 16px;font-size:22px;color:#0e0020;">${interpolate(c.heading!, firstName, dateLabel, timeLabel)}</h2>
     <p style="margin:0 0 12px;font-size:15px;color:#334155;line-height:1.6;">
-      Your free strategy call is booked for <strong>${esc(dateLabel)} at ${esc(timeLabel)} (Alaska Time)</strong>. We'll send a reminder the day before.
+      ${interpolate(c.body!, firstName, dateLabel, timeLabel)}
     </p>
     <div style="text-align:center;margin:24px 0;">
       <a href="${esc(zoomUrl)}" style="display:inline-block;background:#0e0020;color:#ffe500;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:700;text-decoration:none;">Save Your Zoom Link →</a>
     </div>
     <p style="margin:0;font-size:14px;color:#64748b;line-height:1.6;">
-      The day before your call, we'll text you to confirm — reply <strong>Y</strong> to keep your spot or <strong>N</strong> to cancel.
+      ${interpolate(c.outro!, firstName, dateLabel, timeLabel)}
     </p>
   `)
   return { subject, html }
 }
 
-export function buildBookingConfirmationSms(firstName: string, dateLabel: string, timeLabel: string): string {
-  return `You're booked, ${firstName}! Free QuoteBox strategy call on ${dateLabel} at ${timeLabel} (Alaska Time). We'll text you a reminder the day before to confirm.`
+export function buildBookingConfirmationSms(firstName: string, dateLabel: string, timeLabel: string, custom: string | null = null): string {
+  return interpolatePlain(custom || FT_CONFIRMATION_SMS_DEFAULT, firstName, dateLabel, timeLabel)
 }
 
 export function buildOwnerNotificationSms(leadName: string, leadPhone: string, dateLabel: string, timeLabel: string): string {
   return `New booking: ${leadName} (${leadPhone}) — ${dateLabel} at ${timeLabel} (Alaska Time).`
 }
 
-export function buildCancelledEmail(firstName: string): { subject: string; html: string } {
-  const subject = `Your QuoteBox call has been released`
+export function buildCancelledEmail(firstName: string, custom: EmailCopy | null = null): { subject: string; html: string } {
+  const c = mergeCopy(FT_CANCELLED_EMAIL_DEFAULTS, custom)
+  const subject = interpolate(c.subject!, firstName, '', '')
   const html = emailShell(`
-    <h2 style="margin:0 0 16px;font-size:22px;color:#0e0020;">We released your spot, ${esc(firstName)}</h2>
+    <h2 style="margin:0 0 16px;font-size:22px;color:#0e0020;">${interpolate(c.heading!, firstName, '', '')}</h2>
     <p style="margin:0 0 12px;font-size:15px;color:#334155;line-height:1.6;">
-      We didn't hear back to confirm your call, so we opened the spot up to another business. If you still want in on the free 14-day trial, grab a new time whenever works for you.
+      ${interpolate(c.body!, firstName, '', '')}
     </p>
     <div style="text-align:center;margin:24px 0;">
       <a href="${esc(SITE_URL)}/free-trial" style="display:inline-block;background:#0e0020;color:#ffe500;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:700;text-decoration:none;">Book a New Time →</a>
     </div>
+    ${c.outro ? `<p style="margin:0;font-size:14px;color:#64748b;line-height:1.6;">${interpolate(c.outro, firstName, '', '')}</p>` : ''}
   `)
   return { subject, html }
 }
@@ -176,6 +227,7 @@ export async function processFreeTrialReminders(): Promise<{ reminded: number; c
   const now = Date.now()
   const apiKey = process.env.RESEND_API_KEY
   const from = process.env.RESEND_FROM_EMAIL || 'Sam at QuoteBox <sam@quote-box.com>'
+  const { data: cfg } = await admin.from('owner_automation_config').select('*').eq('id', 1).single()
 
   let reminded = 0
   let cancelled = 0
@@ -209,7 +261,7 @@ export async function processFreeTrialReminders(): Promise<{ reminded: number; c
 
     if (apiKey) {
       const resend = new Resend(apiKey)
-      const { subject, html } = buildReminderEmail(firstName, dateLabel, timeLabel, lead.zoom_join_url || FALLBACK_ZOOM_URL)
+      const { subject, html } = buildReminderEmail(firstName, dateLabel, timeLabel, lead.zoom_join_url || FALLBACK_ZOOM_URL, cfg?.ft_reminder_email ?? null)
       try {
         await resend.emails.send({ from, to: lead.email, subject, html })
       } catch (err) {
@@ -217,7 +269,7 @@ export async function processFreeTrialReminders(): Promise<{ reminded: number; c
       }
     }
     if (lead.phone) {
-      await sendSms(lead.phone, buildReminderSms(firstName, timeLabel))
+      await sendSms(lead.phone, buildReminderSms(firstName, timeLabel, cfg?.ft_reminder_sms ?? null))
     }
     reminded++
   }
@@ -254,7 +306,7 @@ export async function processFreeTrialReminders(): Promise<{ reminded: number; c
     const firstName = lead.name.trim().split(/\s+/)[0] || 'there'
     if (apiKey) {
       const resend = new Resend(apiKey)
-      const { subject, html } = buildCancelledEmail(firstName)
+      const { subject, html } = buildCancelledEmail(firstName, cfg?.ft_cancelled_email ?? null)
       try {
         await resend.emails.send({ from, to: lead.email, subject, html })
       } catch (err) {

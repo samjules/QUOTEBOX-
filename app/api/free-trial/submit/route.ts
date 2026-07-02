@@ -83,19 +83,21 @@ export async function POST(req: NextRequest) {
       console.error('Free trial Zoom meeting creation error:', err)
     }
 
+    const { data: cfg } = await supabase.from('owner_automation_config').select('*').eq('id', 1).single()
+
     const apiKey = process.env.RESEND_API_KEY
     const from = process.env.RESEND_FROM_EMAIL || 'Sam at QuoteBox <sam@quote-box.com>'
     if (apiKey) {
       try {
         const resend = new Resend(apiKey)
-        const { subject, html } = buildBookingConfirmationEmail(firstName, dateLabel, scheduled_time, zoomJoinUrl)
+        const { subject, html } = buildBookingConfirmationEmail(firstName, dateLabel, scheduled_time, zoomJoinUrl, cfg?.ft_confirmation_email ?? null)
         await resend.emails.send({ from, to: email, subject, html })
       } catch (err) {
         console.error('Free trial booking confirmation email error:', err)
       }
     }
     try {
-      await sendSms(phone, buildBookingConfirmationSms(firstName, dateLabel, scheduled_time))
+      await sendSms(phone, buildBookingConfirmationSms(firstName, dateLabel, scheduled_time, cfg?.ft_confirmation_sms ?? null))
     } catch (err) {
       console.error('Free trial booking confirmation SMS error:', err)
     }

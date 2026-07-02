@@ -16,10 +16,16 @@ export interface OwnerStep {
   phone: string | null
 }
 
+export interface FreeTrialAutomationStats {
+  confirmationSent: number
+  reminderSent: number
+  cancelled: number
+}
+
 export default async function OwnerAutomationsPage() {
   const admin = createAdminClient()
 
-  const [stepsResult, accountsResult, usersResult] = await Promise.all([
+  const [stepsResult, accountsResult, usersResult, freeTrialLeadsResult] = await Promise.all([
     admin
       .from('owner_onboarding_steps')
       .select('*')
@@ -27,11 +33,19 @@ export default async function OwnerAutomationsPage() {
       .limit(200),
     admin.from('accounts').select('id, business_name, owner_id, phone'),
     admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+    admin.from('free_trial_leads').select('status, reminder_sent_at'),
   ])
 
   const steps = stepsResult.data ?? []
   const accounts = accountsResult.data ?? []
   const users = usersResult.data?.users ?? []
+  const freeTrialLeads = freeTrialLeadsResult.data ?? []
+
+  const freeTrialStats: FreeTrialAutomationStats = {
+    confirmationSent: freeTrialLeads.length,
+    reminderSent: freeTrialLeads.filter((l) => l.reminder_sent_at).length,
+    cancelled: freeTrialLeads.filter((l) => l.status === 'cancelled').length,
+  }
 
   const accountMap = new Map(accounts.map((a) => [a.id, a]))
   const userEmailMap = new Map(users.map((u) => [u.id, u.email ?? '']))
@@ -47,5 +61,5 @@ export default async function OwnerAutomationsPage() {
     }
   })
 
-  return <OwnerAutomationsManager steps={enriched} />
+  return <OwnerAutomationsManager steps={enriched} freeTrialStats={freeTrialStats} />
 }

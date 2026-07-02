@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import type { OwnerStep } from './page'
+import type { OwnerStep, FreeTrialAutomationStats } from './page'
 
 // ── types ────────────────────────────────────────────────────────────────────
 
@@ -17,6 +17,11 @@ interface Config {
   welcome_sms: string | null
   no_leads_email: EmailCopy | null
   no_leads_sms: string | null
+  ft_confirmation_email: EmailCopy | null
+  ft_confirmation_sms: string | null
+  ft_reminder_email: EmailCopy | null
+  ft_reminder_sms: string | null
+  ft_cancelled_email: EmailCopy | null
 }
 
 // ── defaults (mirrors lib/owner-automations.ts) ───────────────────────────
@@ -37,6 +42,38 @@ const NO_LEADS_EMAIL_DEFAULTS: EmailCopy = {
 
 const WELCOME_SMS_DEFAULT = "Welcome to QuoteBox! 🎉 Your account is live. Book your free ad setup call and let's get leads coming in: https://quote-box.com/get-started"
 const NO_LEADS_SMS_DEFAULT = "Hey! I noticed you haven't gotten any leads yet on QuoteBox. Need help? Book a free consulting call here: https://quote-box.com/get-started"
+
+// ── defaults (mirrors lib/free-trial.ts) ──────────────────────────────────
+
+const FT_CONFIRMATION_EMAIL_DEFAULTS: EmailCopy = {
+  subject: `You're booked — {{date}} at {{time}} (QuoteBox free trial)`,
+  heading: `You're in, {{name}}!`,
+  body: `Your free strategy call is booked for <strong>{{date}} at {{time}} (Alaska Time)</strong>. We'll send a reminder the day before.`,
+  outro: `The day before your call, we'll text you to confirm — reply <strong>Y</strong> to keep your spot or <strong>N</strong> to cancel.`,
+}
+
+const FT_REMINDER_EMAIL_DEFAULTS: EmailCopy = {
+  subject: `Reminder: your QuoteBox Zoom call is tomorrow at {{time}}`,
+  heading: `See you tomorrow, {{name}}!`,
+  body: `Quick reminder — your free strategy call is scheduled for <strong>{{date}} at {{time}} (Alaska Time)</strong>.`,
+  outro: `We just texted you too — reply <strong>Y</strong> to confirm you'll be there, or <strong>N</strong> if you need to reschedule. If we don't hear back, the spot will be released to another business.`,
+}
+
+const FT_CANCELLED_EMAIL_DEFAULTS: EmailCopy = {
+  subject: `Your QuoteBox call has been released`,
+  heading: `We released your spot, {{name}}`,
+  body: `We didn't hear back to confirm your call, so we opened the spot up to another business. If you still want in on the free 14-day trial, grab a new time whenever works for you.`,
+  outro: '',
+}
+
+const FT_CONFIRMATION_SMS_DEFAULT = `You're booked, {{name}}! Free QuoteBox strategy call on {{date}} at {{time}} (Alaska Time). We'll text you a reminder the day before to confirm.`
+const FT_REMINDER_SMS_DEFAULT = `Hey {{name}} — reminder: your free QuoteBox strategy call is tomorrow at {{time}} (Alaska Time). Reply Y to confirm or N to cancel. If we don't hear back your spot will be released.`
+
+const FT_STEPS_INFO: { step: string; label: string; channel: 'email' | 'sms' | 'both' }[] = [
+  { step: 'ft_confirmation', label: 'Free Trial: Booking Confirmation', channel: 'both' },
+  { step: 'ft_reminder', label: 'Free Trial: 24h Reminder', channel: 'both' },
+  { step: 'ft_cancelled', label: 'Free Trial: Auto-Cancelled', channel: 'email' },
+]
 
 // ── helpers ───────────────────────────────────────────────────────────────
 
@@ -104,10 +141,12 @@ function EmailEditor({
   value,
   defaults,
   onChange,
+  placeholderHint = '{{business}}',
 }: {
   value: EmailCopy | null
   defaults: EmailCopy
   onChange: (v: EmailCopy) => void
+  placeholderHint?: string
 }) {
   const v = value ?? {}
   const field = (key: keyof EmailCopy, label: string, multi = false) => (
@@ -135,7 +174,7 @@ function EmailEditor({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <p style={{ margin: 0, fontSize: '0.75rem', color: '#94a3b8' }}>
-        Use <code style={{ background: '#f1f5f9', padding: '1px 5px', borderRadius: 4 }}>{'{{business}}'}</code> to insert the business name. Leave blank to use default.
+        Use <code style={{ background: '#f1f5f9', padding: '1px 5px', borderRadius: 4 }}>{placeholderHint}</code> to insert dynamic values. Leave blank to use default.
       </p>
       {field('subject', 'Subject line')}
       {field('heading', 'Heading')}
@@ -156,6 +195,8 @@ function StepNode({
   onSave,
   sentCount,
   pendingCount,
+  hasSms = true,
+  placeholderHint = '{{business}}',
 }: {
   label: string
   timing: string
@@ -167,6 +208,8 @@ function StepNode({
   onSave: (email: EmailCopy | null, sms: string | null) => Promise<void>
   sentCount: number
   pendingCount: number
+  hasSms?: boolean
+  placeholderHint?: string
 }) {
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState<'email' | 'sms'>('email')
@@ -243,26 +286,28 @@ function StepNode({
         {open && (
           <div style={{ borderTop: '1px solid #f1f5f9', padding: '20px' }}>
             {/* Tabs */}
-            <div style={{ display: 'flex', gap: 4, marginBottom: 16, background: '#f8fafc', borderRadius: 8, padding: 4 }}>
-              {(['email', 'sms'] as const).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTab(t)}
-                  style={{
-                    flex: 1, padding: '7px', borderRadius: 6, border: 'none',
-                    fontFamily: 'inherit', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer',
-                    background: tab === t ? '#fff' : 'transparent',
-                    color: tab === t ? '#0e0020' : '#94a3b8',
-                    boxShadow: tab === t ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                  }}
-                >
-                  {t === 'email' ? '✉ Email' : '💬 SMS'}
-                </button>
-              ))}
-            </div>
+            {hasSms && (
+              <div style={{ display: 'flex', gap: 4, marginBottom: 16, background: '#f8fafc', borderRadius: 8, padding: 4 }}>
+                {(['email', 'sms'] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setTab(t)}
+                    style={{
+                      flex: 1, padding: '7px', borderRadius: 6, border: 'none',
+                      fontFamily: 'inherit', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer',
+                      background: tab === t ? '#fff' : 'transparent',
+                      color: tab === t ? '#0e0020' : '#94a3b8',
+                      boxShadow: tab === t ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                    }}
+                  >
+                    {t === 'email' ? '✉ Email' : '💬 SMS'}
+                  </button>
+                ))}
+              </div>
+            )}
 
-            {tab === 'email' ? (
-              <EmailEditor value={Object.values(email).some(Boolean) ? email : null} defaults={emailDefaults} onChange={setEmail} />
+            {(!hasSms || tab === 'email') ? (
+              <EmailEditor value={Object.values(email).some(Boolean) ? email : null} defaults={emailDefaults} onChange={setEmail} placeholderHint={placeholderHint} />
             ) : (
               <div>
                 <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', marginBottom: 4 }}>
@@ -307,9 +352,12 @@ interface PreviewData {
   sms: string | null
 }
 
-export default function OwnerAutomationsManager({ steps: initialSteps }: { steps: OwnerStep[] }) {
+export default function OwnerAutomationsManager({ steps: initialSteps, freeTrialStats }: { steps: OwnerStep[]; freeTrialStats: FreeTrialAutomationStats }) {
   const [steps] = useState(initialSteps)
-  const [config, setConfig] = useState<Config>({ welcome_email: null, welcome_sms: null, no_leads_email: null, no_leads_sms: null })
+  const [config, setConfig] = useState<Config>({
+    welcome_email: null, welcome_sms: null, no_leads_email: null, no_leads_sms: null,
+    ft_confirmation_email: null, ft_confirmation_sms: null, ft_reminder_email: null, ft_reminder_sms: null, ft_cancelled_email: null,
+  })
   const [configLoaded, setConfigLoaded] = useState(false)
 
   const [search, setSearch] = useState('')
@@ -428,17 +476,26 @@ export default function OwnerAutomationsManager({ steps: initialSteps }: { steps
               style={{ width: '100%', padding: '9px 10px', borderRadius: 8, border: '1.5px solid #e2e8f0', fontSize: '0.84rem', fontFamily: 'inherit', color: '#0e0020', background: '#fff' }}
             >
               <option value="all">All 22 steps</option>
-              {SEQUENCE_STEPS.map(({ step, label, channel }) => (
-                <option key={step} value={step}>
-                  {label} · {channel === 'both' ? 'Email + SMS' : channel === 'email' ? 'Email' : 'SMS'}
-                </option>
-              ))}
+              <optgroup label="Owner Onboarding">
+                {SEQUENCE_STEPS.map(({ step, label, channel }) => (
+                  <option key={step} value={step}>
+                    {label} · {channel === 'both' ? 'Email + SMS' : channel === 'email' ? 'Email' : 'SMS'}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Free Trial Booking">
+                {FT_STEPS_INFO.map(({ step, label, channel }) => (
+                  <option key={step} value={step}>
+                    {label} · {channel === 'both' ? 'Email + SMS' : channel === 'email' ? 'Email' : 'SMS'}
+                  </option>
+                ))}
+              </optgroup>
             </select>
           </div>
 
           {/* Channel badge */}
           {testStep !== 'all' && (() => {
-            const info = SEQUENCE_STEPS.find((s) => s.step === testStep)
+            const info = SEQUENCE_STEPS.find((s) => s.step === testStep) ?? FT_STEPS_INFO.find((s) => s.step === testStep)
             const badge = info ? CHANNEL_BADGE[info.channel] : null
             return badge ? (
               <div style={{ marginBottom: 10 }}>
@@ -489,7 +546,7 @@ export default function OwnerAutomationsManager({ steps: initialSteps }: { steps
           {testResults && (
             <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 180, overflowY: 'auto' }}>
               {testResults.map((r, i) => {
-                const info = SEQUENCE_STEPS.find((s) => s.step === r.step)
+                const info = SEQUENCE_STEPS.find((s) => s.step === r.step) ?? FT_STEPS_INFO.find((s) => s.step === r.step)
                 const label = info?.label ?? STEP_LABELS[r.step] ?? r.step
                 return (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: '0.78rem' }}>
@@ -511,7 +568,7 @@ export default function OwnerAutomationsManager({ steps: initialSteps }: { steps
           <div style={{ padding: '14px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#374151' }}>
-                Preview — {SEQUENCE_STEPS.find((s) => s.step === testStep)?.label ?? testStep}
+                Preview — {SEQUENCE_STEPS.find((s) => s.step === testStep)?.label ?? FT_STEPS_INFO.find((s) => s.step === testStep)?.label ?? testStep}
               </span>
               {preview?.subject && previewTab === 'email' && (
                 <span style={{ fontSize: '0.78rem', color: '#64748b' }}>· {preview.subject}</span>
@@ -636,6 +693,82 @@ export default function OwnerAutomationsManager({ steps: initialSteps }: { steps
           sentCount={stepCounts.no_leads_followup?.sent ?? 0}
           pendingCount={stepCounts.no_leads_followup?.pending ?? 0}
           onSave={(email, sms) => saveConfig({ no_leads_email: email, no_leads_sms: sms })}
+        />
+      </div>
+
+      {/* Free Trial Booking flow */}
+      <div style={{ marginBottom: 36 }}>
+        <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+          Free trial booking flow · click a node to edit
+        </p>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, paddingLeft: 4 }}>
+          <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#2f6e4f', flexShrink: 0 }} />
+          <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#2f6e4f' }}>Client books a call (/free-trial or /demo)</span>
+        </div>
+        <div style={{ width: 2, height: 16, background: '#e2e8f0', marginLeft: 8, marginBottom: 8 }} />
+
+        <StepNode
+          label="Booking Confirmation"
+          timing="Fires immediately on booking"
+          accentColor="#2f6e4f"
+          emailValue={config.ft_confirmation_email}
+          emailDefaults={FT_CONFIRMATION_EMAIL_DEFAULTS}
+          smsValue={config.ft_confirmation_sms}
+          smsDefault={FT_CONFIRMATION_SMS_DEFAULT}
+          sentCount={freeTrialStats.confirmationSent}
+          pendingCount={0}
+          placeholderHint="{{name}} {{date}} {{time}}"
+          onSave={(email, sms) => saveConfig({ ft_confirmation_email: email, ft_confirmation_sms: sms })}
+        />
+
+        <div style={{ display: 'flex', alignItems: 'stretch', gap: 0, margin: '8px 0 8px 8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 2 }}>
+            <div style={{ flex: 1, width: 2, background: '#e2e8f0' }} />
+          </div>
+          <div style={{ marginLeft: 12, alignSelf: 'center', background: '#fef9c3', border: '1px solid #fde68a', borderRadius: 6, padding: '3px 10px', fontSize: '0.72rem', fontWeight: 600, color: '#92400e' }}>
+            24h before the call
+          </div>
+        </div>
+        <div style={{ width: 2, height: 8, background: '#e2e8f0', marginLeft: 8, marginBottom: 8 }} />
+
+        <StepNode
+          label="24h Reminder (reply Y/N)"
+          timing="24h before the call · asks for Y/N confirmation"
+          accentColor="#f59e0b"
+          emailValue={config.ft_reminder_email}
+          emailDefaults={FT_REMINDER_EMAIL_DEFAULTS}
+          smsValue={config.ft_reminder_sms}
+          smsDefault={FT_REMINDER_SMS_DEFAULT}
+          sentCount={freeTrialStats.reminderSent}
+          pendingCount={0}
+          placeholderHint="{{name}} {{date}} {{time}}"
+          onSave={(email, sms) => saveConfig({ ft_reminder_email: email, ft_reminder_sms: sms })}
+        />
+
+        <div style={{ display: 'flex', alignItems: 'stretch', gap: 0, margin: '8px 0 8px 8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 2 }}>
+            <div style={{ flex: 1, width: 2, background: '#e2e8f0' }} />
+          </div>
+          <div style={{ marginLeft: 12, alignSelf: 'center', background: '#fee2e2', border: '1px solid #fecaca', borderRadius: 6, padding: '3px 10px', fontSize: '0.72rem', fontWeight: 600, color: '#991b1b' }}>
+            12h before · only if no Y/N reply
+          </div>
+        </div>
+        <div style={{ width: 2, height: 8, background: '#e2e8f0', marginLeft: 8, marginBottom: 8 }} />
+
+        <StepNode
+          label="Auto-Cancelled"
+          timing="12h before the call · fires if the lead never replied"
+          accentColor="#dc2626"
+          emailValue={config.ft_cancelled_email}
+          emailDefaults={FT_CANCELLED_EMAIL_DEFAULTS}
+          smsValue={null}
+          smsDefault=""
+          hasSms={false}
+          sentCount={freeTrialStats.cancelled}
+          pendingCount={0}
+          placeholderHint="{{name}}"
+          onSave={(email) => saveConfig({ ft_cancelled_email: email })}
         />
       </div>
 

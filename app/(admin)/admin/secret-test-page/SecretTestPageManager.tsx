@@ -115,7 +115,7 @@ export default function SecretTestPageManager({ leads: initialLeads }: { leads: 
         </span>
         <span style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.15)' }} />
         <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#FFE500', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-          Secret Test Page — Free Trial Funnel
+          Bookings — Free Trial & Demo Funnel
         </span>
         <span style={{ flex: 1 }} />
         <button

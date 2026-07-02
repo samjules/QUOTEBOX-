@@ -27,6 +27,11 @@ export async function PUT(request: NextRequest) {
   if ('welcome_sms' in body) patch.welcome_sms = body.welcome_sms ?? null
   if ('no_leads_email' in body) patch.no_leads_email = body.no_leads_email ?? null
   if ('no_leads_sms' in body) patch.no_leads_sms = body.no_leads_sms ?? null
+  if ('ft_confirmation_email' in body) patch.ft_confirmation_email = body.ft_confirmation_email ?? null
+  if ('ft_confirmation_sms' in body) patch.ft_confirmation_sms = body.ft_confirmation_sms ?? null
+  if ('ft_reminder_email' in body) patch.ft_reminder_email = body.ft_reminder_email ?? null
+  if ('ft_reminder_sms' in body) patch.ft_reminder_sms = body.ft_reminder_sms ?? null
+  if ('ft_cancelled_email' in body) patch.ft_cancelled_email = body.ft_cancelled_email ?? null
 
   const { data } = await admin
     .from('owner_automation_config')
