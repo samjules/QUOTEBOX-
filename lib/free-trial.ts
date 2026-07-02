@@ -149,6 +149,10 @@ export function buildBookingConfirmationSms(firstName: string, dateLabel: string
   return `You're booked, ${firstName}! Free QuoteBox strategy call on ${dateLabel} at ${timeLabel} (Alaska Time). We'll text you a reminder the day before to confirm.`
 }
 
+export function buildOwnerNotificationSms(leadName: string, leadPhone: string, dateLabel: string, timeLabel: string): string {
+  return `New booking: ${leadName} (${leadPhone}) — ${dateLabel} at ${timeLabel} (Alaska Time).`
+}
+
 export function buildCancelledEmail(firstName: string): { subject: string; html: string } {
   const subject = `Your QuoteBox call has been released`
   const html = emailShell(`

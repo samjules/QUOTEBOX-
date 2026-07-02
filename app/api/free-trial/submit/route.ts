@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { alaskaWallTimeToUTC, isQualified, buildBookingConfirmationEmail, buildBookingConfirmationSms } from '@/lib/free-trial'
+import { alaskaWallTimeToUTC, isQualified, buildBookingConfirmationEmail, buildBookingConfirmationSms, buildOwnerNotificationSms } from '@/lib/free-trial'
 import { sendSms } from '@/lib/sms'
 import { createZoomMeeting } from '@/lib/zoom'
 
@@ -35,6 +35,18 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = createAdminClient()
+
+    const { data: existing } = await supabase
+      .from('free_trial_leads')
+      .select('id')
+      .eq('scheduled_date', scheduled_date)
+      .eq('scheduled_time', scheduled_time)
+      .in('status', ['pending_confirmation', 'confirmed'])
+      .limit(1)
+    if (existing && existing.length > 0) {
+      return NextResponse.json({ error: 'That time was just taken — please pick another' }, { status: 409 })
+    }
+
     const { data, error } = await supabase.from('free_trial_leads').insert({
       name,
       email,
@@ -49,6 +61,9 @@ export async function POST(req: NextRequest) {
     }).select().single()
 
     if (error) {
+      if (error.code === '23505') {
+        return NextResponse.json({ error: 'That time was just taken — please pick another' }, { status: 409 })
+      }
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
@@ -83,6 +98,14 @@ export async function POST(req: NextRequest) {
       await sendSms(phone, buildBookingConfirmationSms(firstName, dateLabel, scheduled_time))
     } catch (err) {
       console.error('Free trial booking confirmation SMS error:', err)
+    }
+    const ownerPhone = process.env.OWNER_PHONE
+    if (ownerPhone) {
+      try {
+        await sendSms(ownerPhone, buildOwnerNotificationSms(name.trim(), phone.trim(), dateLabel, scheduled_time))
+      } catch (err) {
+        console.error('Owner booking notification SMS error:', err)
+      }
     }
 
     return NextResponse.json({ success: true, id: data.id })

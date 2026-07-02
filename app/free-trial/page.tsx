@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, CSSProperties } from 'react'
+import { useState, useRef, useEffect, CSSProperties } from 'react'
 import { Inter, IBM_Plex_Mono } from 'next/font/google'
 
 const inter = Inter({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-inter' })
@@ -168,6 +168,22 @@ export default function FreeTrialPage() {
 
   const weekdaysRef = useRef(getWeekdays(3))
   const weekdays = weekdaysRef.current
+  const [takenSlots, setTakenSlots] = useState<Set<string>>(new Set())
+
+  async function refreshTakenSlots() {
+    try {
+      const res = await fetch('/api/free-trial/taken-slots')
+      if (!res.ok) return
+      const d = await res.json()
+      setTakenSlots(new Set<string>(d.taken ?? []))
+    } catch {
+      // best-effort — leave calendar unrestricted if this fails
+    }
+  }
+
+  useEffect(() => {
+    if (phase === 'booking') refreshTakenSlots()
+  }, [phase])
 
   function answerQ1(v: boolean) {
     setHasCompany(v)
@@ -212,6 +228,7 @@ export default function FreeTrialPage() {
         const d = await res.json()
         setError(d.error ?? 'Something went wrong')
         setSubmitting(false)
+        if (res.status === 409) refreshTakenSlots()
         return
       }
       setPhase('done')
@@ -393,14 +410,17 @@ export default function FreeTrialPage() {
               {weekdays.slice(0, 9).map((d) => {
                 const iso = d.toISOString().split('T')[0]
                 const isSel = selectedDate === iso
+                const isFull = TIME_SLOTS.every((t) => takenSlots.has(`${iso}|${t}`))
                 return (
                   <div
                     key={iso}
-                    onClick={() => setSelectedDate(iso)}
+                    onClick={() => !isFull && setSelectedDate(iso)}
                     style={{
                       border: `1.5px solid ${isSel ? COLORS.purple : COLORS.line}`,
                       borderRadius: 5, padding: '10px 6px', textAlign: 'center', fontSize: 13,
-                      background: isSel ? COLORS.purpleLight : COLORS.paper, cursor: 'pointer',
+                      background: isSel ? COLORS.purpleLight : isFull ? COLORS.line : COLORS.paper,
+                      cursor: isFull ? 'not-allowed' : 'pointer',
+                      opacity: isFull ? 0.5 : 1,
                     }}
                   >
                     <div style={{ color: COLORS.inkSoft, fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 1 }}>
@@ -418,16 +438,19 @@ export default function FreeTrialPage() {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 22 }}>
               {TIME_SLOTS.map((t) => {
                 const isSel = selectedTime === t
+                const isTaken = !!selectedDate && takenSlots.has(`${selectedDate}|${t}`)
                 return (
                   <div
                     key={t}
-                    onClick={() => setSelectedTime(t)}
+                    onClick={() => !isTaken && setSelectedTime(t)}
                     style={{
                       border: `1.5px solid ${isSel ? COLORS.purple : COLORS.line}`,
                       borderRadius: 99, padding: '8px 16px', fontSize: 13, fontWeight: 600,
-                      background: isSel ? COLORS.purpleLight : COLORS.paper,
-                      color: isSel ? COLORS.purple : COLORS.ink,
-                      cursor: 'pointer',
+                      background: isSel ? COLORS.purpleLight : isTaken ? COLORS.line : COLORS.paper,
+                      color: isSel ? COLORS.purple : isTaken ? COLORS.inkSoft : COLORS.ink,
+                      cursor: isTaken ? 'not-allowed' : 'pointer',
+                      opacity: isTaken ? 0.5 : 1,
+                      textDecoration: isTaken ? 'line-through' : 'none',
                     }}
                   >
                     {t}

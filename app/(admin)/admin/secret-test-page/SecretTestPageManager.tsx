@@ -18,16 +18,46 @@ function YesNo({ v }: { v: boolean }) {
   return <span style={{ color: v ? '#22c55e' : '#ef4444', fontWeight: 700 }}>{v ? 'Y' : 'N'}</span>
 }
 
+type ViewTab = 'list' | 'calendar'
+
 export default function SecretTestPageManager({ leads: initialLeads }: { leads: FreeTrialLead[] }) {
   const [leads, setLeads] = useState(initialLeads)
   const [filter, setFilter] = useState<FilterTab>('all')
   const [search, setSearch] = useState('')
   const [saving, setSaving] = useState<string | null>(null)
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
+  const [view, setView] = useState<ViewTab>('list')
+  const [monthOffset, setMonthOffset] = useState(0)
+  const [testRunning, setTestRunning] = useState(false)
+  const [testResult, setTestResult] = useState<{ steps: { name: string; ok: boolean; error?: string }[] } | null>(null)
 
   function showToast(msg: string, ok = true) {
     setToast({ msg, ok })
     setTimeout(() => setToast(null), 3000)
+  }
+
+  async function runTestFlow() {
+    setTestRunning(true)
+    setTestResult(null)
+    try {
+      const res = await fetch('/api/admin/free-trial-leads/test-flow', { method: 'POST' })
+      const d = await res.json()
+      if (!res.ok) {
+        showToast(d.error ?? 'Test flow failed', false)
+        return
+      }
+      setTestResult(d)
+      const listRes = await fetch('/api/admin/free-trial-leads')
+      if (listRes.ok) {
+        const updated = await listRes.json()
+        setLeads(updated)
+      }
+      showToast('Test booking created — check your email/phone')
+    } catch {
+      showToast('Test flow failed', false)
+    } finally {
+      setTestRunning(false)
+    }
   }
 
   const filtered = useMemo(() => {
@@ -88,6 +118,17 @@ export default function SecretTestPageManager({ leads: initialLeads }: { leads: 
           Secret Test Page — Free Trial Funnel
         </span>
         <span style={{ flex: 1 }} />
+        <button
+          onClick={runTestFlow}
+          disabled={testRunning}
+          style={{
+            fontSize: '0.82rem', fontWeight: 700, color: '#0d0d1a', background: '#FFE500',
+            border: 'none', padding: '7px 16px', borderRadius: 6, cursor: testRunning ? 'default' : 'pointer',
+            opacity: testRunning ? 0.6 : 1, fontFamily: "'Nautic', sans-serif",
+          }}
+        >
+          {testRunning ? 'Running test…' : 'Run Test Booking'}
+        </button>
         <a href="/free-trial" target="_blank" rel="noreferrer" style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', padding: '6px 14px', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6 }}>
           View Landing Page ↗
         </a>
@@ -107,6 +148,25 @@ export default function SecretTestPageManager({ leads: initialLeads }: { leads: 
                 <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{label}</div>
                 <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#FFE500', lineHeight: 1 }}>{value}</div>
               </div>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', gap: 4, marginBottom: 16 }}>
+            {(['list', 'calendar'] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setView(tab)}
+                style={{
+                  padding: '6px 16px', fontSize: '0.78rem', fontWeight: 700, borderRadius: 6,
+                  border: 'none', cursor: 'pointer',
+                  background: view === tab ? '#FFE500' : 'rgba(255,255,255,0.06)',
+                  color: view === tab ? '#0d0d1a' : 'rgba(255,255,255,0.5)',
+                  textTransform: 'capitalize',
+                  fontFamily: "'Nautic', sans-serif",
+                }}
+              >
+                {tab}
+              </button>
             ))}
           </div>
 
@@ -142,6 +202,11 @@ export default function SecretTestPageManager({ leads: initialLeads }: { leads: 
             </div>
           </div>
 
+          {view === 'calendar' && (
+            <BookingCalendar leads={leads} monthOffset={monthOffset} setMonthOffset={setMonthOffset} />
+          )}
+
+          {view === 'list' && (
           <div style={{ background: '#0e0020', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)' }}>
             {filtered.length === 0 ? (
               <div style={{ padding: 40, textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: '0.9rem' }}>
@@ -232,8 +297,48 @@ export default function SecretTestPageManager({ leads: initialLeads }: { leads: 
               </table>
             )}
           </div>
+          )}
         </div>
       </div>
+
+      {testResult && (
+        <div
+          onClick={() => setTestResult(null)}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1100,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#0e0020', borderRadius: 12, padding: 24, width: 420,
+              border: '1px solid rgba(255,255,255,0.1)', maxHeight: '80vh', overflow: 'auto',
+            }}
+          >
+            <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#FFE500', marginBottom: 14 }}>Test Booking Flow Results</div>
+            {testResult.steps.map((s, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '8px 0', borderBottom: i < testResult.steps.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+                <span style={{ color: s.ok ? '#22c55e' : '#ef4444', fontWeight: 700, fontSize: '0.85rem' }}>{s.ok ? '✓' : '✗'}</span>
+                <div>
+                  <div style={{ fontSize: '0.82rem', color: 'white' }}>{s.name}</div>
+                  {s.error && <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{s.error}</div>}
+                </div>
+              </div>
+            ))}
+            <button
+              onClick={() => setTestResult(null)}
+              style={{
+                marginTop: 16, width: '100%', padding: '8px 0', fontSize: '0.82rem', fontWeight: 700,
+                borderRadius: 6, border: 'none', background: '#FFE500', color: '#0d0d1a', cursor: 'pointer',
+                fontFamily: "'Nautic', sans-serif",
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
       {toast && (
         <div style={{
@@ -244,6 +349,74 @@ export default function SecretTestPageManager({ leads: initialLeads }: { leads: 
           {toast.msg}
         </div>
       )}
+    </div>
+  )
+}
+
+function BookingCalendar({ leads, monthOffset, setMonthOffset }: { leads: FreeTrialLead[]; monthOffset: number; setMonthOffset: (fn: (n: number) => number) => void }) {
+  const now = new Date()
+  const viewMonth = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1)
+  const year = viewMonth.getFullYear()
+  const month = viewMonth.getMonth()
+  const firstDay = new Date(year, month, 1)
+  const startWeekday = firstDay.getDay()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+
+  const leadsByDate = useMemo(() => {
+    const map: Record<string, FreeTrialLead[]> = {}
+    for (const l of leads) {
+      if (!l.scheduled_date) continue
+      if (!map[l.scheduled_date]) map[l.scheduled_date] = []
+      map[l.scheduled_date].push(l)
+    }
+    return map
+  }, [leads])
+
+  const cells: (number | null)[] = [
+    ...Array(startWeekday).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ]
+
+  return (
+    <div style={{ background: '#0e0020', borderRadius: 12, padding: 20, border: '1px solid rgba(255,255,255,0.06)', marginBottom: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <button onClick={() => setMonthOffset((n) => n - 1)} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: 'white', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontFamily: "'Nautic', sans-serif" }}>←</button>
+        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#FFE500' }}>
+          {viewMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+        </div>
+        <button onClick={() => setMonthOffset((n) => n + 1)} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: 'white', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontFamily: "'Nautic', sans-serif" }}>→</button>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, marginBottom: 6 }}>
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+          <div key={d} style={{ fontSize: '0.68rem', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', textAlign: 'center' }}>{d}</div>
+        ))}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
+        {cells.map((day, i) => {
+          if (day === null) return <div key={i} />
+          const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+          const dayLeads = (leadsByDate[iso] ?? []).filter((l) => l.status !== 'cancelled')
+          return (
+            <div key={i} style={{ minHeight: 78, background: 'rgba(255,255,255,0.03)', borderRadius: 6, padding: 6 }}>
+              <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>{day}</div>
+              {dayLeads.slice(0, 3).map((l) => {
+                const sc = STATUS_COLORS[l.status] ?? STATUS_COLORS.pending_confirmation
+                return (
+                  <div key={l.id} title={`${l.name} — ${l.scheduled_time}`} style={{
+                    fontSize: '0.62rem', fontWeight: 600, color: sc.text, background: sc.bg,
+                    borderRadius: 4, padding: '2px 4px', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}>
+                    {l.scheduled_time} {l.name}
+                  </div>
+                )
+              })}
+              {dayLeads.length > 3 && (
+                <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)' }}>+{dayLeads.length - 3} more</div>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

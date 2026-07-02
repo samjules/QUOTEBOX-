@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
+import { deleteZoomMeeting } from '@/lib/zoom'
 
 const VALID_STATUSES = ['pending_confirmation', 'confirmed', 'cancelled', 'completed']
 
@@ -42,6 +43,15 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (!(await requireAdmin())) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const admin = createAdminClient()
+  const { data: lead } = await admin.from('free_trial_leads').select('zoom_meeting_id').eq('id', id).single()
+  if (lead?.zoom_meeting_id) {
+    try {
+      await deleteZoomMeeting(lead.zoom_meeting_id)
+    } catch (err) {
+      console.error('Admin delete lead: Zoom cleanup error:', err)
+    }
+  }
+
   const { error } = await admin.from('free_trial_leads').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ success: true })
