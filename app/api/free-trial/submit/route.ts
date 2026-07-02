@@ -3,6 +3,7 @@ import { Resend } from 'resend'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { alaskaWallTimeToUTC, isQualified, buildBookingConfirmationEmail, buildBookingConfirmationSms } from '@/lib/free-trial'
 import { sendSms } from '@/lib/sms'
+import { createZoomMeeting } from '@/lib/zoom'
 
 export async function POST(req: NextRequest) {
   try {
@@ -55,12 +56,24 @@ export async function POST(req: NextRequest) {
     const firstName = name.trim().split(/\s+/)[0] || 'there'
     const dateLabel = new Date(scheduled_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 
+    let zoomJoinUrl: string | undefined
+    try {
+      const meeting = await createZoomMeeting(`QuoteBox call with ${name.trim()}`, scheduledAt.toISOString())
+      zoomJoinUrl = meeting.joinUrl
+      await supabase.from('free_trial_leads').update({
+        zoom_meeting_id: meeting.id,
+        zoom_join_url: meeting.joinUrl,
+      }).eq('id', data.id)
+    } catch (err) {
+      console.error('Free trial Zoom meeting creation error:', err)
+    }
+
     const apiKey = process.env.RESEND_API_KEY
     const from = process.env.RESEND_FROM_EMAIL || 'Sam at QuoteBox <sam@quote-box.com>'
     if (apiKey) {
       try {
         const resend = new Resend(apiKey)
-        const { subject, html } = buildBookingConfirmationEmail(firstName, dateLabel, scheduled_time)
+        const { subject, html } = buildBookingConfirmationEmail(firstName, dateLabel, scheduled_time, zoomJoinUrl)
         await resend.emails.send({ from, to: email, subject, html })
       } catch (err) {
         console.error('Free trial booking confirmation email error:', err)

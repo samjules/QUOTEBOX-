@@ -1,9 +1,10 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { Resend } from 'resend'
 import { sendSms } from '@/lib/sms'
+import { createZoomMeeting, deleteZoomMeeting } from '@/lib/zoom'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://quote-box.com'
-const ZOOM_MEETING_URL = process.env.ZOOM_MEETING_URL || 'https://zoom.us/j/PLACEHOLDER'
+const FALLBACK_ZOOM_URL = process.env.ZOOM_MEETING_URL || 'https://zoom.us/j/PLACEHOLDER'
 
 const H = 60 * 60 * 1000
 export const REMINDER_LEAD_MS = 24 * H
@@ -106,7 +107,7 @@ function emailShell(content: string): string {
 </html>`
 }
 
-export function buildReminderEmail(firstName: string, dateLabel: string, timeLabel: string): { subject: string; html: string } {
+export function buildReminderEmail(firstName: string, dateLabel: string, timeLabel: string, zoomUrl: string = FALLBACK_ZOOM_URL): { subject: string; html: string } {
   const subject = `Reminder: your QuoteBox Zoom call is tomorrow at ${timeLabel}`
   const html = emailShell(`
     <h2 style="margin:0 0 16px;font-size:22px;color:#0e0020;">See you tomorrow, ${esc(firstName)}!</h2>
@@ -114,7 +115,7 @@ export function buildReminderEmail(firstName: string, dateLabel: string, timeLab
       Quick reminder — your free strategy call is scheduled for <strong>${esc(dateLabel)} at ${esc(timeLabel)} (Alaska Time)</strong>.
     </p>
     <div style="text-align:center;margin:24px 0;">
-      <a href="${esc(ZOOM_MEETING_URL)}" style="display:inline-block;background:#0e0020;color:#ffe500;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:700;text-decoration:none;">Join Zoom Call →</a>
+      <a href="${esc(zoomUrl)}" style="display:inline-block;background:#0e0020;color:#ffe500;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:700;text-decoration:none;">Join Zoom Call →</a>
     </div>
     <p style="margin:0;font-size:14px;color:#64748b;line-height:1.6;">
       We just texted you too — reply <strong>Y</strong> to confirm you'll be there, or <strong>N</strong> if you need to reschedule. If we don't hear back, the spot will be released to another business.
@@ -127,7 +128,7 @@ export function buildReminderSms(firstName: string, timeLabel: string): string {
   return `Hey ${firstName} — reminder: your free QuoteBox strategy call is tomorrow at ${timeLabel} (Alaska Time). Reply Y to confirm or N to cancel. If we don't hear back your spot will be released.`
 }
 
-export function buildBookingConfirmationEmail(firstName: string, dateLabel: string, timeLabel: string): { subject: string; html: string } {
+export function buildBookingConfirmationEmail(firstName: string, dateLabel: string, timeLabel: string, zoomUrl: string = FALLBACK_ZOOM_URL): { subject: string; html: string } {
   const subject = `You're booked — ${dateLabel} at ${timeLabel} (QuoteBox free trial)`
   const html = emailShell(`
     <h2 style="margin:0 0 16px;font-size:22px;color:#0e0020;">You're in, ${esc(firstName)}!</h2>
@@ -135,7 +136,7 @@ export function buildBookingConfirmationEmail(firstName: string, dateLabel: stri
       Your free strategy call is booked for <strong>${esc(dateLabel)} at ${esc(timeLabel)} (Alaska Time)</strong>. We'll send a reminder the day before.
     </p>
     <div style="text-align:center;margin:24px 0;">
-      <a href="${esc(ZOOM_MEETING_URL)}" style="display:inline-block;background:#0e0020;color:#ffe500;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:700;text-decoration:none;">Save Your Zoom Link →</a>
+      <a href="${esc(zoomUrl)}" style="display:inline-block;background:#0e0020;color:#ffe500;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:700;text-decoration:none;">Save Your Zoom Link →</a>
     </div>
     <p style="margin:0;font-size:14px;color:#64748b;line-height:1.6;">
       The day before your call, we'll text you to confirm — reply <strong>Y</strong> to keep your spot or <strong>N</strong> to cancel.
@@ -204,7 +205,7 @@ export async function processFreeTrialReminders(): Promise<{ reminded: number; c
 
     if (apiKey) {
       const resend = new Resend(apiKey)
-      const { subject, html } = buildReminderEmail(firstName, dateLabel, timeLabel)
+      const { subject, html } = buildReminderEmail(firstName, dateLabel, timeLabel, lead.zoom_join_url || FALLBACK_ZOOM_URL)
       try {
         await resend.emails.send({ from, to: lead.email, subject, html })
       } catch (err) {
@@ -238,6 +239,14 @@ export async function processFreeTrialReminders(): Promise<{ reminded: number; c
       .single()
     if (!claimed) continue
 
+    if (lead.zoom_meeting_id) {
+      try {
+        await deleteZoomMeeting(lead.zoom_meeting_id)
+      } catch (err) {
+        console.error('Free trial auto-cancel Zoom delete error:', err)
+      }
+    }
+
     const firstName = lead.name.trim().split(/\s+/)[0] || 'there'
     if (apiKey) {
       const resend = new Resend(apiKey)
@@ -267,7 +276,7 @@ export async function handleInboundConfirmation(fromPhone: string, body: string)
   const admin = createAdminClient()
   const { data: candidates } = await admin
     .from('free_trial_leads')
-    .select('id, phone')
+    .select('id, phone, zoom_meeting_id, zoom_join_url')
     .eq('status', 'pending_confirmation')
     .not('reminder_sent_at', 'is', null)
 
@@ -284,13 +293,20 @@ export async function handleInboundConfirmation(fromPhone: string, body: string)
       .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
       .eq('id', match.id)
       .eq('status', 'pending_confirmation')
-    await sendSms(fromPhone, `You're confirmed! See you on the Zoom call. Here's the link: ${ZOOM_MEETING_URL}`)
+    await sendSms(fromPhone, `You're confirmed! See you on the Zoom call. Here's the link: ${match.zoom_join_url || FALLBACK_ZOOM_URL}`)
   } else {
     await admin
       .from('free_trial_leads')
       .update({ status: 'cancelled', cancelled_at: new Date().toISOString() })
       .eq('id', match.id)
       .eq('status', 'pending_confirmation')
+    if (match.zoom_meeting_id) {
+      try {
+        await deleteZoomMeeting(match.zoom_meeting_id)
+      } catch (err) {
+        console.error('Free trial inbound-cancel Zoom delete error:', err)
+      }
+    }
     await sendSms(fromPhone, `No problem — your call has been cancelled. Book a new time anytime: ${SITE_URL}/free-trial`)
   }
   return true

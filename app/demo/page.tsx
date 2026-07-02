@@ -23,7 +23,7 @@ const NAUTIC = "'Nautic', sans-serif"
 const INTER = 'var(--font-inter), sans-serif'
 const MONO = 'var(--font-mono), monospace'
 
-const TIME_SLOTS = ['7:00 AM', '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM']
+const TIME_SLOTS = ['11:00 AM', '12:00 PM', '1:00 PM']
 
 function getWeekdays(weeks: number): Date[] {
   const dates: Date[] = []
