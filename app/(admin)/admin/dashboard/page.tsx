@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { alaskaWallTimeToUTC } from '@/lib/free-trial'
+import DashboardCalendar, { type CalendarAppointment } from './DashboardCalendar'
 
 export const dynamic = 'force-dynamic'
 
@@ -81,6 +82,15 @@ export default async function AdminDashboardOverviewPage() {
   }
   upcoming.sort((a, b) => a.at.getTime() - b.at.getTime())
 
+  const calendarAppointments: CalendarAppointment[] = [
+    ...salesLeads
+      .filter((l) => l.scheduled_date && l.scheduled_time && l.status !== 'lost')
+      .map((l): CalendarAppointment => ({ source: 'Sales Lead', name: l.name, email: l.email, scheduled_date: l.scheduled_date!, scheduled_time: l.scheduled_time!, href: '/admin/leads' })),
+    ...freeTrialLeads
+      .filter((l) => l.scheduled_date && l.scheduled_time && l.status !== 'cancelled')
+      .map((l): CalendarAppointment => ({ source: 'Free Trial / Demo', name: l.name, email: l.email, scheduled_date: l.scheduled_date!, scheduled_time: l.scheduled_time!, href: '/admin/leads' })),
+  ]
+
   const activity: Activity[] = [
     ...salesLeads.slice(0, 50).map((l): Activity => ({ source: 'Sales Lead', name: l.name, email: l.email, status: l.status, created_at: l.created_at })),
     ...freeTrialLeads.slice(0, 50).map((l): Activity => ({ source: 'Free Trial / Demo', name: l.name, email: l.email, status: l.status, created_at: l.created_at })),
@@ -103,6 +113,11 @@ export default async function AdminDashboardOverviewPage() {
         <StatCard label="Accounts" value={accounts.length} sub={`${accounts.filter((a) => new Date(a.created_at) >= startOfMonth).length} new this month`} />
         <StatCard label="Sales Pipeline" value={salesStats.total} sub={`${salesStats.new} new · ${salesStats.contacted} contacted · ${salesStats.closed} closed`} />
         <StatCard label="Free Trial / Demo" value={freeTrialStats.total} sub={`${freeTrialStats.pending} pending · ${freeTrialStats.confirmed} confirmed`} />
+      </div>
+
+      <div style={{ marginBottom: 28 }}>
+        <p style={SECTION_TITLE}>Booking calendar</p>
+        <DashboardCalendar appointments={calendarAppointments} />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
