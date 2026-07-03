@@ -51,10 +51,10 @@ export async function GET(request: Request) {
   let adminMeta: { imported: number; skipped: number } | null = null
   const { data: adminCfg } = await admin
     .from('admin_meta_config')
-    .select('page_id, page_access_token, allowed_form_ids')
+    .select('meta_access_token, meta_page_id, meta_allowed_form_ids')
     .eq('id', 1)
     .single()
-  if (adminCfg?.page_id && adminCfg.page_access_token) {
+  if (adminCfg?.meta_access_token && adminCfg.meta_page_id) {
     try {
       adminMeta = await syncAdminSalesLeads(admin, adminCfg)
     } catch (err) {
@@ -68,14 +68,19 @@ export async function GET(request: Request) {
 
 async function syncAdminSalesLeads(
   admin: ReturnType<typeof createAdminClient>,
-  cfg: { page_id: string; page_access_token: string; allowed_form_ids: string[] | null }
+  cfg: { meta_access_token: string; meta_page_id: string; meta_allowed_form_ids: string[] | null }
 ) {
-  const pageToken = cfg.page_access_token
+  const pageRes = await fetch(
+    `https://graph.facebook.com/v18.0/${cfg.meta_page_id}?fields=access_token&access_token=${cfg.meta_access_token}`
+  )
+  const pageData = await pageRes.json()
+  if (!pageData.access_token) throw new Error('Failed to get admin page token')
+  const pageToken = pageData.access_token
 
-  let formIds: string[] = cfg.allowed_form_ids || []
+  let formIds: string[] = cfg.meta_allowed_form_ids || []
   if (formIds.length === 0) {
     const formsRes = await fetch(
-      `https://graph.facebook.com/v18.0/${cfg.page_id}/leadgen_forms?fields=id&limit=100&access_token=${pageToken}`
+      `https://graph.facebook.com/v18.0/${cfg.meta_page_id}/leadgen_forms?fields=id&limit=100&access_token=${pageToken}`
     )
     const formsData = await formsRes.json()
     formIds = (formsData.data || []).map((f: { id: string }) => f.id)

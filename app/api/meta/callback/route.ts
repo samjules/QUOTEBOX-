@@ -20,11 +20,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${siteUrl}/lead-machine?error=missing_params`)
   }
 
-  // Decode state — supports JSON format, legacy plain base64 userId, and ppl-onboarding
+  // Decode state — supports JSON format, legacy plain base64 userId, ppl-onboarding, and admin
   let userId: string = ''
   let from: string = ''
   let accountId: string = ''
   let onboardingToken: string = ''
+  let isAdmin: boolean = false
 
   try {
     const decoded = JSON.parse(Buffer.from(state, 'base64').toString('utf-8'))
@@ -32,6 +33,7 @@ export async function GET(request: NextRequest) {
     from = decoded.from ?? ''
     accountId = decoded.accountId ?? ''
     onboardingToken = decoded.token ?? ''
+    isAdmin = decoded.admin === 'true'
   } catch {
     // Legacy format: state was plain base64-encoded userId string
     try {
@@ -41,7 +43,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  if (!userId && !accountId) {
+  if (!userId && !accountId && !isAdmin) {
     return NextResponse.redirect(`${siteUrl}/lead-machine?error=invalid_state`)
   }
 
@@ -159,6 +161,20 @@ export async function GET(request: NextRequest) {
 
   if (firstPageId) {
     updatePayload.meta_page_id = firstPageId
+  }
+
+  // Admin path — connects QuoteBox's own Meta page for the sales pipeline
+  if (isAdmin) {
+    const admin = createAdminClient()
+    await admin.from('admin_meta_config').upsert({
+      id: 1,
+      meta_access_token: updatePayload.meta_access_token,
+      meta_user_id: updatePayload.meta_user_id,
+      meta_page_id: updatePayload.meta_page_id ?? null,
+      meta_connected_at: updatePayload.meta_connected_at,
+    }, { onConflict: 'id' })
+
+    return NextResponse.redirect(`${siteUrl}/admin/settings?meta=connected`)
   }
 
   // PPL onboarding path — use accountId directly, update via admin client

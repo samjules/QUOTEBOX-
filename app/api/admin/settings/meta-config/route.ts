@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 
 async function assertAdmin() {
   const supabase = createClient()
@@ -13,32 +13,43 @@ async function assertAdmin() {
 export async function GET() {
   if (!await assertAdmin()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const admin = createAdminClient()
-  const { data } = await admin.from('admin_meta_config').select('page_id, page_access_token, allowed_form_ids').eq('id', 1).single()
+  const { data } = await admin
+    .from('admin_meta_config')
+    .select('meta_access_token, meta_user_id, meta_page_id, meta_allowed_form_ids')
+    .eq('id', 1)
+    .single()
+
+  const connected = !!data?.meta_access_token
+  let pages: Array<{ id: string; name: string }> = []
+  if (connected) {
+    try {
+      const res = await fetch(`https://graph.facebook.com/v18.0/me/accounts?fields=id,name&access_token=${data!.meta_access_token}`)
+      const d = await res.json()
+      pages = d.data || []
+    } catch {
+      // pages will just be empty
+    }
+  }
+
   return NextResponse.json({
-    page_id: data?.page_id ?? '',
-    allowed_form_ids: data?.allowed_form_ids ?? [],
-    has_token: !!data?.page_access_token,
+    connected,
+    meta_user_id: data?.meta_user_id ?? null,
+    meta_page_id: data?.meta_page_id ?? '',
+    meta_allowed_form_ids: data?.meta_allowed_form_ids ?? [],
+    pages,
   })
 }
 
-export async function PUT(request: NextRequest) {
+export async function DELETE() {
   if (!await assertAdmin()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const body = await request.json()
   const admin = createAdminClient()
-
-  const patch: Record<string, unknown> = { id: 1, updated_at: new Date().toISOString() }
-  if ('page_id' in body) patch.page_id = body.page_id || null
-  if ('allowed_form_ids' in body) patch.allowed_form_ids = body.allowed_form_ids ?? []
-  if (typeof body.page_access_token === 'string' && body.page_access_token.trim()) {
-    patch.page_access_token = body.page_access_token.trim()
-  }
-
-  const { data, error } = await admin.from('admin_meta_config').upsert(patch, { onConflict: 'id' }).select('page_id, page_access_token, allowed_form_ids').single()
+  const { error } = await admin.from('admin_meta_config').update({
+    meta_access_token: null,
+    meta_user_id: null,
+    meta_page_id: null,
+    meta_allowed_form_ids: [],
+    meta_connected_at: null,
+  }).eq('id', 1)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  return NextResponse.json({
-    page_id: data.page_id ?? '',
-    allowed_form_ids: data.allowed_form_ids ?? [],
-    has_token: !!data.page_access_token,
-  })
+  return NextResponse.json({ success: true })
 }

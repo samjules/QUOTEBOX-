@@ -89,14 +89,14 @@ export async function POST(request: NextRequest) {
           // Not a tenant page — check if this is the admin's own connected Meta page
           const { data: adminCfg } = await admin
             .from('admin_meta_config')
-            .select('page_id, page_access_token, allowed_form_ids')
+            .select('meta_access_token, meta_page_id, meta_allowed_form_ids')
             .eq('id', 1)
             .single()
 
-          if (adminCfg?.page_id === page_id && adminCfg.page_access_token) {
-            const allowedIds: string[] = adminCfg.allowed_form_ids || []
+          if (adminCfg?.meta_page_id === page_id && adminCfg.meta_access_token) {
+            const allowedIds: string[] = adminCfg.meta_allowed_form_ids || []
             if (allowedIds.length === 0 || allowedIds.includes(form_id)) {
-              await handleAdminMetaLead(admin, adminCfg.page_access_token, leadgen_id)
+              await handleAdminMetaLead(admin, adminCfg.meta_access_token, page_id, leadgen_id)
             }
           }
           continue
@@ -214,10 +214,18 @@ export async function POST(request: NextRequest) {
 // Handles a leadgen event for the admin's own connected Meta page — lands in sales_leads
 async function handleAdminMetaLead(
   admin: ReturnType<typeof supabaseAdmin>,
-  pageAccessToken: string,
+  metaAccessToken: string,
+  pageId: string,
   leadgenId: string,
 ) {
   try {
+    const pageRes = await fetch(
+      `https://graph.facebook.com/v18.0/${pageId}?fields=access_token&access_token=${metaAccessToken}`
+    )
+    const pageData = await pageRes.json()
+    const pageAccessToken = pageData.access_token
+    if (!pageAccessToken) return
+
     const leadRes = await fetch(
       `https://graph.facebook.com/v18.0/${leadgenId}?fields=field_data,created_time&access_token=${pageAccessToken}`
     )

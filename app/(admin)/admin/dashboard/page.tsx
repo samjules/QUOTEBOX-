@@ -28,7 +28,7 @@ interface Scheduled {
 }
 
 interface Activity {
-  source: 'Sales Lead' | 'Free Trial / Demo' | 'Customer Lead'
+  source: 'Sales Lead' | 'Free Trial / Demo'
   name: string
   email: string | null
   status: string
@@ -38,15 +38,13 @@ interface Activity {
 export default async function AdminDashboardOverviewPage() {
   const admin = createAdminClient()
 
-  const [accountsResult, leadsResult, salesLeadsResult, freeTrialLeadsResult] = await Promise.all([
+  const [accountsResult, salesLeadsResult, freeTrialLeadsResult] = await Promise.all([
     admin.from('accounts').select('id, created_at'),
-    admin.from('leads').select('id, name, email, status, created_at').order('created_at', { ascending: false }).limit(50),
     admin.from('sales_leads').select('id, name, email, status, scheduled_date, scheduled_time, created_at').order('created_at', { ascending: false }).limit(200),
     admin.from('free_trial_leads').select('id, name, email, status, scheduled_date, scheduled_time, created_at').order('created_at', { ascending: false }).limit(200),
   ])
 
   const accounts = accountsResult.data ?? []
-  const customerLeads = leadsResult.data ?? []
   const salesLeads = salesLeadsResult.data ?? []
   const freeTrialLeads = freeTrialLeadsResult.data ?? []
 
@@ -84,14 +82,12 @@ export default async function AdminDashboardOverviewPage() {
   upcoming.sort((a, b) => a.at.getTime() - b.at.getTime())
 
   const activity: Activity[] = [
-    ...customerLeads.map((l): Activity => ({ source: 'Customer Lead', name: l.name ?? 'Unknown', email: l.email, status: l.status, created_at: l.created_at })),
     ...salesLeads.slice(0, 50).map((l): Activity => ({ source: 'Sales Lead', name: l.name, email: l.email, status: l.status, created_at: l.created_at })),
     ...freeTrialLeads.slice(0, 50).map((l): Activity => ({ source: 'Free Trial / Demo', name: l.name, email: l.email, status: l.status, created_at: l.created_at })),
   ]
   activity.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
   const sourceColor: Record<Activity['source'], { bg: string; text: string }> = {
-    'Customer Lead': { bg: '#dbeafe', text: '#1d4ed8' },
     'Sales Lead': { bg: '#ede9fe', text: '#6d28d9' },
     'Free Trial / Demo': { bg: '#dcfce7', text: '#15803d' },
   }
@@ -100,12 +96,11 @@ export default async function AdminDashboardOverviewPage() {
     <div style={{ padding: '32px 28px', maxWidth: 1100, margin: '0 auto', fontFamily: 'inherit' }}>
       <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0e0020', margin: '0 0 4px' }}>Dashboard</h1>
       <p style={{ fontSize: '0.88rem', color: '#64748b', margin: '0 0 24px' }}>
-        Cross-pipeline overview — accounts, sales pipeline, and free trial / demo bookings.
+        Your leads — sales pipeline and free trial / demo bookings.
       </p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 28 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 28 }}>
         <StatCard label="Accounts" value={accounts.length} sub={`${accounts.filter((a) => new Date(a.created_at) >= startOfMonth).length} new this month`} />
-        <StatCard label="Customer Leads" value={customerLeads.length} sub="most recent 50 shown below" />
         <StatCard label="Sales Pipeline" value={salesStats.total} sub={`${salesStats.new} new · ${salesStats.contacted} contacted · ${salesStats.closed} closed`} />
         <StatCard label="Free Trial / Demo" value={freeTrialStats.total} sub={`${freeTrialStats.pending} pending · ${freeTrialStats.confirmed} confirmed`} />
       </div>

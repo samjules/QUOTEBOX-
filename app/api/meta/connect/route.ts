@@ -11,10 +11,19 @@ export async function GET(request: NextRequest) {
   }
 
   const token = request.nextUrl.searchParams.get('token')
+  const isAdminConnect = request.nextUrl.searchParams.get('admin') === '1'
 
   let statePayload: Record<string, string>
 
-  if (token) {
+  if (isAdminConnect) {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    const adminEmails = (process.env.ADMIN_EMAILS ?? '').split(',').map((e) => e.trim().toLowerCase())
+    if (!user || !adminEmails.includes((user.email ?? '').toLowerCase())) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    statePayload = { admin: 'true', from: 'admin-settings' }
+  } else if (token) {
     // Token-based path for PPL onboarding (no user session required)
     const admin = createAdminClient()
     const { data: session } = await admin
