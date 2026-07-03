@@ -48,7 +48,86 @@ export async function GET(request: Request) {
   const totalImported = results.reduce((s, r) => s + r.imported, 0)
   const totalSkipped = results.reduce((s, r) => s + r.skipped, 0)
 
-  return NextResponse.json({ accounts: results.length, totalImported, totalSkipped, results })
+  let adminMeta: { imported: number; skipped: number } | null = null
+  const { data: adminCfg } = await admin
+    .from('admin_meta_config')
+    .select('page_id, page_access_token, allowed_form_ids')
+    .eq('id', 1)
+    .single()
+  if (adminCfg?.page_id && adminCfg.page_access_token) {
+    try {
+      adminMeta = await syncAdminSalesLeads(admin, adminCfg)
+    } catch (err) {
+      adminMeta = { imported: 0, skipped: 0 }
+      console.error('Admin Meta sync error:', err)
+    }
+  }
+
+  return NextResponse.json({ accounts: results.length, totalImported, totalSkipped, results, adminMeta })
+}
+
+async function syncAdminSalesLeads(
+  admin: ReturnType<typeof createAdminClient>,
+  cfg: { page_id: string; page_access_token: string; allowed_form_ids: string[] | null }
+) {
+  const pageToken = cfg.page_access_token
+
+  let formIds: string[] = cfg.allowed_form_ids || []
+  if (formIds.length === 0) {
+    const formsRes = await fetch(
+      `https://graph.facebook.com/v18.0/${cfg.page_id}/leadgen_forms?fields=id&limit=100&access_token=${pageToken}`
+    )
+    const formsData = await formsRes.json()
+    formIds = (formsData.data || []).map((f: { id: string }) => f.id)
+  }
+
+  if (formIds.length === 0) return { imported: 0, skipped: 0 }
+
+  let imported = 0
+  let skipped = 0
+
+  for (const formId of formIds) {
+    let nextUrl: string | null =
+      `https://graph.facebook.com/v18.0/${formId}/leads?fields=id,field_data,created_time&sort=created_time_descending&limit=100&access_token=${pageToken}`
+
+    while (nextUrl) {
+      const pageLeadsRes: Response = await fetch(nextUrl)
+      const leadsData: { error?: unknown; data?: Array<{ id: string; field_data: Array<{ name: string; values: string[] }>; created_time: string }>; paging?: { next?: string } } = await pageLeadsRes.json()
+      if (leadsData.error || !leadsData.data) break
+
+      for (const lead of leadsData.data) {
+        const { count } = await admin
+          .from('sales_leads')
+          .select('id', { count: 'exact', head: true })
+          .eq('meta_lead_id', lead.id)
+
+        if ((count ?? 0) > 0) { skipped++; continue }
+
+        const fields: Record<string, string> = {}
+        for (const f of lead.field_data) fields[f.name] = f.values?.[0] ?? ''
+
+        const name = fields.full_name || fields.name || 'Unknown'
+        const email = fields.email || ''
+        const phone = fields.phone_number || fields.phone || null
+
+        const { error } = await admin.from('sales_leads').insert({
+          name,
+          email,
+          phone,
+          status: 'new',
+          meta_lead_id: lead.id,
+          source: 'meta',
+          created_at: lead.created_time,
+        })
+        if (!error) imported++
+        else if (error.code !== '23505') console.error('Admin Meta sales_leads insert error:', error)
+      }
+
+      nextUrl = leadsData.paging?.next ?? null
+    }
+  }
+
+  return { imported, skipped }
 }
 
 async function syncAccountLeads(

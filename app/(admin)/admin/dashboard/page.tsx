@@ -73,13 +73,13 @@ export default async function AdminDashboardOverviewPage() {
     if (!l.scheduled_date || !l.scheduled_time || l.status === 'lost') continue
     const at = alaskaWallTimeToUTC(l.scheduled_date, l.scheduled_time)
     if (!at || at.getTime() < now.getTime()) continue
-    upcoming.push({ source: 'Sales Lead', name: l.name, email: l.email, scheduled_date: l.scheduled_date, scheduled_time: l.scheduled_time, at, href: '/admin/crm' })
+    upcoming.push({ source: 'Sales Lead', name: l.name, email: l.email, scheduled_date: l.scheduled_date, scheduled_time: l.scheduled_time, at, href: '/admin/leads' })
   }
   for (const l of freeTrialLeads) {
     if (!l.scheduled_date || !l.scheduled_time || l.status === 'cancelled') continue
     const at = alaskaWallTimeToUTC(l.scheduled_date, l.scheduled_time)
     if (!at || at.getTime() < now.getTime()) continue
-    upcoming.push({ source: 'Free Trial / Demo', name: l.name, email: l.email, scheduled_date: l.scheduled_date, scheduled_time: l.scheduled_time, at, href: '/admin/secret-test-page' })
+    upcoming.push({ source: 'Free Trial / Demo', name: l.name, email: l.email, scheduled_date: l.scheduled_date, scheduled_time: l.scheduled_time, at, href: '/admin/leads' })
   }
   upcoming.sort((a, b) => a.at.getTime() - b.at.getTime())
 

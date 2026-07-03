@@ -85,7 +85,22 @@ export async function POST(request: NextRequest) {
           .eq('meta_page_id', page_id)
           .single()
 
-        if (!account || !account.meta_access_token) continue
+        if (!account || !account.meta_access_token) {
+          // Not a tenant page — check if this is the admin's own connected Meta page
+          const { data: adminCfg } = await admin
+            .from('admin_meta_config')
+            .select('page_id, page_access_token, allowed_form_ids')
+            .eq('id', 1)
+            .single()
+
+          if (adminCfg?.page_id === page_id && adminCfg.page_access_token) {
+            const allowedIds: string[] = adminCfg.allowed_form_ids || []
+            if (allowedIds.length === 0 || allowedIds.includes(form_id)) {
+              await handleAdminMetaLead(admin, adminCfg.page_access_token, leadgen_id)
+            }
+          }
+          continue
+        }
 
         // If allowed form IDs are configured, skip forms not in the list
         const allowedIds: string[] = account.meta_allowed_form_ids || []
@@ -194,4 +209,42 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ received: true }, { status: 200 })
+}
+
+// Handles a leadgen event for the admin's own connected Meta page — lands in sales_leads
+async function handleAdminMetaLead(
+  admin: ReturnType<typeof supabaseAdmin>,
+  pageAccessToken: string,
+  leadgenId: string,
+) {
+  try {
+    const leadRes = await fetch(
+      `https://graph.facebook.com/v18.0/${leadgenId}?fields=field_data,created_time&access_token=${pageAccessToken}`
+    )
+    const leadData = await leadRes.json()
+    if (!leadData.field_data) return
+
+    const fields: Record<string, string> = {}
+    for (const f of leadData.field_data as Array<{ name: string; values: string[] }>) {
+      fields[f.name] = f.values?.[0] ?? ''
+    }
+
+    const name = fields.full_name || fields.name || 'Unknown'
+    const email = fields.email || ''
+    const phone = fields.phone_number || fields.phone || null
+
+    const { error } = await admin.from('sales_leads').insert({
+      name,
+      email,
+      phone,
+      status: 'new',
+      meta_lead_id: leadgenId,
+      source: 'meta',
+    })
+    if (error && error.code !== '23505') {
+      console.error('Admin Meta lead insert error:', error)
+    }
+  } catch (err) {
+    console.error('Admin Meta lead processing error:', err)
+  }
 }
