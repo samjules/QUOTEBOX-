@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import SecretTestPageManager from './SecretTestPageManager'
 
+export const dynamic = 'force-dynamic'
+
 export interface FreeTrialLead {
   id: string
   name: string

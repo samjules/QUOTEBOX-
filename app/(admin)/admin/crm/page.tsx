@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import CrmDashboard from './CrmDashboard'
 
+export const dynamic = 'force-dynamic'
+
 export interface SalesLead {
   id: string
   name: string
