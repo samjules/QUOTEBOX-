@@ -28,10 +28,21 @@ export interface AgencyLeadsStats {
   fromDemo: number
 }
 
+export interface AgencyStepActivity {
+  id: string
+  step: string
+  status: string
+  scheduled_at: string
+  sent_at: string | null
+  contact_name: string
+  contact_email: string | null
+  contact_phone: string | null
+}
+
 export default async function OwnerAutomationsPage() {
   const admin = createAdminClient()
 
-  const [stepsResult, accountsResult, usersResult, freeTrialLeadsResult, agencyLeadContactsResult] = await Promise.all([
+  const [stepsResult, accountsResult, usersResult, freeTrialLeadsResult, agencyLeadContactsResult, agencyStepsResult] = await Promise.all([
     admin
       .from('owner_onboarding_steps')
       .select('*')
@@ -41,6 +52,11 @@ export default async function OwnerAutomationsPage() {
     admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
     admin.from('free_trial_leads').select('status, reminder_sent_at'),
     admin.from('agency_lead_contacts').select('source'),
+    admin
+      .from('agency_lead_steps')
+      .select('id, step, status, scheduled_at, sent_at, agency_lead_contacts(name, email, phone)')
+      .order('scheduled_at', { ascending: true })
+      .limit(500),
   ])
 
   const steps = stepsResult.data ?? []
@@ -48,6 +64,20 @@ export default async function OwnerAutomationsPage() {
   const users = usersResult.data?.users ?? []
   const freeTrialLeads = freeTrialLeadsResult.data ?? []
   const agencyLeadContacts = agencyLeadContactsResult.data ?? []
+
+  const agencySteps: AgencyStepActivity[] = (agencyStepsResult.data ?? []).map((s) => {
+    const contact = s.agency_lead_contacts as unknown as { name: string; email: string | null; phone: string | null } | null
+    return {
+      id: s.id,
+      step: s.step,
+      status: s.status,
+      scheduled_at: s.scheduled_at,
+      sent_at: s.sent_at,
+      contact_name: contact?.name ?? 'Unknown',
+      contact_email: contact?.email ?? null,
+      contact_phone: contact?.phone ?? null,
+    }
+  })
 
   const freeTrialStats: FreeTrialAutomationStats = {
     confirmationSent: freeTrialLeads.length,
@@ -75,5 +105,5 @@ export default async function OwnerAutomationsPage() {
     }
   })
 
-  return <OwnerAutomationsManager steps={enriched} freeTrialStats={freeTrialStats} agencyLeadsStats={agencyLeadsStats} />
+  return <OwnerAutomationsManager steps={enriched} freeTrialStats={freeTrialStats} agencyLeadsStats={agencyLeadsStats} agencySteps={agencySteps} />
 }

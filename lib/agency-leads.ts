@@ -304,7 +304,15 @@ export async function enrollAgencyLead(input: {
 // Cron: process due steps
 // ---------------------------------------------------------------------------
 
-export async function processDueAgencyLeadSteps(): Promise<number> {
+export interface AgencyStepResult {
+  step: string
+  channel: 'email' | 'sms'
+  contactName: string
+  ok: boolean
+  error?: string
+}
+
+export async function processDueAgencyLeadSteps(): Promise<{ processed: number; results: AgencyStepResult[] }> {
   const admin = createAdminClient()
 
   const { data: dueSteps } = await admin
@@ -315,9 +323,10 @@ export async function processDueAgencyLeadSteps(): Promise<number> {
     .order('scheduled_at', { ascending: true })
     .limit(100)
 
-  if (!dueSteps?.length) return 0
+  if (!dueSteps?.length) return { processed: 0, results: [] }
 
   let processed = 0
+  const results: AgencyStepResult[] = []
   const apiKey = process.env.RESEND_API_KEY
   const from = process.env.RESEND_FROM_EMAIL || 'Sam at QuoteBox <sam@quote-box.com>'
 
@@ -345,16 +354,33 @@ export async function processDueAgencyLeadSteps(): Promise<number> {
     if (isSms) {
       if (contact.phone) {
         const msg = buildAgencySmsForStep(step.step, firstName)
-        if (msg) await sendSms(contact.phone, msg)
+        if (msg) {
+          const ok = await sendSms(contact.phone, msg)
+          results.push({
+            step: step.step, channel: 'sms', contactName: contact.name, ok,
+            error: ok ? undefined : 'sendSms returned false — check TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_PHONE_NUMBER',
+          })
+          if (!ok) console.error(`Agency Leads SMS failed for ${contact.name} (${step.step}) — check Twilio env vars`)
+        }
+      } else {
+        results.push({ step: step.step, channel: 'sms', contactName: contact.name, ok: false, error: 'Contact has no phone number' })
       }
-    } else if (contact.email && apiKey) {
+    } else if (contact.email) {
       const result = buildAgencyEmailForStep(step.step, firstName)
       if (result) {
-        try {
-          const resend = new Resend(apiKey)
-          await resend.emails.send({ from, to: contact.email, subject: result.subject, html: result.html })
-        } catch (err) {
-          console.error('Agency Leads email error:', err)
+        if (!apiKey) {
+          results.push({ step: step.step, channel: 'email', contactName: contact.name, ok: false, error: 'RESEND_API_KEY not configured' })
+        } else {
+          try {
+            const resend = new Resend(apiKey)
+            const { error } = await resend.emails.send({ from, to: contact.email, subject: result.subject, html: result.html })
+            results.push({ step: step.step, channel: 'email', contactName: contact.name, ok: !error, error: error?.message })
+            if (error) console.error(`Agency Leads email failed for ${contact.name} (${step.step}):`, error)
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err)
+            results.push({ step: step.step, channel: 'email', contactName: contact.name, ok: false, error: msg })
+            console.error('Agency Leads email error:', err)
+          }
         }
       }
     }
@@ -362,7 +388,7 @@ export async function processDueAgencyLeadSteps(): Promise<number> {
     processed++
   }
 
-  return processed
+  return { processed, results }
 }
 
 // ---------------------------------------------------------------------------

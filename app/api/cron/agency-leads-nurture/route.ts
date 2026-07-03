@@ -14,6 +14,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const processed = await processDueAgencyLeadSteps()
-  return NextResponse.json({ processed })
+  const result = await processDueAgencyLeadSteps()
+  return NextResponse.json(result)
 }

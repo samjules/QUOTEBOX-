@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import type { OwnerStep, FreeTrialAutomationStats, AgencyLeadsStats } from './page'
+import type { OwnerStep, FreeTrialAutomationStats, AgencyLeadsStats, AgencyStepActivity } from './page'
 
 // ── types ────────────────────────────────────────────────────────────────────
 
@@ -464,7 +464,7 @@ interface PreviewData {
 
 type FlowTab = 'onboarding' | 'free_trial' | 'agency_leads'
 
-export default function OwnerAutomationsManager({ steps: initialSteps, freeTrialStats, agencyLeadsStats }: { steps: OwnerStep[]; freeTrialStats: FreeTrialAutomationStats; agencyLeadsStats: AgencyLeadsStats }) {
+export default function OwnerAutomationsManager({ steps: initialSteps, freeTrialStats, agencyLeadsStats, agencySteps }: { steps: OwnerStep[]; freeTrialStats: FreeTrialAutomationStats; agencyLeadsStats: AgencyLeadsStats; agencySteps: AgencyStepActivity[] }) {
   const [steps] = useState(initialSteps)
   const [config, setConfig] = useState<Config>({
     welcome_email: null, welcome_sms: null, no_leads_email: null, no_leads_sms: null,
@@ -499,6 +499,21 @@ export default function OwnerAutomationsManager({ steps: initialSteps, freeTrial
       if (res.ok) setBackfillResult(d)
     } finally {
       setBackfilling(false)
+    }
+  }
+
+  const [processingNow, setProcessingNow] = useState(false)
+  const [processNowResult, setProcessNowResult] = useState<{ processed: number; results: { step: string; channel: string; contactName: string; ok: boolean; error?: string }[] } | null>(null)
+
+  async function runAgencyProcessNow() {
+    setProcessingNow(true)
+    setProcessNowResult(null)
+    try {
+      const res = await fetch('/api/admin/settings/agency-leads-process-now', { method: 'POST' })
+      const d = await res.json()
+      if (res.ok) setProcessNowResult(d)
+    } finally {
+      setProcessingNow(false)
     }
   }
 
@@ -961,28 +976,102 @@ export default function OwnerAutomationsManager({ steps: initialSteps, freeTrial
           </div>
         </div>
 
-        <button
-          onClick={runAgencyBackfill}
-          disabled={backfilling}
-          style={{
-            marginBottom: 20, padding: '9px 18px', borderRadius: 8, border: 'none',
-            background: '#0866ff', color: '#fff', fontSize: '0.84rem', fontWeight: 700,
-            cursor: backfilling ? 'not-allowed' : 'pointer', opacity: backfilling ? 0.6 : 1, fontFamily: 'inherit',
-          }}
-        >
-          {backfilling ? 'Enrolling…' : 'Enroll existing Meta + /demo leads (start today)'}
-        </button>
+        <div style={{ marginBottom: 12 }}>
+          <button
+            onClick={runAgencyBackfill}
+            disabled={backfilling}
+            style={{
+              marginRight: 10, padding: '9px 18px', borderRadius: 8, border: 'none',
+              background: '#0866ff', color: '#fff', fontSize: '0.84rem', fontWeight: 700,
+              cursor: backfilling ? 'not-allowed' : 'pointer', opacity: backfilling ? 0.6 : 1, fontFamily: 'inherit',
+            }}
+          >
+            {backfilling ? 'Enrolling…' : 'Enroll existing Meta + /demo leads (start today)'}
+          </button>
+          <button
+            onClick={runAgencyProcessNow}
+            disabled={processingNow}
+            style={{
+              padding: '9px 18px', borderRadius: 8, border: '1.5px solid #0866ff',
+              background: '#fff', color: '#0866ff', fontSize: '0.84rem', fontWeight: 700,
+              cursor: processingNow ? 'not-allowed' : 'pointer', opacity: processingNow ? 0.6 : 1, fontFamily: 'inherit',
+            }}
+          >
+            {processingNow ? 'Processing…' : 'Process due steps now'}
+          </button>
+        </div>
         {backfillResult && (
-          <span style={{ marginLeft: 12, fontSize: '0.8rem', color: '#15803d' }}>
+          <div style={{ fontSize: '0.8rem', color: '#15803d', marginBottom: 8 }}>
             Enrolled {backfillResult.enrolled}, already enrolled {backfillResult.skipped}
-          </span>
+          </div>
+        )}
+        {processNowResult && (
+          <div style={{ marginBottom: 16, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px 16px' }}>
+            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0e0020', marginBottom: 6 }}>
+              {processNowResult.processed} step{processNowResult.processed === 1 ? '' : 's'} processed
+            </div>
+            {processNowResult.results.length === 0 ? (
+              <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Nothing was due to send.</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 200, overflowY: 'auto' }}>
+                {processNowResult.results.map((r, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: '0.78rem' }}>
+                    <span style={{ color: r.ok ? '#16a34a' : '#dc2626', fontWeight: 700, flexShrink: 0 }}>{r.ok ? '✓' : '✗'}</span>
+                    <span style={{ color: '#374151' }}>{r.contactName} · {r.step.replace('agency_', '')} · {r.channel}</span>
+                    {r.error && <span style={{ color: '#dc2626', fontSize: '0.72rem' }}>— {r.error}</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: '0 0 8px' }}>Click any step to preview exactly what it looks like.</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
           {AGENCY_STEPS_INFO.map((s) => (
             <AgencyStepPreviewRow key={s.step} step={s.step} label={s.label.replace('Agency Leads: ', '')} channel={s.channel} />
           ))}
+        </div>
+
+        <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+          Activity log
+        </p>
+        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, overflow: 'hidden' }}>
+          {agencySteps.length === 0 ? (
+            <div style={{ padding: 32, textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>No activity yet.</div>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                  {['Contact', 'Email', 'Phone', 'Step', 'Status', 'Scheduled', 'Sent'].map((h) => (
+                    <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#374151', whiteSpace: 'nowrap' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {agencySteps.map((s) => {
+                  const colors = s.status === 'sent' ? { bg: '#dcfce7', text: '#15803d' } : s.status === 'skipped' ? { bg: '#f3f4f6', text: '#6b7280' } : { bg: '#fef9c3', text: '#92400e' }
+                  return (
+                    <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <td style={{ padding: '9px 14px', fontWeight: 600, color: '#0e0020' }}>{s.contact_name}</td>
+                      <td style={{ padding: '9px 14px', color: '#475569' }}>{s.contact_email ?? <span style={{ color: '#cbd5e1' }}>—</span>}</td>
+                      <td style={{ padding: '9px 14px', color: '#475569' }}>{s.contact_phone ?? <span style={{ color: '#cbd5e1' }}>—</span>}</td>
+                      <td style={{ padding: '9px 14px', color: '#374151' }}>{s.step.replace('agency_', '')}</td>
+                      <td style={{ padding: '9px 14px' }}>
+                        <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 5, fontSize: '0.76rem', fontWeight: 600, background: colors.bg, color: colors.text }}>
+                          {s.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: '9px 14px', color: '#475569', whiteSpace: 'nowrap' }}>{fmt(s.scheduled_at)}</td>
+                      <td style={{ padding: '9px 14px', color: '#475569', whiteSpace: 'nowrap' }}>
+                        {s.sent_at ? fmt(s.sent_at) : <span style={{ color: '#cbd5e1' }}>—</span>}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
       )}
