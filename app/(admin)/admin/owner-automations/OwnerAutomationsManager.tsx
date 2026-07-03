@@ -366,6 +366,94 @@ function StepNode({
   )
 }
 
+function AgencyStepPreviewRow({ step, label, channel }: { step: string; label: string; channel: 'email' | 'sms' | 'both' }) {
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [data, setData] = useState<{ subject: string | null; html: string | null; sms: string | null } | null>(null)
+  const [tab, setTab] = useState<'email' | 'sms'>(channel === 'sms' ? 'sms' : 'email')
+
+  async function toggle() {
+    const next = !open
+    setOpen(next)
+    if (next && !data) {
+      setLoading(true)
+      try {
+        const res = await fetch(`/api/admin/owner-automations/preview?step=${step}`)
+        setData(await res.json())
+      } finally {
+        setLoading(false)
+      }
+    }
+  }
+
+  return (
+    <div style={{ background: '#fff', border: `1.5px solid ${open ? '#0866ff' : '#e2e8f0'}`, borderRadius: 10, overflow: 'hidden' }}>
+      <div
+        onClick={toggle}
+        style={{ padding: '10px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+      >
+        <span style={{ fontSize: '0.84rem', fontWeight: 600, color: '#0e0020' }}>{label}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: '0.72rem', fontWeight: 600, padding: '2px 8px', borderRadius: 99, background: CHANNEL_BADGE[channel].bg, color: CHANNEL_BADGE[channel].color }}>
+            {CHANNEL_BADGE[channel].label}
+          </span>
+          <svg width="14" height="14" fill="none" stroke="#94a3b8" strokeWidth={2} viewBox="0 0 24 24" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </div>
+      {open && (
+        <div style={{ borderTop: '1px solid #f1f5f9' }}>
+          {loading ? (
+            <div style={{ padding: 24, textAlign: 'center', color: '#94a3b8', fontSize: '0.82rem' }}>Loading…</div>
+          ) : data && (data.html || data.sms) ? (
+            <>
+              {data.html && data.sms && (
+                <div style={{ display: 'flex', gap: 4, padding: '10px 16px 0' }}>
+                  {(['email', 'sms'] as const).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setTab(t)}
+                      style={{
+                        padding: '5px 12px', borderRadius: 6, border: 'none', fontFamily: 'inherit',
+                        fontSize: '0.76rem', fontWeight: 600, cursor: 'pointer',
+                        background: tab === t ? '#f1f5f9' : 'transparent',
+                        color: tab === t ? '#0e0020' : '#94a3b8',
+                      }}
+                    >
+                      {t === 'email' ? '✉ Email' : '💬 SMS'}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {(tab === 'email' || !data.sms) && data.html && (
+                <>
+                  {data.subject && (
+                    <div style={{ padding: '10px 16px 0', fontSize: '0.78rem', color: '#64748b' }}>
+                      Subject: <strong style={{ color: '#0e0020' }}>{data.subject}</strong>
+                    </div>
+                  )}
+                  <iframe srcDoc={data.html} title={`${label} preview`} style={{ width: '100%', height: 420, border: 'none', display: 'block' }} sandbox="allow-same-origin" />
+                </>
+              )}
+              {(tab === 'sms' || !data.html) && data.sms && (
+                <div style={{ padding: '16px 20px', background: '#f8fafc' }}>
+                  <div style={{ display: 'inline-block', maxWidth: 380, background: '#0e0020', color: '#fff', padding: '10px 14px', borderRadius: '14px 14px 14px 3px', fontSize: '0.86rem', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+                    {data.sms}
+                  </div>
+                  <p style={{ margin: '8px 0 0', fontSize: '0.7rem', color: '#94a3b8' }}>{data.sms.length} chars</p>
+                </div>
+              )}
+            </>
+          ) : (
+            <div style={{ padding: 24, textAlign: 'center', color: '#94a3b8', fontSize: '0.82rem' }}>No preview available.</div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── main component ────────────────────────────────────────────────────────
 
 interface PreviewData {
@@ -890,28 +978,11 @@ export default function OwnerAutomationsManager({ steps: initialSteps, freeTrial
           </span>
         )}
 
-        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
-            <thead>
-              <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                {['Step', 'Channel'].map((h) => (
-                  <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#374151' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {AGENCY_STEPS_INFO.map((s) => (
-                <tr key={s.step} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '10px 14px', color: '#0e0020', fontWeight: 500 }}>{s.label.replace('Agency Leads: ', '')}</td>
-                  <td style={{ padding: '10px 14px' }}>
-                    <span style={{ fontSize: '0.72rem', fontWeight: 600, padding: '2px 8px', borderRadius: 99, background: CHANNEL_BADGE[s.channel].bg, color: CHANNEL_BADGE[s.channel].color }}>
-                      {CHANNEL_BADGE[s.channel].label}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: '0 0 8px' }}>Click any step to preview exactly what it looks like.</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {AGENCY_STEPS_INFO.map((s) => (
+            <AgencyStepPreviewRow key={s.step} step={s.step} label={s.label.replace('Agency Leads: ', '')} channel={s.channel} />
+          ))}
         </div>
       </div>
       )}
