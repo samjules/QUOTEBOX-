@@ -10,7 +10,7 @@ import {
   buildOwnerNotificationSms,
 } from '@/lib/free-trial'
 import { sendSms } from '@/lib/sms'
-import { createZoomMeeting } from '@/lib/zoom'
+import { createZoomMeeting, deleteZoomMeeting } from '@/lib/zoom'
 import { Resend } from 'resend'
 
 async function requireAdmin() {
@@ -41,6 +41,26 @@ export async function POST() {
   }
 
   const admin = createAdminClient()
+
+  // Clean up any previous test bookings first — repeated runs otherwise collide with
+  // the fixed slot below via the double-booking unique constraint.
+  const { data: priorTestLeads } = await admin
+    .from('free_trial_leads')
+    .select('id, zoom_meeting_id')
+    .eq('name', 'Test Booking')
+    .eq('email', testEmail)
+    .in('status', ['pending_confirmation', 'confirmed'])
+  for (const prior of priorTestLeads ?? []) {
+    if (prior.zoom_meeting_id) {
+      try {
+        await deleteZoomMeeting(prior.zoom_meeting_id)
+      } catch (err) {
+        console.error('Test-flow cleanup: Zoom delete error:', err)
+      }
+    }
+    await admin.from('free_trial_leads').delete().eq('id', prior.id)
+  }
+
   const scheduledDate = nextWeekday(7)
   const scheduled_date = scheduledDate.toISOString().split('T')[0]
   const scheduled_time = '11:00 AM'
@@ -63,6 +83,9 @@ export async function POST() {
   }).select().single()
 
   if (insertError || !lead) {
+    if (insertError?.code === '23505') {
+      return NextResponse.json({ error: `That test slot (${scheduled_date} ${scheduled_time}) is already booked by someone else — try again in a moment.` }, { status: 409 })
+    }
     return NextResponse.json({ error: insertError?.message ?? 'Failed to create test lead' }, { status: 500 })
   }
   steps.push({ name: 'Create test lead', ok: true })
