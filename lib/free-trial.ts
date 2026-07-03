@@ -349,7 +349,7 @@ export async function handleInboundConfirmation(fromPhone: string, body: string)
       .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
       .eq('id', match.id)
       .eq('status', 'pending_confirmation')
-    await sendSms(fromPhone, `You're confirmed! See you on the Zoom call. Here's the link: ${match.zoom_join_url || FALLBACK_ZOOM_URL}`)
+    await sendSms(fromPhone, `Thanks for confirming! You're all set — see you on the Zoom call. Here's the link: ${match.zoom_join_url || FALLBACK_ZOOM_URL}`)
   } else {
     await admin
       .from('free_trial_leads')
