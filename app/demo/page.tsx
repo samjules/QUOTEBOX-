@@ -164,6 +164,7 @@ export default function DemoPage() {
           willingIosApp: true,
           scheduled_date: selectedDate,
           scheduled_time: selectedTime,
+          funnel: 'demo',
         }),
       })
       if (!res.ok) {

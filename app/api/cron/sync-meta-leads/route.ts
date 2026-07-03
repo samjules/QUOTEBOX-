@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { enrollLead } from '@/lib/enroll-lead'
 import { processDueSteps } from '@/lib/process-automations'
+import { triggerAgencyLeadsAutomation } from '@/lib/agency-leads'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
@@ -124,7 +125,17 @@ async function syncAdminSalesLeads(
           source: 'meta',
           created_at: lead.created_time,
         })
-        if (!error) imported++
+        if (!error) {
+          imported++
+          const isRecent = (Date.now() - new Date(lead.created_time).getTime()) < 48 * 60 * 60 * 1000
+          if (isRecent) {
+            try {
+              await triggerAgencyLeadsAutomation({ name, email, phone, source: 'meta' })
+            } catch (err) {
+              console.error('Agency Leads trigger error (cron):', err)
+            }
+          }
+        }
         else if (error.code !== '23505') console.error('Admin Meta sales_leads insert error:', error)
       }
 

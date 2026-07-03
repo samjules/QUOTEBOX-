@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { triggerAgencyLeadsAutomation } from '@/lib/agency-leads'
 
 export const dynamic = 'force-dynamic'
 
@@ -85,7 +86,17 @@ export async function POST() {
           source: 'meta',
           created_at: lead.created_time,
         })
-        if (!error) imported++
+        if (!error) {
+          imported++
+          const isRecent = (Date.now() - new Date(lead.created_time).getTime()) < 48 * 60 * 60 * 1000
+          if (isRecent) {
+            try {
+              await triggerAgencyLeadsAutomation({ name, email, phone, source: 'meta' })
+            } catch (err) {
+              console.error('Agency Leads trigger error (manual sync):', err)
+            }
+          }
+        }
         else if (error.code !== '23505') console.error('Admin Meta manual sync insert error:', error)
       }
 

@@ -32,6 +32,8 @@ export async function PUT(request: NextRequest) {
   if ('ft_reminder_email' in body) patch.ft_reminder_email = body.ft_reminder_email ?? null
   if ('ft_reminder_sms' in body) patch.ft_reminder_sms = body.ft_reminder_sms ?? null
   if ('ft_cancelled_email' in body) patch.ft_cancelled_email = body.ft_cancelled_email ?? null
+  if ('agency_leads_email' in body) patch.agency_leads_email = body.agency_leads_email ?? null
+  if ('agency_leads_sms' in body) patch.agency_leads_sms = body.agency_leads_sms ?? null
 
   const { data } = await admin
     .from('owner_automation_config')

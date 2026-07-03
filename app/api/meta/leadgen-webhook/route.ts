@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { enrollLead } from '@/lib/enroll-lead'
 import { processDueSteps } from '@/lib/process-automations'
+import { triggerAgencyLeadsAutomation } from '@/lib/agency-leads'
 
 const supabaseAdmin = () =>
   createClient(
@@ -251,6 +252,13 @@ async function handleAdminMetaLead(
     })
     if (error && error.code !== '23505') {
       console.error('Admin Meta lead insert error:', error)
+    }
+    if (!error) {
+      try {
+        await triggerAgencyLeadsAutomation({ name, email, phone, source: 'meta' })
+      } catch (err) {
+        console.error('Agency Leads trigger error (meta webhook):', err)
+      }
     }
   } catch (err) {
     console.error('Admin Meta lead processing error:', err)

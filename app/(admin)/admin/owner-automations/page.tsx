@@ -22,10 +22,16 @@ export interface FreeTrialAutomationStats {
   cancelled: number
 }
 
+export interface AgencyLeadsStats {
+  sent: number
+  fromMeta: number
+  fromDemo: number
+}
+
 export default async function OwnerAutomationsPage() {
   const admin = createAdminClient()
 
-  const [stepsResult, accountsResult, usersResult, freeTrialLeadsResult] = await Promise.all([
+  const [stepsResult, accountsResult, usersResult, freeTrialLeadsResult, agencyLeadContactsResult] = await Promise.all([
     admin
       .from('owner_onboarding_steps')
       .select('*')
@@ -34,17 +40,25 @@ export default async function OwnerAutomationsPage() {
     admin.from('accounts').select('id, business_name, owner_id, phone'),
     admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
     admin.from('free_trial_leads').select('status, reminder_sent_at'),
+    admin.from('agency_lead_contacts').select('source'),
   ])
 
   const steps = stepsResult.data ?? []
   const accounts = accountsResult.data ?? []
   const users = usersResult.data?.users ?? []
   const freeTrialLeads = freeTrialLeadsResult.data ?? []
+  const agencyLeadContacts = agencyLeadContactsResult.data ?? []
 
   const freeTrialStats: FreeTrialAutomationStats = {
     confirmationSent: freeTrialLeads.length,
     reminderSent: freeTrialLeads.filter((l) => l.reminder_sent_at).length,
     cancelled: freeTrialLeads.filter((l) => l.status === 'cancelled').length,
+  }
+
+  const agencyLeadsStats: AgencyLeadsStats = {
+    sent: agencyLeadContacts.length,
+    fromMeta: agencyLeadContacts.filter((c) => c.source === 'meta').length,
+    fromDemo: agencyLeadContacts.filter((c) => c.source === 'demo').length,
   }
 
   const accountMap = new Map(accounts.map((a) => [a.id, a]))
@@ -61,5 +75,5 @@ export default async function OwnerAutomationsPage() {
     }
   })
 
-  return <OwnerAutomationsManager steps={enriched} freeTrialStats={freeTrialStats} />
+  return <OwnerAutomationsManager steps={enriched} freeTrialStats={freeTrialStats} agencyLeadsStats={agencyLeadsStats} />
 }

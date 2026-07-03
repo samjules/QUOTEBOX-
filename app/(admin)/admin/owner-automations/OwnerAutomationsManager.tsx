@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import type { OwnerStep, FreeTrialAutomationStats } from './page'
+import type { OwnerStep, FreeTrialAutomationStats, AgencyLeadsStats } from './page'
 
 // ── types ────────────────────────────────────────────────────────────────────
 
@@ -22,6 +22,8 @@ interface Config {
   ft_reminder_email: EmailCopy | null
   ft_reminder_sms: string | null
   ft_cancelled_email: EmailCopy | null
+  agency_leads_email: EmailCopy | null
+  agency_leads_sms: string | null
 }
 
 // ── defaults (mirrors lib/owner-automations.ts) ───────────────────────────
@@ -69,10 +71,19 @@ const FT_CANCELLED_EMAIL_DEFAULTS: EmailCopy = {
 const FT_CONFIRMATION_SMS_DEFAULT = `You're booked, {{name}}! Free QuoteBox strategy call on {{date}} at {{time}} (Alaska Time). We'll text you a reminder the day before to confirm.`
 const FT_REMINDER_SMS_DEFAULT = `Hey {{name}} — reminder: your free QuoteBox strategy call is tomorrow at {{time}} (Alaska Time). Reply Y to confirm or N to cancel. If we don't hear back your spot will be released.`
 
+// ── Agency Leads (Meta ads + /demo bookings) — intentionally blank until a script is provided ──
+
+const AGENCY_LEADS_EMAIL_DEFAULTS: EmailCopy = { subject: '', heading: '', body: '', outro: '' }
+const AGENCY_LEADS_SMS_DEFAULT = ''
+
 const FT_STEPS_INFO: { step: string; label: string; channel: 'email' | 'sms' | 'both' }[] = [
   { step: 'ft_confirmation', label: 'Free Trial: Booking Confirmation', channel: 'both' },
   { step: 'ft_reminder', label: 'Free Trial: 24h Reminder', channel: 'both' },
   { step: 'ft_cancelled', label: 'Free Trial: Auto-Cancelled', channel: 'email' },
+]
+
+const AGENCY_STEPS_INFO: { step: string; label: string; channel: 'email' | 'sms' | 'both' }[] = [
+  { step: 'agency_leads', label: 'Agency Leads: New Meta / Demo Lead', channel: 'both' },
 ]
 
 // ── helpers ───────────────────────────────────────────────────────────────
@@ -352,13 +363,17 @@ interface PreviewData {
   sms: string | null
 }
 
-export default function OwnerAutomationsManager({ steps: initialSteps, freeTrialStats }: { steps: OwnerStep[]; freeTrialStats: FreeTrialAutomationStats }) {
+type FlowTab = 'onboarding' | 'free_trial' | 'agency_leads'
+
+export default function OwnerAutomationsManager({ steps: initialSteps, freeTrialStats, agencyLeadsStats }: { steps: OwnerStep[]; freeTrialStats: FreeTrialAutomationStats; agencyLeadsStats: AgencyLeadsStats }) {
   const [steps] = useState(initialSteps)
   const [config, setConfig] = useState<Config>({
     welcome_email: null, welcome_sms: null, no_leads_email: null, no_leads_sms: null,
     ft_confirmation_email: null, ft_confirmation_sms: null, ft_reminder_email: null, ft_reminder_sms: null, ft_cancelled_email: null,
+    agency_leads_email: null, agency_leads_sms: null,
   })
   const [configLoaded, setConfigLoaded] = useState(false)
+  const [flowTab, setFlowTab] = useState<FlowTab>('onboarding')
 
   const [search, setSearch] = useState('')
   const [stepFilter, setStepFilter] = useState('all')
@@ -490,12 +505,19 @@ export default function OwnerAutomationsManager({ steps: initialSteps, freeTrial
                   </option>
                 ))}
               </optgroup>
+              <optgroup label="Agency Leads">
+                {AGENCY_STEPS_INFO.map(({ step, label, channel }) => (
+                  <option key={step} value={step}>
+                    {label} · {channel === 'both' ? 'Email + SMS' : channel === 'email' ? 'Email' : 'SMS'}
+                  </option>
+                ))}
+              </optgroup>
             </select>
           </div>
 
           {/* Channel badge */}
           {testStep !== 'all' && (() => {
-            const info = SEQUENCE_STEPS.find((s) => s.step === testStep) ?? FT_STEPS_INFO.find((s) => s.step === testStep)
+            const info = SEQUENCE_STEPS.find((s) => s.step === testStep) ?? FT_STEPS_INFO.find((s) => s.step === testStep) ?? AGENCY_STEPS_INFO.find((s) => s.step === testStep)
             const badge = info ? CHANNEL_BADGE[info.channel] : null
             return badge ? (
               <div style={{ marginBottom: 10 }}>
@@ -546,7 +568,7 @@ export default function OwnerAutomationsManager({ steps: initialSteps, freeTrial
           {testResults && (
             <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 180, overflowY: 'auto' }}>
               {testResults.map((r, i) => {
-                const info = SEQUENCE_STEPS.find((s) => s.step === r.step) ?? FT_STEPS_INFO.find((s) => s.step === r.step)
+                const info = SEQUENCE_STEPS.find((s) => s.step === r.step) ?? FT_STEPS_INFO.find((s) => s.step === r.step) ?? AGENCY_STEPS_INFO.find((s) => s.step === r.step)
                 const label = info?.label ?? STEP_LABELS[r.step] ?? r.step
                 return (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: '0.78rem' }}>
@@ -568,7 +590,7 @@ export default function OwnerAutomationsManager({ steps: initialSteps, freeTrial
           <div style={{ padding: '14px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#374151' }}>
-                Preview — {SEQUENCE_STEPS.find((s) => s.step === testStep)?.label ?? FT_STEPS_INFO.find((s) => s.step === testStep)?.label ?? testStep}
+                Preview — {SEQUENCE_STEPS.find((s) => s.step === testStep)?.label ?? FT_STEPS_INFO.find((s) => s.step === testStep)?.label ?? AGENCY_STEPS_INFO.find((s) => s.step === testStep)?.label ?? testStep}
               </span>
               {preview?.subject && previewTab === 'email' && (
                 <span style={{ fontSize: '0.78rem', color: '#64748b' }}>· {preview.subject}</span>
@@ -643,7 +665,31 @@ export default function OwnerAutomationsManager({ steps: initialSteps, freeTrial
         ))}
       </div>
 
+      {/* View switcher — which automation to look at */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 24 }}>
+        {([
+          ['onboarding', 'Owner Onboarding'],
+          ['free_trial', 'Free Trial Booking'],
+          ['agency_leads', 'Agency Leads'],
+        ] as const).map(([tab, label]) => (
+          <button
+            key={tab}
+            onClick={() => setFlowTab(tab)}
+            style={{
+              padding: '8px 18px', fontSize: '0.82rem', fontWeight: 700, borderRadius: 8,
+              border: 'none', cursor: 'pointer',
+              background: flowTab === tab ? '#0e0020' : '#f1f5f9',
+              color: flowTab === tab ? '#ffe500' : '#64748b',
+              fontFamily: 'inherit',
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       {/* Flow nodes */}
+      {flowTab === 'onboarding' && (
       <div style={{ marginBottom: 36 }}>
         <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
           Automation flow · click a node to edit
@@ -695,8 +741,10 @@ export default function OwnerAutomationsManager({ steps: initialSteps, freeTrial
           onSave={(email, sms) => saveConfig({ no_leads_email: email, no_leads_sms: sms })}
         />
       </div>
+      )}
 
       {/* Free Trial Booking flow */}
+      {flowTab === 'free_trial' && (
       <div style={{ marginBottom: 36 }}>
         <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
           Free trial booking flow · click a node to edit
@@ -771,8 +819,56 @@ export default function OwnerAutomationsManager({ steps: initialSteps, freeTrial
           onSave={(email) => saveConfig({ ft_cancelled_email: email })}
         />
       </div>
+      )}
+
+      {/* Agency Leads flow */}
+      {flowTab === 'agency_leads' && (
+      <div style={{ marginBottom: 36 }}>
+        <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+          Agency leads flow · click a node to edit
+        </p>
+        <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '0 0 16px' }}>
+          Fires once per contact for a new Meta ad lead or a /demo booking. If the same person comes in through
+          both (matched by email or phone, same as Super Lead matching), only the first one sends — no duplicate outreach.
+          Left blank until you provide copy; nothing sends until then.
+        </p>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, paddingLeft: 4 }}>
+          <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#0866ff', flexShrink: 0 }} />
+          <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0866ff' }}>New Meta ad lead or /demo booking</span>
+        </div>
+        <div style={{ width: 2, height: 16, background: '#e2e8f0', marginLeft: 8, marginBottom: 8 }} />
+
+        <StepNode
+          label="Agency Leads Outreach"
+          timing="Fires immediately, once per contact across Meta + /demo"
+          accentColor="#0866ff"
+          emailValue={config.agency_leads_email}
+          emailDefaults={AGENCY_LEADS_EMAIL_DEFAULTS}
+          smsValue={config.agency_leads_sms}
+          smsDefault={AGENCY_LEADS_SMS_DEFAULT}
+          sentCount={agencyLeadsStats.sent}
+          pendingCount={0}
+          placeholderHint="{{name}}"
+          onSave={(email, sms) => saveConfig({ agency_leads_email: email, agency_leads_sms: sms })}
+        />
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginTop: 16 }}>
+          <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px 16px' }}>
+            <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0e0020' }}>{agencyLeadsStats.fromMeta}</div>
+            <div style={{ fontSize: '0.72rem', color: '#64748b' }}>From Meta ads</div>
+          </div>
+          <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px 16px' }}>
+            <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0e0020' }}>{agencyLeadsStats.fromDemo}</div>
+            <div style={{ fontSize: '0.72rem', color: '#64748b' }}>From /demo bookings</div>
+          </div>
+        </div>
+      </div>
+      )}
 
       {/* Activity table */}
+      {flowTab === 'onboarding' && (
+      <>
       <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
         Activity log
       </p>
@@ -841,6 +937,8 @@ export default function OwnerAutomationsManager({ steps: initialSteps, freeTrial
       <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: 8 }}>
         {filtered.length} of {steps.length} records · Booking link → /get-started
       </p>
+      </>
+      )}
     </div>
   )
 }

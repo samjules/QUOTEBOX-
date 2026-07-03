@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { alaskaWallTimeToUTC, isQualified, buildBookingConfirmationEmail, buildBookingConfirmationSms, buildOwnerNotificationSms } from '@/lib/free-trial'
 import { sendSms } from '@/lib/sms'
 import { createZoomMeeting } from '@/lib/zoom'
+import { triggerAgencyLeadsAutomation } from '@/lib/agency-leads'
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,6 +13,7 @@ export async function POST(req: NextRequest) {
       name, email, phone,
       hasJunkOrMovingCompany, canSpend50PerDay, willingIosApp,
       scheduled_date, scheduled_time,
+      funnel,
     } = body
 
     if (!name || !email || !phone) {
@@ -58,6 +60,7 @@ export async function POST(req: NextRequest) {
       scheduled_date,
       scheduled_time,
       scheduled_at: scheduledAt.toISOString(),
+      funnel: funnel === 'demo' ? 'demo' : 'free_trial',
     }).select().single()
 
     if (error) {
@@ -107,6 +110,14 @@ export async function POST(req: NextRequest) {
         await sendSms(ownerPhone, buildOwnerNotificationSms(name.trim(), phone.trim(), dateLabel, scheduled_time))
       } catch (err) {
         console.error('Owner booking notification SMS error:', err)
+      }
+    }
+
+    if (funnel === 'demo') {
+      try {
+        await triggerAgencyLeadsAutomation({ name: name.trim(), email: email.trim(), phone: phone.trim(), source: 'demo' })
+      } catch (err) {
+        console.error('Agency Leads trigger error (demo):', err)
       }
     }
 
