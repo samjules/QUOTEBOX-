@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { enrollLead } from '@/lib/enroll-lead'
 import { processDueSteps } from '@/lib/process-automations'
-import { triggerAgencyLeadsAutomation } from '@/lib/agency-leads'
+import { enrollAgencyLead } from '@/lib/agency-leads'
 
 const supabaseAdmin = () =>
   createClient(
@@ -255,7 +255,7 @@ async function handleAdminMetaLead(
     }
     if (!error) {
       try {
-        await triggerAgencyLeadsAutomation({ name, email, phone, source: 'meta' })
+        await enrollAgencyLead({ name, email, phone, source: 'meta' })
       } catch (err) {
         console.error('Agency Leads trigger error (meta webhook):', err)
       }

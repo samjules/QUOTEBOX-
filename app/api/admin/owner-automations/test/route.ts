@@ -15,7 +15,7 @@ import {
   buildReminderSms,
   buildCancelledEmail,
 } from '@/lib/free-trial'
-import { buildAgencyLeadsEmail, buildAgencyLeadsSms } from '@/lib/agency-leads'
+import { buildAgencyEmailForStep, buildAgencySmsForStep } from '@/lib/agency-leads'
 import { Resend } from 'resend'
 import { sendSms } from '@/lib/sms'
 
@@ -86,32 +86,26 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ results })
   }
 
-  if (stepFilter === 'agency_leads') {
-    const emailCopy = cfg?.agency_leads_email as { subject?: string; heading?: string; body?: string; outro?: string } | null
-    const smsCopy = cfg?.agency_leads_sms as string | null
-    const hasEmail = !!(emailCopy?.subject && emailCopy?.body)
+  if (stepFilter.startsWith('agency_')) {
+    const result = buildAgencyEmailForStep(stepFilter, testFirstName)
+    const sms = buildAgencySmsForStep(stepFilter, testFirstName)
 
-    if (!hasEmail && !smsCopy) {
-      return NextResponse.json({ results: [{ step: 'agency_leads', channel: 'email', ok: false, error: 'No copy configured yet — nothing to send' }] })
-    }
-
-    if (hasEmail && apiKey) {
+    if (result && apiKey) {
       try {
         const resend = new Resend(apiKey)
-        const result = buildAgencyLeadsEmail(testFirstName, emailCopy!)
         const { error } = await resend.emails.send({ from, to: testEmail, subject: `[TEST] ${result.subject}`, html: result.html })
-        results.push({ step: 'agency_leads', channel: 'email', ok: !error, error: error?.message })
+        results.push({ step: stepFilter, channel: 'email', ok: !error, error: error?.message })
       } catch (err) {
-        results.push({ step: 'agency_leads', channel: 'email', ok: false, error: err instanceof Error ? err.message : String(err) })
+        results.push({ step: stepFilter, channel: 'email', ok: false, error: err instanceof Error ? err.message : String(err) })
       }
     }
 
-    if (smsCopy && testPhone) {
+    if (sms && testPhone) {
       try {
-        const ok = await sendSms(testPhone, `[TEST] ${buildAgencyLeadsSms(testFirstName, smsCopy)}`)
-        results.push({ step: 'agency_leads', channel: 'sms', ok })
+        const ok = await sendSms(testPhone, `[TEST] ${sms}`)
+        results.push({ step: stepFilter, channel: 'sms', ok })
       } catch (err) {
-        results.push({ step: 'agency_leads', channel: 'sms', ok: false, error: err instanceof Error ? err.message : String(err) })
+        results.push({ step: stepFilter, channel: 'sms', ok: false, error: err instanceof Error ? err.message : String(err) })
       }
     }
 

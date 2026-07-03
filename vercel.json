@@ -15,6 +15,10 @@
     {
       "path": "/api/cron/free-trial-reminders",
       "schedule": "0 11 * * *"
+    },
+    {
+      "path": "/api/cron/agency-leads-nurture",
+      "schedule": "0 12 * * *"
     }
   ]
 }

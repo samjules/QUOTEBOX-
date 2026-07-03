@@ -22,8 +22,6 @@ interface Config {
   ft_reminder_email: EmailCopy | null
   ft_reminder_sms: string | null
   ft_cancelled_email: EmailCopy | null
-  agency_leads_email: EmailCopy | null
-  agency_leads_sms: string | null
 }
 
 // ── defaults (mirrors lib/owner-automations.ts) ───────────────────────────
@@ -73,17 +71,30 @@ const FT_REMINDER_SMS_DEFAULT = `Hey {{name}} — reminder: your free QuoteBox s
 
 // ── Agency Leads (Meta ads + /demo bookings) — intentionally blank until a script is provided ──
 
-const AGENCY_LEADS_EMAIL_DEFAULTS: EmailCopy = { subject: '', heading: '', body: '', outro: '' }
-const AGENCY_LEADS_SMS_DEFAULT = ''
-
 const FT_STEPS_INFO: { step: string; label: string; channel: 'email' | 'sms' | 'both' }[] = [
   { step: 'ft_confirmation', label: 'Free Trial: Booking Confirmation', channel: 'both' },
   { step: 'ft_reminder', label: 'Free Trial: 24h Reminder', channel: 'both' },
   { step: 'ft_cancelled', label: 'Free Trial: Auto-Cancelled', channel: 'email' },
 ]
 
+// Mirrors AGENCY_LEAD_STEPS in lib/agency-leads.ts — the 30-day/16-touch nurture sequence
 const AGENCY_STEPS_INFO: { step: string; label: string; channel: 'email' | 'sms' | 'both' }[] = [
-  { step: 'agency_leads', label: 'Agency Leads: New Meta / Demo Lead', channel: 'both' },
+  { step: 'agency_day0_email', label: 'Agency Leads: Day 0 · Instant Email', channel: 'email' },
+  { step: 'agency_day0_sms', label: 'Agency Leads: Day 0 · +10min SMS', channel: 'sms' },
+  { step: 'agency_day1_sms', label: 'Agency Leads: Day 1 · SMS', channel: 'sms' },
+  { step: 'agency_day2_email', label: 'Agency Leads: Day 2 · Founder Note', channel: 'email' },
+  { step: 'agency_day4_email', label: 'Agency Leads: Day 4 · Customer Story', channel: 'email' },
+  { step: 'agency_day5_sms', label: 'Agency Leads: Day 5 · SMS', channel: 'sms' },
+  { step: 'agency_day7_email', label: 'Agency Leads: Day 7 · Feature Spotlight', channel: 'email' },
+  { step: 'agency_day9_sms', label: 'Agency Leads: Day 9 · Social Proof', channel: 'sms' },
+  { step: 'agency_day11_email', label: 'Agency Leads: Day 11 · ROI Framing', channel: 'email' },
+  { step: 'agency_day13_sms', label: 'Agency Leads: Day 13 · SMS', channel: 'sms' },
+  { step: 'agency_day16_email', label: 'Agency Leads: Day 16 · Objection Handling', channel: 'email' },
+  { step: 'agency_day19_email', label: 'Agency Leads: Day 19 · Testimonial', channel: 'email' },
+  { step: 'agency_day22_sms', label: 'Agency Leads: Day 22 · Low-Pressure Check-in', channel: 'sms' },
+  { step: 'agency_day25_email', label: 'Agency Leads: Day 25 · Urgency', channel: 'email' },
+  { step: 'agency_day28_sms', label: 'Agency Leads: Day 28 · Last Nudge', channel: 'sms' },
+  { step: 'agency_day30_email', label: 'Agency Leads: Day 30 · Breakup', channel: 'email' },
 ]
 
 // ── helpers ───────────────────────────────────────────────────────────────
@@ -370,7 +381,6 @@ export default function OwnerAutomationsManager({ steps: initialSteps, freeTrial
   const [config, setConfig] = useState<Config>({
     welcome_email: null, welcome_sms: null, no_leads_email: null, no_leads_sms: null,
     ft_confirmation_email: null, ft_confirmation_sms: null, ft_reminder_email: null, ft_reminder_sms: null, ft_cancelled_email: null,
-    agency_leads_email: null, agency_leads_sms: null,
   })
   const [configLoaded, setConfigLoaded] = useState(false)
   const [flowTab, setFlowTab] = useState<FlowTab>('onboarding')
@@ -388,6 +398,21 @@ export default function OwnerAutomationsManager({ steps: initialSteps, freeTrial
   const [preview, setPreview] = useState<PreviewData | null>(null)
   const [previewLoading, setPreviewLoading] = useState(false)
   const [previewTab, setPreviewTab] = useState<'email' | 'sms'>('email')
+
+  const [backfilling, setBackfilling] = useState(false)
+  const [backfillResult, setBackfillResult] = useState<{ enrolled: number; skipped: number } | null>(null)
+
+  async function runAgencyBackfill() {
+    setBackfilling(true)
+    setBackfillResult(null)
+    try {
+      const res = await fetch('/api/admin/settings/agency-leads-backfill', { method: 'POST' })
+      const d = await res.json()
+      if (res.ok) setBackfillResult(d)
+    } finally {
+      setBackfilling(false)
+    }
+  }
 
   useEffect(() => {
     fetch('/api/admin/owner-automations/config')
@@ -825,35 +850,19 @@ export default function OwnerAutomationsManager({ steps: initialSteps, freeTrial
       {flowTab === 'agency_leads' && (
       <div style={{ marginBottom: 36 }}>
         <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
-          Agency leads flow · click a node to edit
+          30-day nurture sequence · 16 touches
         </p>
         <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '0 0 16px' }}>
-          Fires once per contact for a new Meta ad lead or a /demo booking. If the same person comes in through
-          both (matched by email or phone, same as Super Lead matching), only the first one sends — no duplicate outreach.
-          Left blank until you provide copy; nothing sends until then.
+          Enrolls once per contact on a new Meta ad lead or a /demo booking. If the same person comes in through
+          both (matched by email or phone, Super-Lead style), only the first one enrolls — no duplicate sequence.
+          Every link points to the /demo booking page. Use the Send Test panel above to preview or test-send any step.
         </p>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, paddingLeft: 4 }}>
-          <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#0866ff', flexShrink: 0 }} />
-          <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0866ff' }}>New Meta ad lead or /demo booking</span>
-        </div>
-        <div style={{ width: 2, height: 16, background: '#e2e8f0', marginLeft: 8, marginBottom: 8 }} />
-
-        <StepNode
-          label="Agency Leads Outreach"
-          timing="Fires immediately, once per contact across Meta + /demo"
-          accentColor="#0866ff"
-          emailValue={config.agency_leads_email}
-          emailDefaults={AGENCY_LEADS_EMAIL_DEFAULTS}
-          smsValue={config.agency_leads_sms}
-          smsDefault={AGENCY_LEADS_SMS_DEFAULT}
-          sentCount={agencyLeadsStats.sent}
-          pendingCount={0}
-          placeholderHint="{{name}}"
-          onSave={(email, sms) => saveConfig({ agency_leads_email: email, agency_leads_sms: sms })}
-        />
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginTop: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 20 }}>
+          <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px 16px' }}>
+            <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0e0020' }}>{agencyLeadsStats.sent}</div>
+            <div style={{ fontSize: '0.72rem', color: '#64748b' }}>Total enrolled</div>
+          </div>
           <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px 16px' }}>
             <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0e0020' }}>{agencyLeadsStats.fromMeta}</div>
             <div style={{ fontSize: '0.72rem', color: '#64748b' }}>From Meta ads</div>
@@ -862,6 +871,47 @@ export default function OwnerAutomationsManager({ steps: initialSteps, freeTrial
             <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0e0020' }}>{agencyLeadsStats.fromDemo}</div>
             <div style={{ fontSize: '0.72rem', color: '#64748b' }}>From /demo bookings</div>
           </div>
+        </div>
+
+        <button
+          onClick={runAgencyBackfill}
+          disabled={backfilling}
+          style={{
+            marginBottom: 20, padding: '9px 18px', borderRadius: 8, border: 'none',
+            background: '#0866ff', color: '#fff', fontSize: '0.84rem', fontWeight: 700,
+            cursor: backfilling ? 'not-allowed' : 'pointer', opacity: backfilling ? 0.6 : 1, fontFamily: 'inherit',
+          }}
+        >
+          {backfilling ? 'Enrolling…' : 'Enroll existing Meta + /demo leads (start today)'}
+        </button>
+        {backfillResult && (
+          <span style={{ marginLeft: 12, fontSize: '0.8rem', color: '#15803d' }}>
+            Enrolled {backfillResult.enrolled}, already enrolled {backfillResult.skipped}
+          </span>
+        )}
+
+        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, overflow: 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
+            <thead>
+              <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                {['Step', 'Channel'].map((h) => (
+                  <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#374151' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {AGENCY_STEPS_INFO.map((s) => (
+                <tr key={s.step} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '10px 14px', color: '#0e0020', fontWeight: 500 }}>{s.label.replace('Agency Leads: ', '')}</td>
+                  <td style={{ padding: '10px 14px' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 600, padding: '2px 8px', borderRadius: 99, background: CHANNEL_BADGE[s.channel].bg, color: CHANNEL_BADGE[s.channel].color }}>
+                      {CHANNEL_BADGE[s.channel].label}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
       )}

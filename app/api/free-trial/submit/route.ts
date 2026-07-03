@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { alaskaWallTimeToUTC, isQualified, buildBookingConfirmationEmail, buildBookingConfirmationSms, buildOwnerNotificationSms } from '@/lib/free-trial'
 import { sendSms } from '@/lib/sms'
 import { createZoomMeeting } from '@/lib/zoom'
-import { triggerAgencyLeadsAutomation } from '@/lib/agency-leads'
+import { enrollAgencyLead } from '@/lib/agency-leads'
 
 export async function POST(req: NextRequest) {
   try {
@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
 
     if (funnel === 'demo') {
       try {
-        await triggerAgencyLeadsAutomation({ name: name.trim(), email: email.trim(), phone: phone.trim(), source: 'demo' })
+        await enrollAgencyLead({ name: name.trim(), email: email.trim(), phone: phone.trim(), source: 'demo' })
       } catch (err) {
         console.error('Agency Leads trigger error (demo):', err)
       }

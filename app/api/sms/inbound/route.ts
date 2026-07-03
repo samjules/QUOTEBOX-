@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { handleInboundConfirmation } from '@/lib/free-trial'
+import { handleAgencyLeadsOptOut } from '@/lib/agency-leads'
 
 function verifyTwilioSignature(url: string, params: Record<string, string>, signature: string, authToken: string): boolean {
   const sorted = Object.keys(params).sort()
@@ -31,6 +32,7 @@ export async function POST(req: NextRequest) {
   const bodyText = params.Body ?? ''
   if (from && bodyText) {
     await handleInboundConfirmation(from, bodyText)
+    await handleAgencyLeadsOptOut(from, bodyText)
   }
 
   return new NextResponse('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', {
