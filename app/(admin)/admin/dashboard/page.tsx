@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { alaskaWallTimeToUTC } from '@/lib/free-trial'
 import DashboardCalendar, { type CalendarAppointment } from './DashboardCalendar'
+import NewAppointmentModal from './NewAppointmentModal'
 
 export const dynamic = 'force-dynamic'
 
@@ -116,7 +117,10 @@ export default async function AdminDashboardOverviewPage() {
       </div>
 
       <div style={{ marginBottom: 28 }}>
-        <p style={SECTION_TITLE}>Booking calendar</p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <p style={{ ...SECTION_TITLE, marginBottom: 0 }}>Booking calendar</p>
+          <NewAppointmentModal />
+        </div>
         <DashboardCalendar appointments={calendarAppointments} />
       </div>
 
