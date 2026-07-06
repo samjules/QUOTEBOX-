@@ -1,3 +1,4 @@
+import { Resend } from 'resend'
 import { sendSms } from '@/lib/sms'
 
 interface SendOnboardingInviteArgs {
@@ -11,19 +12,14 @@ export async function sendOnboardingInviteNotifications({ leadName, leadEmail, l
   let emailSent = false
   let smsSent = false
 
-  const gmailUser = process.env.GMAIL_USER
-  const gmailPass = process.env.GMAIL_APP_PASSWORD
+  const apiKey = process.env.RESEND_API_KEY
+  const from = process.env.RESEND_FROM_EMAIL || 'Sam at QuoteBox <sam@quote-box.com>'
 
-  if (gmailUser && gmailPass) {
+  if (apiKey) {
     try {
-      const nodemailer = (await import('nodemailer')).default
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user: gmailUser, pass: gmailPass },
-      })
-
-      await transporter.sendMail({
-        from: `"QuoteBox" <${gmailUser}>`,
+      const resend = new Resend(apiKey)
+      await resend.emails.send({
+        from,
         to: leadEmail,
         subject: "You're invited to Quotebox — Pay Per Lead",
         html: `
