@@ -66,6 +66,7 @@ export default function AdminDashboard({ accounts, pendingInvites }: { accounts:
   const [markingBuilt, setMarkingBuilt] = useState(false)
   const [resettingOnboarding, setResettingOnboarding] = useState(false)
   const [blessSaving, setBlessSaving] = useState(false)
+  const [downloadingData, setDownloadingData] = useState(false)
   const [localPendingInvites, setLocalPendingInvites] = useState<PendingInvite[]>(pendingInvites)
   const [inviteOpen, setInviteOpen] = useState(false)
   const [inviteName, setInviteName] = useState('')
@@ -157,6 +158,32 @@ export default function AdminDashboard({ accounts, pendingInvites }: { accounts:
       prev.map((a) => a.id === selectedId ? { ...a, blessed: data.blessed } : a)
     )
     showToast(newVal ? 'Account blessed' : 'Blessing removed')
+  }
+
+  async function handleDownloadData() {
+    if (!selected) return
+    setDownloadingData(true)
+    try {
+      const res = await fetch(`/api/admin/accounts/${selected.id}/export`)
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        showToast(data.error ?? 'Failed to export account data', false)
+        return
+      }
+      const blob = await res.blob()
+      const filename = res.headers.get('Content-Disposition')?.match(/filename="([^"]+)"/)?.[1] ?? 'account-export.zip'
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+      showToast('Export downloaded')
+    } finally {
+      setDownloadingData(false)
+    }
   }
 
   async function handleImpersonate(redirectPath?: string, sameTab = false) {
@@ -534,6 +561,18 @@ export default function AdminDashboard({ accounts, pendingInvites }: { accounts:
                     }}
                   >
                     {impersonating ? 'Generating…' : '↗ Enter as User'}
+                  </button>
+                  <button
+                    onClick={handleDownloadData}
+                    disabled={downloadingData}
+                    style={{
+                      padding: '7px 16px', fontSize: '0.82rem', fontWeight: 600,
+                      borderRadius: 8, border: '1px solid #e2e8f0', cursor: 'pointer',
+                      background: 'white', color: '#475569',
+                      opacity: downloadingData ? 0.6 : 1,
+                    }}
+                  >
+                    {downloadingData ? 'Zipping…' : '⬇ Download Data'}
                   </button>
                   {selected.onboarding_status !== 'none' && (
                     <>
