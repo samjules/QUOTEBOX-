@@ -4,10 +4,14 @@
 export const DEMO_BUSINESS_NAME = 'Summit Pressure Washing'
 
 export const DEMO_STATS = {
-  leadsThisMonth: 47,
-  revenueThisMonth: 8420,
-  conversionRate: 34,
-  creditBalance: 182.5,
+  totalLeads: 128,
+  newLeads: 14,
+  bookedLeads: 47,
+  contactedLeads: 22,
+  lostLeads: 9,
+  conversionRate: 36.7,
+  pipelineValue: 28450,
+  periodLabel: 'This Month',
 }
 
 export const DEMO_LEADS = [
@@ -19,15 +23,85 @@ export const DEMO_LEADS = [
   { id: '6', name: 'Marcus Webb', email: 'mwebb@gmail.com', phone: '(555) 998-4471', status: 'new', service: 'Fence + Deck Combo', quote: 720, created_at: '2026-07-05T07:52:00Z' },
 ] as const
 
-export const DEMO_FORMS = [
-  { id: 'f1', form_name: 'Instant Pressure Wash Quote', slug: 'summit-instant-quote', leads: 31, steps: 4, is_active: true, created_at: '2026-05-12T00:00:00Z', instant: true },
-  { id: 'f2', form_name: 'Roof Cleaning Estimate', slug: 'summit-roof-clean', leads: 9, steps: 3, is_active: true, created_at: '2026-05-28T00:00:00Z', instant: false },
-  { id: 'f3', form_name: 'Commercial Property Inquiry', slug: 'summit-commercial', leads: 7, steps: 5, is_active: false, created_at: '2026-06-10T00:00:00Z', instant: false },
-] as const
-
 export const STATUS_COLORS: Record<string, string> = {
-  new: '#2563eb',
+  new: '#5b5bd6',
   contacted: '#d97706',
   booked: '#16a34a',
-  lost: '#dc2626',
+  lost: '#9ca3af',
 }
+
+interface DemoFormField { id: string; type: string; label: string }
+interface DemoForm {
+  id: string
+  form_name: string
+  is_active: boolean
+  created_at: string
+  leads: number
+  instant: boolean
+  form_config: {
+    slug: string
+    brand_color: 'yellow' | 'blue'
+    currency: string
+    fields: DemoFormField[]
+  }
+}
+
+export const DEMO_FORMS: DemoForm[] = [
+  {
+    id: 'f1',
+    form_name: 'Instant Pressure Wash Quote',
+    is_active: true,
+    created_at: '2026-05-12T00:00:00Z',
+    leads: 31,
+    instant: true,
+    form_config: {
+      slug: 'summit-instant-quote',
+      brand_color: 'yellow',
+      currency: '$',
+      fields: [
+        { id: '1', type: 'radio', label: 'Service' },
+        { id: '2', type: 'number', label: 'Sqft' },
+        { id: '3', type: 'checkbox', label: 'Add-ons' },
+        { id: '4', type: 'textarea', label: 'Notes' },
+      ],
+    },
+  },
+  {
+    id: 'f2',
+    form_name: 'Roof Cleaning Estimate',
+    is_active: true,
+    created_at: '2026-05-28T00:00:00Z',
+    leads: 9,
+    instant: false,
+    form_config: {
+      slug: 'summit-roof-clean',
+      brand_color: 'blue',
+      currency: '$',
+      fields: [
+        { id: '1', type: 'dropdown', label: 'Roof Type' },
+        { id: '2', type: 'number', label: 'Sqft' },
+        { id: '3', type: 'image', label: 'Photos' },
+      ],
+    },
+  },
+  {
+    id: 'f3',
+    form_name: 'Commercial Property Inquiry',
+    is_active: false,
+    created_at: '2026-06-10T00:00:00Z',
+    leads: 7,
+    instant: false,
+    form_config: {
+      slug: 'summit-commercial',
+      brand_color: 'yellow',
+      currency: '$',
+      fields: [
+        { id: '1', type: 'radio', label: 'Property Type' },
+        { id: '2', type: 'route', label: 'Address' },
+        { id: '3', type: 'draw_area', label: 'Lot Size' },
+        { id: '4', type: 'number', label: 'Quantity' },
+        { id: '5', type: 'textarea', label: 'Details' },
+      ],
+    },
+  },
+]
