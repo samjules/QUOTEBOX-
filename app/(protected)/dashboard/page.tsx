@@ -1112,7 +1112,7 @@ function LeadUsageBanner({
 }) {
   if (plan === 'fully_managed' || plan === 'pay_per_lead') {
     const accrued = monthlyLeads * 15
-    const label = plan === 'pay_per_lead' ? 'Pay Per Lead' : 'Fully Managed'
+    const label = plan === 'pay_per_lead' ? 'Retainer' : 'Fully Managed'
     return (
       <div className="rounded-lg p-5 flex items-center justify-between bg-gray-900 text-white">
         <div className="flex items-center gap-3">

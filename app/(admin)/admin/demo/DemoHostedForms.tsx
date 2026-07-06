@@ -37,7 +37,7 @@ export default function DemoHostedForms() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 500 }}>{DEMO_FORMS.length} / ∞</span>
               <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', background: '#ede9fe', color: '#6d28d9', borderRadius: 6, padding: '2px 8px' }}>
-                Pay Per Lead
+                Retainer
               </span>
             </div>
           </div>

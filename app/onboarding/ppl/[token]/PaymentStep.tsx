@@ -73,7 +73,7 @@ export default function PaymentStep({ token, businessName, initialSessionId }: P
           Step 2 of 3
         </div>
         <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0e0020', margin: '0 0 6px' }}>
-          Activate Pay Per Lead
+          Activate Your Account
         </h2>
         <p style={{ fontSize: '0.88rem', color: '#64748b', margin: '0 0 24px' }}>
           {businessName ? `${businessName} — ` : ''}subscribe to unlock your quote form and start receiving leads.
@@ -84,7 +84,7 @@ export default function PaymentStep({ token, businessName, initialSessionId }: P
             <span style={{ fontSize: '2rem', fontWeight: 800, color: '#0e0020' }}>$750</span>
             <span style={{ fontSize: '0.9rem', color: '#94a3b8', fontWeight: 600 }}>/ month</span>
           </div>
-          <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: 6 }}>Pay Per Lead plan · billed monthly · cancel anytime</div>
+          <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: 6 }}>Monthly retainer · cancel anytime</div>
         </div>
 
         {error && (

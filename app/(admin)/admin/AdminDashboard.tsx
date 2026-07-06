@@ -8,7 +8,7 @@ const PLAN_LABELS: Record<string, string> = {
   starter: 'Starter',
   growth: 'Growth',
   fully_managed: 'Fully Managed',
-  pay_per_lead: 'Pay Per Lead',
+  pay_per_lead: 'Retainer',
 }
 
 const PLAN_COLORS: Record<string, { bg: string; text: string }> = {
@@ -385,7 +385,7 @@ export default function AdminDashboard({ accounts, pendingInvites }: { accounts:
           onClick={() => setInviteOpen(true)}
           style={{ fontSize: '0.82rem', color: '#16a34a', background: 'transparent', textDecoration: 'none', padding: '6px 14px', border: '1px solid rgba(22,163,74,0.4)', borderRadius: 6, fontWeight: 600, cursor: 'pointer' }}
         >
-          + PPL Invite
+          + Send Invite
         </button>
         <a href="/admin/leads" style={{ fontSize: '0.82rem', color: '#FFE500', textDecoration: 'none', padding: '6px 14px', border: '1px solid rgba(255,229,0,0.3)', borderRadius: 6, fontWeight: 600 }}>
           CRM
@@ -455,7 +455,7 @@ export default function AdminDashboard({ accounts, pendingInvites }: { accounts:
 
           {/* Plan filter chips */}
           <div style={{ display: 'flex', gap: 4, padding: '8px 12px', borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap' }}>
-            {([['all', 'All'], ['starter', 'Starter'], ['growth', 'Growth'], ['fully_managed', 'FM'], ['pay_per_lead', 'PPL'], ['none', 'No plan']] as const).map(([val, label]) => (
+            {([['all', 'All'], ['starter', 'Starter'], ['growth', 'Growth'], ['fully_managed', 'FM'], ['pay_per_lead', 'Retainer'], ['none', 'No plan']] as const).map(([val, label]) => (
               <button
                 key={val}
                 onClick={() => setPlanFilter(val)}
@@ -674,10 +674,7 @@ export default function AdminDashboard({ accounts, pendingInvites }: { accounts:
                         style={{ flex: 1, padding: '8px 12px', fontSize: '0.85rem', border: '1px solid #e2e8f0', borderRadius: 8, outline: 'none' }}
                       >
                         <option value="">No plan</option>
-                        <option value="starter">Starter — $20/mo</option>
-                        <option value="growth">Growth — $30/mo</option>
-                        <option value="fully_managed">Fully Managed — $15/lead</option>
-                        <option value="pay_per_lead">Pay Per Lead — no monthly limit</option>
+                        <option value="pay_per_lead">Retainer — $750/mo</option>
                       </select>
                       <button
                         onClick={handleSavePlan}
@@ -854,7 +851,7 @@ export default function AdminDashboard({ accounts, pendingInvites }: { accounts:
                 </div>
               )}
 
-              {/* PPL Onboarding Data */}
+              {/* Onboarding Data */}
               {selected.onboarding_status !== 'none' && (
                 <div style={{ background: 'white', borderRadius: 12, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
                   <div
@@ -863,7 +860,7 @@ export default function AdminDashboard({ accounts, pendingInvites }: { accounts:
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <h3 style={{ fontSize: '0.88rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
-                        PPL Onboarding
+                        Onboarding
                       </h3>
                       <span style={{
                         fontSize: '0.68rem', fontWeight: 700, padding: '2px 8px', borderRadius: 99,
@@ -949,7 +946,7 @@ export default function AdminDashboard({ accounts, pendingInvites }: { accounts:
       {inviteOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ background: 'white', borderRadius: 14, padding: 24, width: '100%', maxWidth: 380 }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#1e293b', margin: '0 0 4px' }}>Send PPL Onboarding Invite</h3>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#1e293b', margin: '0 0 4px' }}>Send Onboarding Invite</h3>
             <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '0 0 16px' }}>
               They&apos;ll get the link by email (and text, if you add a number), then create a password, subscribe at $750/mo, and fill out the business wizard.
             </p>
