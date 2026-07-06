@@ -53,9 +53,6 @@ export default function AdminDashboard({ accounts, pendingInvites }: { accounts:
   const [detailLoading, setDetailLoading] = useState(false)
 
   // Billing edit state
-  const [creditInput, setCreditInput] = useState('')
-  const [creditMode, setCreditMode] = useState<'add' | 'set'>('add')
-  const [creditSaving, setCreditSaving] = useState(false)
   const [planEdit, setPlanEdit] = useState<string>('')
   const [planSaving, setPlanSaving] = useState(false)
   const [impersonating, setImpersonating] = useState(false)
@@ -103,26 +100,6 @@ export default function AdminDashboard({ accounts, pendingInvites }: { accounts:
       return matchSearch && matchPlan
     })
   }, [localAccounts, search, planFilter])
-
-  async function handleSaveCredits() {
-    if (!selectedId || !creditInput.trim()) return
-    const amount = parseFloat(creditInput)
-    if (isNaN(amount)) return
-    setCreditSaving(true)
-    const res = await fetch(`/api/admin/accounts/${selectedId}/credits`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount, mode: creditMode }),
-    })
-    const data = await res.json()
-    setCreditSaving(false)
-    if (!res.ok) { showToast(data.error ?? 'Failed', false); return }
-    setLocalAccounts((prev) =>
-      prev.map((a) => a.id === selectedId ? { ...a, credit_balance: data.credit_balance } : a)
-    )
-    setCreditInput('')
-    showToast(`Credits updated — new balance $${data.credit_balance.toFixed(2)}`)
-  }
 
   async function handleSavePlan() {
     if (!selectedId) return
@@ -689,52 +666,6 @@ export default function AdminDashboard({ accounts, pendingInvites }: { accounts:
                     </div>
                   </div>
 
-                  {/* Credit adjustment */}
-                  <div style={{ flex: '1 1 260px' }}>
-                    <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#475569', display: 'block', marginBottom: 6 }}>
-                      Adjust Credits
-                      <span style={{ fontWeight: 400, color: '#94a3b8', marginLeft: 8 }}>current: ${selected.credit_balance.toFixed(2)}</span>
-                    </label>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <select
-                        value={creditMode}
-                        onChange={(e) => setCreditMode(e.target.value as 'add' | 'set')}
-                        style={{ padding: '8px 10px', fontSize: '0.82rem', border: '1px solid #e2e8f0', borderRadius: 8, outline: 'none' }}
-                      >
-                        <option value="add">Add</option>
-                        <option value="set">Set to</option>
-                      </select>
-                      <input
-                        type="number"
-                        placeholder="0.00"
-                        value={creditInput}
-                        onChange={(e) => setCreditInput(e.target.value)}
-                        style={{ flex: 1, padding: '8px 12px', fontSize: '0.85rem', border: '1px solid #e2e8f0', borderRadius: 8, outline: 'none' }}
-                      />
-                      <button
-                        onClick={handleSaveCredits}
-                        disabled={creditSaving || !creditInput.trim()}
-                        style={{
-                          padding: '8px 16px', fontSize: '0.82rem', fontWeight: 600, borderRadius: 8, border: 'none', cursor: 'pointer',
-                          background: '#16a34a', color: 'white', opacity: creditSaving || !creditInput.trim() ? 0.5 : 1,
-                        }}
-                      >
-                        {creditSaving ? '…' : 'Apply'}
-                      </button>
-                    </div>
-                    {/* Quick-add buttons */}
-                    <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-                      {[15, 50, 100, 250].map((n) => (
-                        <button
-                          key={n}
-                          onClick={() => { setCreditMode('add'); setCreditInput(String(n)) }}
-                          style={{ padding: '4px 10px', fontSize: '0.72rem', fontWeight: 600, borderRadius: 6, border: '1px solid #e2e8f0', background: 'white', cursor: 'pointer', color: '#475569' }}
-                        >
-                          +${n}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
                 </div>
 
                 {/* Bless toggle */}
