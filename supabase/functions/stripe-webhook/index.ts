@@ -15,9 +15,10 @@ const supabase = createClient(
 )
 
 // Maps the plan string from checkout session metadata → DB value
-const PLAN_MAP: Record<string, 'starter' | 'growth'> = {
+const PLAN_MAP: Record<string, 'starter' | 'growth' | 'pay_per_lead'> = {
   starter: 'starter',
   growth: 'growth',
+  ppl_onboarding: 'pay_per_lead',
 }
 
 serve(async (req) => {

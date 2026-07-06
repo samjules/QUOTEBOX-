@@ -15,19 +15,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { accountId } = await request.json() as { accountId: string }
-  if (!accountId) {
-    return NextResponse.json({ error: 'accountId required' }, { status: 400 })
+  const { leadName, leadEmail } = await request.json() as { leadName: string; leadEmail: string }
+  if (!leadName?.trim() || !leadEmail?.trim()) {
+    return NextResponse.json({ error: 'leadName and leadEmail are required' }, { status: 400 })
   }
 
+  const email = leadEmail.trim().toLowerCase()
   const admin = createAdminClient()
 
-  // Check for existing active session
+  // Check for an existing active invite for this email (don't spam duplicates)
   const { data: existing } = await admin
     .from('onboarding_sessions')
     .select('id, token, status')
-    .eq('account_id', accountId)
-    .in('status', ['pending', 'in_progress'])
+    .eq('lead_email', email)
+    .neq('status', 'form_built')
+    .order('created_at', { ascending: false })
     .limit(1)
     .single()
 
@@ -36,22 +38,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ url, token: existing.token, sessionId: existing.id, existing: true })
   }
 
-  // Fetch business name for pre-fill
-  const { data: account } = await admin
-    .from('accounts')
-    .select('business_name')
-    .eq('id', accountId)
-    .single()
-
   const token = crypto.randomBytes(24).toString('base64url')
 
   const { data: session, error } = await admin
     .from('onboarding_sessions')
     .insert({
-      account_id: accountId,
+      account_id: null,
+      lead_name: leadName.trim(),
+      lead_email: email,
       token,
       status: 'pending',
-      step_data: account?.business_name ? { 1: { businessName: account.business_name } } : {},
+      step_data: {},
       current_step: 1,
       created_by: user.id,
     })

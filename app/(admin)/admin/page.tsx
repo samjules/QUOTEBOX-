@@ -19,8 +19,16 @@ export interface AdminAccount {
   leads_total: number
   leads_this_month: number
   forms_count: number
-  onboarding_status: 'none' | 'pending' | 'in_progress' | 'completed' | 'form_built'
+  onboarding_status: 'none' | 'pending' | 'awaiting_payment' | 'in_progress' | 'completed' | 'form_built'
   onboarding_token: string | null
+}
+
+export interface PendingInvite {
+  id: string
+  lead_name: string
+  lead_email: string
+  token: string
+  created_at: string
 }
 
 export default async function AdminPage() {
@@ -32,7 +40,7 @@ export default async function AdminPage() {
     admin.from('leads').select('account_id, created_at'),
     admin.from('hosted_forms').select('account_id'),
     admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
-    admin.from('onboarding_sessions').select('account_id, status, token').order('created_at', { ascending: false }),
+    admin.from('onboarding_sessions').select('account_id, status, token, paid_at, lead_name, lead_email, id, created_at').order('created_at', { ascending: false }),
   ])
 
   const accounts = accountsResult.data ?? []
@@ -63,12 +71,18 @@ export default async function AdminPage() {
 
   // Use the most recent onboarding session per account
   const onboardingSessions = onboardingResult.data ?? []
-  const onboardingMap = new Map<string, { status: string; token: string }>()
+  const onboardingMap = new Map<string, { status: string; token: string; paid_at: string | null }>()
   for (const s of onboardingSessions) {
+    if (!s.account_id) continue
     if (!onboardingMap.has(s.account_id)) {
-      onboardingMap.set(s.account_id, { status: s.status, token: s.token })
+      onboardingMap.set(s.account_id, { status: s.status, token: s.token, paid_at: s.paid_at })
     }
   }
+
+  // Invites sent to a lead who hasn't created their account yet
+  const pendingInvites: PendingInvite[] = onboardingSessions
+    .filter((s) => !s.account_id)
+    .map((s) => ({ id: s.id, lead_name: s.lead_name ?? '', lead_email: s.lead_email ?? '', token: s.token, created_at: s.created_at }))
 
   const combined: AdminAccount[] = accounts.map((acc) => {
     const b = billingMap.get(acc.id)
@@ -90,10 +104,14 @@ export default async function AdminPage() {
       leads_total: l.total,
       leads_this_month: l.thisMonth,
       forms_count: formsPerAccount.get(acc.id) ?? 0,
-      onboarding_status: (ob?.status as AdminAccount['onboarding_status']) ?? 'none',
+      onboarding_status: !ob
+        ? 'none'
+        : ob.status === 'pending' && !ob.paid_at
+        ? 'awaiting_payment'
+        : (ob.status as AdminAccount['onboarding_status']),
       onboarding_token: ob?.token ?? null,
     }
   })
 
-  return <AdminDashboard accounts={combined} />
+  return <AdminDashboard accounts={combined} pendingInvites={pendingInvites} />
 }

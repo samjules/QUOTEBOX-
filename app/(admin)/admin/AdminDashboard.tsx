@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { AdminAccount } from './page'
+import type { AdminAccount, PendingInvite } from './page'
 
 const PLAN_LABELS: Record<string, string> = {
   starter: 'Starter',
@@ -23,6 +23,15 @@ function planStyle(plan: string | null) {
   return PLAN_COLORS[plan ?? 'none'] ?? PLAN_COLORS.none
 }
 
+const ONBOARDING_BADGES: Record<AdminAccount['onboarding_status'], { bg: string; color: string; label: string; shortLabel: string }> = {
+  none: { bg: '#f1f5f9', color: '#64748b', label: '', shortLabel: '' },
+  pending: { bg: '#fff7ed', color: '#ea580c', label: 'Onboarding Sent', shortLabel: 'Sent' },
+  awaiting_payment: { bg: '#fef3c7', color: '#b45309', label: 'Awaiting Payment', shortLabel: 'Awaiting Payment' },
+  in_progress: { bg: '#eff6ff', color: '#2563eb', label: 'Filling Out', shortLabel: 'In Progress' },
+  completed: { bg: '#f0fdf4', color: '#16a34a', label: 'Ready to Build', shortLabel: 'Ready to Build' },
+  form_built: { bg: '#f1f5f9', color: '#64748b', label: 'Form Built', shortLabel: 'Built' },
+}
+
 interface DetailData {
   leads: Array<{ id: string; name: string | null; email: string | null; phone: string | null; status: string; created_at: string }>
   forms: Array<{ id: string; form_name: string; is_active: boolean; created_at: string; form_config: { slug?: string } }>
@@ -36,7 +45,7 @@ const STATUS_COLORS: Record<string, string> = {
   held: '#6b7280',
 }
 
-export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] }) {
+export default function AdminDashboard({ accounts, pendingInvites }: { accounts: AdminAccount[]; pendingInvites: PendingInvite[] }) {
   const [search, setSearch] = useState('')
   const [planFilter, setPlanFilter] = useState<string>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -52,12 +61,17 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
   const [impersonating, setImpersonating] = useState(false)
   const [localAccounts, setLocalAccounts] = useState<AdminAccount[]>(accounts)
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
-  const [onboardingLoading, setOnboardingLoading] = useState(false)
   const [onboardingData, setOnboardingData] = useState<Record<string, unknown> | null>(null)
   const [onboardingOpen, setOnboardingOpen] = useState(false)
   const [markingBuilt, setMarkingBuilt] = useState(false)
   const [resettingOnboarding, setResettingOnboarding] = useState(false)
   const [blessSaving, setBlessSaving] = useState(false)
+  const [localPendingInvites, setLocalPendingInvites] = useState<PendingInvite[]>(pendingInvites)
+  const [inviteOpen, setInviteOpen] = useState(false)
+  const [inviteName, setInviteName] = useState('')
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteSaving, setInviteSaving] = useState(false)
+  const [revokingInviteId, setRevokingInviteId] = useState<string | null>(null)
 
   const selected = localAccounts.find((a) => a.id === selectedId) ?? null
 
@@ -173,24 +187,52 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
     }
   }
 
-  async function handleStartOnboarding() {
-    if (!selectedId) return
-    setOnboardingLoading(true)
+  async function handleSendInvite() {
+    if (!inviteName.trim() || !inviteEmail.trim()) return
+    setInviteSaving(true)
     try {
       const res = await fetch('/api/admin/onboarding/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accountId: selectedId }),
+        body: JSON.stringify({ leadName: inviteName, leadEmail: inviteEmail }),
       })
       const data = await res.json()
       if (!res.ok) { showToast(data.error ?? 'Failed', false); return }
       await navigator.clipboard.writeText(data.url)
-      setLocalAccounts((prev) =>
-        prev.map((a) => a.id === selectedId ? { ...a, onboarding_status: 'pending' as const, onboarding_token: data.token } : a)
-      )
-      showToast(data.existing ? 'Link copied (existing session)' : 'Onboarding link copied to clipboard!')
+      if (!data.existing) {
+        setLocalPendingInvites((prev) => [
+          { id: data.sessionId, lead_name: inviteName.trim(), lead_email: inviteEmail.trim().toLowerCase(), token: data.token, created_at: new Date().toISOString() },
+          ...prev,
+        ])
+      }
+      setInviteOpen(false)
+      setInviteName('')
+      setInviteEmail('')
+      showToast(data.existing ? 'Link copied (existing invite)' : 'Invite link copied to clipboard!')
     } finally {
-      setOnboardingLoading(false)
+      setInviteSaving(false)
+    }
+  }
+
+  async function handleCopyInviteLink(token: string) {
+    await navigator.clipboard.writeText(`${window.location.origin}/onboarding/ppl/${token}`)
+    showToast('Link copied!')
+  }
+
+  async function handleRevokeInvite(sessionId: string) {
+    if (!confirm('Revoke this invite? The link will stop working.')) return
+    setRevokingInviteId(sessionId)
+    try {
+      const res = await fetch(`/api/admin/onboarding/pending/${sessionId}`, { method: 'DELETE' })
+      if (res.ok) {
+        setLocalPendingInvites((prev) => prev.filter((i) => i.id !== sessionId))
+        showToast('Invite revoked')
+      } else {
+        const data = await res.json()
+        showToast(data.error ?? 'Failed to revoke', false)
+      }
+    } finally {
+      setRevokingInviteId(null)
     }
   }
 
@@ -284,8 +326,17 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
         <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)' }}>
           {localAccounts.length} accounts
         </span>
+        <button
+          onClick={() => setInviteOpen(true)}
+          style={{ fontSize: '0.82rem', color: '#16a34a', background: 'transparent', textDecoration: 'none', padding: '6px 14px', border: '1px solid rgba(22,163,74,0.4)', borderRadius: 6, fontWeight: 600, cursor: 'pointer' }}
+        >
+          + PPL Invite
+        </button>
         <a href="/admin/leads" style={{ fontSize: '0.82rem', color: '#FFE500', textDecoration: 'none', padding: '6px 14px', border: '1px solid rgba(255,229,0,0.3)', borderRadius: 6, fontWeight: 600 }}>
           CRM
+        </a>
+        <a href="/admin/demo" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.82rem', color: '#0e0020', textDecoration: 'none', padding: '6px 14px', background: '#FFE500', borderRadius: 6, fontWeight: 700 }}>
+          🎬 Sales Demo
         </a>
         <a href="/dashboard" style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', padding: '6px 14px', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6 }}>
           &larr; Dashboard
@@ -308,6 +359,36 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
               style={{ width: '100%', padding: '8px 12px', fontSize: '0.82rem', border: '1px solid #e2e8f0', borderRadius: 8, outline: 'none', boxSizing: 'border-box' }}
             />
           </div>
+
+          {/* Pending PPL invites — lead has a link but hasn't created an account yet */}
+          {localPendingInvites.length > 0 && (
+            <div style={{ borderBottom: '1px solid #e2e8f0', padding: '10px 14px' }}>
+              <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                Pending Invites ({localPendingInvites.length})
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {localPendingInvites.map((inv) => (
+                  <div key={inv.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, background: '#fff7ed', borderRadius: 8, padding: '6px 10px' }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{inv.lead_name}</div>
+                      <div style={{ fontSize: '0.7rem', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{inv.lead_email}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                      <button onClick={() => handleCopyInviteLink(inv.token)} title="Copy link" style={{ border: 'none', background: 'white', borderRadius: 6, padding: '4px 7px', cursor: 'pointer', fontSize: '0.78rem' }}>🔗</button>
+                      <button
+                        onClick={() => handleRevokeInvite(inv.id)}
+                        disabled={revokingInviteId === inv.id}
+                        title="Revoke"
+                        style={{ border: 'none', background: 'white', borderRadius: 6, padding: '4px 7px', cursor: 'pointer', fontSize: '0.78rem', opacity: revokingInviteId === inv.id ? 0.5 : 1 }}
+                      >
+                        🗑
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Plan filter chips */}
           <div style={{ display: 'flex', gap: 4, padding: '8px 12px', borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap' }}>
@@ -360,10 +441,10 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
                     <div style={{ marginBottom: 4 }}>
                       <span style={{
                         fontSize: '0.68rem', fontWeight: 700, padding: '2px 8px', borderRadius: 99,
-                        background: acc.onboarding_status === 'pending' ? '#fff7ed' : acc.onboarding_status === 'in_progress' ? '#eff6ff' : acc.onboarding_status === 'completed' ? '#f0fdf4' : '#f1f5f9',
-                        color: acc.onboarding_status === 'pending' ? '#ea580c' : acc.onboarding_status === 'in_progress' ? '#2563eb' : acc.onboarding_status === 'completed' ? '#16a34a' : '#64748b',
+                        background: ONBOARDING_BADGES[acc.onboarding_status].bg,
+                        color: ONBOARDING_BADGES[acc.onboarding_status].color,
                       }}>
-                        {acc.onboarding_status === 'pending' ? 'Onboarding Sent' : acc.onboarding_status === 'in_progress' ? 'Filling Out' : acc.onboarding_status === 'completed' ? 'Ready to Build' : 'Form Built'}
+                        {ONBOARDING_BADGES[acc.onboarding_status].label}
                       </span>
                     </div>
                   )}
@@ -418,20 +499,6 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
                   >
                     {impersonating ? 'Generating…' : '↗ Enter as User'}
                   </button>
-                  {selected.plan === 'pay_per_lead' && selected.onboarding_status === 'none' && (
-                    <button
-                      onClick={handleStartOnboarding}
-                      disabled={onboardingLoading}
-                      style={{
-                        padding: '7px 16px', fontSize: '0.82rem', fontWeight: 600,
-                        borderRadius: 8, border: 'none', cursor: 'pointer',
-                        background: '#16a34a', color: 'white',
-                        opacity: onboardingLoading ? 0.6 : 1,
-                      }}
-                    >
-                      {onboardingLoading ? 'Creating…' : 'Start Onboarding'}
-                    </button>
-                  )}
                   {selected.onboarding_status !== 'none' && (
                     <>
                       <button
@@ -725,10 +792,10 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
                       </h3>
                       <span style={{
                         fontSize: '0.68rem', fontWeight: 700, padding: '2px 8px', borderRadius: 99,
-                        background: selected.onboarding_status === 'pending' ? '#fff7ed' : selected.onboarding_status === 'in_progress' ? '#eff6ff' : selected.onboarding_status === 'completed' ? '#f0fdf4' : '#f1f5f9',
-                        color: selected.onboarding_status === 'pending' ? '#ea580c' : selected.onboarding_status === 'in_progress' ? '#2563eb' : selected.onboarding_status === 'completed' ? '#16a34a' : '#64748b',
+                        background: ONBOARDING_BADGES[selected.onboarding_status].bg,
+                        color: ONBOARDING_BADGES[selected.onboarding_status].color,
                       }}>
-                        {selected.onboarding_status === 'pending' ? 'Sent' : selected.onboarding_status === 'in_progress' ? 'In Progress' : selected.onboarding_status === 'completed' ? 'Ready to Build' : 'Built'}
+                        {ONBOARDING_BADGES[selected.onboarding_status].shortLabel}
                       </span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -802,6 +869,55 @@ export default function AdminDashboard({ accounts }: { accounts: AdminAccount[] 
           )}
         </div>
       </div>
+
+      {/* New PPL invite modal */}
+      {inviteOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: 'white', borderRadius: 14, padding: 24, width: '100%', maxWidth: 380 }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#1e293b', margin: '0 0 4px' }}>Send PPL Onboarding Invite</h3>
+            <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '0 0 16px' }}>
+              They&apos;ll create a password, subscribe at $750/mo, then fill out the business wizard.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Business / Contact Name</label>
+                <input
+                  type="text" value={inviteName} onChange={(e) => setInviteName(e.target.value)}
+                  placeholder="Smith Moving Co."
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '0.88rem', border: '1px solid #e2e8f0', borderRadius: 8, outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Email</label>
+                <input
+                  type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)}
+                  placeholder="owner@example.com"
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '0.88rem', border: '1px solid #e2e8f0', borderRadius: 8, outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
+              <button
+                onClick={() => setInviteOpen(false)}
+                style={{ flex: 1, padding: '9px 14px', fontSize: '0.85rem', fontWeight: 600, borderRadius: 8, border: '1px solid #e2e8f0', background: 'white', color: '#475569', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSendInvite}
+                disabled={inviteSaving || !inviteName.trim() || !inviteEmail.trim()}
+                style={{
+                  flex: 1, padding: '9px 14px', fontSize: '0.85rem', fontWeight: 700, borderRadius: 8, border: 'none',
+                  background: '#0e0020', color: '#FFE500', cursor: 'pointer',
+                  opacity: inviteSaving || !inviteName.trim() || !inviteEmail.trim() ? 0.5 : 1,
+                }}
+              >
+                {inviteSaving ? 'Creating…' : 'Create & Copy Link'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast */}
       {toast && (

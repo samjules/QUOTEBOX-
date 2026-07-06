@@ -20,6 +20,11 @@ const PLANS = {
     amount: 35000, // $350.00 in cents
     description: 'Unlimited quote forms, unlimited leads, full platform access',
   },
+  ppl_onboarding: {
+    name: 'Pay Per Lead — Onboarding',
+    amount: 75000, // $750.00 in cents
+    description: 'Pay Per Lead plan setup — monthly subscription',
+  },
 }
 
 serve(async (req) => {
@@ -28,7 +33,7 @@ serve(async (req) => {
   }
 
   try {
-    const { plan, accountId, userId, trialDays } = await req.json()
+    const { plan, accountId, userId, trialDays, successUrl, cancelUrl } = await req.json()
 
     if (!plan || !accountId || !userId) {
       throw new Error('Missing required parameters')
@@ -62,8 +67,8 @@ serve(async (req) => {
       ],
       mode: 'subscription',
       subscription_data: resolvedTrialDays ? { trial_period_days: resolvedTrialDays } : undefined,
-      success_url: `${origin}/billing?subscription=success&plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/billing?canceled=true`,
+      success_url: successUrl || `${origin}/billing?subscription=success&plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: cancelUrl || `${origin}/billing?canceled=true`,
       metadata: {
         accountId,
         userId,

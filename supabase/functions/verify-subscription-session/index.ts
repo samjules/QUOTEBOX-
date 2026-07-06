@@ -15,8 +15,9 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 )
 
-const PLAN_MAP: Record<string, 'pro'> = {
+const PLAN_MAP: Record<string, 'pro' | 'pay_per_lead'> = {
   pro: 'pro',
+  ppl_onboarding: 'pay_per_lead',
 }
 
 const corsHeaders = {

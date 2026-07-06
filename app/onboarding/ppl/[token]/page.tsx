@@ -1,5 +1,9 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 import PPLWizard from './PPLWizard'
+import CreateAccountStep from './CreateAccountStep'
+import LoginGate from './LoginGate'
+import PaymentStep from './PaymentStep'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -18,12 +22,18 @@ export const metadata: Metadata = {
   },
 }
 
-export default async function PPLOnboardingPage({ params }: { params: { token: string } }) {
+export default async function PPLOnboardingPage({
+  params,
+  searchParams,
+}: {
+  params: { token: string }
+  searchParams: { session_id?: string }
+}) {
   const admin = createAdminClient()
 
   const { data: session } = await admin
     .from('onboarding_sessions')
-    .select('id, account_id, status, step_data, current_step, created_at')
+    .select('id, account_id, status, step_data, current_step, created_at, lead_name, lead_email, paid_at')
     .eq('token', params.token)
     .single()
 
@@ -50,12 +60,45 @@ export default async function PPLOnboardingPage({ params }: { params: { token: s
     )
   }
 
+  // Step 1: no account yet — customer sets a password to create it
+  if (!session.account_id) {
+    return <CreateAccountStep token={params.token} businessName={session.lead_name ?? ''} email={session.lead_email ?? ''} />
+  }
+
   const { data: account } = await admin
     .from('accounts')
-    .select('business_name')
+    .select('business_name, owner_id')
     .eq('id', session.account_id)
     .single()
 
+  // Sessions created by the old admin flow (pre-dating lead-based invites) were
+  // tied to an account admin already provisioned, with no password/payment step
+  // and no login requirement. Grandfather them in unchanged so accounts already
+  // mid-wizard don't suddenly get locked out or asked to pay $750/mo.
+  const isLegacySession = !session.lead_email
+
+  if (!isLegacySession) {
+    // The account exists — make sure the browser is logged in as its owner
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user || user.id !== account?.owner_id) {
+      return <LoginGate email={session.lead_email ?? ''} />
+    }
+  }
+
+  // Step 2: account exists but the $750/mo subscription hasn't been confirmed yet
+  if (!isLegacySession && !session.paid_at) {
+    return (
+      <PaymentStep
+        token={params.token}
+        businessName={account?.business_name ?? ''}
+        initialSessionId={searchParams.session_id ?? null}
+      />
+    )
+  }
+
+  // Step 3+: the existing business-details wizard
   return (
     <PPLWizard
       token={params.token}
