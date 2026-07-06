@@ -27,6 +27,7 @@ export interface PendingInvite {
   id: string
   lead_name: string
   lead_email: string
+  lead_phone: string | null
   token: string
   created_at: string
 }
@@ -40,7 +41,7 @@ export default async function AdminPage() {
     admin.from('leads').select('account_id, created_at'),
     admin.from('hosted_forms').select('account_id'),
     admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
-    admin.from('onboarding_sessions').select('account_id, status, token, paid_at, lead_name, lead_email, id, created_at').order('created_at', { ascending: false }),
+    admin.from('onboarding_sessions').select('account_id, status, token, paid_at, lead_name, lead_email, lead_phone, id, created_at').order('created_at', { ascending: false }),
   ])
 
   const accounts = accountsResult.data ?? []
@@ -82,7 +83,7 @@ export default async function AdminPage() {
   // Invites sent to a lead who hasn't created their account yet
   const pendingInvites: PendingInvite[] = onboardingSessions
     .filter((s) => !s.account_id)
-    .map((s) => ({ id: s.id, lead_name: s.lead_name ?? '', lead_email: s.lead_email ?? '', token: s.token, created_at: s.created_at }))
+    .map((s) => ({ id: s.id, lead_name: s.lead_name ?? '', lead_email: s.lead_email ?? '', lead_phone: s.lead_phone ?? null, token: s.token, created_at: s.created_at }))
 
   const combined: AdminAccount[] = accounts.map((acc) => {
     const b = billingMap.get(acc.id)

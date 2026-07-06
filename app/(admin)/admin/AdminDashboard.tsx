@@ -70,8 +70,10 @@ export default function AdminDashboard({ accounts, pendingInvites }: { accounts:
   const [inviteOpen, setInviteOpen] = useState(false)
   const [inviteName, setInviteName] = useState('')
   const [inviteEmail, setInviteEmail] = useState('')
+  const [invitePhone, setInvitePhone] = useState('')
   const [inviteSaving, setInviteSaving] = useState(false)
   const [revokingInviteId, setRevokingInviteId] = useState<string | null>(null)
+  const [sendingInviteId, setSendingInviteId] = useState<string | null>(null)
 
   const selected = localAccounts.find((a) => a.id === selectedId) ?? null
 
@@ -187,6 +189,15 @@ export default function AdminDashboard({ accounts, pendingInvites }: { accounts:
     }
   }
 
+  function inviteResultMessage(data: { emailSent?: boolean; smsSent?: boolean; existing?: boolean }, hadPhone: boolean) {
+    const parts: string[] = []
+    if (data.emailSent) parts.push('email')
+    if (hadPhone && data.smsSent) parts.push('SMS')
+    const prefix = data.existing ? 'Resent' : 'Invite created — sent'
+    if (parts.length === 0) return `${data.existing ? 'Resent' : 'Invite created'}, but sending failed — link copied to clipboard instead`
+    return `${prefix} via ${parts.join(' + ')}, link also copied`
+  }
+
   async function handleSendInvite() {
     if (!inviteName.trim() || !inviteEmail.trim()) return
     setInviteSaving(true)
@@ -194,23 +205,40 @@ export default function AdminDashboard({ accounts, pendingInvites }: { accounts:
       const res = await fetch('/api/admin/onboarding/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leadName: inviteName, leadEmail: inviteEmail }),
+        body: JSON.stringify({ leadName: inviteName, leadEmail: inviteEmail, leadPhone: invitePhone || undefined }),
       })
       const data = await res.json()
       if (!res.ok) { showToast(data.error ?? 'Failed', false); return }
       await navigator.clipboard.writeText(data.url)
       if (!data.existing) {
         setLocalPendingInvites((prev) => [
-          { id: data.sessionId, lead_name: inviteName.trim(), lead_email: inviteEmail.trim().toLowerCase(), token: data.token, created_at: new Date().toISOString() },
+          { id: data.sessionId, lead_name: inviteName.trim(), lead_email: inviteEmail.trim().toLowerCase(), lead_phone: invitePhone.trim() || null, token: data.token, created_at: new Date().toISOString() },
           ...prev,
         ])
       }
       setInviteOpen(false)
       setInviteName('')
       setInviteEmail('')
-      showToast(data.existing ? 'Link copied (existing invite)' : 'Invite link copied to clipboard!')
+      setInvitePhone('')
+      showToast(inviteResultMessage(data, !!invitePhone.trim()), !!(data.emailSent || data.smsSent))
     } finally {
       setInviteSaving(false)
+    }
+  }
+
+  async function handleResendInvite(inv: PendingInvite) {
+    setSendingInviteId(inv.id)
+    try {
+      const res = await fetch('/api/admin/onboarding/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leadName: inv.lead_name, leadEmail: inv.lead_email, leadPhone: inv.lead_phone ?? undefined }),
+      })
+      const data = await res.json()
+      if (!res.ok) { showToast(data.error ?? 'Failed to resend', false); return }
+      showToast(inviteResultMessage(data, !!inv.lead_phone), !!(data.emailSent || data.smsSent))
+    } finally {
+      setSendingInviteId(null)
     }
   }
 
@@ -374,6 +402,14 @@ export default function AdminDashboard({ accounts, pendingInvites }: { accounts:
                       <div style={{ fontSize: '0.7rem', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{inv.lead_email}</div>
                     </div>
                     <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                      <button
+                        onClick={() => handleResendInvite(inv)}
+                        disabled={sendingInviteId === inv.id}
+                        title="Send link (email + SMS)"
+                        style={{ border: 'none', background: '#16a34a', color: 'white', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 700, opacity: sendingInviteId === inv.id ? 0.5 : 1 }}
+                      >
+                        {sendingInviteId === inv.id ? '…' : 'Send Link'}
+                      </button>
                       <button onClick={() => handleCopyInviteLink(inv.token)} title="Copy link" style={{ border: 'none', background: 'white', borderRadius: 6, padding: '4px 7px', cursor: 'pointer', fontSize: '0.78rem' }}>🔗</button>
                       <button
                         onClick={() => handleRevokeInvite(inv.id)}
@@ -876,7 +912,7 @@ export default function AdminDashboard({ accounts, pendingInvites }: { accounts:
           <div style={{ background: 'white', borderRadius: 14, padding: 24, width: '100%', maxWidth: 380 }}>
             <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#1e293b', margin: '0 0 4px' }}>Send PPL Onboarding Invite</h3>
             <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '0 0 16px' }}>
-              They&apos;ll create a password, subscribe at $750/mo, then fill out the business wizard.
+              They&apos;ll get the link by email (and text, if you add a number), then create a password, subscribe at $750/mo, and fill out the business wizard.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
@@ -892,6 +928,16 @@ export default function AdminDashboard({ accounts, pendingInvites }: { accounts:
                 <input
                   type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="owner@example.com"
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '0.88rem', border: '1px solid #e2e8f0', borderRadius: 8, outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>
+                  Phone <span style={{ fontWeight: 400, color: '#94a3b8' }}>(optional — enables SMS)</span>
+                </label>
+                <input
+                  type="tel" value={invitePhone} onChange={(e) => setInvitePhone(e.target.value)}
+                  placeholder="(555) 123-4567"
                   style={{ width: '100%', padding: '9px 12px', fontSize: '0.88rem', border: '1px solid #e2e8f0', borderRadius: 8, outline: 'none', boxSizing: 'border-box' }}
                 />
               </div>

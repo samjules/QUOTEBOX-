@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendOnboardingInviteNotifications } from '@/lib/onboarding-invite'
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 
@@ -15,15 +16,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { leadName, leadEmail } = await request.json() as { leadName: string; leadEmail: string }
+  const { leadName, leadEmail, leadPhone } = await request.json() as { leadName: string; leadEmail: string; leadPhone?: string }
   if (!leadName?.trim() || !leadEmail?.trim()) {
     return NextResponse.json({ error: 'leadName and leadEmail are required' }, { status: 400 })
   }
 
   const email = leadEmail.trim().toLowerCase()
+  const phone = leadPhone?.trim() || null
   const admin = createAdminClient()
 
-  // Check for an existing active invite for this email (don't spam duplicates)
+  // Reuse an existing active invite for this email — calling this again for the
+  // same lead is how "Send Link" / resend works, so always (re)send below.
   const { data: existing } = await admin
     .from('onboarding_sessions')
     .select('id, token, status')
@@ -33,30 +36,45 @@ export async function POST(request: NextRequest) {
     .limit(1)
     .single()
 
+  let token: string
+  let sessionId: string
+  let isExisting = false
+
   if (existing) {
-    const url = `${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/onboarding/ppl/${existing.token}`
-    return NextResponse.json({ url, token: existing.token, sessionId: existing.id, existing: true })
+    token = existing.token
+    sessionId = existing.id
+    isExisting = true
+    // Keep phone in sync if it was added/changed on a resend
+    if (phone) await admin.from('onboarding_sessions').update({ lead_phone: phone }).eq('id', existing.id)
+  } else {
+    token = crypto.randomBytes(24).toString('base64url')
+    const { data: session, error } = await admin
+      .from('onboarding_sessions')
+      .insert({
+        account_id: null,
+        lead_name: leadName.trim(),
+        lead_email: email,
+        lead_phone: phone,
+        token,
+        status: 'pending',
+        step_data: {},
+        current_step: 1,
+        created_by: user.id,
+      })
+      .select('id, token')
+      .single()
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    sessionId = session.id
   }
 
-  const token = crypto.randomBytes(24).toString('base64url')
+  const url = `${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/onboarding/ppl/${token}`
+  const { emailSent, smsSent } = await sendOnboardingInviteNotifications({
+    leadName: leadName.trim(),
+    leadEmail: email,
+    leadPhone: phone,
+    url,
+  })
 
-  const { data: session, error } = await admin
-    .from('onboarding_sessions')
-    .insert({
-      account_id: null,
-      lead_name: leadName.trim(),
-      lead_email: email,
-      token,
-      status: 'pending',
-      step_data: {},
-      current_step: 1,
-      created_by: user.id,
-    })
-    .select('id, token')
-    .single()
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  const url = `${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/onboarding/ppl/${session.token}`
-  return NextResponse.json({ url, token: session.token, sessionId: session.id })
+  return NextResponse.json({ url, token, sessionId, existing: isExisting, emailSent, smsSent })
 }
