@@ -36,6 +36,20 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
 
   let ownerId: string
   if (existingUser) {
+    // This email already has a login — make sure it doesn't already own a
+    // different account before reusing it, so onboarding never creates a
+    // second account glued onto an existing one.
+    const { data: existingAccount } = await admin
+      .from('accounts')
+      .select('id, business_name')
+      .eq('owner_id', existingUser.id)
+      .maybeSingle()
+    if (existingAccount) {
+      return NextResponse.json({
+        error: `An account already exists for this email (${existingAccount.business_name}). Contact support to proceed.`,
+      }, { status: 409 })
+    }
+
     await admin.auth.admin.updateUserById(existingUser.id, { password })
     ownerId = existingUser.id
   } else {

@@ -82,12 +82,26 @@ serve(async (req) => {
     const { error: e5 } = await supabaseAdmin.from('deal_notifications').delete().eq('account_id', account.id)
     if (e5) throw new Error(`Failed to delete deal_notifications: ${e5.message}`)
 
+    const { error: e7 } = await supabaseAdmin.from('onboarding_sessions').delete().eq('account_id', account.id)
+    if (e7) throw new Error(`Failed to delete onboarding_sessions: ${e7.message}`)
+
     const { error: e6 } = await supabaseAdmin.from('accounts').delete().eq('id', account.id)
     if (e6) throw new Error(`Failed to delete account: ${e6.message}`)
 
-    // Delete the auth user last
-    const { error: deleteUserError } = await supabaseAdmin.auth.admin.deleteUser(user.id)
-    if (deleteUserError) throw new Error(`Failed to delete auth user: ${deleteUserError.message}`)
+    // Only delete the auth user if no other account still depends on this
+    // login — a single email can end up owning more than one account row,
+    // and deleting the shared login out from under a surviving account
+    // would lock its owner out entirely.
+    const { data: otherAccounts } = await supabaseAdmin
+      .from('accounts')
+      .select('id')
+      .eq('owner_id', user.id)
+      .limit(1)
+
+    if (!otherAccounts || otherAccounts.length === 0) {
+      const { error: deleteUserError } = await supabaseAdmin.auth.admin.deleteUser(user.id)
+      if (deleteUserError) throw new Error(`Failed to delete auth user: ${deleteUserError.message}`)
+    }
 
     return new Response(
       JSON.stringify({ success: true }),
