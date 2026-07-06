@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, type KeyboardEvent } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 const input: React.CSSProperties = {
@@ -15,7 +14,6 @@ const btn: React.CSSProperties = {
 }
 
 export default function LoginGate({ email }: { email: string }) {
-  const router = useRouter()
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -25,9 +23,12 @@ export default function LoginGate({ email }: { email: string }) {
     setLoading(true)
     const supabase = createClient()
     const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password })
-    setLoading(false)
-    if (signInErr) { setError('Incorrect password'); return }
-    router.refresh()
+    if (signInErr) { setError('Incorrect password'); setLoading(false); return }
+
+    // Full reload rather than router.refresh() — guarantees the server sees
+    // the freshly-written session cookies instead of racing ahead of them.
+    await supabase.auth.getSession()
+    window.location.reload()
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {

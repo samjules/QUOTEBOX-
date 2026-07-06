@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, type KeyboardEvent } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 const input: React.CSSProperties = {
@@ -21,7 +20,6 @@ interface Props {
 }
 
 export default function CreateAccountStep({ token, businessName, email }: Props) {
-  const router = useRouter()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
@@ -46,7 +44,12 @@ export default function CreateAccountStep({ token, businessName, email }: Props)
       const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password })
       if (signInErr) { setError(signInErr.message); setLoading(false); return }
 
-      router.refresh()
+      // Make sure the session (and its cookies) are fully settled before the
+      // server re-reads them — router.refresh() can otherwise race ahead of
+      // the cookie write and re-render this same step forever, even though
+      // the account was already created.
+      await supabase.auth.getSession()
+      window.location.reload()
     } catch {
       setError('Something went wrong — please try again')
       setLoading(false)
