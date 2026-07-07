@@ -3,12 +3,20 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { BillingTransaction } from '@/lib/types'
 
 const SUBSCRIPTION_FUNCTION_URL = process.env.NEXT_PUBLIC_SUBSCRIPTION_FUNCTION_URL!
 const PORTAL_FUNCTION_URL = process.env.NEXT_PUBLIC_PORTAL_FUNCTION_URL!
 const VERIFY_SESSION_FUNCTION_URL = process.env.NEXT_PUBLIC_VERIFY_SESSION_FUNCTION_URL!
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+const PLAN_INFO: Record<string, { label: string; detail: string }> = {
+  trial: { label: 'Trial', detail: '$1 this month · renews at $34/month' },
+  starter: { label: 'Starter', detail: 'Full platform access' },
+  growth: { label: 'Growth', detail: 'Full platform access · Unlimited leads' },
+  fully_managed: { label: 'Fully Managed', detail: 'Full platform access · Unlimited leads' },
+  pay_per_lead: { label: 'Retainer', detail: '$15 per booked lead' },
+  pro: { label: 'Pro', detail: '$350/month · Full platform access · Unlimited leads' },
+}
 
 export default function BillingPage() {
   const searchParams = useSearchParams()
@@ -18,10 +26,8 @@ export default function BillingPage() {
   const [userId, setUserId] = useState<string | null>(null)
   const [plan, setPlan] = useState<string | null>(null)
   const [blessed, setBlessed] = useState(false)
-  const [totalSpent, setTotalSpent] = useState(0)
   const [totalLeads, setTotalLeads] = useState(0)
   const [monthlyLeads, setMonthlyLeads] = useState(0)
-  const [transactions, setTransactions] = useState<BillingTransaction[]>([])
   const [loading, setLoading] = useState(true)
   const [subscribing, setSubscribing] = useState(false)
   const [stripeCustomerId, setStripeCustomerId] = useState<string | null>(null)
@@ -49,7 +55,6 @@ export default function BillingPage() {
       setBlessed(billing?.blessed === true)
       setStripeCustomerId(billing?.stripe_customer_id ?? null)
       setTrialEndsAt(billing?.trial_ends_at ?? null)
-      setTotalSpent(billing?.total_spent ?? 0)
 
       const { data: leads } = await supabase
         .from('leads')
@@ -68,14 +73,6 @@ export default function BillingPage() {
         ).length
       )
 
-      const { data: txns } = await supabase
-        .from('billing_transactions')
-        .select('*')
-        .eq('account_id', accId)
-        .order('created_at', { ascending: false })
-        .limit(50)
-
-      setTransactions(txns ?? [])
       setLoading(false)
     },
     [supabase]
@@ -200,12 +197,12 @@ export default function BillingPage() {
                 {blessed ? 'Account Status' : 'Current Plan'}
               </p>
               <p className="text-xl font-bold text-white">
-                {blessed ? 'Blessed Account — Free Access' : 'Pro — $350/month'}
+                {blessed ? 'Blessed Account — Free Access' : (PLAN_INFO[plan ?? '']?.label ?? plan)}
               </p>
               <p className="text-sm mt-1 text-white/70">
                 {blessed
                   ? 'Full platform access granted by admin'
-                  : 'Full platform access · Unlimited leads'}
+                  : (PLAN_INFO[plan ?? '']?.detail ?? 'Active subscription')}
               </p>
               {trialEndsAt && new Date(trialEndsAt) > new Date() && (
                 <span className="inline-block mt-2 px-2.5 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-300">
@@ -290,10 +287,9 @@ export default function BillingPage() {
 
         {/* Stats */}
         {!loading && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             {[
               { label: 'Total Leads', value: totalLeads, icon: '📊', color: 'rgba(91,91,214,0.1)' },
-              { label: 'Total Spent', value: `$${totalSpent.toFixed(2)}`, icon: '💰', color: 'rgba(16,185,129,0.1)' },
               { label: 'This Month', value: monthlyLeads, icon: '📈', color: 'rgba(245,158,11,0.1)' },
             ].map(({ label, value, icon, color }) => (
               <div
@@ -318,73 +314,6 @@ export default function BillingPage() {
           </div>
         )}
 
-        {/* Transaction history */}
-        {!loading && transactions.length > 0 && (
-          <div
-            className="bg-white rounded-2xl overflow-hidden"
-            style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)' }}
-          >
-            <div className="px-6 py-5 border-b border-gray-100">
-              <h3 className="text-base font-semibold text-gray-900">Billing History</h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-100">
-                <thead className="bg-gray-50">
-                  <tr>
-                    {['Date', 'Type', 'Description', 'Amount', 'Balance'].map((h) => (
-                      <th
-                        key={h}
-                        className="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider"
-                      >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-100">
-                  {transactions.map((tx) => {
-                    const isCredit = tx.type === 'credit_purchase'
-                    return (
-                      <tr key={tx.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                          {new Date(tx.created_at).toLocaleDateString('en-US', {
-                            month: '2-digit',
-                            day: '2-digit',
-                            year: 'numeric',
-                          })}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <span
-                            className={`px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              isCredit
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}
-                          >
-                            {isCredit ? 'Credit' : 'Charge'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {tx.description || '—'}
-                        </td>
-                        <td
-                          className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
-                            isCredit ? 'text-green-600' : 'text-red-600'
-                          }`}
-                        >
-                          {isCredit ? '+' : '-'}${Math.abs(tx.amount).toFixed(2)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                          ${tx.balance_after.toFixed(2)}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
 
         {loading && (
           <div

@@ -27,7 +27,7 @@ const PLANS = {
   },
 }
 
-const TRIAL_1_COUPON_ID = 'trial-1-dollar-3mo'
+const TRIAL_1_COUPON_ID = 'trial-1-dollar-1mo'
 
 async function ensureTrialCoupon(): Promise<string> {
   try {
@@ -38,8 +38,8 @@ async function ensureTrialCoupon(): Promise<string> {
       amount_off: 3300, // $34.00 - $1.00 = $33.00 off, in cents
       currency: 'usd',
       duration: 'repeating',
-      duration_in_months: 3,
-      name: '$1 Trial — first 3 months',
+      duration_in_months: 1,
+      name: '$1 Trial — first month',
     })
   }
   return TRIAL_1_COUPON_ID
@@ -59,7 +59,7 @@ serve(async (req) => {
 
     const origin = req.headers.get('origin') || 'https://quote-box.com'
 
-    // $1 trial: $34/mo recurring, discounted to $1 for the first 3 months via a repeating coupon,
+    // $1 trial: $34/mo recurring, discounted to $1 for the first month via a repeating coupon,
     // plus an optional one-time $297 "done for you" setup line in the same checkout session.
     if (plan === 'trial_1') {
       const couponId = await ensureTrialCoupon()
@@ -70,7 +70,7 @@ serve(async (req) => {
             currency: 'usd',
             product_data: {
               name: 'Quotebox — Monthly',
-              description: '$1/mo for your first 3 months, then $34/mo',
+              description: '$1 for your first month, then $34/mo',
             },
             unit_amount: 3400,
             recurring: { interval: 'month' },

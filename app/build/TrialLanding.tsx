@@ -19,6 +19,108 @@ const SAMPLE_LEADS = [
 const PANELS = ['Dashboard', 'Leads', 'Automations'] as const
 type PanelName = typeof PANELS[number]
 
+// Hero illustration — desktop dashboard with the iOS app's lock-screen alerts layered on top.
+// Sample data only, same as ProductPanel — nothing pulled from a real account.
+function HeroMock() {
+  return (
+    <div className="hero-mock">
+      <div className="hero-desktop">
+        <div className="hd-bar">
+          <span className="hd-dot r" /><span className="hd-dot y" /><span className="hd-dot g" />
+          <div className="hd-url">quote-box.com/dashboard</div>
+        </div>
+        <div className="hd-shell">
+          <div className="hd-sidebar">
+            <div className="hd-brand"><span className="qb">QB</span>QuoteBox</div>
+            {['Dashboard', 'Leads', 'Calendar', 'Automations'].map((item, i) => (
+              <div key={item} className={`hd-nav ${i === 0 ? 'active' : ''}`}>{item}</div>
+            ))}
+          </div>
+          <div className="hd-content">
+            <div className="hd-title">Dashboard</div>
+            <div className="hd-sub">This Month</div>
+            <div className="hd-pipeline-label">PIPELINE VALUE · 22 LEADS</div>
+            <div className="hd-pipeline-big">$9,270</div>
+            <div className="hd-stats">
+              {[['Total Leads', '22'], ['New Leads', '14'], ['Booked', '3'], ['Ad Spend', '$412']].map(([l, v]) => (
+                <div className="hd-stat" key={l}><span className="l">{l}</span><span className="v">{v}</span></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="hero-phone">
+        <div className="hp-frame">
+          <div className="hp-notch" />
+          <div className="hp-screen">
+            <div className="hp-clock">9:41</div>
+            <div className="hp-date">Wed, Jul 6</div>
+            <div className="hp-notif">
+              <div className="hp-icon">QB</div>
+              <div className="hp-body">
+                <div className="hp-top"><span>QUOTEBOX</span><span>now</span></div>
+                <div className="hp-lead">New lead — Jordan P.</div>
+                <div className="hp-text">3-bedroom move. Est. <b>$420</b>. Tap to call.</div>
+              </div>
+            </div>
+            <div className="hp-notif">
+              <div className="hp-icon">QB</div>
+              <div className="hp-body">
+                <div className="hp-top"><span>QUOTEBOX</span><span>1m ago</span></div>
+                <div className="hp-lead">Demo booked — Casey N.</div>
+                <div className="hp-text">Confirmed for <b>2:00 PM</b>.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <style jsx>{`
+        .hero-mock{position:relative;padding-bottom:56px;padding-right:24px;}
+        .hero-desktop{border-radius:14px;overflow:hidden;background:#0c0a16;border:1px solid var(--line);box-shadow:0 40px 90px -35px rgba(0,0,0,0.7);}
+        .hd-bar{display:flex;align-items:center;gap:6px;padding:10px 13px;background:#141024;border-bottom:1px solid var(--line);}
+        .hd-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
+        .hd-dot.r{background:#ff5f57;} .hd-dot.y{background:#febc2e;} .hd-dot.g{background:#28c840;}
+        .hd-url{margin-left:8px;background:rgba(255,255,255,0.06);padding:3px 12px;border-radius:6px;font-size:10.5px;color:var(--muted);}
+        .hd-shell{display:flex;min-height:230px;}
+        .hd-sidebar{width:96px;flex:0 0 auto;background:#14111f;padding:12px 8px;display:flex;flex-direction:column;gap:1px;}
+        .hd-brand{display:flex;align-items:center;gap:6px;color:#fff;font-weight:700;font-size:9.5px;margin-bottom:10px;padding:0 2px;}
+        .hd-brand .qb{width:16px;height:16px;border-radius:5px;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:800;flex:0 0 auto;}
+        .hd-nav{padding:5px 6px;border-radius:6px;color:#8b86a8;font-size:8.5px;font-weight:600;white-space:nowrap;}
+        .hd-nav.active{background:rgba(92,81,214,0.28);color:#fff;}
+        .hd-content{flex:1;background:#f4f3fa;padding:14px 16px;color:#1c1830;min-width:0;}
+        .hd-title{font-family: var(--font-space-grotesk-offer), sans-serif;font-weight:700;font-size:14px;}
+        .hd-sub{font-size:9px;color:#8b86a8;margin-bottom:10px;}
+        .hd-pipeline-label{font-size:8px;color:#8b86a8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;}
+        .hd-pipeline-big{font-family: var(--font-space-grotesk-offer), sans-serif;font-weight:700;font-size:22px;margin-bottom:10px;}
+        .hd-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+        .hd-stat{background:#fff;border-radius:7px;padding:7px 8px;display:flex;flex-direction:column;gap:2px;box-shadow:0 1px 3px rgba(0,0,0,.05);min-width:0;}
+        .hd-stat .l{font-size:6.5px;color:#8b86a8;text-transform:uppercase;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .hd-stat .v{font-family: var(--font-space-grotesk-offer), sans-serif;font-weight:700;font-size:11px;color:#1c1830;}
+
+        .hero-phone{position:absolute;right:0;bottom:0;width:150px;}
+        .hp-frame{width:100%;aspect-ratio:150/305;border-radius:22px;background:#05060c;border:5px solid #1a1e33;box-shadow:0 20px 50px -18px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.05);position:relative;}
+        .hp-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:54px;height:12px;background:#05060c;border-radius:0 0 8px 8px;z-index:3;}
+        .hp-screen{position:absolute;inset:0;border-radius:17px;overflow:hidden;background:radial-gradient(circle at 50% 15%, #1c2140 0%, #0B0E1A 55%);padding:22px 8px 8px;}
+        .hp-clock{text-align:center;font-family: var(--font-space-grotesk-offer), sans-serif;font-size:19px;font-weight:600;color:#fff;margin-bottom:1px;}
+        .hp-date{text-align:center;color:var(--muted);font-size:6.5px;margin-bottom:9px;}
+        .hp-notif{background:rgba(23,28,51,.92);border:1px solid var(--line);border-radius:8px;padding:6px 7px;display:flex;gap:5px;margin-bottom:5px;}
+        .hp-icon{width:14px;height:14px;border-radius:4px;flex-shrink:0;background:linear-gradient(145deg, var(--primary-light), var(--primary));display:flex;align-items:center;justify-content:center;font-size:5px;font-weight:700;color:#fff;}
+        .hp-body{flex:1;min-width:0;}
+        .hp-top{display:flex;justify-content:space-between;font-size:5.5px;color:var(--muted);margin-bottom:1px;}
+        .hp-lead{font-size:6.5px;font-weight:700;color:#fff;margin-bottom:1px;line-height:1.2;}
+        .hp-text{font-size:6px;color:var(--muted);line-height:1.3;}
+        .hp-text :global(b){color:#fff;font-weight:700;}
+
+        @media(max-width:900px){
+          .hero-mock{padding-right:0;max-width:420px;margin:0 auto;}
+        }
+      `}</style>
+    </div>
+  )
+}
+
 function ProductPanel() {
   const [i, setI] = useState(0)
   useEffect(() => {
@@ -237,7 +339,7 @@ function PhoneMock() {
 }
 
 const FAQS = [
-  { q: 'Is this really $1/month, or is there a catch?', a: "It's $1/month for your first 3 months — full access, no feature limits. After month 3, it renews at the normal $34/month rate. Cancel anytime before that and you're never charged again." },
+  { q: 'Is this really $1, or is there a catch?', a: "It's $1 for your first month — full access, no feature limits. After that, it renews at the normal $34/month rate. Cancel anytime before your first renewal and you're never charged again." },
   { q: 'Do I need to be technical to set this up?', a: 'No. Most owners have their branded quote form live in under 10 minutes using our guided setup. If you get stuck, our team will build it with you on a quick call at no charge.' },
   { q: 'What happens after I sign up?', a: "You'll land in your dashboard immediately. From there you can build your quote form, connect your number for SMS, and start collecting leads the same day." },
   { q: 'Does this replace my Facebook/Google ads?', a: 'No — Quotebox is where your leads land and get followed up with automatically. If you want us to also run your ad campaigns, that\'s available separately once you\'re set up.' },
@@ -261,14 +363,19 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
       </nav>
 
       <header className="hero">
-        <div className="eyebrow"><span className="dot" /> For moving &amp; junk removal companies</div>
-        <h1 className="headline">The quote form &amp; CRM<br />that turned <span className="accent">685 leads</span> into $111K in pipeline.</h1>
-        <p className="sub">Quotebox is the instant-quote form, CRM, and Meta Ads dashboard built specifically for movers and junk haulers — with every lead texted and emailed back automatically. Try the full software for <strong>$1/month for your first 3 months</strong>, instead of $34/month.</p>
-        <button className="cta-btn" onClick={() => onStart()}>Try Quotebox For $1 →</button>
-        <span className="cta-sub">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#34d399" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          Cancel anytime · Then $34/mo · Live in under 10 minutes
-        </span>
+        <div className="hero-text">
+          <div className="eyebrow"><span className="dot" /> For moving &amp; junk removal companies</div>
+          <h1 className="headline">The quote form &amp; CRM<br />that turned <span className="accent">685 leads</span> into $111K in pipeline.</h1>
+          <p className="sub">Quotebox is the instant-quote form, CRM, and Meta Ads dashboard built specifically for movers and junk haulers — with every lead texted and emailed back automatically. Try the full software for <strong>$1 for your first month</strong>, instead of $34/month.</p>
+          <button className="cta-btn" onClick={() => onStart()}>Try Quotebox For $1 →</button>
+          <span className="cta-sub">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#34d399" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            Cancel anytime · Then $34/mo · Live in under 10 minutes
+          </span>
+        </div>
+        <div className="hero-visual">
+          <HeroMock />
+        </div>
       </header>
 
       <div className="divider" />
@@ -337,7 +444,7 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
         </div>
         <div className="stack-wrap">
           <div className="receipt">
-            <div className="stamp">3 months</div>
+            <div className="stamp">1st month</div>
             <div className="receipt-head">
               <div className="rlogo" />
               <h3>Quotebox Order Summary</h3>
@@ -362,13 +469,13 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
             </div>
             <div className="due">
               <div className="label">Due today</div>
-              <div className="amt">$1<sup>/mo × 3</sup></div>
+              <div className="amt">$1<sup>1st mo</sup></div>
             </div>
           </div>
         </div>
         <div style={{ textAlign: 'center', marginTop: 38 }}>
           <button className="cta-btn" onClick={() => onStart()}>Claim My $1 Trial →</button>
-          <span className="cta-sub" style={{ display: 'block', marginTop: 14 }}>Renews at $34/mo after month 3 · Cancel anytime, no questions asked</span>
+          <span className="cta-sub" style={{ display: 'block', marginTop: 14 }}>Renews at $34/mo after your first month · Cancel anytime, no questions asked</span>
         </div>
       </section>
 
@@ -450,7 +557,7 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
       <footer>Quotebox is a product of Arctic Reach LLC. © 2026 Quotebox. All rights reserved.</footer>
 
       <div className={`sticky-bar ${showSticky ? 'show' : ''}`}>
-        <div className="txt">First 3 months just <b>$1/mo</b> — normally $34/mo</div>
+        <div className="txt">Your first month just <b>$1</b> — normally $34/mo</div>
         <button className="cta-btn" onClick={() => onStart()}>Start My $1 Trial →</button>
       </div>
 
@@ -485,14 +592,15 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
         section{ max-width:1080px; margin:0 auto; padding:64px 24px; }
         .divider{ max-width:1080px; margin:0 auto; height:1px; background:var(--line); }
 
-        .hero{ max-width:1080px; margin:0 auto; padding:56px 24px 40px; text-align:center; }
+        .hero{ max-width:1080px; margin:0 auto; padding:56px 24px 40px; display:grid; grid-template-columns:1.05fr 0.95fr; align-items:center; gap:40px; }
         .eyebrow{ display:inline-flex; align-items:center; gap:8px; background:rgba(92,81,214,0.18); border:1px solid rgba(139,127,255,0.4); color:var(--primary-light);
           padding:7px 16px; border-radius:999px; font-size:13px; font-weight:600; letter-spacing:0.03em; text-transform:uppercase; margin-bottom:26px; }
         .eyebrow .dot{ width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); }
-        .headline{ font-size:clamp(30px,5.2vw,62px); line-height:1.06; margin:0 0 22px; max-width:880px; margin-left:auto; margin-right:auto; }
+        .headline{ font-size:clamp(30px,4.6vw,54px); line-height:1.06; margin:0 0 22px; }
         .headline :global(.accent){ color:var(--gold); }
-        .sub{ font-size:18px; line-height:1.55; color:var(--muted); max-width:620px; margin:0 auto 34px; }
+        .sub{ font-size:17px; line-height:1.55; color:var(--muted); max-width:480px; margin:0 0 34px; }
         .sub :global(strong){ color:var(--text); }
+        @media(max-width:900px){ .hero{ grid-template-columns:1fr; text-align:center; } .hero-text{ order:1; } .hero-visual{ order:2; } .sub{ margin-left:auto; margin-right:auto; } }
 
         .showcase-head{ text-align:center; margin-bottom:34px; }
         .showcase-head h2{ font-size:clamp(22px,3.4vw,34px); margin:0 0 8px; }
