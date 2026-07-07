@@ -4,9 +4,12 @@ import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-const SUBSCRIPTION_FUNCTION_URL = process.env.NEXT_PUBLIC_SUBSCRIPTION_FUNCTION_URL!
-const PORTAL_FUNCTION_URL = process.env.NEXT_PUBLIC_PORTAL_FUNCTION_URL!
-const VERIFY_SESSION_FUNCTION_URL = process.env.NEXT_PUBLIC_VERIFY_SESSION_FUNCTION_URL!
+// Built from NEXT_PUBLIC_SUPABASE_URL rather than dedicated per-function env vars —
+// those (NEXT_PUBLIC_PORTAL_FUNCTION_URL etc.) were never actually set, which made
+// "Manage Subscription" 404 against this app's own routes instead of Supabase.
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const SUBSCRIPTION_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/create-subscription-session`
+const VERIFY_SESSION_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/verify-subscription-session`
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 const PLAN_INFO: Record<string, { label: string; detail: string }> = {
@@ -154,17 +157,13 @@ export default function BillingPage() {
   async function openPortal() {
     setOpeningPortal(true)
     try {
-      const response = await fetch(PORTAL_FUNCTION_URL, {
+      const response = await fetch('/api/billing/portal', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ accountId }),
       })
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
       const { url, error } = await response.json()
-      if (error) throw new Error(error)
+      if (!response.ok || error) throw new Error(error ?? `HTTP error! status: ${response.status}`)
       window.location.href = url
     } catch (err) {
       alert(`Could not open billing portal: ${err instanceof Error ? err.message : 'Unknown error'}`)
