@@ -69,11 +69,22 @@ async function geocode(query: string): Promise<GeocodeSuggestion[]> {
   }
 }
 
-// Fetches drive route geometry for map display only. Distance is always haversine.
+// Default average local driving speed when an account hasn't set one yet.
+const DEFAULT_AVG_MPH = 35
+
+// Drive time is unreliable from the routing API, so we only ever trust it for
+// distance (and map geometry) — duration is always derived as distance / avg speed,
+// using the business's own configured average local driving speed.
+function minutesFromDistance(distanceMiles: number, avgMph: number | null): number {
+  const mph = avgMph && avgMph > 0 ? avgMph : DEFAULT_AVG_MPH
+  return (distanceMiles / mph) * 60
+}
+
+// Fetches the route's real road distance + geometry from the Directions API.
 async function getDirections(
   start: [number, number],
   end: [number, number]
-): Promise<{ distanceMiles: number; durationMinutes: number; geometry: RouteGeometry } | null> {
+): Promise<{ distanceMiles: number; geometry: RouteGeometry } | null> {
   const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?steps=false&geometries=geojson&overview=full&access_token=${MAPBOX_TOKEN}`
   try {
     const res = await fetch(url)
@@ -81,8 +92,8 @@ async function getDirections(
     const route = data.routes?.[0]
     if (!route) return null
     return {
-      distanceMiles: haversineMiles(start, end),
-      durationMinutes: 0,
+      // route.distance is meters; fall back to haversine if the API omits it
+      distanceMiles: typeof route.distance === 'number' ? route.distance / 1609.344 : haversineMiles(start, end),
       geometry: route.geometry,
     }
   } catch {
@@ -93,7 +104,8 @@ async function getDirections(
 interface LegInfo { distanceMiles: number; durationMinutes: number }
 
 async function getWaypointRoute(
-  coords: [number, number][]
+  coords: [number, number][],
+  avgMph: number | null
 ): Promise<{ legs: LegInfo[]; totalMiles: number; totalMinutes: number; geometry: RouteGeometry } | null> {
   const waypoints = coords.map((c) => `${c[0]},${c[1]}`).join(';')
   const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${waypoints}?steps=false&geometries=geojson&overview=full&access_token=${MAPBOX_TOKEN}`
@@ -102,14 +114,16 @@ async function getWaypointRoute(
     const data = await res.json()
     const route = data.routes?.[0]
     if (!route) return null
-    const legs: LegInfo[] = coords.slice(0, -1).map((c, i) => ({
-      distanceMiles: haversineMiles(c, coords[i + 1]),
-      durationMinutes: 0,
-    }))
+    const apiLegs = route.legs as Array<{ distance: number }> | undefined
+    const legs: LegInfo[] = coords.slice(0, -1).map((c, i) => {
+      const distanceMiles = apiLegs?.[i] ? apiLegs[i].distance / 1609.344 : haversineMiles(c, coords[i + 1])
+      return { distanceMiles, durationMinutes: minutesFromDistance(distanceMiles, avgMph) }
+    })
+    const totalMiles = legs.reduce((s, l) => s + l.distanceMiles, 0)
     return {
       legs,
-      totalMiles: legs.reduce((s, l) => s + l.distanceMiles, 0),
-      totalMinutes: 0,
+      totalMiles,
+      totalMinutes: minutesFromDistance(totalMiles, avgMph),
       geometry: route.geometry,
     }
   } catch {
@@ -478,6 +492,7 @@ function RouteField({
   onStartCoordsChange,
   onEndCoordsChange,
   hidePrices,
+  avgMph,
 }: {
   field: FormField
   currency: string
@@ -487,6 +502,7 @@ function RouteField({
   onStartCoordsChange: (coords: [number, number] | null) => void
   onEndCoordsChange: (coords: [number, number] | null) => void
   hidePrices?: boolean
+  avgMph: number | null
 }) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -586,8 +602,9 @@ function RouteField({
       getDirections(baseCoords, endCoords).then((result) => {
         setIsLoadingRoute(false)
         if (!result) return
-        const distMiles = haversineMiles(baseCoords, endCoords!)
-        setRouteInfo({ distanceMiles: distMiles, durationMinutes: 0 })
+        const distMiles = result.distanceMiles
+        const mins = minutesFromDistance(distMiles, avgMph)
+        setRouteInfo({ distanceMiles: distMiles, durationMinutes: mins })
         setBaseGeometry(result.geometry)
         setRouteGeometry(null)
         setLegInfos(null)
@@ -597,7 +614,7 @@ function RouteField({
           endAddress: endQuery,
           endCoords: endCoords!,
           distanceMiles: distMiles,
-          durationMinutes: 0,
+          durationMinutes: mins,
         })
       })
       return
@@ -619,11 +636,12 @@ function RouteField({
       ]).then(([toStartResult, customerResult, returnResult]) => {
         setIsLoadingRoute(false)
         if (!toStartResult || !customerResult || !returnResult) return
-        const leg0 = { distanceMiles: toStartResult.distanceMiles, durationMinutes: 0 }
-        const leg1 = { distanceMiles: customerResult.distanceMiles, durationMinutes: 0 }
-        const leg2 = { distanceMiles: returnResult.distanceMiles, durationMinutes: 0 }
+        const leg0 = { distanceMiles: toStartResult.distanceMiles, durationMinutes: minutesFromDistance(toStartResult.distanceMiles, avgMph) }
+        const leg1 = { distanceMiles: customerResult.distanceMiles, durationMinutes: minutesFromDistance(customerResult.distanceMiles, avgMph) }
+        const leg2 = { distanceMiles: returnResult.distanceMiles, durationMinutes: minutesFromDistance(returnResult.distanceMiles, avgMph) }
         const totalMiles = leg0.distanceMiles + leg1.distanceMiles + leg2.distanceMiles
-        setRouteInfo({ distanceMiles: totalMiles, durationMinutes: 0, jobLegMiles: leg1.distanceMiles })
+        const totalMinutes = leg0.durationMinutes + leg1.durationMinutes + leg2.durationMinutes
+        setRouteInfo({ distanceMiles: totalMiles, durationMinutes: totalMinutes, jobLegMiles: leg1.distanceMiles })
         setBaseGeometry(toStartResult.geometry)
         setRouteGeometry(customerResult.geometry)
         setLegInfos([leg0, leg1, leg2])
@@ -633,7 +651,7 @@ function RouteField({
           endAddress: endQuery,
           endCoords: endCoords!,
           distanceMiles: totalMiles,
-          durationMinutes: 0,
+          durationMinutes: totalMinutes,
           jobLegMiles: leg1.distanceMiles,
         })
       })
@@ -641,7 +659,8 @@ function RouteField({
       getDirections(startCoords, endCoords).then((result) => {
         setIsLoadingRoute(false)
         if (!result) return
-        setRouteInfo({ distanceMiles: result.distanceMiles, durationMinutes: 0 })
+        const mins = minutesFromDistance(result.distanceMiles, avgMph)
+        setRouteInfo({ distanceMiles: result.distanceMiles, durationMinutes: mins })
         setBaseGeometry(null)
         setRouteGeometry(result.geometry)
         setLegInfos(null)
@@ -651,7 +670,7 @@ function RouteField({
           endAddress: endQuery,
           endCoords: endCoords!,
           distanceMiles: result.distanceMiles,
-          durationMinutes: 0,
+          durationMinutes: mins,
         })
       })
     }
@@ -902,6 +921,7 @@ function RouteField({
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <span style={{ fontSize: '0.82rem', color: '#334155', fontWeight: 700 }}>
                         {(jobLeg ? jobLeg.distanceMiles : routeInfo.distanceMiles).toFixed(1)} mi
+                        <span style={{ color: '#64748b', fontWeight: 500 }}> · ~{Math.round(jobLeg ? jobLeg.durationMinutes : routeInfo.durationMinutes)} min</span>
                       </span>
                       {!hidePrices && priceContribution > 0 && (
                         <span style={{ fontSize: '0.85rem', color: '#059669', fontWeight: 700 }}>
@@ -929,6 +949,7 @@ function RouteField({
                 }}>
                   <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>
                     📍 {routeInfo.distanceMiles.toFixed(1)} mi
+                    <span style={{ color: '#64748b', fontWeight: 500 }}> · ~{Math.round(routeInfo.durationMinutes)} min</span>
                   </span>
                   {!hidePrices && priceContribution > 0 && (
                     <span style={{ marginLeft: 'auto', fontSize: '0.88rem', color: '#059669', fontWeight: 700 }}>
@@ -988,7 +1009,7 @@ function RouteField({
 }
 
 // ── QuoteForm ──────────────────────────────────────────────────
-export default function QuoteForm({ form, businessName = '' }: { form: HostedForm; businessName?: string }) {
+export default function QuoteForm({ form, businessName = '', avgMph = null }: { form: HostedForm; businessName?: string; avgMph?: number | null }) {
   const config = form.form_config
   const router = useRouter()
   const supabase = createClient()
@@ -1739,6 +1760,7 @@ export default function QuoteForm({ form, businessName = '' }: { form: HostedFor
                     onStartCoordsChange={(coords) => handleStartCoordsChange(currentField.id, coords)}
                     onEndCoordsChange={(coords) => handleEndCoordsChange(currentField.id, coords)}
                     hidePrices={hidePrices}
+                    avgMph={avgMph}
                   />
                   <button onClick={handleNext} disabled={!canAdvance()}
                     style={{ ...continueBtn, opacity: canAdvance() ? 1 : 0.35, cursor: canAdvance() ? 'pointer' : 'not-allowed' }}>

@@ -2183,9 +2183,10 @@ export default function FormBuilderPage() {
   const [quoteDisplay, setQuoteDisplay] = useState<'live' | 'after_submit' | 'hidden'>('live')
   const [editingFormId, setEditingFormId] = useState<string | null>(null)
   const [accountId, setAccountId] = useState<string | null>(null)
-  const [existingForms, setExistingForms] = useState<Array<{ id: string; form_name: string; form_config: { slug?: string; brand_color?: string; hero_image_url?: string } }>>([])
+  const [existingForms, setExistingForms] = useState<Array<{ id: string; form_name: string; form_config: { slug?: string; brand_color?: string; hero_image_url?: string; fields?: FormField[] } }>>([])
   const [existingFormsLoading, setExistingFormsLoading] = useState(true)
-  const [existingFormForWizard, setExistingFormForWizard] = useState<{ id: string; form_name: string; form_config: { slug?: string; brand_color?: string; hero_image_url?: string } } | null>(null)
+  const [existingFormForWizard, setExistingFormForWizard] = useState<{ id: string; form_name: string; form_config: { slug?: string; brand_color?: string; hero_image_url?: string; fields?: FormField[] } } | null>(null)
+  const [avgMph, setAvgMph] = useState<number | null>(null)
   const [quizConfig, setQuizConfig] = useState<QuizConfig | null>(null)
   const quizMode = quizConfig !== null
   const [planBadge, setPlanBadge] = useState('Loading…')
@@ -2331,6 +2332,7 @@ export default function FormBuilderPage() {
         return
       }
       setAccountId(account.id)
+      setAvgMph(account.avg_driving_mph ?? null)
 
       // Fetch existing forms
       setExistingFormsLoading(true)
@@ -2930,6 +2932,7 @@ export default function FormBuilderPage() {
               key={existingFormForWizard?.id ?? 'new'}
               accountId={accountId}
               existingForm={existingFormForWizard}
+              initialAvgMph={avgMph}
               onCustomize={(formId) => { window.location.href = `/form-builder?form_id=${formId}` }}
             />
           )}

@@ -16,6 +16,7 @@ export interface Account {
   agreement_template_url?: string | null
   logo_url?: string | null
   upsell_purchased_at?: string | null
+  avg_driving_mph?: number | null
 }
 
 export interface FieldOption {

@@ -29,16 +29,17 @@ export default async function PublicFormPage({
 
   const { data: account } = await admin
     .from('accounts')
-    .select('business_name')
+    .select('business_name, avg_driving_mph')
     .eq('id', form.account_id)
     .single()
 
   const businessName = account?.business_name ?? ''
+  const avgMph = account?.avg_driving_mph ?? null
 
   const typedForm = form as HostedForm
   if (typedForm.form_config?.quiz) {
     return <QuizForm form={typedForm} businessName={businessName} />
   }
 
-  return <QuoteForm form={typedForm} businessName={businessName} />
+  return <QuoteForm form={typedForm} businessName={businessName} avgMph={avgMph} />
 }
