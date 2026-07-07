@@ -3,6 +3,7 @@ import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import Sidebar from '@/components/Sidebar'
 import ImpersonationBanner from '@/components/ImpersonationBanner'
+import MobileAppPrompt from '@/components/MobileAppPrompt'
 
 export default async function ProtectedLayout({
   children,
@@ -35,7 +36,10 @@ export default async function ProtectedLayout({
         <ImpersonationBanner />
       </Suspense>
       <Sidebar />
-      <div className="flex-1 overflow-auto flex flex-col">{children}</div>
+      <div className="flex-1 overflow-auto flex flex-col pt-14 lg:pt-0">
+        <MobileAppPrompt />
+        {children}
+      </div>
     </div>
   )
 }

@@ -6,53 +6,104 @@ import { Space_Grotesk, Inter } from 'next/font/google'
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], weight: ['500', '700'], variable: '--font-space-grotesk-offer' })
 const inter = Inter({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], variable: '--font-inter-offer' })
 
-const PANELS = [
-  { label: 'Dashboard', banner: 'Pipeline value · 685 leads', big: '$111,811', stats: [['Total Leads', '685'], ['New Leads', '366'], ['Booked', '41'], ['Ad Spend', '$6,038']], row: ['Return on ad spend', '2.88x'] },
-  { label: 'Leads', banner: 'Leads', big: '686', stats: [['Total', '686'], ['New', '367'], ['Booked', '41']], row: null },
-  { label: 'Automations', banner: 'Automations', big: null, stats: null, row: null },
+const NAV_ITEMS = ['Dashboard', 'Leads', 'Calendar', 'Time Clock', 'Map', 'Hosted Forms', 'Form Builder', 'Analytics', 'Media', 'Automations', 'Campaigns', 'Billing & Credits', 'Settings'] as const
+
+// Sample data only — invented names/emails/numbers, not pulled from any real account.
+const SAMPLE_LEADS = [
+  { name: 'Jordan Patel', email: 'jordan.p@example.com', phone: '+1 555-201-4488', quote: '$420' },
+  { name: 'Casey Nguyen', email: 'casey.nguyen@example.com', phone: '+1 555-118-3302', quote: '$610' },
+  { name: 'Maria Chen', email: 'maria.c@example.com', phone: '+1 555-347-9021', quote: '$390' },
+  { name: 'Sam Cooper', email: 'sam.cooper@example.com', phone: '+1 555-902-1187', quote: '$540' },
 ] as const
+
+const PANELS = ['Dashboard', 'Leads', 'Automations'] as const
+type PanelName = typeof PANELS[number]
 
 function ProductPanel() {
   const [i, setI] = useState(0)
   useEffect(() => {
-    const t = setInterval(() => setI((p) => (p + 1) % PANELS.length), 3200)
+    const t = setInterval(() => setI((p) => (p + 1) % PANELS.length), 4400)
     return () => clearInterval(t)
   }, [])
-  const panel = PANELS[i]
+  const active: PanelName = PANELS[i]
+
   return (
     <div className="browser-mock">
       <div className="browser-bar">
         <span className="bdot r" /><span className="bdot y" /><span className="bdot g" />
-        <div className="browser-url">quote-box.com/dashboard</div>
+        <div className="browser-url">quote-box.com/{active.toLowerCase().replace(/\s+/g, '-')}</div>
       </div>
-      <div className="browser-tabs">
-        {PANELS.map((p, idx) => (
-          <span key={p.label} className={`tab ${idx === i ? 'active' : ''}`}>{p.label}</span>
-        ))}
-      </div>
-      <div className="browser-screen">
-        {panel.big ? (
-          <>
-            <div className="ac-banner">{panel.banner}</div>
-            <div className="ac-bignum">{panel.big}</div>
-            <div className="ac-stats-grid">
-              {panel.stats!.map(([l, v]) => (
-                <div className="ac-stat" key={l}><span className="l">{l}</span><span className="v">{v}</span></div>
-              ))}
-            </div>
-            {panel.row && <div className="ac-row"><span>{panel.row[0]}</span><b className="good">{panel.row[1]}</b></div>}
-          </>
-        ) : (
-          <>
-            <div className="ac-banner">Trigger: Any New Lead</div>
-            <div className="auto-card">
-              <div className="auto-card-head">Instant Contact</div>
-              <div className="auto-bar"><span>Sent</span><div className="bar"><i style={{ width: '100%' }} /></div><b>231</b></div>
-              <div className="auto-bar"><span>Opened</span><div className="bar"><i style={{ width: '19%' }} /></div><b>19%</b></div>
-              <div className="auto-bar"><span>Clicked</span><div className="bar"><i style={{ width: '3%' }} /></div><b>3%</b></div>
-            </div>
-          </>
-        )}
+      <div className="app-shell">
+        <div className="app-sidebar">
+          <div className="sidebar-brand"><span className="qb">QB</span>QuoteBox</div>
+          {NAV_ITEMS.map((item) => (
+            <div key={item} className={`nav-item ${item === active ? 'active' : ''}`}>{item}</div>
+          ))}
+        </div>
+
+        <div className="app-content">
+          {active === 'Dashboard' && (
+            <>
+              <div className="content-title">Dashboard</div>
+              <div className="content-sub">This Month</div>
+              <div className="pipeline-label">PIPELINE VALUE · 22 LEADS</div>
+              <div className="pipeline-big">$9,270</div>
+              <div className="live-banner">
+                <span className="live-dot" />Your quote form is live!
+                <span className="live-url">quote-box.com/sample-moving-co</span>
+              </div>
+              <div className="today-row">
+                <div>
+                  <div className="today-label">Today</div>
+                  {SAMPLE_LEADS.slice(0, 2).map((l) => (
+                    <div className="today-lead" key={l.name}><span className="avatar">{l.name.split(' ').map((n) => n[0]).join('')}</span>{l.name}</div>
+                  ))}
+                </div>
+              </div>
+              <div className="stat-grid">
+                {[['Total Leads', '22'], ['New Leads', '14'], ['Booked', '3'], ['Ad Spend', '$412']].map(([l, v]) => (
+                  <div className="stat-tile" key={l}><span className="l">{l}</span><span className="v">{v}</span></div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {active === 'Leads' && (
+            <>
+              <div className="content-title">Leads</div>
+              <div className="content-sub">Sample Moving Co.</div>
+              <div className="stat-grid three">
+                {[['Total Leads', '22'], ['New Leads', '14'], ['Booked', '3']].map(([l, v]) => (
+                  <div className="stat-tile" key={l}><span className="l">{l}</span><span className="v">{v}</span></div>
+                ))}
+              </div>
+              <div className="lead-table">
+                <div className="lead-row head"><span>Name</span><span>Email</span><span>Phone</span><span>Quote</span></div>
+                {SAMPLE_LEADS.map((l) => (
+                  <div className="lead-row" key={l.name}><span>{l.name}</span><span>{l.email}</span><span>{l.phone}</span><span>{l.quote}</span></div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {active === 'Automations' && (
+            <>
+              <div className="content-title">Automations</div>
+              <div className="content-sub">Nurture every lead from first touch to close.</div>
+              <div className="trigger-card">
+                <div className="trigger-label">TRIGGER</div>
+                <div className="trigger-name">Any New Lead</div>
+                <div className="trigger-sub">Meta or hosted form</div>
+              </div>
+              <div className="auto-card">
+                <div className="auto-card-head">Instant Contact<span className="tag">Email</span><span className="tag">SMS</span></div>
+                <div className="auto-bar"><span>Sent</span><div className="bar"><i style={{ width: '100%' }} /></div><b>184</b></div>
+                <div className="auto-bar"><span>Opened</span><div className="bar"><i style={{ width: '31%' }} /></div><b>31%</b></div>
+                <div className="auto-bar"><span>Clicked</span><div className="bar"><i style={{ width: '6%' }} /></div><b>6%</b></div>
+              </div>
+            </>
+          )}
+        </div>
       </div>
       <style jsx>{`
         .browser-mock{position:relative;border-radius:16px;overflow:hidden;background:#0c0a16;border:1px solid var(--line);box-shadow:0 40px 90px -35px rgba(0,0,0,0.7);}
@@ -60,25 +111,58 @@ function ProductPanel() {
         .bdot{width:11px;height:11px;border-radius:50%;flex:0 0 auto;}
         .bdot.r{background:#ff5f57;} .bdot.y{background:#febc2e;} .bdot.g{background:#28c840;}
         .browser-url{margin-left:10px;background:rgba(255,255,255,0.06);padding:5px 16px;border-radius:7px;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-        .browser-tabs{display:flex;gap:2px;padding:10px 14px;background:#100c20;border-bottom:1px solid var(--line);overflow-x:auto;}
-        .tab{background:none;border:none;color:var(--muted);font-size:12.5px;font-weight:600;padding:8px 13px;border-radius:8px;white-space:nowrap;transition:color .3s, background .3s;}
-        .tab.active{color:#fff;background:var(--primary);}
-        .browser-screen{position:relative;width:100%;min-height:280px;background:#f4f3fa;padding:20px 22px;color:#1c1830;}
-        .ac-banner{font-size:11px;color:#8b86a8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
-        .ac-bignum{font-family: var(--font-space-grotesk-offer), sans-serif;font-weight:700;font-size:28px;margin-bottom:16px;}
-        .ac-stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
-        .ac-stat{background:#fff;border-radius:9px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;box-shadow:0 1px 3px rgba(0,0,0,.05);min-width:0;}
-        .ac-stat .l{font-size:10px;color:#8b86a8;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-        .ac-stat .v{font-family: var(--font-space-grotesk-offer), sans-serif;font-weight:700;font-size:15px;color:#1c1830;}
-        .ac-row{display:flex;justify-content:space-between;font-size:13px;color:#5d5776;background:#fff;border-radius:9px;padding:10px 14px;}
-        .good{color:#1a9e6a;font-family: var(--font-space-grotesk-offer), sans-serif;font-weight:700;}
+
+        .app-shell{display:flex;min-height:420px;}
+        .app-sidebar{width:150px;flex:0 0 auto;background:#14111f;padding:16px 12px;display:flex;flex-direction:column;gap:1px;}
+        .sidebar-brand{display:flex;align-items:center;gap:8px;color:#fff;font-weight:700;font-size:12.5px;margin-bottom:16px;padding:0 4px;}
+        .sidebar-brand .qb{width:22px;height:22px;border-radius:6px;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:800;flex:0 0 auto;}
+        .nav-item{padding:7px 8px;border-radius:7px;color:#8b86a8;font-size:10.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .nav-item.active{background:rgba(92,81,214,0.28);color:#fff;}
+
+        .app-content{flex:1;background:#f4f3fa;padding:20px 22px;color:#1c1830;min-width:0;overflow:hidden;}
+        .content-title{font-family: var(--font-space-grotesk-offer), sans-serif;font-weight:700;font-size:19px;}
+        .content-sub{font-size:11.5px;color:#8b86a8;margin-bottom:14px;}
+
+        .pipeline-label{font-size:10px;color:#8b86a8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+        .pipeline-big{font-family: var(--font-space-grotesk-offer), sans-serif;font-weight:700;font-size:28px;margin-bottom:12px;}
+        .live-banner{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#fff;border-radius:9px;padding:10px 14px;font-size:11.5px;font-weight:600;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+        .live-dot{width:7px;height:7px;border-radius:50%;background:#1a9e6a;flex:0 0 auto;}
+        .live-url{font-size:10px;color:#8b86a8;font-weight:500;background:#f4f3fa;border-radius:6px;padding:3px 8px;}
+        .today-row{margin-bottom:14px;}
+        .today-label{font-size:10.5px;font-weight:700;color:#8b86a8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
+        .today-lead{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:600;background:#fff;border-radius:8px;padding:8px 10px;margin-bottom:5px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+        .avatar{width:20px;height:20px;border-radius:50%;background:var(--primary);color:#fff;font-size:8.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+
+        .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+        .stat-grid.three{grid-template-columns:repeat(3,1fr);margin-bottom:14px;}
+        .stat-tile{background:#fff;border-radius:9px;padding:9px 10px;display:flex;flex-direction:column;gap:3px;box-shadow:0 1px 3px rgba(0,0,0,.05);min-width:0;}
+        .stat-tile .l{font-size:9px;color:#8b86a8;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .stat-tile .v{font-family: var(--font-space-grotesk-offer), sans-serif;font-weight:700;font-size:14px;color:#1c1830;}
+
+        .lead-table{background:#fff;border-radius:9px;overflow:hidden;}
+        .lead-row{display:grid;grid-template-columns:1.2fr 1.6fr 1.3fr 0.7fr;gap:8px;padding:8px 12px;font-size:10.5px;border-bottom:1px solid #eeecf5;color:#3a3555;white-space:nowrap;overflow:hidden;}
+        .lead-row span{overflow:hidden;text-overflow:ellipsis;}
+        .lead-row.head{color:#8b86a8;font-size:9px;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid #e3e0ef;font-weight:700;}
+        .lead-row:last-child{border-bottom:none;}
+
+        .trigger-card{background:var(--primary);color:#fff;border-radius:10px;padding:14px 16px;margin-bottom:12px;}
+        .trigger-label{font-size:9px;letter-spacing:.08em;opacity:.85;margin-bottom:2px;}
+        .trigger-name{font-family: var(--font-space-grotesk-offer), sans-serif;font-weight:700;font-size:14px;}
+        .trigger-sub{font-size:10.5px;opacity:.85;}
         .auto-card{background:#fff;border-radius:10px;padding:16px;}
-        .auto-card-head{font-family: var(--font-space-grotesk-offer), sans-serif;font-weight:700;font-size:14px;margin-bottom:12px;}
+        .auto-card-head{display:flex;align-items:center;gap:6px;font-family: var(--font-space-grotesk-offer), sans-serif;font-weight:700;font-size:13px;margin-bottom:12px;}
+        .auto-card-head .tag{font-family: var(--font-inter-offer), sans-serif;font-size:9px;font-weight:700;background:rgba(92,81,214,0.1);color:var(--primary);border-radius:999px;padding:2px 8px;}
         .auto-bar{display:grid;grid-template-columns:52px 1fr 36px;align-items:center;gap:10px;font-size:11px;color:#8b86a8;margin-bottom:10px;}
         .auto-bar .bar{height:6px;background:#eeecf5;border-radius:4px;overflow:hidden;}
         .auto-bar .bar i{display:block;height:100%;background:var(--primary);border-radius:4px;transition:width 1s ease;}
         .auto-bar b{text-align:right;color:#1c1830;font-weight:700;}
-        @media(max-width:560px){ .ac-stats-grid{grid-template-columns:repeat(2,1fr);} }
+
+        @media(max-width:640px){
+          .app-sidebar{width:0;padding:0;overflow:hidden;}
+          .stat-grid{grid-template-columns:repeat(2,1fr);}
+          .lead-row{grid-template-columns:1fr 1fr;}
+          .lead-row span:nth-child(3), .lead-row span:nth-child(4){display:none;}
+        }
       `}</style>
     </div>
   )

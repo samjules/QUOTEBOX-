@@ -89,6 +89,12 @@ export default function Sidebar() {
   const [gamesEnrolled, setGamesEnrolled] = useState(false)
   const [userRole, setUserRole] = useState<'owner' | 'employee'>('owner')
   const [userInitial, setUserInitial] = useState('')
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  // Close the mobile drawer whenever the route changes
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [pathname])
 
   useEffect(() => {
     const supabase = createClient()
@@ -205,10 +211,44 @@ export default function Sidebar() {
   }
 
   return (
-    <div
-      className="w-60 flex-shrink-0 flex flex-col h-full"
-      style={{ background: '#13122b', borderRight: '1px solid rgba(255,255,255,0.07)' }}
-    >
+    <>
+      {/* Mobile top bar — hamburger trigger, only shown below the lg breakpoint */}
+      <div
+        className="lg:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3"
+        style={{ background: '#13122b', borderBottom: '1px solid rgba(255,255,255,0.07)' }}
+      >
+        <div className="flex items-center gap-2.5">
+          <img src="/quotebox_icon.png" alt="QuoteBox" className="w-7 h-7 rounded-lg object-cover flex-shrink-0" />
+          <span className="text-white font-bold text-[14px] leading-none tracking-tight" style={{ fontFamily: "'Nautic', sans-serif" }}>
+            QuoteBox
+          </span>
+        </div>
+        <button
+          onClick={() => setMobileOpen((v) => !v)}
+          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+          className="flex items-center justify-center w-9 h-9 rounded-lg"
+          style={{ background: 'rgba(255,255,255,0.08)', color: '#fff' }}
+        >
+          {mobileOpen ? (
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          ) : (
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+          )}
+        </button>
+      </div>
+
+      {/* Backdrop — closes the drawer on tap, mobile only */}
+      {mobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-40 bg-black/50"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-60 flex-shrink-0 flex flex-col h-full transform transition-transform duration-200 ease-in-out lg:relative lg:z-auto lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        style={{ background: '#13122b', borderRight: '1px solid rgba(255,255,255,0.07)' }}
+      >
       {/* Logo / Brand */}
       <div
         className="flex items-center px-5 py-5 flex-shrink-0"
@@ -282,6 +322,7 @@ export default function Sidebar() {
           Sign out
         </button>
       </div>
-    </div>
+      </div>
+    </>
   )
 }
