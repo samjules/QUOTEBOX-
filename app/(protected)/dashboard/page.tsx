@@ -9,7 +9,7 @@ import AppDownloadBanner from '@/components/AppDownloadBanner'
 import LtvDefaultValueInput from './LtvDefaultValueInput'
 import type { ReactNode } from 'react'
 
-const PLAN_LIMITS: Record<string, number> = { starter: 10, growth: 50 }
+const PLAN_LIMITS: Record<string, number> = { starter: 10, growth: 50, trial: 10 }
 
 type Timeframe = 'today' | 'week' | 'month' | 'year' | 'all'
 
@@ -1135,7 +1135,7 @@ function LeadUsageBanner({
   const pct = Math.min(100, Math.round((monthlyLeads / limit) * 100))
   const isOver = monthlyLeads >= limit
   const isNearing = !isOver && pct >= 80
-  const planLabel = plan === 'growth' ? 'Growth' : 'Starter'
+  const planLabel = plan === 'growth' ? 'Growth' : plan === 'trial' ? 'Trial' : 'Starter'
 
   if (isOver) {
     return (

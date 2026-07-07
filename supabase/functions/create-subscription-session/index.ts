@@ -27,24 +27,99 @@ const PLANS = {
   },
 }
 
+const TRIAL_1_COUPON_ID = 'trial-1-dollar-3mo'
+
+async function ensureTrialCoupon(): Promise<string> {
+  try {
+    await stripe.coupons.retrieve(TRIAL_1_COUPON_ID)
+  } catch (_) {
+    await stripe.coupons.create({
+      id: TRIAL_1_COUPON_ID,
+      amount_off: 3300, // $34.00 - $1.00 = $33.00 off, in cents
+      currency: 'usd',
+      duration: 'repeating',
+      duration_in_months: 3,
+      name: '$1 Trial — first 3 months',
+    })
+  }
+  return TRIAL_1_COUPON_ID
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { plan, accountId, userId, trialDays, successUrl, cancelUrl } = await req.json()
+    const { plan, accountId, userId, trialDays, upsell, successUrl, cancelUrl } = await req.json()
 
     if (!plan || !accountId || !userId) {
       throw new Error('Missing required parameters')
+    }
+
+    const origin = req.headers.get('origin') || 'https://quote-box.com'
+
+    // $1 trial: $34/mo recurring, discounted to $1 for the first 3 months via a repeating coupon,
+    // plus an optional one-time $297 "done for you" setup line in the same checkout session.
+    if (plan === 'trial_1') {
+      const couponId = await ensureTrialCoupon()
+
+      const lineItems: Array<Record<string, unknown>> = [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: 'Quotebox — Monthly',
+              description: '$1/mo for your first 3 months, then $34/mo',
+            },
+            unit_amount: 3400,
+            recurring: { interval: 'month' },
+          },
+          quantity: 1,
+        },
+      ]
+
+      if (upsell === true) {
+        lineItems.push({
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: 'Done-For-You Setup',
+              description: 'One-time setup — SMS/email sequence, CRM pipeline, pricing rules, walkthrough call',
+            },
+            unit_amount: 29700,
+          },
+          quantity: 1,
+        })
+      }
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: lineItems as Stripe.Checkout.SessionCreateParams.LineItem[],
+        mode: 'subscription',
+        discounts: [{ coupon: couponId }],
+        success_url: successUrl || `${origin}/build/confirm?session_id={CHECKOUT_SESSION_ID}&account_id=${accountId}`,
+        cancel_url: cancelUrl || `${origin}/dashboard?checkout=cancelled`,
+        metadata: {
+          accountId,
+          userId,
+          plan,
+          upsell: upsell === true ? 'yes' : 'no',
+        },
+      })
+
+      console.log('Trial checkout session created:', session.id, 'upsell:', upsell === true)
+
+      return new Response(
+        JSON.stringify({ sessionId: session.id, url: session.url }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      )
     }
 
     const planConfig = PLANS[plan as keyof typeof PLANS]
     if (!planConfig) {
       throw new Error(`Invalid plan: ${plan}`)
     }
-
-    const origin = req.headers.get('origin') || 'https://quote-box.com'
 
     const resolvedTrialDays: number | undefined =
       typeof trialDays === 'number' ? trialDays : undefined

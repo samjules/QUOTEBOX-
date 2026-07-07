@@ -14,6 +14,8 @@ export interface Account {
   stripe_connect_account_id?: string | null
   stripe_connect_completed_at?: string | null
   agreement_template_url?: string | null
+  logo_url?: string | null
+  upsell_purchased_at?: string | null
 }
 
 export interface FieldOption {
@@ -157,7 +159,7 @@ export interface Billing {
   account_id: string
   credit_balance: number
   total_spent: number
-  plan: 'pro' | 'starter' | 'growth' | 'fully_managed' | 'pay_per_lead' | null
+  plan: 'pro' | 'starter' | 'growth' | 'fully_managed' | 'pay_per_lead' | 'trial' | null
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
   trial_ends_at: string | null

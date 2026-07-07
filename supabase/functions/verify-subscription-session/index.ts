@@ -15,9 +15,10 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 )
 
-const PLAN_MAP: Record<string, 'pro' | 'pay_per_lead'> = {
+const PLAN_MAP: Record<string, 'pro' | 'pay_per_lead' | 'trial'> = {
   pro: 'pro',
   ppl_onboarding: 'pay_per_lead',
+  trial_1: 'trial',
 }
 
 const corsHeaders = {
@@ -100,7 +101,7 @@ serve(async (req) => {
     console.log(`Billing updated for account ${accountId} — plan: ${mappedPlan}`)
 
     return new Response(
-      JSON.stringify({ success: true, plan: mappedPlan, trial_ends_at: trialEndsAt }),
+      JSON.stringify({ success: true, plan: mappedPlan, trial_ends_at: trialEndsAt, upsell: session.metadata?.upsell ?? 'no' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
   } catch (error) {
