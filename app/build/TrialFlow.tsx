@@ -13,13 +13,8 @@ type ServiceId = typeof SERVICE_TYPES[number]['id']
 
 function fid() { return Math.random().toString(36).slice(2, 9) }
 
-const DEFAULT_TIERS: Record<ServiceId, Array<{ label: string; rate: string; hours: string }>> = {
-  moving: [
-    { label: 'Studio / 1 Bedroom', rate: '120', hours: '3' },
-    { label: '2–3 Bedrooms', rate: '120', hours: '5' },
-    { label: '4+ Bedrooms', rate: '150', hours: '8' },
-  ],
-}
+const TIER_LABELS = ['Studio / 1 Bedroom', '2–3 Bedrooms', '4+ Bedrooms']
+const TIER_HOURS = [3, 5, 8]
 
 const DEFAULT_EXTRAS: Record<ServiceId, Array<{ label: string; price: string }>> = {
   moving: [
@@ -29,29 +24,33 @@ const DEFAULT_EXTRAS: Record<ServiceId, Array<{ label: string; price: string }>>
   ],
 }
 
-const DEFAULT_RADIUS_TIERS = [
-  { maxMiles: 20, driveCharge: 50 },
-  { maxMiles: 40, driveCharge: 100 },
-  { maxMiles: null as number | null, driveCharge: 175 },
+interface RadiusTierDraft { id: string; maxMiles: number | null; driveCharge: number }
+
+const DEFAULT_RADIUS_TIERS: RadiusTierDraft[] = [
+  { id: fid(), maxMiles: 20, driveCharge: 50 },
+  { id: fid(), maxMiles: 40, driveCharge: 100 },
+  { id: fid(), maxMiles: null, driveCharge: 175 },
 ]
 
-function generateFields(service: ServiceId): FormField[] {
+function generateFields(service: ServiceId, hourlyRate: number, chargeDrive: boolean, radiusTiers: RadiusTierDraft[]): FormField[] {
   const fields: FormField[] = []
 
   fields.push({
     id: fid(), type: 'radio',
     label: 'Home Size',
     required: true, showPrices: true,
-    options: DEFAULT_TIERS[service].map((t) => ({ id: fid(), label: t.label, price: parseFloat(t.rate) || 0, hours: parseFloat(t.hours) || 1 })),
+    options: TIER_LABELS.map((label, i) => ({ id: fid(), label, price: hourlyRate * TIER_HOURS[i], hours: TIER_HOURS[i] })),
   })
 
-  fields.push({
-    id: fid(), type: 'route',
-    label: 'Moving Route',
-    required: true, routeChargeType: 'radius_tiers',
-    locationMode: 'point_to_point',
-    radiusTiers: DEFAULT_RADIUS_TIERS.map((r) => ({ id: fid(), maxMiles: r.maxMiles, driveCharge: r.driveCharge })),
-  } as FormField)
+  if (chargeDrive) {
+    fields.push({
+      id: fid(), type: 'route',
+      label: 'Moving Route',
+      required: true, routeChargeType: 'radius_tiers',
+      locationMode: 'point_to_point',
+      radiusTiers: radiusTiers.map((r) => ({ id: r.id, maxMiles: r.maxMiles, driveCharge: r.driveCharge })),
+    } as FormField)
+  }
 
   fields.push({
     id: fid(), type: 'checkbox', label: 'Add-ons', required: false,
@@ -69,7 +68,7 @@ function toSlug(name: string) {
 
 const COLOR_PRESETS = ['#F97316', '#374151', '#0e0020', '#22C55E', '#3B82F6', '#8B5CF6', '#EF4444', '#0EA5E9']
 
-type Phase = 'landing' | 'build' | 'upsell' | 'account'
+type Phase = 'landing' | 'build' | 'rate' | 'drive' | 'upsell' | 'account'
 
 export default function TrialFlow() {
   const [phase, setPhase] = useState<Phase>('landing')
@@ -81,6 +80,23 @@ export default function TrialFlow() {
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreviewUrl, setLogoPreviewUrl] = useState('')
   const logoInputRef = useRef<HTMLInputElement>(null)
+
+  // Hourly rate step
+  const [hourlyRate, setHourlyRate] = useState('120')
+
+  // Drive time step
+  const [chargeDrive, setChargeDrive] = useState(true)
+  const [radiusTiers, setRadiusTiers] = useState<RadiusTierDraft[]>(DEFAULT_RADIUS_TIERS)
+  const [avgMph, setAvgMph] = useState('')
+
+  function setRadiusField(id: string, key: 'maxMiles' | 'driveCharge', val: string) {
+    setRadiusTiers((p) => p.map((r) => r.id === id
+      ? { ...r, [key]: key === 'maxMiles' ? (val === '' ? null : Number(val)) : Number(val) }
+      : r
+    ))
+  }
+  function addZone() { setRadiusTiers((p) => [...p, { id: fid(), maxMiles: null, driveCharge: 0 }]) }
+  function removeZone(id: string) { setRadiusTiers((p) => p.filter((r) => r.id !== id)) }
 
   // Upsell step
   const [upsell, setUpsell] = useState(false)
@@ -142,12 +158,18 @@ export default function TrialFlow() {
       }
     }
 
+    // Average local driving speed, reused for every future quote's drive-time calc.
+    if (chargeDrive && avgMph.trim()) {
+      const clampedMph = Math.min(80, Math.max(10, parseInt(avgMph, 10) || 35))
+      await supabase.from('accounts').update({ avg_driving_mph: clampedMph }).eq('id', accountId)
+    }
+
     const baseSlug = toSlug(businessName.trim())
     let slug = baseSlug
     const { data: conflicts } = await supabase.from('hosted_forms').select('id').eq('form_config->>slug', slug)
     if ((conflicts ?? []).length > 0) slug = `${baseSlug}-${Math.random().toString(36).slice(2, 5)}`
 
-    const fields = generateFields(serviceType)
+    const fields = generateFields(serviceType, parseFloat(hourlyRate) || 0, chargeDrive, radiusTiers)
     const formConfig = {
       slug,
       description: `Get an instant quote for your ${SERVICE_TYPES.find((s) => s.id === serviceType)!.label.toLowerCase()} job.`,
@@ -210,7 +232,7 @@ export default function TrialFlow() {
       <div style={pageStyle}>
         <div style={cardStyle}>
           <div style={bodyStyle}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#5c51d6', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Step 1 of 3</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#5c51d6', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Step 1 of 5</div>
             <h2 style={{ fontSize: 24, margin: '0 0 6px' }}>Build your instant quote form</h2>
             <p style={{ color: '#8b86a8', fontSize: 14.5, margin: '0 0 26px', lineHeight: 1.5 }}>This is what your customers will see once you&apos;re live.</p>
 
@@ -285,10 +307,134 @@ export default function TrialFlow() {
             <button
               style={{ ...btnPrimary, opacity: businessName.trim().length > 1 && serviceType ? 1 : 0.4, cursor: businessName.trim().length > 1 && serviceType ? 'pointer' : 'default' }}
               disabled={!(businessName.trim().length > 1 && serviceType !== null)}
-              onClick={() => setPhase('upsell')}
+              onClick={() => setPhase('rate')}
             >
               Continue →
             </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (phase === 'rate') {
+    return (
+      <div style={pageStyle}>
+        <div style={cardStyle}>
+          <div style={bodyStyle}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#5c51d6', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Step 2 of 5</div>
+            <h2 style={{ fontSize: 24, margin: '0 0 6px' }}>What do you charge per hour?</h2>
+            <p style={{ color: '#8b86a8', fontSize: 14.5, margin: '0 0 26px', lineHeight: 1.5 }}>This is your base labor rate. We&apos;ll use it to price the Studio/1BR, 2–3BR, and 4+BR options on your form.</p>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: '2rem', fontWeight: 800, color: '#8b86a8' }}>$</span>
+              <input
+                type="number" min={0} step={5} autoFocus
+                value={hourlyRate}
+                onChange={(e) => setHourlyRate(e.target.value)}
+                style={{ ...inputStyle, fontSize: '2rem', fontWeight: 800, padding: '14px 16px', maxWidth: 160, textAlign: 'center' as const }}
+              />
+              <span style={{ fontSize: '1.1rem', color: '#8b86a8', fontWeight: 600 }}>/hr</span>
+            </div>
+            <div style={{ marginTop: 14, fontSize: 13, color: '#8b86a8', lineHeight: 1.5 }}>
+              Not sure? Most moving companies charge $80–$150/hr.
+            </div>
+          </div>
+          <div style={footStyle}>
+            <button style={btnGhost} onClick={() => setPhase('build')}>Back</button>
+            <button
+              style={{ ...btnPrimary, opacity: !hourlyRate || parseFloat(hourlyRate) <= 0 ? 0.4 : 1 }}
+              disabled={!hourlyRate || parseFloat(hourlyRate) <= 0}
+              onClick={() => setPhase('drive')}
+            >
+              Continue →
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (phase === 'drive') {
+    return (
+      <div style={pageStyle}>
+        <div style={cardStyle}>
+          <div style={bodyStyle}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#5c51d6', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Step 3 of 5</div>
+            <h2 style={{ fontSize: 24, margin: '0 0 6px' }}>Do you charge extra for drive time?</h2>
+            <p style={{ color: '#8b86a8', fontSize: 14.5, margin: '0 0 20px', lineHeight: 1.5 }}>Some companies add a fee based on how far the job is from their location.</p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: chargeDrive ? 20 : 0 }}>
+              {[
+                { val: true, label: 'Yes — I charge by distance', desc: 'Set a fee for different distance zones' },
+                { val: false, label: 'No — drive time is included in my rate', desc: "Distance doesn't affect the quote" },
+              ].map((opt) => (
+                <button
+                  key={String(opt.val)}
+                  onClick={() => setChargeDrive(opt.val)}
+                  style={{
+                    width: '100%', padding: '16px 18px', borderRadius: 11, textAlign: 'left', cursor: 'pointer',
+                    border: `2px solid ${chargeDrive === opt.val ? '#5c51d6' : '#e3e0ef'}`,
+                    background: chargeDrive === opt.val ? 'rgba(92,81,214,0.06)' : '#fff',
+                  }}
+                >
+                  <div style={{ fontSize: 14.5, fontWeight: 700, color: chargeDrive === opt.val ? '#5c51d6' : '#1c1830' }}>{opt.label}</div>
+                  <div style={{ fontSize: 12.5, color: '#8b86a8', marginTop: 3 }}>{opt.desc}</div>
+                </button>
+              ))}
+            </div>
+
+            {chargeDrive && (
+              <div>
+                <div style={{ fontSize: 11.5, fontWeight: 700, color: '#8b86a8', letterSpacing: '0.04em', textTransform: 'uppercase' as const, marginBottom: 10 }}>Your distance zones</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 28px', gap: 6, marginBottom: 6 }}>
+                  <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#8b86a8', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Up to (miles)</span>
+                  <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#8b86a8', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Add to quote</span>
+                  <span />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                  {radiusTiers.map((r, i) => (
+                    <div key={r.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 28px', gap: 6, alignItems: 'center' }}>
+                      <input
+                        type="number" min={1} placeholder={i === radiusTiers.length - 1 ? 'Any distance' : '20'}
+                        value={r.maxMiles ?? ''}
+                        onChange={(e) => setRadiusField(r.id, 'maxMiles', e.target.value)}
+                        disabled={i === radiusTiers.length - 1}
+                        style={{ ...inputStyle, padding: '8px 10px', fontSize: '0.85rem', opacity: i === radiusTiers.length - 1 ? 0.5 : 1 }}
+                      />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span style={{ color: '#8b86a8', flexShrink: 0 }}>$</span>
+                        <input type="number" min={0} placeholder="50" value={r.driveCharge || ''} onChange={(e) => setRadiusField(r.id, 'driveCharge', e.target.value)} style={{ ...inputStyle, padding: '8px 8px', fontSize: '0.85rem' }} />
+                      </div>
+                      <button onClick={() => removeZone(r.id)} disabled={radiusTiers.length <= 1} style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid #e3e0ef', background: 'none', color: '#8b86a8', fontSize: '0.76rem', cursor: radiusTiers.length <= 1 ? 'default' : 'pointer', opacity: radiusTiers.length <= 1 ? 0.3 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={addZone} style={{ marginTop: 8, padding: '8px 0', width: '100%', borderRadius: 8, border: '1px dashed #e3e0ef', background: 'none', color: '#5c51d6', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>+ Add zone</button>
+                <div style={{ marginTop: 4, fontSize: '0.7rem', color: '#8b86a8' }}>Last row = any distance beyond your other zones.</div>
+
+                <div style={{ marginTop: 20, paddingTop: 18, borderTop: '1px solid #e3e0ef' }}>
+                  <label style={fieldLabel}>Average speed (mph)</label>
+                  <div style={{ fontSize: '0.78rem', color: '#8b86a8', marginBottom: 10, lineHeight: 1.5 }}>
+                    How many miles can you typically drive in one hour in your area? We use this — not the map API&apos;s own time estimate, which isn&apos;t reliable — to turn the distance to a job into an accurate drive time.
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <input
+                      type="number" min={10} max={80}
+                      placeholder="e.g. 35–45"
+                      value={avgMph}
+                      onChange={(e) => setAvgMph(e.target.value)}
+                      style={{ ...inputStyle, maxWidth: 140 }}
+                    />
+                    <span style={{ fontSize: '0.85rem', color: '#8b86a8', fontWeight: 600 }}>mph</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          <div style={footStyle}>
+            <button style={btnGhost} onClick={() => setPhase('rate')}>Back</button>
+            <button style={btnPrimary} onClick={() => setPhase('upsell')}>Continue →</button>
           </div>
         </div>
       </div>
@@ -300,7 +446,7 @@ export default function TrialFlow() {
       <div style={pageStyle}>
         <div style={cardStyle}>
           <div style={{ ...bodyStyle, alignItems: 'center', textAlign: 'center', justifyContent: 'center' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#5c51d6', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 16, alignSelf: 'flex-start' }}>Step 2 of 3</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#5c51d6', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 16, alignSelf: 'flex-start' }}>Step 4 of 5</div>
             <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(92,81,214,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h7l-1 8 11-14h-7l1-6z" fill="#5c51d6" /></svg>
             </div>
@@ -331,7 +477,7 @@ export default function TrialFlow() {
     <div style={pageStyle}>
       <div style={cardStyle}>
         <div style={bodyStyle}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#5c51d6', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Step 3 of 3</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#5c51d6', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Step 5 of 5</div>
           <h2 style={{ fontSize: 24, margin: '0 0 6px' }}>Create your account</h2>
           <p style={{ color: '#8b86a8', fontSize: 14.5, margin: '0 0 26px', lineHeight: 1.5 }}>
             Your form is ready. Next, you&apos;ll be sent to secure checkout for your $1 trial{upsell ? ' plus the done-for-you setup' : ''}.
