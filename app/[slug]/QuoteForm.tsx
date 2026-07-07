@@ -460,6 +460,39 @@ function RouteStop({ dotColor, bg, border, textColor, label, tag }: {
   )
 }
 
+// Distance + drive time, called out as its own card so it's never missed —
+// drive time here is always distance / the business's average local driving
+// speed, not the routing API's own (unreliable) duration estimate.
+function TripStats({ miles, minutes, priceContribution, hidePrices, currency, accentColor }: {
+  miles: number; minutes: number; priceContribution: number; hidePrices?: boolean; currency: string; accentColor: string
+}) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'stretch',
+      background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: 14, overflow: 'hidden',
+    }}>
+      <div style={{ flex: 1, padding: '11px 16px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <span style={{ fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#94a3b8' }}>Distance</span>
+        <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.15 }}>
+          {miles.toFixed(1)}<span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', marginLeft: 3 }}>mi</span>
+        </span>
+      </div>
+      <div style={{ width: 1, background: '#e2e8f0', flexShrink: 0 }} />
+      <div style={{ flex: 1, padding: '11px 16px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <span style={{ fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#94a3b8' }}>Drive time</span>
+        <span style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.15 }}>
+          ~{Math.round(minutes)}<span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748b', marginLeft: 3 }}>min</span>
+        </span>
+      </div>
+      {!hidePrices && priceContribution > 0 && (
+        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', padding: '0 16px', background: `${accentColor}16` }}>
+          <span style={{ fontSize: '0.95rem', color: '#059669', fontWeight: 800, whiteSpace: 'nowrap' }}>+{currency}{priceContribution.toFixed(2)}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function RouteLeg({ leg, isTravel }: { leg: LegInfo | undefined; isTravel: boolean }) {
   if (!leg) return null
   return (
@@ -909,27 +942,16 @@ function RouteField({
 
 {/* Travel fee banner hidden — charges still apply but we don't show base mileage to customers */}
 
-                {/* Distance — always show only customer-to-customer job leg */}
+                {/* Distance + drive time — always show only customer-to-customer job leg */}
                 {routeInfo && (
-                  <div style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '8px 12px', background: '#f1f5f9', borderRadius: 8, border: '1px solid #cbd5e1',
-                  }}>
-                    <span style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 700 }}>
-                      Distance
-                    </span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: '0.82rem', color: '#334155', fontWeight: 700 }}>
-                        {(jobLeg ? jobLeg.distanceMiles : routeInfo.distanceMiles).toFixed(1)} mi
-                        <span style={{ color: '#64748b', fontWeight: 500 }}> · ~{Math.round(jobLeg ? jobLeg.durationMinutes : routeInfo.durationMinutes)} min</span>
-                      </span>
-                      {!hidePrices && priceContribution > 0 && (
-                        <span style={{ fontSize: '0.85rem', color: '#059669', fontWeight: 700 }}>
-                          +{currency}{priceContribution.toFixed(2)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  <TripStats
+                    miles={jobLeg ? jobLeg.distanceMiles : routeInfo.distanceMiles}
+                    minutes={jobLeg ? jobLeg.durationMinutes : routeInfo.durationMinutes}
+                    priceContribution={priceContribution}
+                    hidePrices={hidePrices}
+                    currency={currency}
+                    accentColor={accentColor}
+                  />
                 )}
               </div>
             )
@@ -943,20 +965,14 @@ function RouteField({
                   label={endQuery || 'Destination'} tag="" />
               </div>
               {routeInfo && (
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 14, padding: '9px 14px',
-                  background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0', flexWrap: 'wrap',
-                }}>
-                  <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>
-                    📍 {routeInfo.distanceMiles.toFixed(1)} mi
-                    <span style={{ color: '#64748b', fontWeight: 500 }}> · ~{Math.round(routeInfo.durationMinutes)} min</span>
-                  </span>
-                  {!hidePrices && priceContribution > 0 && (
-                    <span style={{ marginLeft: 'auto', fontSize: '0.88rem', color: '#059669', fontWeight: 700 }}>
-                      +{currency}{priceContribution.toFixed(2)}
-                    </span>
-                  )}
-                </div>
+                <TripStats
+                  miles={routeInfo.distanceMiles}
+                  minutes={routeInfo.durationMinutes}
+                  priceContribution={priceContribution}
+                  hidePrices={hidePrices}
+                  currency={currency}
+                  accentColor={accentColor}
+                />
               )}
             </>
           ) : null}
@@ -1345,21 +1361,22 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
   const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '14px 16px',
-    borderRadius: 12,
-    border: '2px solid #e2e8f0',
+    borderRadius: 13,
+    border: '1.5px solid #e2e8f0',
     fontSize: '0.95rem',
     outline: 'none',
     boxSizing: 'border-box',
     fontFamily: 'inherit',
     color: '#0f172a',
-    background: 'white',
-    transition: 'border-color 0.15s',
+    background: '#fbfcfe',
+    boxShadow: '0 1px 2px rgba(15,23,42,0.03)',
+    transition: 'border-color 0.15s, box-shadow 0.15s',
   }
 
   const continueBtn: React.CSSProperties = {
     width: '100%',
     padding: '17px',
-    borderRadius: 14,
+    borderRadius: 16,
     border: 'none',
     background: accentBg,
     color: accentFg,
@@ -1369,6 +1386,8 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
     fontFamily: 'inherit',
     letterSpacing: '0.01em',
     marginTop: 20,
+    boxShadow: `0 10px 24px -8px ${accentBg}80, 0 2px 6px rgba(15,23,42,0.06)`,
+    transition: 'transform 0.12s ease, box-shadow 0.12s ease',
   }
 
   const backBtn: React.CSSProperties = {
@@ -1376,11 +1395,12 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
     background: 'none',
     border: 'none',
     color: '#94a3b8',
-    fontSize: '0.85rem',
+    fontSize: '0.83rem',
     cursor: 'pointer',
     padding: '10px 0 0',
     fontFamily: 'inherit',
-    fontWeight: 500,
+    fontWeight: 600,
+    letterSpacing: '0.01em',
   }
 
   return (
@@ -1436,8 +1456,9 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
         width: '100%',
         maxWidth: 520,
         background: 'white',
-        borderRadius: 22,
-        boxShadow: '0 4px 6px rgba(0,0,0,0.04), 0 20px 60px rgba(0,0,0,0.13)',
+        borderRadius: 26,
+        border: '1px solid rgba(15,23,42,0.05)',
+        boxShadow: '0 2px 5px rgba(15,23,42,0.05), 0 24px 64px -12px rgba(15,23,42,0.22)',
         overflow: 'hidden',
       }}>
 
