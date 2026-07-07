@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
       name, email, phone,
       hasJunkOrMovingCompany, canSpend50PerDay, willingIosApp,
       scheduled_date, scheduled_time,
-      funnel,
+      funnel, demo_variant,
     } = body
 
     if (!name || !email || !phone) {
@@ -61,6 +61,7 @@ export async function POST(req: NextRequest) {
       scheduled_time,
       scheduled_at: scheduledAt.toISOString(),
       funnel: funnel === 'demo' ? 'demo' : 'free_trial',
+      demo_variant: demo_variant === 'quote_form' || demo_variant === 'ios_app' ? demo_variant : null,
     }).select().single()
 
     if (error) {
