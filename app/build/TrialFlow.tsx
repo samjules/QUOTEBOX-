@@ -5,9 +5,9 @@ import { createClient } from '@/lib/supabase/client'
 import type { FormField } from '@/lib/types'
 import TrialLanding from './TrialLanding'
 
+// Junk removal is hidden for now — focusing on moving only.
 const SERVICE_TYPES = [
   { id: 'moving', label: 'Moving', desc: 'Local & long-distance residential moves', color: '#F97316' },
-  { id: 'junk_removal', label: 'Junk Removal', desc: 'Haul-away, cleanouts & debris removal', color: '#374151' },
 ] as const
 type ServiceId = typeof SERVICE_TYPES[number]['id']
 
@@ -19,11 +19,6 @@ const DEFAULT_TIERS: Record<ServiceId, Array<{ label: string; rate: string; hour
     { label: '2–3 Bedrooms', rate: '120', hours: '5' },
     { label: '4+ Bedrooms', rate: '150', hours: '8' },
   ],
-  junk_removal: [
-    { label: '1/4 Truck Load', rate: '100', hours: '2' },
-    { label: '1/2 Truck Load', rate: '100', hours: '3' },
-    { label: 'Full Truck Load', rate: '120', hours: '4' },
-  ],
 }
 
 const DEFAULT_EXTRAS: Record<ServiceId, Array<{ label: string; price: string }>> = {
@@ -31,11 +26,6 @@ const DEFAULT_EXTRAS: Record<ServiceId, Array<{ label: string; price: string }>>
     { label: 'Packing & Unpacking', price: '150' },
     { label: 'Piano / Heavy Items', price: '100' },
     { label: 'Long Carry (>75 ft)', price: '75' },
-  ],
-  junk_removal: [
-    { label: 'Same-day service', price: '50' },
-    { label: 'Heavy items (piano)', price: '75' },
-    { label: 'Appliance removal', price: '50' },
   ],
 }
 
@@ -50,16 +40,16 @@ function generateFields(service: ServiceId): FormField[] {
 
   fields.push({
     id: fid(), type: 'radio',
-    label: service === 'moving' ? 'Home Size' : 'Load Size',
+    label: 'Home Size',
     required: true, showPrices: true,
     options: DEFAULT_TIERS[service].map((t) => ({ id: fid(), label: t.label, price: parseFloat(t.rate) || 0, hours: parseFloat(t.hours) || 1 })),
   })
 
   fields.push({
     id: fid(), type: 'route',
-    label: service === 'moving' ? 'Moving Route' : 'Pickup Location',
+    label: 'Moving Route',
     required: true, routeChargeType: 'radius_tiers',
-    locationMode: service === 'junk_removal' ? 'single' : 'point_to_point',
+    locationMode: 'point_to_point',
     radiusTiers: DEFAULT_RADIUS_TIERS.map((r) => ({ id: fid(), maxMiles: r.maxMiles, driveCharge: r.driveCharge })),
   } as FormField)
 
@@ -86,7 +76,7 @@ export default function TrialFlow() {
 
   // Build step
   const [businessName, setBusinessName] = useState('')
-  const [serviceType, setServiceType] = useState<ServiceId | null>(null)
+  const [serviceType] = useState<ServiceId>('moving')
   const [brandColor, setBrandColor] = useState('#F97316')
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreviewUrl, setLogoPreviewUrl] = useState('')
@@ -100,11 +90,6 @@ export default function TrialFlow() {
   const [password, setPassword] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
-
-  function selectService(id: ServiceId, color: string) {
-    setServiceType(id)
-    setBrandColor(color)
-  }
 
   function handleLogoSelect(file: File) {
     const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
@@ -236,25 +221,6 @@ export default function TrialFlow() {
                   <input style={inputStyle} type="text" placeholder="e.g. Titan Tuff Moving" value={businessName} onChange={(e) => setBusinessName(e.target.value)} autoFocus />
                 </div>
                 <div style={{ marginBottom: 18 }}>
-                  <label style={fieldLabel}>Service type</label>
-                  <div style={{ display: 'flex', gap: 10 }}>
-                    {SERVICE_TYPES.map((s) => (
-                      <button
-                        key={s.id}
-                        onClick={() => selectService(s.id, s.color)}
-                        style={{
-                          flex: 1, border: `1.5px solid ${serviceType === s.id ? '#5c51d6' : '#e3e0ef'}`, borderRadius: 10, padding: 12,
-                          textAlign: 'center', fontSize: 13.5, fontWeight: 600, cursor: 'pointer',
-                          color: serviceType === s.id ? '#5c51d6' : '#8b86a8',
-                          background: serviceType === s.id ? 'rgba(92,81,214,0.06)' : '#fff',
-                        }}
-                      >
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div style={{ marginBottom: 18 }}>
                   <label style={fieldLabel}>Brand color</label>
                   <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
                     {COLOR_PRESETS.map((c) => (
@@ -297,16 +263,16 @@ export default function TrialFlow() {
                     </div>
                     <div style={{ padding: 12, flex: 1 }}>
                       <div style={{ fontSize: 9, color: '#8b86a8', textTransform: 'uppercase', letterSpacing: '.05em', fontWeight: 700, marginBottom: 8 }}>
-                        {serviceType === 'junk_removal' ? 'What are you getting rid of?' : 'Home Size'}
+                        Home Size
                       </div>
                       <div style={{ border: '1.5px solid #e3e0ef', borderRadius: 9, padding: '9px 10px', fontSize: 11, fontWeight: 600, color: '#2b2640', marginBottom: 7 }}>
-                        {serviceType === 'junk_removal' ? 'A few small items' : 'Studio / 1 Bed'}
+                        Studio / 1 Bed
                       </div>
                       <div style={{ border: `1.5px solid ${brandColor}`, background: `${brandColor}0f`, color: brandColor, borderRadius: 9, padding: '9px 10px', fontSize: 11, fontWeight: 600, marginBottom: 7 }}>
-                        {serviceType === 'junk_removal' ? 'A few large items' : '2 Bedrooms'}
+                        2 Bedrooms
                       </div>
                       <div style={{ border: '1.5px solid #e3e0ef', borderRadius: 9, padding: '9px 10px', fontSize: 11, fontWeight: 600, color: '#2b2640' }}>
-                        {serviceType === 'junk_removal' ? 'Full truck load' : '3 Bedrooms'}
+                        3 Bedrooms
                       </div>
                     </div>
                   </div>

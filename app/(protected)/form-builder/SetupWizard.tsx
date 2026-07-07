@@ -5,9 +5,9 @@ import { createClient } from '@/lib/supabase/client'
 import type { FormField, QuizConfig } from '@/lib/types'
 import QuizBuilder, { makeDefaultQuizConfig } from './QuizBuilder'
 
+// Junk removal is hidden for now — focusing on moving only.
 const SERVICE_TYPES = [
   { id: 'moving',       label: 'Moving',       desc: 'Local & long-distance residential moves', color: '#F97316' },
-  { id: 'junk_removal', label: 'Junk Removal',  desc: 'Haul-away, cleanouts & debris removal',   color: '#374151' },
 ] as const
 type ServiceId = typeof SERVICE_TYPES[number]['id']
 
@@ -24,11 +24,6 @@ const DEFAULT_TIERS: Record<ServiceId, Array<Omit<ServiceTier, 'id'>>> = {
     { label: '2–3 Bedrooms',       rate: '120', hours: '5' },
     { label: '4+ Bedrooms',        rate: '150', hours: '8' },
   ],
-  junk_removal: [
-    { label: '1/4 Truck Load',  rate: '100', hours: '2' },
-    { label: '1/2 Truck Load',  rate: '100', hours: '3' },
-    { label: 'Full Truck Load', rate: '120', hours: '4' },
-  ],
 }
 
 const DEFAULT_EXTRAS: Record<ServiceId, Array<Omit<ExtraItem, 'id'>>> = {
@@ -36,11 +31,6 @@ const DEFAULT_EXTRAS: Record<ServiceId, Array<Omit<ExtraItem, 'id'>>> = {
     { label: 'Packing & Unpacking', price: '150' },
     { label: 'Piano / Heavy Items', price: '100' },
     { label: 'Long Carry (>75 ft)', price: '75'  },
-  ],
-  junk_removal: [
-    { label: 'Same-day service',    price: '50' },
-    { label: 'Heavy items (piano)', price: '75' },
-    { label: 'Appliance removal',   price: '50' },
   ],
 }
 
@@ -77,7 +67,7 @@ function generateFields(
       id: fid(), type: 'route',
       label: service === 'moving' ? 'Moving Route' : 'Pickup Location',
       required: true, routeChargeType: 'radius_tiers',
-      locationMode: service === 'junk_removal' ? 'single' : 'point_to_point',
+      locationMode: 'point_to_point',
       radiusTiers: radiusTiers.map((r) => ({ id: r.id, maxMiles: r.maxMiles, driveCharge: r.driveCharge })),
     } as FormField)
   }
@@ -107,7 +97,7 @@ const COLOR_PRESETS = ['#F97316', '#374151', '#0e0020', '#22C55E', '#3B82F6', '#
 interface SetupWizardProps {
   accountId: string
   onCustomize: (formId: string, formName: string, slug: string) => void
-  onAdvanced: () => void
+  onAdvanced?: () => void
   onDone?: (formId: string) => void
 }
 
@@ -435,7 +425,9 @@ export default function SetupWizard({ accountId, onCustomize, onAdvanced, onDone
             </div>
           </div>
           <div style={footerStyle}>
-            <button onClick={onAdvanced} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.8rem', cursor: 'pointer', padding: 0 }}>Advanced builder</button>
+            {onAdvanced ? (
+              <button onClick={onAdvanced} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.8rem', cursor: 'pointer', padding: 0 }}>Advanced builder</button>
+            ) : <div />}
             <button
               className="bb bb-primary"
               disabled={!(businessName.trim().length > 1 && (formCategory === 'quiz' || serviceType !== null))}
