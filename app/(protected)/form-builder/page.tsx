@@ -2183,8 +2183,9 @@ export default function FormBuilderPage() {
   const [quoteDisplay, setQuoteDisplay] = useState<'live' | 'after_submit' | 'hidden'>('live')
   const [editingFormId, setEditingFormId] = useState<string | null>(null)
   const [accountId, setAccountId] = useState<string | null>(null)
-  const [existingForms, setExistingForms] = useState<Array<{ id: string; form_name: string; form_config: { slug?: string } }>>([])
-  const [existingFormsLoading, setExistingFormsLoading] = useState(false)
+  const [existingForms, setExistingForms] = useState<Array<{ id: string; form_name: string; form_config: { slug?: string; brand_color?: string; hero_image_url?: string } }>>([])
+  const [existingFormsLoading, setExistingFormsLoading] = useState(true)
+  const [existingFormForWizard, setExistingFormForWizard] = useState<{ id: string; form_name: string; form_config: { slug?: string; brand_color?: string; hero_image_url?: string } } | null>(null)
   const [quizConfig, setQuizConfig] = useState<QuizConfig | null>(null)
   const quizMode = quizConfig !== null
   const [planBadge, setPlanBadge] = useState('Loading…')
@@ -2355,28 +2356,26 @@ export default function FormBuilderPage() {
       }
       setPlanBadge(planLabels[plan] ?? planLabels.base)
 
+      // The complex drag-and-drop builder is no longer the default landing experience —
+      // Quick Setup (business name, brand color, hero photo only) handles both creating
+      // a new form and editing an existing one's branding, without touching its pricing
+      // fields. Stay on the picker screen either way and hand the existing form (if any)
+      // to SetupWizard as pre-fill data.
       const editId = searchParams.get('form_id')
-      if (editId) {
-        // Explicit form requested via URL param
-        await loadExistingForm(editId)
-        setScreen('builder')
-      } else if ((existingFormsData ?? []).length > 0) {
-        // Auto-load the most recently updated form — no more landing on picker
-        // when the user already has a form from the wizard or a previous session
-        await loadExistingForm(existingFormsData![0].id)
-        setScreen('builder')
-      } else {
-        // Brand new account with no forms yet — show the wizard
-        if (account.business_name) {
-          const defaultSlug = account.business_name
-            .toLowerCase()
-            .replace(/[^a-z0-9-]/g, '-')
-            .replace(/-+/g, '-')
-            .replace(/^-|-$/g, '')
-          setFormSlug(defaultSlug)
-        }
-        setScreen('picker')
+      const forEdit = editId
+        ? (existingFormsData ?? []).find((f) => f.id === editId) ?? null
+        : (existingFormsData ?? [])[0] ?? null
+      setExistingFormForWizard(forEdit)
+
+      if (!forEdit && account.business_name) {
+        const defaultSlug = account.business_name
+          .toLowerCase()
+          .replace(/[^a-z0-9-]/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '')
+        setFormSlug(defaultSlug)
       }
+      setScreen('picker')
     }
     init()
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2926,17 +2925,12 @@ export default function FormBuilderPage() {
       {screen === 'picker' ? (
         <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 52px)' }}>
           {/* Advanced/from-scratch builder is hidden for now — Quick Setup is the only way to create a new form. */}
-          {accountId && (
+          {accountId && !existingFormsLoading && (
             <SetupWizard
+              key={existingFormForWizard?.id ?? 'new'}
               accountId={accountId}
-              onCustomize={async (formId, formName, slug) => {
-                await loadExistingForm(formId)
-                setExistingForms((prev) => {
-                  if (prev.find((f) => f.id === formId)) return prev
-                  return [{ id: formId, form_name: formName, form_config: { slug } }, ...prev]
-                })
-                setScreen('builder')
-              }}
+              existingForm={existingFormForWizard}
+              onCustomize={(formId) => { window.location.href = `/form-builder?form_id=${formId}` }}
             />
           )}
         </div>
