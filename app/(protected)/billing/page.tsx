@@ -8,17 +8,19 @@ import { createClient } from '@/lib/supabase/client'
 // those (NEXT_PUBLIC_PORTAL_FUNCTION_URL etc.) were never actually set, which made
 // "Manage Subscription" 404 against this app's own routes instead of Supabase.
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SUBSCRIPTION_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/create-subscription-session`
 const VERIFY_SESSION_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/verify-subscription-session`
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
+// Only the $1→$34/mo trial (+ optional $297 done-for-you setup) is sold going forward.
+// Legacy plans are label-only here — existing accounts on them keep working, just
+// with no price asserted that could go stale, and no path to newly subscribe to them.
 const PLAN_INFO: Record<string, { label: string; detail: string }> = {
-  trial: { label: 'Trial', detail: '$1 this month · renews at $34/month' },
+  trial: { label: 'Trial', detail: 'Started at $1 · billed at $34/month' },
   starter: { label: 'Starter', detail: 'Full platform access' },
   growth: { label: 'Growth', detail: 'Full platform access · Unlimited leads' },
   fully_managed: { label: 'Fully Managed', detail: 'Full platform access · Unlimited leads' },
   pay_per_lead: { label: 'Retainer', detail: '$15 per booked lead' },
-  pro: { label: 'Pro', detail: '$350/month · Full platform access · Unlimited leads' },
+  pro: { label: 'Pro', detail: 'Full platform access · Unlimited leads' },
 }
 
 export default function BillingPage() {
@@ -26,8 +28,8 @@ export default function BillingPage() {
   const supabase = createClient()
 
   const [accountId, setAccountId] = useState<string | null>(null)
-  const [userId, setUserId] = useState<string | null>(null)
   const [plan, setPlan] = useState<string | null>(null)
+  const [upsell, setUpsell] = useState(false)
   const [blessed, setBlessed] = useState(false)
   const [totalLeads, setTotalLeads] = useState(0)
   const [monthlyLeads, setMonthlyLeads] = useState(0)
@@ -87,7 +89,6 @@ export default function BillingPage() {
         data: { user },
       } = await supabase.auth.getUser()
       if (!user) return
-      setUserId(user.id)
 
       const { data: account } = await supabase
         .from('accounts')
@@ -131,23 +132,16 @@ export default function BillingPage() {
   }, [searchParams, accountId, loadBillingData])
 
   async function subscribe() {
-    if (!SUBSCRIPTION_FUNCTION_URL) {
-      alert('Subscription checkout is not configured. Please contact support.')
-      return
-    }
     setSubscribing(true)
     try {
-      const response = await fetch(SUBSCRIPTION_FUNCTION_URL, {
+      const response = await fetch('/api/build/checkout', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ plan: 'pro', accountId, userId }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accountId, upsell }),
       })
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
-      const { url } = await response.json()
-      window.location.href = url
+      const data = await response.json()
+      if (!response.ok || !data.url) throw new Error(data.error ?? `HTTP error! status: ${response.status}`)
+      window.location.href = data.url
     } catch (err) {
       alert(`Checkout failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
       setSubscribing(false)
@@ -226,7 +220,7 @@ export default function BillingPage() {
           </div>
         )}
 
-        {/* Pro plan card — shown when not yet subscribed */}
+        {/* Trial offer card — shown when not yet subscribed. This is the only plan sold now. */}
         {!isActive && (
           <div
             className="bg-white rounded-2xl p-8 mb-6"
@@ -236,23 +230,22 @@ export default function BillingPage() {
               className="inline-block px-3 py-1 text-xs font-bold rounded-full mb-4"
               style={{ background: 'rgba(91,91,214,0.1)', color: '#5b5bd6' }}
             >
-              PRO
+              TRIAL
             </span>
             <div className="flex items-end gap-2 mb-2">
-              <span className="text-5xl font-bold text-gray-900">$350</span>
-              <span className="text-gray-400 mb-2">/month</span>
+              <span className="text-5xl font-bold text-gray-900">$1</span>
+              <span className="text-gray-400 mb-2">first month, then $34/month</span>
             </div>
             <p className="text-gray-500 text-sm mb-6">
-              Everything you need to grow your contracting business
+              Everything you need to start booking jobs from your own quote form
             </p>
-            <ul className="space-y-3 mb-8">
+            <ul className="space-y-3 mb-6">
               {[
-                'Unlimited quote forms',
-                'Unlimited leads per month',
-                'Meta Ads campaign management',
-                'Automated follow-up sequences',
-                'Lead analytics & reporting',
-                'Priority support',
+                'Branded instant quote form',
+                'Unlimited leads',
+                'Instant SMS + email follow-up',
+                'Full CRM & lead pipeline',
+                'iOS app access',
               ].map((feature) => (
                 <li key={feature} className="flex items-center gap-3 text-sm text-gray-700">
                   <svg
@@ -273,13 +266,27 @@ export default function BillingPage() {
                 </li>
               ))}
             </ul>
+
+            <label className="flex items-start gap-3 mb-6 p-4 rounded-xl cursor-pointer" style={{ background: '#f9fafb', border: '1px solid #e5e7eb' }}>
+              <input
+                type="checkbox"
+                checked={upsell}
+                onChange={(e) => setUpsell(e.target.checked)}
+                className="mt-0.5"
+              />
+              <span className="text-sm text-gray-700">
+                <span className="font-semibold text-gray-900">Add done-for-you setup — $297 one-time.</span>{' '}
+                Our team configures your SMS/email sequence, pricing rules, and CRM pipeline for you.
+              </span>
+            </label>
+
             <button
               onClick={subscribe}
               disabled={subscribing}
               className="px-8 py-3 rounded-xl text-sm font-bold text-white transition disabled:opacity-60 disabled:cursor-not-allowed active:scale-95"
               style={{ background: 'linear-gradient(135deg, #5b5bd6 0%, #4c4cbf 100%)' }}
             >
-              {subscribing ? 'Redirecting to checkout…' : 'Get Started — $350/month'}
+              {subscribing ? 'Redirecting to checkout…' : upsell ? 'Continue — $1 + $297 setup' : 'Get Started — $1'}
             </button>
           </div>
         )}

@@ -5,11 +5,14 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { HostedForm } from '@/lib/types'
 
-const PLAN_LIMITS: Record<string, number> = { starter: 1, growth: 3, fully_managed: Infinity, pay_per_lead: Infinity }
+const PLAN_LIMITS: Record<string, number> = { trial: 1, starter: 1, growth: 3, fully_managed: Infinity, pay_per_lead: Infinity, pro: Infinity }
 const PLAN_LABELS: Record<string, string> = {
+  trial: 'Trial',
   starter: 'Starter plan',
   growth: 'Growth plan',
   fully_managed: 'Fully Managed',
+  pay_per_lead: 'Retainer',
+  pro: 'Pro plan',
 }
 
 function esc(s: string) {
@@ -156,7 +159,7 @@ export default function HostedFormsPage() {
                   fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em',
                   background: '#ede9fe', color: '#6d28d9', borderRadius: 6, padding: '2px 8px',
                 }}>
-                  {PLAN_LABELS[plan]}
+                  {PLAN_LABELS[plan] ?? plan}
                 </span>
               </div>
             </div>

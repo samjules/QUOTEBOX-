@@ -82,17 +82,10 @@ export default function LeadMap({ leads }: { leads: Lead[] }) {
   const locations = extractLeadLocations(leads)
   const noLocationLeads = leads.filter((l) => !hasLocation(l))
 
-  console.log('[LeadMap] render — leads:', leads.length, 'locations:', locations.length, 'noLocation:', noLocationLeads.length)
-  console.log('[LeadMap] token:', process.env.NEXT_PUBLIC_MAPBOX_TOKEN?.slice(0, 20) + '...')
-  if (leads.length > 0) console.log('[LeadMap] sample form_data:', JSON.stringify(leads[0].form_data))
-
   useEffect(() => {
     const el = mapContainer.current
-    console.log('[LeadMap] useEffect — container:', !!el, 'mapRef:', !!mapRef.current)
     if (!el || mapRef.current) return
 
-    console.log('[LeadMap] container dimensions:', el.offsetWidth, 'x', el.offsetHeight, '| clientRect:', el.getBoundingClientRect())
-    console.log('[LeadMap] initializing map')
     const map = new mapboxgl.Map({
       container: el,
       style: 'mapbox://styles/mapbox/streets-v12',
@@ -105,7 +98,6 @@ export default function LeadMap({ leads }: { leads: Lead[] }) {
     mapRef.current = map
 
     map.on('load', () => {
-      console.log('[LeadMap] map loaded — locations:', locations.length)
       if (locations.length === 0) return
 
       const bounds = new mapboxgl.LngLatBounds()

@@ -988,7 +988,7 @@ function RouteField({
 }
 
 // ── QuoteForm ──────────────────────────────────────────────────
-export default function QuoteForm({ form, hasCredits, businessName = '' }: { form: HostedForm; hasCredits: boolean; businessName?: string }) {
+export default function QuoteForm({ form, businessName = '' }: { form: HostedForm; businessName?: string }) {
   const config = form.form_config
   const router = useRouter()
   const supabase = createClient()
@@ -1261,7 +1261,7 @@ export default function QuoteForm({ form, hasCredits, businessName = '' }: { for
         phone: phone.trim(),
         form_type: form.form_type,
         form_data: { ...formData, _sms_opt_in: smsOptIn },
-        status: hasCredits ? 'new' : 'held',
+        status: 'new',
       }),
     })
 

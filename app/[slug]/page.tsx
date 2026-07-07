@@ -27,13 +27,12 @@ export default async function PublicFormPage({
   const form = rows?.[0] ?? null
   if (!form) notFound()
 
-  const [{ data: billing }, { data: account }] = await Promise.all([
-    admin.from('billing').select('credit_balance, plan').eq('account_id', form.account_id).single(),
-    admin.from('accounts').select('business_name').eq('id', form.account_id).single(),
-  ])
+  const { data: account } = await admin
+    .from('accounts')
+    .select('business_name')
+    .eq('id', form.account_id)
+    .single()
 
-  // Pay-per-lead plan has no credit gate — leads always come in as 'new'
-  const hasCredits = billing?.plan === 'pay_per_lead' || (billing?.credit_balance ?? 0) >= 15
   const businessName = account?.business_name ?? ''
 
   const typedForm = form as HostedForm
@@ -41,5 +40,5 @@ export default async function PublicFormPage({
     return <QuizForm form={typedForm} businessName={businessName} />
   }
 
-  return <QuoteForm form={typedForm} hasCredits={hasCredits} businessName={businessName} />
+  return <QuoteForm form={typedForm} businessName={businessName} />
 }

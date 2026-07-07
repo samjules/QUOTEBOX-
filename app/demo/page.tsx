@@ -1,12 +1,7 @@
-import { cookies } from 'next/headers'
-import DemoClient from './DemoClient'
-import { DEMO_VARIANT_COOKIE, isDemoVariant, pickDemoVariant } from '@/lib/demo-variant'
+import { redirect } from 'next/navigation'
 
-export const dynamic = 'force-dynamic'
-
+// /demo is retired — /build is the only funnel now. Kept as a redirect (rather than
+// deleted outright) so old ad links/bookmarks land somewhere real instead of 404ing.
 export default function DemoPage() {
-  const fromCookie = cookies().get(DEMO_VARIANT_COOKIE)?.value
-  const variant = isDemoVariant(fromCookie) ? fromCookie : pickDemoVariant()
-
-  return <DemoClient variant={variant} />
+  redirect('/build')
 }
