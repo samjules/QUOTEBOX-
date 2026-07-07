@@ -6,38 +6,39 @@ import type { FormField } from '@/lib/types'
 
 function fid() { return Math.random().toString(36).slice(2, 9) }
 
-// Quick Setup for a moving quote form — business info, hourly rate, and drive-time
-// pricing. Extras/minimum-charge/from-scratch templates live in the (currently
-// hidden) advanced builder; this only ever manages these two generated fields plus
-// business name/color/photo, whether creating a form or editing one.
+// Quick Setup for a moving quote form — business info, hourly rate (with per-size
+// job hours), and drive-time pricing. Extras/minimum-charge/from-scratch templates
+// live in the (currently hidden) advanced builder; this only ever manages these two
+// generated fields plus business name/color/photo, whether creating or editing.
 const TIER_LABELS = ['Studio / 1 Bedroom', '2–3 Bedrooms', '4+ Bedrooms']
-const TIER_HOURS = [3, 5, 8]
+const DEFAULT_TIER_HOURS = [3, 5, 8]
 const DEFAULT_EXTRAS = [
   { label: 'Packing & Unpacking', price: '150' },
   { label: 'Piano / Heavy Items', price: '100' },
   { label: 'Long Carry (>75 ft)', price: '75' },
 ]
 
-interface RadiusTierDraft { id: string; maxMiles: number | null; driveCharge: number }
-
-const DEFAULT_RADIUS_TIERS: RadiusTierDraft[] = [
-  { id: fid(), maxMiles: 20, driveCharge: 50 },
-  { id: fid(), maxMiles: 40, driveCharge: 100 },
-  { id: fid(), maxMiles: null, driveCharge: 175 },
-]
-
-function homeSizeField(hourlyRate: number): FormField {
+// option.price is the hourly RATE, not the total — pricing.ts multiplies
+// price × hours itself, so storing an already-multiplied total here would
+// double-charge (this bit us once already: a $100/hr, 3hr job showed $900,
+// not $300, because price was pre-multiplied AND hours was still attached).
+function homeSizeField(hourlyRate: number, tierHours: number[]): FormField {
   return {
     id: fid(), type: 'radio', label: 'Home Size', required: true, showPrices: true,
-    options: TIER_LABELS.map((label, i) => ({ id: fid(), label, price: hourlyRate * TIER_HOURS[i], hours: TIER_HOURS[i] })),
+    options: TIER_LABELS.map((label, i) => ({ id: fid(), label, price: hourlyRate, hours: tierHours[i] || 1 })),
   }
 }
 
-function routeField(radiusTiers: RadiusTierDraft[]): FormField {
+// Drive time is charged as (distance ÷ the business's average mph) hours × their
+// drive-time rate — never a flat fee, since that would ignore how far the job
+// actually is. ratePerMinute is stored since that's what pricing.ts multiplies
+// duration by; the wizard only ever shows/asks for the equivalent hourly rate.
+function routeField(driveRatePerHour: number): FormField {
   return {
-    id: fid(), type: 'route', label: 'Moving Route', required: true, routeChargeType: 'radius_tiers',
+    id: fid(), type: 'route', label: 'Moving Route', required: true,
+    routeChargeType: 'drivetime',
     locationMode: 'point_to_point',
-    radiusTiers: radiusTiers.map((r) => ({ id: r.id, maxMiles: r.maxMiles, driveCharge: r.driveCharge })),
+    ratePerMinute: driveRatePerHour / 60,
   } as FormField
 }
 
@@ -77,20 +78,31 @@ function stripSuffix(name: string) {
   return name.replace(/\s+(Quote|Quiz)$/i, '')
 }
 
-// Pull the hourly rate back out of a previously-generated Home Size field — uses the
-// middle (2–3 Bedroom) tier's rate since that's what seeded all three originally.
-function rateFromExistingFields(fields: FormField[] | undefined): string {
+// Pull the hourly rate + per-size job hours back out of a previously-generated
+// Home Size field — uses the middle (2–3 Bedroom) tier's rate since that's what
+// seeded all three originally.
+function tiersFromExistingFields(fields: FormField[] | undefined): { rate: string; hours: number[] } {
   const radio = fields?.find((f) => f.type === 'radio' && f.label === 'Home Size')
-  const midOption = radio?.options?.[1] ?? radio?.options?.[0]
-  const hours = (midOption as { hours?: number } | undefined)?.hours
-  if (midOption && hours) return String(Math.round((midOption.price ?? 0) / hours))
-  return '120'
+  const opts = radio?.options
+  if (opts && opts.length === TIER_LABELS.length) {
+    const hours = opts.map((o) => (o as { hours?: number }).hours || 1)
+    const rate = Math.round(opts[1]?.price ?? opts[0]?.price ?? 0)
+    return { rate: String(rate || 120), hours }
+  }
+  return { rate: '120', hours: DEFAULT_TIER_HOURS }
 }
 
-function radiusTiersFromExistingFields(fields: FormField[] | undefined): RadiusTierDraft[] | null {
+// Whether drive time is charged, and the equivalent hourly rate if so. Forms saved
+// before this used a flat radius-tier fee that can't convert to an hourly rate —
+// those come back with chargeDrive on but an empty rate to re-enter.
+function driveFromExistingFields(fields: FormField[] | undefined): { chargeDrive: boolean; driveRate: string } {
   const route = fields?.find((f) => f.type === 'route')
-  if (!route?.radiusTiers?.length) return null
-  return route.radiusTiers.map((r) => ({ id: r.id || fid(), maxMiles: r.maxMiles, driveCharge: r.driveCharge }))
+  if (!route) return { chargeDrive: false, driveRate: '' }
+  if (route.routeChargeType === 'drivetime' || route.routeChargeType === 'both') {
+    const perMin = route.ratePerMinute ?? 0
+    return { chargeDrive: true, driveRate: perMin > 0 ? String(Math.round(perMin * 60)) : '' }
+  }
+  return { chargeDrive: true, driveRate: '' }
 }
 
 type Step = 'business' | 'rate' | 'drive'
@@ -110,13 +122,15 @@ export default function SetupWizard({ accountId, existingForm, initialAvgMph, on
   const [heroUploading, setHeroUploading] = useState(false)
   const heroFileRef = useRef<HTMLInputElement>(null)
 
-  // Hourly rate
-  const [hourlyRate, setHourlyRate] = useState(rateFromExistingFields(existingFields))
+  // Hourly rate + per-size job hours
+  const initialTiers = tiersFromExistingFields(existingFields)
+  const [hourlyRate, setHourlyRate] = useState(initialTiers.rate)
+  const [tierHours, setTierHours] = useState<number[]>(initialTiers.hours)
 
   // Drive time
-  const existingRadiusTiers = radiusTiersFromExistingFields(existingFields)
-  const [chargeDrive, setChargeDrive] = useState<boolean>(!isEditing || existingRadiusTiers !== null)
-  const [radiusTiers, setRadiusTiers] = useState<RadiusTierDraft[]>(existingRadiusTiers ?? DEFAULT_RADIUS_TIERS)
+  const initialDrive = driveFromExistingFields(existingFields)
+  const [chargeDrive, setChargeDrive] = useState<boolean>(!isEditing || initialDrive.chargeDrive)
+  const [driveRate, setDriveRate] = useState(initialDrive.driveRate || initialTiers.rate)
   const [avgMph, setAvgMph] = useState(initialAvgMph ? String(initialAvgMph) : '')
 
   const [saving, setSaving] = useState(false)
@@ -139,17 +153,13 @@ export default function SetupWizard({ accountId, existingForm, initialAvgMph, on
     setHeroUploading(false)
   }
 
-  function setRadiusField(id: string, key: 'maxMiles' | 'driveCharge', val: string) {
-    setRadiusTiers((p) => p.map((r) => r.id === id
-      ? { ...r, [key]: key === 'maxMiles' ? (val === '' ? null : Number(val)) : Number(val) }
-      : r
-    ))
+  function setTierHour(i: number, val: string) {
+    setTierHours((p) => p.map((h, idx) => idx === i ? (parseFloat(val) || 0) : h))
   }
-  function addZone() { setRadiusTiers((p) => [...p, { id: fid(), maxMiles: null, driveCharge: 0 }]) }
-  function removeZone(id: string) { setRadiusTiers((p) => p.filter((r) => r.id !== id)) }
 
   async function handleSave() {
     if (!businessName.trim()) return
+    if (chargeDrive && !avgMph.trim()) return
     const rate = parseFloat(hourlyRate) || 0
     setSaving(true); setSaveError('')
 
@@ -161,8 +171,8 @@ export default function SetupWizard({ accountId, existingForm, initialAvgMph, on
         await supabase.from('accounts').update({ avg_driving_mph: clampedMph }).eq('id', accountId)
       }
 
-      const newHomeSize = homeSizeField(rate)
-      const newRoute = chargeDrive ? routeField(radiusTiers) : null
+      const newHomeSize = homeSizeField(rate, tierHours)
+      const newRoute = chargeDrive ? routeField(parseFloat(driveRate) || 0) : null
 
       if (existingForm) {
         // Editing: regenerate only the two fields this wizard manages (Home Size, Route).
@@ -393,6 +403,29 @@ export default function SetupWizard({ accountId, existingForm, initialAvgMph, on
             <div style={{ marginTop: 14, fontSize: '0.8rem', color: 'var(--muted)', lineHeight: 1.5 }}>
               Not sure? Most moving companies charge $80–$150/hr.
             </div>
+
+            <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
+              <label style={fieldLabel}>How many hours does each size typically take?</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+                {TIER_LABELS.map((label, i) => {
+                  const rate = parseFloat(hourlyRate) || 0
+                  const price = Math.round(rate * (tierHours[i] || 0))
+                  return (
+                    <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ flex: 1, fontSize: '0.86rem', fontWeight: 600, color: 'var(--fg)' }}>{label}</span>
+                      <input
+                        type="number" min={0.5} step={0.5}
+                        value={tierHours[i]}
+                        onChange={(e) => setTierHour(i, e.target.value)}
+                        style={{ ...inputStyle, width: 68, padding: '7px 8px', fontSize: '0.85rem', textAlign: 'center' as const }}
+                      />
+                      <span style={{ fontSize: '0.76rem', color: 'var(--muted)', width: 24 }}>hrs</span>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--muted)', width: 58, textAlign: 'right' as const }}>${price}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
           </div>
           <div style={footerStyle}>
             <button className="bb bb-ghost" onClick={() => setStep('business')}>Back</button>
@@ -404,59 +437,48 @@ export default function SetupWizard({ accountId, existingForm, initialAvgMph, on
   }
 
   // ── STEP: drive time ──────────────────────────────────────────────
+  const driveDisabled = chargeDrive && !avgMph.trim()
   return (
     <div style={pageStyle}>
       <div style={cardStyle}>
         <ProgressBar current={3} />
         <div style={bodyStyle}>
           <div style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: 'var(--muted)', marginBottom: 10 }}>Step 3 of {STEPS.length}</div>
-          <Q label="Do you charge extra for drive time?" sub="Some companies add a fee based on how far the job is from their location." />
-          <BigChoice label="Yes — I charge by distance" desc="Set a fee for different distance zones" selected={chargeDrive === true} onClick={() => setChargeDrive(true)} />
+          <Q label="Do you charge extra for drive time?" sub="We calculate drive time ourselves from the distance to the job — mapping apps guess badly for this, so we use your own numbers instead." />
+          <BigChoice label="Yes — charge for drive time" desc="Distance ÷ your average speed × your rate" selected={chargeDrive === true} onClick={() => setChargeDrive(true)} />
           <BigChoice label="No — drive time is included in my rate" desc="Distance doesn't affect the quote" selected={chargeDrive === false} onClick={() => setChargeDrive(false)} />
 
           {chargeDrive && (
             <div style={{ marginTop: 8 }}>
-              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--muted)', letterSpacing: '0.07em', textTransform: 'uppercase' as const, marginBottom: 10 }}>Your distance zones</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 28px', gap: 6, marginBottom: 6 }}>
-                <span style={{ fontSize: '0.62rem', fontWeight: 700, color: 'var(--muted)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Up to (miles)</span>
-                <span style={{ fontSize: '0.62rem', fontWeight: 700, color: 'var(--muted)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}>Add to quote</span>
-                <span />
+              <label style={fieldLabel}>Average speed (mph)</label>
+              <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginBottom: 10, lineHeight: 1.5 }}>
+                How many miles can you typically drive in one hour in your area? We use this — not the map API's own time estimate, which isn't reliable — to turn the distance to a job into an accurate drive time.
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                {radiusTiers.map((r, i) => (
-                  <div key={r.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 28px', gap: 6, alignItems: 'center' }}>
-                    <input
-                      type="number" min={1} placeholder={i === radiusTiers.length - 1 ? 'Any distance' : '20'}
-                      value={r.maxMiles ?? ''}
-                      onChange={(e) => setRadiusField(r.id, 'maxMiles', e.target.value)}
-                      disabled={i === radiusTiers.length - 1}
-                      style={{ ...inputStyle, padding: '8px 10px', fontSize: '0.88rem', opacity: i === radiusTiers.length - 1 ? 0.5 : 1 }}
-                    />
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <span style={{ color: 'var(--muted)', flexShrink: 0 }}>$</span>
-                      <input type="number" min={0} placeholder="50" value={r.driveCharge || ''} onChange={(e) => setRadiusField(r.id, 'driveCharge', e.target.value)} style={{ ...inputStyle, padding: '8px 8px', fontSize: '0.88rem' }} />
-                    </div>
-                    <button onClick={() => removeZone(r.id)} disabled={radiusTiers.length <= 1} style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid var(--border)', background: 'none', color: 'var(--muted)', fontSize: '0.76rem', cursor: radiusTiers.length <= 1 ? 'default' : 'pointer', opacity: radiusTiers.length <= 1 ? 0.3 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-                  </div>
-                ))}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <input
+                  type="number" min={10} max={80} autoFocus
+                  placeholder="e.g. 35–45"
+                  value={avgMph}
+                  onChange={(e) => setAvgMph(e.target.value)}
+                  style={{ ...inputStyle, maxWidth: 140 }}
+                />
+                <span style={{ fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 600 }}>mph</span>
               </div>
-              <button onClick={addZone} style={{ marginTop: 8, padding: '8px 0', width: '100%', borderRadius: 8, border: '1px dashed var(--border)', background: 'none', color: 'var(--accent)', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>+ Add zone</button>
-              <div style={{ marginTop: 4, fontSize: '0.7rem', color: 'var(--muted)' }}>Last row = any distance beyond your other zones.</div>
 
               <div style={{ marginTop: 20, paddingTop: 18, borderTop: '1px solid var(--border)' }}>
-                <label style={fieldLabel}>Average speed (mph)</label>
+                <label style={fieldLabel}>What do you charge for drive time?</label>
                 <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginBottom: 10, lineHeight: 1.5 }}>
-                  How many miles can you typically drive in one hour in your area? We use this — not the map API's own time estimate, which isn't reliable — to turn the distance to a job into an accurate drive time.
+                  Distance ÷ {avgMph || 'your mph'} = drive time in hours, × this rate = the drive-time charge added to the quote.
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--muted)' }}>$</span>
                   <input
-                    type="number" min={10} max={80}
-                    placeholder="e.g. 35–45"
-                    value={avgMph}
-                    onChange={(e) => setAvgMph(e.target.value)}
-                    style={{ ...inputStyle, maxWidth: 140 }}
+                    type="number" min={0} step={5}
+                    value={driveRate}
+                    onChange={(e) => setDriveRate(e.target.value)}
+                    style={{ ...inputStyle, fontSize: '1.4rem', fontWeight: 800, padding: '10px 14px', maxWidth: 130, textAlign: 'center' as const }}
                   />
-                  <span style={{ fontSize: '0.85rem', color: 'var(--muted)', fontWeight: 600 }}>mph</span>
+                  <span style={{ fontSize: '0.95rem', color: 'var(--muted)', fontWeight: 600 }}>/hr of drive time</span>
                 </div>
               </div>
             </div>
@@ -466,7 +488,7 @@ export default function SetupWizard({ accountId, existingForm, initialAvgMph, on
         </div>
         <div style={footerStyle}>
           <button className="bb bb-ghost" onClick={() => setStep('rate')}>Back</button>
-          <button className="bb bb-primary" disabled={saving} onClick={handleSave} style={{ minWidth: 140 }}>
+          <button className="bb bb-primary" disabled={saving || driveDisabled} onClick={handleSave} style={{ minWidth: 140 }}>
             {saving ? 'Saving…' : isEditing ? 'Save changes' : 'Launch my form'}
           </button>
         </div>
