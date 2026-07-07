@@ -122,24 +122,24 @@ export default function TrialFlow() {
     setSaveError('')
     const supabase = createClient()
 
-    const { data: authData, error: authError } = await supabase.auth.signUp({ email: email.trim(), password })
-    if (authError) { setSaveError(authError.message); setSaving(false); return }
-    if (!authData.user) { setSaveError('Could not create account. Please try again.'); setSaving(false); return }
-
-    const { data: newAccount, error: accountError } = await supabase
-      .from('accounts')
-      .insert([{ business_name: businessName.trim(), owner_id: authData.user.id }])
-      .select('id')
-      .single()
-    if (accountError || !newAccount) {
-      setSaveError(accountError?.message ?? 'Failed to create account')
+    const createRes = await fetch('/api/build/create-account', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim(), password, businessName: businessName.trim() }),
+    })
+    const createData = await createRes.json()
+    if (!createRes.ok || !createData.accountId) {
+      setSaveError(createData.error ?? 'Failed to create account')
       setSaving(false)
       return
     }
+    const accountId: string = createData.accountId
 
-    const accountId = newAccount.id
-
-    await supabase.from('billing').insert([{ account_id: accountId, credit_balance: 0, total_spent: 0 }])
+    // The account was created server-side (service role) — sign in now so the
+    // browser has an authenticated session for the rest of this step and for checkout.
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+    if (signInError) { setSaveError(signInError.message); setSaving(false); return }
+    await supabase.auth.getSession()
 
     fetch('/api/auth/welcome', {
       method: 'POST',
