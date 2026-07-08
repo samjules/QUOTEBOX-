@@ -112,8 +112,8 @@ export default function QuizForm({ form, businessName }: { form: HostedForm; bus
   }
 
   const pageBackground = {
-    background: `linear-gradient(135deg, rgba(255,255,255,0.86) 0%, rgba(255,255,255,0.83) 60%, rgba(255,255,255,0.86) 100%), url('/map-tiles/map_1_tile.svg') center / 600px auto`,
-    backgroundColor: `${accent}22`,
+    background: `linear-gradient(135deg, rgba(76,29,149,0.94) 0%, rgba(126,34,206,0.90) 55%, rgba(76,29,149,0.94) 100%), url('/map-tiles/map_1_tile.svg') center / 600px auto`,
+    backgroundColor: '#6b21a8',
   }
 
   return (

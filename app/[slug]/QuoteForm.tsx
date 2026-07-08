@@ -1411,8 +1411,10 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
       minHeight: '100vh',
       background: isDark
         ? `linear-gradient(135deg, rgba(240,244,255,0.88) 0%, rgba(232,238,255,0.85) 60%, rgba(240,244,255,0.88) 100%), url('/map-tiles/map_1_tile.svg') center / 600px auto`
-        : `linear-gradient(135deg, rgba(255,255,255,0.86) 0%, rgba(255,255,255,0.83) 60%, rgba(255,255,255,0.86) 100%), url('/map-tiles/map_1_tile.svg') center / 600px auto`,
-      backgroundColor: isDark ? '#e8eeff' : noHeroImage ? 'rgba(126,58,242,0.12)' : `${accentBg}22`,
+        : noHeroImage
+          ? `linear-gradient(135deg, rgba(76,29,149,0.94) 0%, rgba(126,34,206,0.90) 55%, rgba(76,29,149,0.94) 100%), url('/map-tiles/map_1_tile.svg') center / 600px auto`
+          : `linear-gradient(135deg, rgba(255,255,255,0.86) 0%, rgba(255,255,255,0.83) 60%, rgba(255,255,255,0.86) 100%), url('/map-tiles/map_1_tile.svg') center / 600px auto`,
+      backgroundColor: isDark ? '#e8eeff' : noHeroImage ? '#6b21a8' : `${accentBg}22`,
       display: 'flex',
       alignItems: 'flex-start',
       justifyContent: 'center',

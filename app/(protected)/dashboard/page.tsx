@@ -301,6 +301,10 @@ export default async function DashboardPage({
   const hasCampaign = (campaigns?.length ?? 0) > 0
   const hasMetaLead = (metaLeadsData?.length ?? 0) > 0
   const onboardingComplete = hasMetaLead
+  // Accounts that haven't uploaded their own dashboard photo get a branded
+  // QuoteBox purple scrim over the map texture instead of a washed-out one —
+  // uploaded photos keep the darker scrim since that's what keeps text legible.
+  const hasCustomBg = !!account.dashboard_bg_url
   const dashboardBgUrl = (account.dashboard_bg_url as string | null) ?? '/map-tiles/map_1_tile.svg'
 
   const hasBg = !!dashboardBgUrl
@@ -320,7 +324,9 @@ export default async function DashboardPage({
           }} />
           <div style={{
             position: 'absolute', inset: 0,
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.78) 100%)',
+            background: hasCustomBg
+              ? 'linear-gradient(to bottom, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.78) 100%)'
+              : 'linear-gradient(135deg, rgba(76,29,149,0.94) 0%, rgba(126,34,206,0.90) 55%, rgba(76,29,149,0.94) 100%)',
           }} />
         </div>
       )}
