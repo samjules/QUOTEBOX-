@@ -4,11 +4,11 @@ import PublicFooter from '@/components/PublicFooter'
 
 export default function LandingPage() {
   return (
-    <div style={{ fontFamily: "'Nautic', sans-serif", color: '#0e0020', background: '#fff' }}>
+    <div style={{ fontFamily: "'Nautic', sans-serif", color: '#201d3d', background: '#fff' }}>
 
       {/* ── Arctic Reach banner ── */}
       <div style={{
-        background: '#0e0020', color: 'rgba(255,255,255,0.5)',
+        background: '#201d3d', color: 'rgba(255,255,255,0.5)',
         textAlign: 'center', fontSize: '0.72rem', padding: '6px 16px',
         letterSpacing: '0.03em',
       }}>
@@ -29,8 +29,8 @@ export default function LandingPage() {
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/quotebox_icon.png" alt="QuoteBox" style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover', display: 'block' }} />
-          <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.35rem', fontWeight: 700, letterSpacing: '0.01em', color: '#0e0020' }}>
-            Quote<span style={{ color: '#FFE500', WebkitTextStroke: '1px #0e0020' }}>.</span>Box
+          <span style={{ fontFamily: "'Nautic', sans-serif", fontSize: '1.35rem', fontWeight: 700, letterSpacing: '0.01em', color: '#201d3d' }}>
+            Quote<span style={{ color: '#f4a93c', WebkitTextStroke: '1px #201d3d' }}>.</span>Box
           </span>
         </Link>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
@@ -45,7 +45,7 @@ export default function LandingPage() {
           </Link>
           <Link href="/build" style={{
             fontSize: '0.88rem', fontWeight: 600, padding: '8px 18px',
-            background: '#0e0020', color: '#FFE500', borderRadius: 8, textDecoration: 'none',
+            background: '#201d3d', color: '#f4a93c', borderRadius: 8, textDecoration: 'none',
           }}>
             Build your form free
           </Link>
@@ -54,7 +54,7 @@ export default function LandingPage() {
 
       {/* ── Hero ── */}
       <section className="maze-dark" style={{
-        background: '#0e0020', color: 'white',
+        background: '#453bc2', color: 'white',
         padding: '80px 24px 0', overflow: 'hidden',
       }}>
         <div style={{
@@ -68,18 +68,18 @@ export default function LandingPage() {
           <div style={{ paddingBottom: 80 }}>
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
-              background: '#FFE500', color: '#0e0020',
+              background: '#f4a93c', color: '#201d3d',
               fontSize: '0.73rem', fontWeight: 800, letterSpacing: '0.08em',
               textTransform: 'uppercase', padding: '5px 14px', borderRadius: 99, marginBottom: 28,
             }}>
               <span>★</span> Free CRM · Free App · No Credit Card
             </div>
             <h1 style={{
-              fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(2.6rem, 5.5vw, 4.4rem)',
+              fontFamily: "'Nautic', sans-serif", fontSize: 'clamp(2.6rem, 5.5vw, 4.4rem)',
               fontWeight: 800, lineHeight: 1.05, marginBottom: 24,
             }}>
               Your instant quote form<br />
-              <span style={{ color: '#FFE500' }}>is free.</span><br />
+              <span style={{ color: '#f4a93c' }}>is free.</span><br />
               Forever.
             </h1>
             <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.68)', lineHeight: 1.75, marginBottom: 38, maxWidth: 480 }}>
@@ -87,9 +87,9 @@ export default function LandingPage() {
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <Link href="/build" style={{
-                padding: '16px 36px', background: '#FFE500', color: '#0e0020',
+                padding: '16px 36px', background: '#f4a93c', color: '#201d3d',
                 fontWeight: 800, fontSize: '1.05rem', borderRadius: 10, textDecoration: 'none',
-                fontFamily: "'Oswald', sans-serif", letterSpacing: '0.03em',
+                fontFamily: "'Nautic', sans-serif", letterSpacing: '0.03em',
               }}>
                 Build your form now — it&apos;s free →
               </Link>
@@ -149,7 +149,7 @@ export default function LandingPage() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               }}>🔔</div>
               <div>
-                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#0e0020', lineHeight: 1.2 }}>New lead received</div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#201d3d', lineHeight: 1.2 }}>New lead received</div>
                 <div style={{ fontSize: '0.65rem', color: '#10b981', fontWeight: 600 }}>Quote: $510.00 · Just now</div>
               </div>
             </div>
@@ -159,8 +159,8 @@ export default function LandingPage() {
 
       {/* ── Strip ── */}
       <div style={{
-        background: '#FFE500', padding: '13px 24px', textAlign: 'center',
-        fontSize: '0.88rem', fontWeight: 700, color: '#0e0020', letterSpacing: '0.01em',
+        background: '#f4a93c', padding: '13px 24px', textAlign: 'center',
+        fontSize: '0.88rem', fontWeight: 700, color: '#201d3d', letterSpacing: '0.01em',
       }}>
         Free CRM · Free iOS & Android app · No credit card required · Build your instant quote form now
       </div>
@@ -170,13 +170,13 @@ export default function LandingPage() {
         <div style={{ maxWidth: 1060, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 60 }}>
             <div style={{
-              display: 'inline-block', background: '#0e0020', color: '#FFE500',
+              display: 'inline-block', background: '#201d3d', color: '#f4a93c',
               fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.1em',
               textTransform: 'uppercase', padding: '5px 14px', borderRadius: 99, marginBottom: 20,
             }}>
               Your instant quote form
             </div>
-            <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.8rem, 3.5vw, 2.6rem)', fontWeight: 800, marginBottom: 12, color: '#0e0020' }}>
+            <h2 style={{ fontFamily: "'Nautic', sans-serif", fontSize: 'clamp(1.8rem, 3.5vw, 2.6rem)', fontWeight: 800, marginBottom: 12, color: '#201d3d' }}>
               Customers get a real price.<br />You get a real lead.
             </h2>
             <p style={{ color: '#6b7280', fontSize: '1rem', maxWidth: 520, margin: '0 auto', lineHeight: 1.7 }}>
@@ -219,8 +219,8 @@ export default function LandingPage() {
             ].map(({ step, label, img, alt }) => (
               <div key={step} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
                 <div style={{
-                  width: 32, height: 32, borderRadius: '50%', background: '#0e0020',
-                  color: '#FFE500', fontFamily: "'Oswald', sans-serif", fontSize: '0.95rem',
+                  width: 32, height: 32, borderRadius: '50%', background: '#201d3d',
+                  color: '#f4a93c', fontFamily: "'Nautic', sans-serif", fontSize: '0.95rem',
                   fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
                   {step}
@@ -234,7 +234,7 @@ export default function LandingPage() {
                 }}>
                   <img src={img} alt={alt} style={{ width: '100%', display: 'block' }} />
                 </div>
-                <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0e0020' }}>{label}</div>
+                <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#201d3d' }}>{label}</div>
               </div>
             ))}
           </div>
@@ -242,9 +242,9 @@ export default function LandingPage() {
           <div style={{ textAlign: 'center', marginTop: 52 }}>
             <Link href="/build" style={{
               display: 'inline-block', padding: '15px 36px',
-              background: '#0e0020', color: '#FFE500',
+              background: '#201d3d', color: '#f4a93c',
               fontWeight: 800, fontSize: '1rem', borderRadius: 10, textDecoration: 'none',
-              fontFamily: "'Oswald', sans-serif", letterSpacing: '0.03em',
+              fontFamily: "'Nautic', sans-serif", letterSpacing: '0.03em',
             }}>
               Build your form free →
             </Link>
@@ -310,8 +310,8 @@ export default function LandingPage() {
                 Free CRM — included
               </div>
               <h2 style={{
-                fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
-                fontWeight: 800, lineHeight: 1.12, color: '#0e0020', marginBottom: 20,
+                fontFamily: "'Nautic', sans-serif", fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
+                fontWeight: 800, lineHeight: 1.12, color: '#201d3d', marginBottom: 20,
               }}>
                 Every lead lands in<br />your dashboard the<br />second they submit.
               </h2>
@@ -336,7 +336,7 @@ export default function LandingPage() {
                   display: 'inline-block', padding: '13px 28px',
                   background: '#15803d', color: 'white',
                   fontWeight: 700, fontSize: '0.93rem', borderRadius: 10, textDecoration: 'none',
-                  fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
+                  fontFamily: "'Nautic', sans-serif", letterSpacing: '0.02em',
                 }}>
                   Start capturing leads free →
                 </Link>
@@ -360,8 +360,8 @@ export default function LandingPage() {
                 Pipeline dashboard
               </div>
               <h2 style={{
-                fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
-                fontWeight: 800, lineHeight: 1.12, color: '#0e0020', marginBottom: 20,
+                fontFamily: "'Nautic', sans-serif", fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
+                fontWeight: 800, lineHeight: 1.12, color: '#201d3d', marginBottom: 20,
               }}>
                 See your full pipeline.<br />Know your numbers.<br />Close more jobs.
               </h2>
@@ -386,7 +386,7 @@ export default function LandingPage() {
                   display: 'inline-block', padding: '13px 28px',
                   background: '#1d4ed8', color: 'white',
                   fontWeight: 700, fontSize: '0.93rem', borderRadius: 10, textDecoration: 'none',
-                  fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
+                  fontFamily: "'Nautic', sans-serif", letterSpacing: '0.02em',
                 }}>
                   Get your free dashboard →
                 </Link>
@@ -446,7 +446,7 @@ export default function LandingPage() {
             <div style={{ display: 'flex', justifyContent: 'center', position: 'relative' }}>
               <div style={{
                 position: 'absolute', inset: -32,
-                background: 'radial-gradient(ellipse at center, #FFE50028 0%, transparent 70%)',
+                background: 'radial-gradient(ellipse at center, #f4a93c28 0%, transparent 70%)',
                 borderRadius: '50%', zIndex: 0,
               }} />
               <div style={{
@@ -489,8 +489,8 @@ export default function LandingPage() {
                 Lead map
               </div>
               <h2 style={{
-                fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
-                fontWeight: 800, lineHeight: 1.12, color: '#0e0020', marginBottom: 20,
+                fontFamily: "'Nautic', sans-serif", fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
+                fontWeight: 800, lineHeight: 1.12, color: '#201d3d', marginBottom: 20,
               }}>
                 See exactly where<br />your leads are<br />coming from.
               </h2>
@@ -512,9 +512,9 @@ export default function LandingPage() {
               <div style={{ marginTop: 36 }}>
                 <Link href="/build" style={{
                   display: 'inline-block', padding: '13px 28px',
-                  background: '#0e0020', color: '#FFE500',
+                  background: '#201d3d', color: '#f4a93c',
                   fontWeight: 700, fontSize: '0.93rem', borderRadius: 10, textDecoration: 'none',
-                  fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
+                  fontFamily: "'Nautic', sans-serif", letterSpacing: '0.02em',
                 }}>
                   Get your free CRM →
                 </Link>
@@ -542,8 +542,8 @@ export default function LandingPage() {
                 Instant automations
               </div>
               <h2 style={{
-                fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
-                fontWeight: 800, lineHeight: 1.12, color: '#0e0020', marginBottom: 20,
+                fontFamily: "'Nautic', sans-serif", fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
+                fontWeight: 800, lineHeight: 1.12, color: '#201d3d', marginBottom: 20,
               }}>
                 Contact every lead<br />the second they<br />hit submit.
               </h2>
@@ -568,7 +568,7 @@ export default function LandingPage() {
                   display: 'inline-block', padding: '13px 28px',
                   background: '#6d28d9', color: 'white',
                   fontWeight: 700, fontSize: '0.93rem', borderRadius: 10, textDecoration: 'none',
-                  fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
+                  fontFamily: "'Nautic', sans-serif", letterSpacing: '0.02em',
                 }}>
                   Set up automations free →
                 </Link>
@@ -675,8 +675,8 @@ export default function LandingPage() {
                 </span>
               </div>
               <h2 style={{
-                fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
-                fontWeight: 800, lineHeight: 1.12, color: '#0e0020', marginBottom: 20,
+                fontFamily: "'Nautic', sans-serif", fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
+                fontWeight: 800, lineHeight: 1.12, color: '#201d3d', marginBottom: 20,
               }}>
                 Run Meta ads that<br />send customers straight<br />to your quote form.
               </h2>
@@ -699,9 +699,9 @@ export default function LandingPage() {
               <div style={{ marginTop: 36 }}>
                 <Link href="/build" style={{
                   display: 'inline-block', padding: '13px 28px',
-                  background: '#0e0020', color: '#FFE500',
+                  background: '#201d3d', color: '#f4a93c',
                   fontWeight: 700, fontSize: '0.93rem', borderRadius: 10, textDecoration: 'none',
-                  fontFamily: "'Oswald', sans-serif", letterSpacing: '0.02em',
+                  fontFamily: "'Nautic', sans-serif", letterSpacing: '0.02em',
                 }}>
                   Build your form & run ads →
                 </Link>
@@ -712,7 +712,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Free App dark section ── */}
-      <section className="maze-dark" style={{ padding: '80px 24px', background: '#0e0020' }}>
+      <section className="maze-dark" style={{ padding: '80px 24px', background: '#453bc2' }}>
         <div style={{ maxWidth: 860, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 48, alignItems: 'center' }}>
           <div>
             <div style={{
@@ -720,14 +720,14 @@ export default function LandingPage() {
               background: 'rgba(255,229,0,0.12)', border: '1px solid rgba(255,229,0,0.3)',
               borderRadius: 99, padding: '5px 14px', marginBottom: 22,
             }}>
-              <svg width="13" height="16" viewBox="0 0 814 1000" fill="#FFE500" xmlns="http://www.w3.org/2000/svg">
+              <svg width="13" height="16" viewBox="0 0 814 1000" fill="#f4a93c" xmlns="http://www.w3.org/2000/svg">
                 <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-42.3-150.3-110.7c-67.5-98.2-120-252.6-120-398.7 0-138.9 48.4-207.5 96.8-253.5 57.3-54.5 138.4-86.1 213.3-86.1 81.6 0 132.2 39.5 189.5 39.5 55.4 0 115.7-42.3 207.8-42.3zm-156.5-252c32.5-50 56.7-119 56.7-188C688.3 24.6 549.8 0 476.5 0c-2 0-4 0-6.1.1 -2.3 30.5-1.2 96 22.7 158.6 23.2 61.5 56.8 99.2 138.4 130.2z"/>
               </svg>
-              <span style={{ color: '#FFE500', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              <span style={{ color: '#f4a93c', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                 Free iOS & Android app
               </span>
             </div>
-            <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '2.2rem', fontWeight: 800, color: 'white', lineHeight: 1.12, marginBottom: 18 }}>
+            <h2 style={{ fontFamily: "'Nautic', sans-serif", fontSize: '2.2rem', fontWeight: 800, color: 'white', lineHeight: 1.12, marginBottom: 18 }}>
               Manage your CRM<br />from your phone.<br />For free.
             </h2>
             <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.97rem', lineHeight: 1.75, marginBottom: 24 }}>
@@ -748,9 +748,9 @@ export default function LandingPage() {
             </div>
             <Link href="/build" style={{
               display: 'inline-block', padding: '14px 32px',
-              background: '#FFE500', color: '#0e0020',
+              background: '#f4a93c', color: '#201d3d',
               fontWeight: 800, fontSize: '0.95rem', borderRadius: 10, textDecoration: 'none',
-              fontFamily: "'Oswald', sans-serif", letterSpacing: '0.03em',
+              fontFamily: "'Nautic', sans-serif", letterSpacing: '0.03em',
             }}>
               Get the app free →
             </Link>
@@ -770,7 +770,7 @@ export default function LandingPage() {
                 background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)',
                 borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 12, alignItems: 'flex-start',
               }}>
-                <span style={{ color: '#FFE500', fontWeight: 800, fontSize: '1rem', flexShrink: 0, marginTop: 1 }}>✓</span>
+                <span style={{ color: '#f4a93c', fontWeight: 800, fontSize: '1rem', flexShrink: 0, marginTop: 1 }}>✓</span>
                 <div>
                   <div style={{ color: 'white', fontWeight: 600, fontSize: '0.9rem', marginBottom: 3 }}>{label}</div>
                   <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.82rem', lineHeight: 1.5 }}>{desc}</div>
@@ -782,25 +782,25 @@ export default function LandingPage() {
       </section>
 
       {/* ── Final CTA ── */}
-      <section style={{ padding: '96px 24px', background: '#FFE500', textAlign: 'center' }}>
+      <section style={{ padding: '96px 24px', background: '#f4a93c', textAlign: 'center' }}>
         <div style={{ maxWidth: 640, margin: '0 auto' }}>
           <div style={{
-            display: 'inline-block', background: '#0e0020', color: '#FFE500',
+            display: 'inline-block', background: '#201d3d', color: '#f4a93c',
             fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.1em',
             textTransform: 'uppercase', padding: '5px 14px', borderRadius: 99, marginBottom: 24,
           }}>
             No credit card · Free forever CRM
           </div>
-          <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(2.2rem, 5vw, 3.4rem)', fontWeight: 800, color: '#0e0020', marginBottom: 16, lineHeight: 1.08 }}>
+          <h2 style={{ fontFamily: "'Nautic', sans-serif", fontSize: 'clamp(2.2rem, 5vw, 3.4rem)', fontWeight: 800, color: '#201d3d', marginBottom: 16, lineHeight: 1.08 }}>
             Build your instant quote form now.
           </h2>
           <p style={{ fontSize: '1.05rem', color: 'rgba(14,0,32,0.65)', lineHeight: 1.75, marginBottom: 40, maxWidth: 520, margin: '0 auto 40px' }}>
             Free CRM. Free app. Free quote form. No credit card required. Start collecting leads from your first share.
           </p>
           <Link href="/build" style={{
-            display: 'inline-block', padding: '18px 48px', background: '#0e0020',
-            color: '#FFE500', fontWeight: 800, fontSize: '1.1rem', borderRadius: 10,
-            textDecoration: 'none', fontFamily: "'Oswald', sans-serif", letterSpacing: '0.03em',
+            display: 'inline-block', padding: '18px 48px', background: '#201d3d',
+            color: '#f4a93c', fontWeight: 800, fontSize: '1.1rem', borderRadius: 10,
+            textDecoration: 'none', fontFamily: "'Nautic', sans-serif", letterSpacing: '0.03em',
           }}>
             Build your form — it&apos;s free →
           </Link>

@@ -287,7 +287,7 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
       <style jsx>{`
         .offer{
           --bg:#0e0b1a; --bg-2:#141024; --panel:#181330; --panel-2:#1e1838;
-          --primary:#5c51d6; --primary-light:#8b7fff; --gold:#f5a623; --green:#34d399;
+          --primary:#5b50d6; --primary-light:#8b7fff; --gold:#f4a93c; --green:#34d399;
           --text:#f4f2fb; --muted:#a79fc7; --line:rgba(255,255,255,0.09); --radius:16px;
           background:
             radial-gradient(ellipse 900px 500px at 15% -5%, rgba(92,81,214,0.35), transparent 60%),
@@ -296,12 +296,12 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
           color:var(--text); font-family: var(--font-inter-offer), sans-serif; -webkit-font-smoothing:antialiased;
           overflow-x:hidden; position:relative;
         }
-        .offer :global(h1), .offer :global(h2), .offer :global(h3){ font-family: var(--font-space-grotesk-offer), sans-serif; font-weight:700; letter-spacing:-0.02em; }
+        .offer :global(h1), .offer :global(h2), .offer :global(h3){ font-family: 'Nautic', var(--font-space-grotesk-offer), sans-serif; font-weight:800; letter-spacing:-0.02em; }
         .offer :global(a){ color:inherit; }
         .offer button{ font-family: var(--font-inter-offer), sans-serif; border:none; cursor:pointer; }
 
         nav{ max-width:1080px; margin:0 auto; padding:22px 24px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
-        .brand{ display:flex; align-items:center; gap:10px; font-family: var(--font-space-grotesk-offer), sans-serif; font-weight:700; font-size:19px; }
+        .brand{ display:flex; align-items:center; gap:10px; font-family: 'Nautic', var(--font-space-grotesk-offer), sans-serif; font-weight:700; font-size:19px; }
         .logo-mark{ width:34px; height:34px; border-radius:8px; background:linear-gradient(145deg, var(--primary-light), var(--primary)); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; }
 
         .cta-btn{ display:inline-flex; align-items:center; justify-content:center; gap:10px;
@@ -337,7 +337,7 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
         .showcase-head p{ color:var(--muted); font-size:15.5px; margin:0; }
         .stat-strip{ display:flex; justify-content:center; gap:60px; flex-wrap:wrap; margin-top:34px; }
         .stat-strip .stat{ text-align:center; }
-        .stat-strip .stat .n{ font-family: var(--font-space-grotesk-offer), sans-serif; font-size:30px; font-weight:700; color:var(--gold); }
+        .stat-strip .stat .n{ font-family: 'Nautic', var(--font-space-grotesk-offer), sans-serif; font-size:30px; font-weight:700; color:var(--gold); }
         .stat-strip .stat .l{ font-size:12px; color:var(--muted); letter-spacing:0.03em; text-transform:uppercase; margin-top:4px; }
 
         .problem{ text-align:center; }
@@ -345,7 +345,7 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
         .problem p{ color:var(--muted); max-width:600px; margin:0 auto; font-size:16px; line-height:1.6; }
         .leak-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:40px; }
         .leak-card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:26px 22px; text-align:left; }
-        .leak-card .num{ font-family: var(--font-space-grotesk-offer), sans-serif; font-size:13px; color:var(--primary-light); font-weight:700; letter-spacing:0.08em; }
+        .leak-card .num{ font-family: 'Nautic', var(--font-space-grotesk-offer), sans-serif; font-size:13px; color:var(--primary-light); font-weight:700; letter-spacing:0.08em; }
         .leak-card h3{ font-size:17px; margin:10px 0 8px; }
         .leak-card p{ font-size:14.5px; color:var(--muted); margin:0; }
 
@@ -365,7 +365,7 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
           box-shadow:0 30px 60px -20px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.04); }
         .receipt-head{ text-align:center; border-bottom:2px dashed #d8d2c4; padding-bottom:18px; margin-bottom:18px; }
         .receipt-head .rlogo{ width:30px; height:30px; border-radius:7px; margin:0 auto 10px; display:block; background:linear-gradient(145deg, var(--primary-light), var(--primary)); }
-        .receipt-head h3{ font-family: var(--font-space-grotesk-offer), sans-serif; font-size:15px; letter-spacing:0.14em; text-transform:uppercase; margin:0 0 4px; }
+        .receipt-head h3{ font-family: 'Nautic', var(--font-space-grotesk-offer), sans-serif; font-size:15px; letter-spacing:0.14em; text-transform:uppercase; margin:0 0 4px; }
         .receipt-head span{ font-size:12px; color:#8a8296; letter-spacing:0.04em; }
         .rline{ display:flex; justify-content:space-between; align-items:baseline; font-size:14.5px; padding:9px 0; border-bottom:1px dotted #e3ded1; gap:12px; }
         .rline .rname{ max-width:270px; }
@@ -373,20 +373,20 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
         .rline .rprice{ font-variant-numeric:tabular-nums; white-space:nowrap; }
         .rline .rprice :global(.was){ text-decoration:line-through; color:#b3ab9c; margin-right:8px; font-size:13px; }
         .rtotal{ display:flex; justify-content:space-between; align-items:center; padding-top:16px; margin-top:6px; border-top:2px dashed #d8d2c4; }
-        .rtotal .label{ font-family: var(--font-space-grotesk-offer), sans-serif; font-weight:700; font-size:15px; letter-spacing:0.03em; }
-        .rtotal .value{ font-family: var(--font-space-grotesk-offer), sans-serif; font-size:15px; text-decoration:line-through; color:#b3ab9c; }
+        .rtotal .label{ font-family: 'Nautic', var(--font-space-grotesk-offer), sans-serif; font-weight:700; font-size:15px; letter-spacing:0.03em; }
+        .rtotal .value{ font-family: 'Nautic', var(--font-space-grotesk-offer), sans-serif; font-size:15px; text-decoration:line-through; color:#b3ab9c; }
         .due{ margin-top:16px; background:#221c33; color:#fbfaf7; border-radius:8px; padding:18px 20px; display:flex; justify-content:space-between; align-items:center; }
-        .due .label{ font-family: var(--font-space-grotesk-offer), sans-serif; font-size:13px; letter-spacing:0.1em; text-transform:uppercase; color:#c9c2e6; }
-        .due .amt{ font-family: var(--font-space-grotesk-offer), sans-serif; font-size:34px; font-weight:700; color:var(--gold); }
+        .due .label{ font-family: 'Nautic', var(--font-space-grotesk-offer), sans-serif; font-size:13px; letter-spacing:0.1em; text-transform:uppercase; color:#c9c2e6; }
+        .due .amt{ font-family: 'Nautic', var(--font-space-grotesk-offer), sans-serif; font-size:34px; font-weight:700; color:var(--gold); }
         .due .amt :global(sup){ font-size:15px; color:#c9c2e6; font-weight:600; margin-left:5px; }
         .stamp{ position:absolute; top:38px; right:24px; border:3px solid #d1483d; color:#d1483d;
-          font-family: var(--font-space-grotesk-offer), sans-serif; font-weight:700; font-size:13px; letter-spacing:0.1em;
+          font-family: 'Nautic', var(--font-space-grotesk-offer), sans-serif; font-weight:700; font-size:13px; letter-spacing:0.1em;
           padding:5px 10px; border-radius:6px; transform:rotate(9deg); text-transform:uppercase; }
 
         .steps{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:44px; }
         .step-card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:28px 24px; }
         .step-num{ width:38px; height:38px; border-radius:10px; background:rgba(92,81,214,0.25); display:flex; align-items:center; justify-content:center; color:var(--primary-light);
-          font-family: var(--font-space-grotesk-offer), sans-serif; font-weight:700; font-size:16px; margin-bottom:16px; }
+          font-family: 'Nautic', var(--font-space-grotesk-offer), sans-serif; font-weight:700; font-size:16px; margin-bottom:16px; }
         .step-card h3{ font-size:17px; margin:0 0 8px; }
         .step-card p{ font-size:14.5px; color:var(--muted); margin:0; line-height:1.55; }
 
@@ -396,13 +396,13 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
         .guarantee p{ color:var(--muted); font-size:15px; line-height:1.6; margin:0; max-width:600px; }
 
         .proof-card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:36px; display:flex; gap:26px; align-items:flex-start; }
-        .proof-avatar{ flex:0 0 auto; width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg,var(--primary),var(--primary-light)); display:flex; align-items:center; justify-content:center; font-family: var(--font-space-grotesk-offer), sans-serif; font-weight:700; font-size:18px; }
+        .proof-avatar{ flex:0 0 auto; width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg,var(--primary),var(--primary-light)); display:flex; align-items:center; justify-content:center; font-family: 'Nautic', var(--font-space-grotesk-offer), sans-serif; font-weight:700; font-size:18px; }
         .proof-card :global(p.quote){ font-size:17px; line-height:1.6; margin:0 0 14px; }
         .who{ color:var(--muted); font-size:14px; }
         .who :global(strong){ color:var(--text); }
         .proof-stats{ display:flex; gap:34px; margin-top:22px; padding-top:22px; border-top:1px solid var(--line); flex-wrap:wrap; }
         .proof-stats > div{ text-align:left; }
-        .proof-stats .n{ font-family: var(--font-space-grotesk-offer), sans-serif; font-size:24px; font-weight:700; color:var(--gold); }
+        .proof-stats .n{ font-family: 'Nautic', var(--font-space-grotesk-offer), sans-serif; font-size:24px; font-weight:700; color:var(--gold); }
         .proof-stats .l{ font-size:12.5px; color:var(--muted); }
 
         .faq-item{ border-bottom:1px solid var(--line); padding:20px 0; }
