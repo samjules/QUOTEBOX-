@@ -4,6 +4,7 @@ import { sendSms } from '@/lib/sms'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://quote-box.com'
 const CALENDAR_URL = `${SITE_URL}/get-started`
+const LOGIN_URL = `${SITE_URL}/dashboard`
 
 const H = 60 * 60 * 1000
 const DAY = 24 * H
@@ -74,41 +75,65 @@ function emailBody(heading: string, body: string, outro: string, cta?: string): 
 }
 
 // ---------------------------------------------------------------------------
-// Step schedule
+// Step schedule — "The Pledge Path": every new /build account pledges a
+// booked-jobs number before the account even exists (accounts.monthly_booking_goal).
+// This 30-day, 22-touch sequence keeps that number in front of them and puts the
+// $297 Consultation & Ad Setup right where the gap between pledged and booked opens up.
 // ---------------------------------------------------------------------------
 
 export const ONBOARDING_STEPS: { step: string; delay_ms: number }[] = [
-  { step: 'welcome',             delay_ms: 0 },
-  { step: 'day1_sms_2h',        delay_ms: 2 * H },
-  { step: 'day2_email',         delay_ms: 2 * DAY },
-  { step: 'day3_sms',           delay_ms: 3 * DAY },
-  { step: 'day4_email',         delay_ms: 4 * DAY },
-  { step: 'day5_morning_email', delay_ms: 5 * DAY },
-  { step: 'day5_afternoon_sms', delay_ms: 5 * DAY + 6 * H },
-  { step: 'day7_email',         delay_ms: 7 * DAY },
-  { step: 'day9_sms',           delay_ms: 9 * DAY },
-  { step: 'day10_email',        delay_ms: 10 * DAY },
-  { step: 'day12_email',        delay_ms: 12 * DAY },
-  { step: 'day13_sms',          delay_ms: 13 * DAY },
-  { step: 'day14_email',        delay_ms: 14 * DAY },
-  { step: 'day14_sms',          delay_ms: 14 * DAY + 2 * H },
-  { step: 'day15_email',        delay_ms: 15 * DAY },
-  { step: 'day17_email',        delay_ms: 17 * DAY },
-  { step: 'day19_sms',          delay_ms: 19 * DAY },
-  { step: 'day21_email',        delay_ms: 21 * DAY },
-  { step: 'day23_sms',          delay_ms: 23 * DAY },
-  { step: 'day25_email',        delay_ms: 25 * DAY },
-  { step: 'day28_email',        delay_ms: 28 * DAY },
-  { step: 'day30_sms',          delay_ms: 30 * DAY },
+  { step: 'pledge_day0_email',  delay_ms: 0 },
+  { step: 'pledge_day0_sms',    delay_ms: 0 },
+  { step: 'pledge_day1_email',  delay_ms: 1 * DAY },
+  { step: 'pledge_day2_sms',    delay_ms: 2 * DAY },
+  { step: 'pledge_day3_email',  delay_ms: 3 * DAY },
+  { step: 'pledge_day4_sms',    delay_ms: 4 * DAY },
+  { step: 'pledge_day5_email',  delay_ms: 5 * DAY },
+  { step: 'pledge_day6_sms',    delay_ms: 6 * DAY },
+  { step: 'pledge_day7_email',  delay_ms: 7 * DAY },
+  { step: 'pledge_day9_sms',    delay_ms: 9 * DAY },
+  { step: 'pledge_day10_email', delay_ms: 10 * DAY },
+  { step: 'pledge_day12_sms',   delay_ms: 12 * DAY },
+  { step: 'pledge_day14_email', delay_ms: 14 * DAY },
+  { step: 'pledge_day16_sms',   delay_ms: 16 * DAY },
+  { step: 'pledge_day18_email', delay_ms: 18 * DAY },
+  { step: 'pledge_day20_sms',   delay_ms: 20 * DAY },
+  { step: 'pledge_day21_email', delay_ms: 21 * DAY },
+  { step: 'pledge_day24_sms',   delay_ms: 24 * DAY },
+  { step: 'pledge_day25_email', delay_ms: 25 * DAY },
+  { step: 'pledge_day27_sms',   delay_ms: 27 * DAY },
+  { step: 'pledge_day28_email', delay_ms: 28 * DAY },
+  { step: 'pledge_day30_email', delay_ms: 30 * DAY },
 ]
 
 export const SMS_STEPS = new Set([
-  'day1_sms_2h', 'day3_sms', 'day5_afternoon_sms', 'day9_sms',
-  'day13_sms', 'day14_sms', 'day19_sms', 'day23_sms', 'day30_sms',
+  'pledge_day0_sms', 'pledge_day2_sms', 'pledge_day4_sms', 'pledge_day6_sms',
+  'pledge_day9_sms', 'pledge_day12_sms', 'pledge_day16_sms', 'pledge_day20_sms',
+  'pledge_day24_sms', 'pledge_day27_sms',
 ])
 
+const DEFAULT_PLEDGE = 10
+const STOP = `\n\nReply STOP to opt out.`
+
+function pcopy(paragraphs: string[]): string {
+  return paragraphs.map((p) => `<p style="margin:0 0 14px;font-size:15px;color:#334155;line-height:1.65;">${p}</p>`).join('')
+}
+
+function statStrip(stats: { v: string; l: string }[]): string {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 20px;"><tr>${stats.map((s) => (
+    `<td align="center" style="padding:10px 6px;"><div style="font-size:20px;font-weight:800;color:#0e0020;">${esc(s.v)}</div><div style="font-size:10.5px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em;margin-top:2px;">${esc(s.l)}</div></td>`
+  )).join('')}</tr></table>`
+}
+
+function pledgeEmail(opts: { greet: string; paragraphs: string[]; stats?: { v: string; l: string }[]; cta?: { label: string; url: string } }): string {
+  return `<p style="margin:0 0 14px;font-size:15px;color:#0e0020;font-weight:700;">${opts.greet}</p>${pcopy(opts.paragraphs)}${opts.stats ? statStrip(opts.stats) : ''}${opts.cta ? ctaButton(opts.cta.label, opts.cta.url) : ''}`
+}
+
 // ---------------------------------------------------------------------------
-// Email builders — keyed by step name
+// Email builders — keyed by step name. pledgeCount/jobsBookedSoFar are live
+// values pulled at send time (accounts.monthly_booking_goal, and a count of
+// this account's 'booked' leads since signup) — default here only for the
+// admin preview/test tools, which don't have a real account to read from.
 // ---------------------------------------------------------------------------
 
 export function buildEmailForStep(
@@ -116,234 +141,210 @@ export function buildEmailForStep(
   businessName: string,
   firstName: string,
   custom: EmailCopy | null,
+  pledgeCount: number | null = DEFAULT_PLEDGE,
+  jobsBookedSoFar: number = 3,
 ): { subject: string; html: string } | null {
-  const hi = `Hi ${esc(firstName)},`
+  const fn = esc(firstName)
   const biz = esc(businessName)
-  const cta = ctaButton('Book Your Free Strategy Call →', CALENDAR_URL)
+  const pc = pledgeCount ?? DEFAULT_PLEDGE
+  const jb = jobsBookedSoFar
 
   const configs: Record<string, { subject: string; html: string }> = {
-    welcome: buildWelcomeEmail(businessName, custom),
-
-    day2_email: {
-      subject: `The #1 mistake junk removal owners make with their leads`,
-      html: emailShell(businessName, emailBody(
-        'Most owners lose leads by responding too slowly.',
-        `<p style="margin:0 0 12px;">${hi}</p>
-         <p style="margin:0 0 12px;">When a potential customer submits a quote request, they're often shopping around. The business that responds first — wins. Studies show responding within 5 minutes increases conversions by 8x.</p>
-         <p style="margin:0 0 12px;">The good news: your <strong>${biz}</strong> QuoteBox CRM already handles this automatically. The moment a lead submits your quote form, they get an instant email and (if opted in) an SMS — before your competitors even see the notification.</p>
-         <p style="margin:0;">Your CRM is already set up to fix this. Log in and check your automation settings.</p>`,
-        `Questions? Just reply to this email.`,
-        ctaButton('Log In to Your CRM →', `${SITE_URL}/dashboard`),
-      )),
+    pledge_day0_email: {
+      subject: `You just pledged ${pc} jobs. Let's make it real.`,
+      html: emailShell(businessName, pledgeEmail({
+        greet: `Hey ${fn},`,
+        paragraphs: [
+          `Before you even finished setting up <strong>${biz}</strong>, you told us something: you're booking ${pc} jobs this month.`,
+          `We wrote it down. It's on your dashboard right now, sitting at the top where you'll see it every time you log in.`,
+          `That's on purpose. A pledge that's easy to forget is just a guess. This one isn't going anywhere.`,
+          `Your Quotebox account is live. Here's what to do in the next 10 minutes to start closing the gap between "pledged" and "booked."`,
+        ],
+        cta: { label: 'Set up my account →', url: LOGIN_URL },
+      })),
     },
 
-    day4_email: {
-      subject: `How Mike's junk removal company booked 12 jobs in his first week`,
-      html: emailShell(businessName, emailBody(
-        "From scrambling for leads → consistent bookings",
-        `<p style="margin:0 0 12px;">${hi}</p>
-         <p style="margin:0 0 12px;">Mike runs a junk removal company in the midwest. Before QuoteBox, he was juggling Facebook messages, missed calls, and a spreadsheet he updated maybe twice a week. Leads were slipping through the cracks daily.</p>
-         <p style="margin:0 0 12px;">In his first week with QuoteBox, he set up his quote form, linked it to his Meta ad, and let the automation run. 12 booked jobs. His close rate went from around 20% to over 55% — just from following up faster and more consistently.</p>
-         <p style="margin:0;">"I didn't change my prices or my ads. I just stopped losing leads I was already paying for."</p>`,
-        `Want results like this? Book a free strategy call and we'll walk through your setup together.`,
-        cta,
-      )),
+    pledge_day1_email: {
+      subject: `3 things to turn on before your first lead comes in`,
+      html: emailShell(businessName, pledgeEmail({
+        greet: `${fn},`,
+        paragraphs: [
+          `Every ${pc}-job month starts with your quote form actually catching leads instead of losing them to a callback.`,
+          `Today, do these three things:<br>1. Finish your branded instant quote form — most owners are live in under 10 minutes<br>2. Confirm instant SMS + email follow-up is turned on for new leads<br>3. Connect your Meta ad account so every lead ties back to real spend`,
+          `Businesses that finish this checklist in week one are the ones who hit their pledge. The ones who don't usually spend the whole month playing catch-up.`,
+        ],
+        cta: { label: 'Finish setup →', url: LOGIN_URL },
+      })),
     },
 
-    day5_morning_email: {
-      subject: `Your CRM setup checklist (takes 10 minutes)`,
-      html: emailShell(businessName, emailBody(
-        'Get your CRM fully set up in 10 minutes',
-        `<p style="margin:0 0 12px;">${hi}</p>
-         <p style="margin:0 0 12px;">Here's a quick checklist to make sure your <strong>${biz}</strong> account is dialed in:</p>
-         <ol style="margin:0 0 16px;padding-left:20px;line-height:2;">
-           <li>Add your profile photo to your account</li>
-           <li>Set your service area</li>
-           <li>Add your pricing (even just a starting range)</li>
-           <li>Customize your quote form headline</li>
-           <li>Copy your booking link and add it to your bio or Google listing</li>
-         </ol>
-         <p style="margin:0;">Most owners who finish this checklist get their first lead within 48 hours.</p>`,
-        `Need help finishing setup? Grab a free call and we'll do it together.`,
-        cta,
-      )),
+    pledge_day3_email: {
+      subject: `How Titan Tuff went from scattered leads to a full board`,
+      html: emailShell(businessName, pledgeEmail({
+        greet: `${fn},`,
+        paragraphs: [
+          `Titan Tuff Moving in Clearwater started right where you are — a pledge, a fresh account, and a month to prove it out.`,
+          `Their account now shows 685 leads captured, $111,811 in tracked pipeline, and a 2.88x return on ad spend. What changed things wasn't just the CRM — it was pairing it with a properly built ad account and a consultation that mapped their funnel to an actual pledge number, instead of guessing at targeting.`,
+          `We do that exact setup for a small group of owners each month. More on that soon — for now, just know it's an option if week one feels slower than you'd like.`,
+        ],
+      })),
     },
 
-    day7_email: {
-      subject: `3 ways moving companies are doubling their bookings right now`,
-      html: emailShell(businessName, emailBody(
-        '3 things the busiest moving companies are doing differently',
-        `<p style="margin:0 0 12px;">${hi}</p>
-         <p style="margin:0 0 12px;">Here are three things that are working right now for junk removal and moving businesses:</p>
-         <p style="margin:0 0 8px;"><strong>1. Google My Business optimization</strong><br>Adding real job photos and responding to every review (even the bad ones) is moving companies up 3–5 spots in local search — for free.</p>
-         <p style="margin:0 0 8px;"><strong>2. Referral automation</strong><br>Sending a simple "know anyone who needs a move?" text 3 days after every completed job. Earns 1–2 referral jobs per 10 completed jobs on average.</p>
-         <p style="margin:0 0 12px;"><strong>3. Instant quote follow-up</strong><br>The businesses doing this right are using automated follow-up within the first hour. QuoteBox handles this for you automatically.</p>
-         <p style="margin:0;">We can help you implement all three. Let's talk.</p>`,
-        `Book a free strategy call and we'll build this out for your business.`,
-        cta,
-      )),
+    pledge_day5_email: {
+      subject: `Your pledge tracker: ${jb} of ${pc} jobs booked`,
+      html: emailShell(businessName, pledgeEmail({
+        greet: `${fn},`,
+        paragraphs: [
+          `Five days in, here's where things actually stand:`,
+          `&rarr; Pledged: ${pc} jobs<br>&rarr; Booked so far: ${jb}<br>&rarr; Days left in the month: 25`,
+          `At this pace, that gap doesn't close itself. It closes with more qualified leads reaching you, faster.`,
+          `That's exactly what our $297 Consultation &amp; Ad Setup is for. One session, our team builds and launches your ad account around your actual pledge number, and configures Quotebox to catch and convert every lead it sends you. It's the fastest lever available to you this month.`,
+        ],
+        cta: { label: `See what's included →`, url: CALENDAR_URL },
+      })),
     },
 
-    day10_email: {
-      subject: `What your competitors are doing to stay fully booked`,
-      html: emailShell(businessName, emailBody(
-        "Here's what the fully-booked guys in your market are doing",
-        `<p style="margin:0 0 12px;">${hi}</p>
-         <p style="margin:0 0 12px;">Businesses using a CRM to track and follow up on leads close significantly more jobs than those who don't. That's not a sales pitch — it's just what the data shows across thousands of service businesses.</p>
-         <p style="margin:0 0 12px;">The ones staying fully booked aren't necessarily spending more on ads. They're just not losing the leads they're already generating. Every missed follow-up, every slow response, every un-answered inquiry — that's revenue walking to a competitor.</p>
-         <p style="margin:0;">Your QuoteBox is already set up to prevent this. Want to see how your lead flow compares to top performers in your area?</p>`,
-        `Book a free call to see how you stack up — and what to fix first.`,
-        cta,
-      )),
+    pledge_day7_email: {
+      subject: `One week in: the fastest way to hit ${pc} jobs this month`,
+      html: emailShell(businessName, pledgeEmail({
+        greet: `${fn},`,
+        paragraphs: [
+          `A week down. Here's the honest math: most owners who hit their pledge without help do it because they already had ad accounts running and lead flow figured out before day one.`,
+          `If that's not you yet, the $297 Consultation &amp; Ad Setup gets you there in one sitting:<br>&rarr; A live strategy call mapped to your ${pc}-job goal<br>&rarr; Your ad account built and launched, not just audited<br>&rarr; Quotebox automations configured to convert what the ads send you`,
+          `We only take a limited number of these each month so the builds stay hands-on. If you want this month to actually hit your number, now's the time.`,
+        ],
+        cta: { label: 'Book my $297 setup →', url: CALENDAR_URL },
+      })),
     },
 
-    day12_email: {
-      subject: `Behind the scenes: how we helped a moving company go from 4 to 20 jobs/month`,
-      html: emailShell(businessName, emailBody(
-        'From 4 to 20 jobs/month — here\'s exactly how',
-        `<p style="margin:0 0 12px;">${hi}</p>
-         <p style="margin:0 0 12px;">A moving company came to us doing about 4 jobs a month. Good reviews, decent ad budget, but leads were going cold before they could follow up.</p>
-         <p style="margin:0 0 12px;">Here's what we built for them in one strategy call:</p>
-         <ul style="margin:0 0 16px;padding-left:20px;line-height:1.9;">
-           <li>A quote form with a clear, specific headline (conversion went up 40%)</li>
-           <li>Automated email + SMS follow-up within 60 seconds of a new inquiry</li>
-           <li>A 3-touch re-engagement sequence for leads who didn't book</li>
-           <li>A simple referral ask sent 2 days after job completion</li>
-         </ul>
-         <p style="margin:0 0 12px;"><em>"Within 6 weeks we hit 20 jobs. I didn't change my prices, didn't increase my ad spend. We just stopped hemorrhaging leads."</em></p>
-         <p style="margin:0;">We can build the same system for <strong>${biz}</strong>. Book a free call this week.</p>`,
-        `It's a 20-minute call. No pitch, no pressure. Just your setup, reviewed.`,
-        cta,
-      )),
+    pledge_day10_email: {
+      subject: `"What actually happens in the $297 setup?"`,
+      html: emailShell(businessName, pledgeEmail({
+        greet: `${fn},`,
+        paragraphs: [
+          `Fair question — here's exactly what you get:`,
+          `1. A 30-minute call where we map your ${pc}-job pledge to a real ad budget and timeline<br>2. Your Meta ad account built and launched around your service area and pricing<br>3. Your Quotebox lead routing and follow-up sequences configured to match`,
+          `The math most owners miss: one missed job usually costs more than $297. This pays for itself the first time it prevents a lead from slipping through.`,
+        ],
+        cta: { label: 'Book my setup call →', url: CALENDAR_URL },
+      })),
     },
 
-    day14_email: {
-      subject: `Quick question for you, ${firstName}`,
-      html: emailShell(businessName, emailBody(
-        `Quick question, ${esc(firstName)}`,
-        `<p style="margin:0 0 12px;">${hi}</p>
-         <p style="margin:0 0 12px;">What's the biggest challenge you're facing with your business right now?</p>
-         <p style="margin:0 0 8px;"><strong>A)</strong> Getting more leads in the door</p>
-         <p style="margin:0 0 8px;"><strong>B)</strong> Following up fast enough before they go cold</p>
-         <p style="margin:0 0 12px;"><strong>C)</strong> Closing quotes once leads come in</p>
-         <p style="margin:0;">Just hit reply and let me know — it helps me point you toward the right resources, and I personally read every response.</p>`,
-        `Either way, your QuoteBox CRM is ready to help with all three. Let's make it work harder for you.`,
-        cta,
-      )),
+    pledge_day14_email: {
+      subject: `Halfway through the month: ${jb} of ${pc}`,
+      html: emailShell(businessName, pledgeEmail({
+        greet: `${fn},`,
+        paragraphs: [
+          `Fifteen days left. Here's the honest read on where you stand against your pledge:`,
+          `If ${jb} is tracking close to half of ${pc}, you're on pace — keep doing exactly what you're doing.`,
+          `If it's not, the math for the rest of the month gets tighter every day you wait. Owners who bring in the $297 Ad Setup &amp; Consultation at this point usually see it show up in bookings within the final two weeks, not months later.`,
+          `This is the last natural checkpoint before "hitting your pledge" starts requiring a rush.`,
+        ],
+        cta: { label: 'Close the gap now →', url: CALENDAR_URL },
+      })),
     },
 
-    day15_email: {
-      subject: `We set aside 5 spots this month for new Quotebox clients`,
-      html: emailShell(businessName, emailBody(
-        '5 free strategy call spots — this month only',
-        `<p style="margin:0 0 12px;">${hi}</p>
-         <p style="margin:0 0 12px;">We set aside a limited number of free strategy calls each month for new QuoteBox users. These aren't sales calls — here's exactly what we cover:</p>
-         <ul style="margin:0 0 16px;padding-left:20px;line-height:1.9;">
-           <li>A custom lead gen audit for <strong>${biz}</strong></li>
-           <li>A review of your current CRM and form setup</li>
-           <li>A 90-day growth plan tailored to your market</li>
-         </ul>
-         <p style="margin:0;">We only take on as many clients as we can actually help well. A few spots are still open this month.</p>`,
-        `Claim your spot before they fill up.`,
-        cta,
-      )),
+    pledge_day18_email: {
+      subject: `What changed for Titan Tuff after one call`,
+      html: emailShell(businessName, pledgeEmail({
+        greet: `${fn},`,
+        paragraphs: [
+          `Titan Tuff Moving pledged a number that felt like a stretch. Two weeks in, they weren't close.`,
+          `Before the setup call, their leads were sitting in a Facebook inbox for a day or two at a time. The call was simple: we rebuilt their ad targeting around the actual jobs they wanted (not just "moving leads"), got every quote request an instant reply, and gave them a clear line of sight from ad dollar to booked job.`,
+        ],
+        stats: [
+          { v: '$111,811', l: 'pipeline value' },
+          { v: '685', l: 'leads captured' },
+          { v: '2.88x', l: 'return on ad spend' },
+        ],
+        cta: { label: 'See if it fits my pledge →', url: CALENDAR_URL },
+      })),
     },
 
-    day17_email: {
-      subject: `What happens on your free strategy call (exactly)`,
-      html: emailShell(businessName, emailBody(
-        "Here's exactly what happens on the call",
-        `<p style="margin:0 0 12px;">${hi}</p>
-         <p style="margin:0 0 12px;">We know "free strategy call" can mean anything — so here's the actual agenda:</p>
-         <p style="margin:0 0 8px;"><strong>First 5 min:</strong> You tell us about <strong>${biz}</strong> — market, volume, current setup.</p>
-         <p style="margin:0 0 8px;"><strong>Next 10 min:</strong> We audit your current lead flow and find where you're losing jobs.</p>
-         <p style="margin:0 0 12px;"><strong>Last 15 min:</strong> We build a custom action plan. What to fix, in what order, with what tools.</p>
-         <p style="margin:0;">No pitch. No pressure. If QuoteBox isn't the right fit, we'll tell you — and point you somewhere that is. Total time: 30 minutes.</p>`,
-        `Book your spot now. Calendar fills up mid-month.`,
-        cta,
-      )),
+    pledge_day21_email: {
+      subject: `9 days left to hit ${pc} jobs`,
+      html: emailShell(businessName, pledgeEmail({
+        greet: `${fn},`,
+        paragraphs: [
+          `Nine days left in the month. You're at ${jb} of ${pc}.`,
+          `At this point, the ad setup call stops being a "nice to have" and starts being the only lever with enough runway left to actually move the number before the month closes. Calls booked this week can usually get an ad account live within 48 hours.`,
+          `We'd rather you hit this pledge than watch the calendar run out on it.`,
+        ],
+        cta: { label: 'Book before the month closes →', url: CALENDAR_URL },
+      })),
     },
 
-    day21_email: {
-      subject: `"I almost didn't book a call" — here's what happened`,
-      html: emailShell(businessName, emailBody(
-        '"I almost didn\'t book. Glad I did."',
-        `<p style="margin:0 0 12px;">${hi}</p>
-         <p style="margin:0 0 12px;">We hear this a lot. Here's what Sarah, who runs a moving company in Texas, told us after her call:</p>
-         <blockquote style="margin:0 0 16px;padding:16px 20px;background:#f8fafc;border-left:3px solid #ffe500;border-radius:0 8px 8px 0;">
-           <em>"I kept putting it off because I thought I didn't have time. The call was 25 minutes. By the end we had a plan. Within two weeks I was booking more jobs than the whole previous month."</em>
-         </blockquote>
-         <p style="margin:0;">The most common hesitation we hear: <em>"I don't have time right now."</em> That's exactly why the call is worth it — it saves time by cutting out what's not working and doubling down on what is.</p>`,
-        `25 minutes. Real plan. Book your spot.`,
-        cta,
-      )),
+    pledge_day25_email: {
+      subject: `Last call on this month's $297 setup slots`,
+      html: emailShell(businessName, pledgeEmail({
+        greet: `${fn},`,
+        paragraphs: [
+          `Five days left. We're closing this month's $297 Consultation &amp; Ad Setup slots on the 28th so every build we start still has time to actually run before the month ends.`,
+          `If ${biz} is short of ${pc}, this is the last version of this offer that can still affect this month's number. After the 28th, it rolls into next month's pledge instead.`,
+        ],
+        cta: { label: 'Grab one of the last slots →', url: CALENDAR_URL },
+      })),
     },
 
-    day25_email: {
-      subject: `Still thinking about it? Here's an honest breakdown`,
-      html: emailShell(businessName, emailBody(
-        "Still on the fence? Here's the honest version.",
-        `<p style="margin:0 0 12px;">${hi}</p>
-         <p style="margin:0 0 12px;">I want to address the three things we hear most often at this point:</p>
-         <p style="margin:0 0 8px;"><strong>"Too busy right now."</strong><br>We get it. The call is 20 minutes and the plan we give you will save you more time than it costs. But if now genuinely isn't the moment, that's okay.</p>
-         <p style="margin:0 0 8px;"><strong>"Not sure it's worth it."</strong><br>Fair. The call is free. If it's not useful, you've lost 20 minutes. If it is, you could have a better system in place within a week.</p>
-         <p style="margin:0 0 12px;"><strong>"Already tried ads and it didn't work."</strong><br>Ads alone rarely work. The follow-up and conversion system behind them is where most businesses fail. That's what we fix.</p>
-         <p style="margin:0;">Your <strong>${biz}</strong> CRM is already live and working. The door is open whenever you're ready.</p>`,
-        `No pressure. Book when you're ready — or just reply and let me know where you're at.`,
-        cta,
-      )),
+    pledge_day28_email: {
+      subject: `Final reminder — setup slots close tonight`,
+      html: emailShell(businessName, pledgeEmail({
+        greet: `${fn},`,
+        paragraphs: [
+          `This is the last note before this month's $297 Consultation &amp; Ad Setup slots close.`,
+          `If you've been meaning to book one, this is the moment. One click gets you on the calendar — we'll handle the rest.`,
+        ],
+        cta: { label: 'Book now →', url: CALENDAR_URL },
+      })),
     },
 
-    day28_email: {
-      subject: `The 3 things we'd do with your Quotebox account this month`,
-      html: emailShell(businessName, emailBody(
-        '3 things to do with your CRM this month (free tips)',
-        `<p style="margin:0 0 12px;">${hi}</p>
-         <p style="margin:0 0 12px;">Here are three high-impact moves you can make with your QuoteBox account right now — no call needed:</p>
-         <p style="margin:0 0 8px;"><strong>1. Optimize your quote form headline</strong><br>Change it from generic ("Get a free quote") to specific ("See your moving cost in 60 seconds"). Typically lifts form starts by 20–40%.</p>
-         <p style="margin:0 0 8px;"><strong>2. Set up a 3-step follow-up sequence</strong><br>Instant email → 24h follow-up → 48h offer. Your CRM can run this automatically for every new lead.</p>
-         <p style="margin:0 0 12px;"><strong>3. Add a referral ask after each completed job</strong><br>A simple automated text 2 days after job completion: "Know anyone who needs a move?" Earns 1–2 referrals per 10 jobs on average.</p>
-         <p style="margin:0;">These are free to implement on your own — or we can set them all up together on a call in under 20 minutes.</p>`,
-        `Either way, your CRM is ready. Let's make it earn its keep.`,
-        cta,
-      )),
+    pledge_day30_email: {
+      subject: `You pledged ${pc}. You booked ${jb}.`,
+      html: emailShell(businessName, pledgeEmail({
+        greet: `${fn},`,
+        paragraphs: [
+          `The month's closed. Here's the final tally against what you pledged on day one.`,
+          `Whatever that number is, it's real data now — not a guess. Owners who came in short almost always point to the same thing afterward: lead flow, not effort.`,
+          `Time to set next month's pledge. If you want this next one to run differently, the $297 Consultation &amp; Ad Setup carries forward — and this time, there's a full month ahead of it instead of behind it.`,
+        ],
+        cta: { label: `Set next month's pledge →`, url: LOGIN_URL },
+      })),
     },
 
-    // Backward-compatible steps
+    // Legacy step, kept for backward compat with the free-trial no-leads flow.
     no_leads_followup: buildNoLeadsEmail(businessName, null),
   }
 
   const result = configs[step]
   if (!result) return null
-
-  if (custom) {
-    // Allow custom overrides for subject/html (admin config)
-    return { ...result }
-  }
-  return result
+  return custom ? { ...result } : result
 }
 
 // ---------------------------------------------------------------------------
 // SMS builders — keyed by step name
 // ---------------------------------------------------------------------------
 
-const STOP = `\n\nReply STOP to opt out.`
-
-export function buildSmsForStep(step: string, firstName: string, businessName: string): string | null {
-  const link = CALENDAR_URL
-  const greet = `Hey ${firstName}`
+export function buildSmsForStep(
+  step: string,
+  firstName: string,
+  businessName: string,
+  pledgeCount: number | null = DEFAULT_PLEDGE,
+  jobsBookedSoFar: number = 3,
+): string | null {
+  const pc = pledgeCount ?? DEFAULT_PLEDGE
+  const jb = jobsBookedSoFar
 
   const msgs: Record<string, string> = {
-    day1_sms_2h: `${greet} — your Quotebox CRM is live 🎉 Got 5 min? Log in and grab your free lead capture link: ${SITE_URL}/dashboard${STOP}`,
-    day3_sms: `Quick tip: businesses that follow up within 5 min book 8x more jobs. Your Quotebox does that automatically. Want us to show you how? ${link}${STOP}`,
-    day5_afternoon_sms: `${greet} — did you get a chance to finish your CRM setup? Takes 10 min and your first lead could come in today: ${SITE_URL}/dashboard${STOP}`,
-    day9_sms: `Most junk removal owners don't know this: automated follow-up can recover 30–40% of leads who didn't book the first time. Want to see how your CRM handles it? ${link}${STOP}`,
-    day13_sms: `${greet} — we helped a moving company go from 4 to 20 jobs/month with their Quotebox setup. Want to see how? 15-min call, no pressure: ${link}${STOP}`,
-    day14_sms: `Hey — sent you a quick question by email. Would love your answer, it helps us help you better. Takes 30 seconds: ${link}${STOP}`,
-    day19_sms: `${greet}, only a few spots left for our free strategy calls this month. We go through your lead setup and build a 90-day plan together. Grab yours: ${link}${STOP}`,
-    day23_sms: `Last chance for this month's free strategy sessions, ${firstName}. Spots fill up fast — book here: ${link}. Takes 30 sec.${STOP}`,
-    day30_sms: `${greet} — wrapping up our onboarding series. Your CRM is still ready to generate leads. If you ever want to talk strategy, we're here: ${link}. No rush at all.${STOP}`,
-    // Backward-compatible
+    pledge_day0_sms: `Quotebox: Welcome, ${firstName} 🎉 Your pledge of ${pc} jobs this month is locked in on your dashboard. Log in here to get your first leads flowing: ${LOGIN_URL}${STOP}`,
+    pledge_day2_sms: `Quotebox: Quick check — is your quote form live yet? Takes about 10 min and it's the difference between leads reaching you or not: ${LOGIN_URL}. Reply HELP if you're stuck.${STOP}`,
+    pledge_day4_sms: `Quotebox: Pro tip — accounts that respond to leads in under 5 min book 3x more jobs. Your automations handle that for you if they're turned on. Check yours: ${LOGIN_URL}${STOP}`,
+    pledge_day6_sms: `Quotebox: You're at ${jb}/${pc} jobs with 24 days left. Our $297 Ad Setup + Consultation is built to close that exact gap: ${CALENDAR_URL}${STOP}`,
+    pledge_day9_sms: `Quotebox: "I figured I'd just run the ads myself" — most owners try that first. The ones who book their pledge usually don't. Worth 15 min to see why: ${CALENDAR_URL}${STOP}`,
+    pledge_day12_sms: `Quotebox: A third of the month is gone. Where do you sit against your ${pc}-job pledge? Check your tracker: ${LOGIN_URL}${STOP}`,
+    pledge_day16_sms: `Quotebox: Titan Tuff's ad setup call helped turn 685 leads into $111,811 in tracked pipeline at a 2.88x return. Yours is still open this month: ${CALENDAR_URL}${STOP}`,
+    pledge_day20_sms: `Quotebox: Heads up — we only take a handful of $297 setup calls each month, and this month's slots are thinning out. If you want yours: ${CALENDAR_URL}${STOP}`,
+    pledge_day24_sms: `Quotebox: One week left this month. ${jb}/${pc} booked. Last real window to get an ad setup live before it closes: ${CALENDAR_URL}${STOP}`,
+    pledge_day27_sms: `Quotebox: 72 hours left on this month's ad setup slots. After that it rolls to next month's pledge: ${CALENDAR_URL}${STOP}`,
+    // Legacy step, kept for backward compat.
     no_leads_followup: buildNoLeadsSms(null),
   }
 
@@ -464,16 +465,13 @@ function resolveFirstName(userMetadata: Record<string, unknown> | null, business
 export async function processDueOwnerSteps(): Promise<number> {
   const admin = createAdminClient()
 
-  const [{ data: dueSteps }, { data: cfg }] = await Promise.all([
-    admin
-      .from('owner_onboarding_steps')
-      .select('id, account_id, step')
-      .in('status', ['pending'])
-      .lte('scheduled_at', new Date().toISOString())
-      .order('scheduled_at', { ascending: true })
-      .limit(50),
-    admin.from('owner_automation_config').select('*').eq('id', 1).single(),
-  ])
+  const { data: dueSteps } = await admin
+    .from('owner_onboarding_steps')
+    .select('id, account_id, step')
+    .in('status', ['pending'])
+    .lte('scheduled_at', new Date().toISOString())
+    .order('scheduled_at', { ascending: true })
+    .limit(50)
 
   if (!dueSteps?.length) return 0
 
@@ -495,13 +493,14 @@ export async function processDueOwnerSteps(): Promise<number> {
 
     const { data: account } = await admin
       .from('accounts')
-      .select('business_name, phone, owner_id')
+      .select('business_name, phone, owner_id, created_at, monthly_booking_goal')
       .eq('id', step.account_id)
       .single()
 
     if (!account) { processed++; continue }
 
-    // Skip the no_leads_followup if the account already has leads (backward compat)
+    // Skip the no_leads_followup if the account already has leads (backward compat
+    // with the free-trial flow, which still schedules this one legacy step)
     if (step.step === 'no_leads_followup') {
       const { count } = await admin
         .from('leads')
@@ -525,20 +524,30 @@ export async function processDueOwnerSteps(): Promise<number> {
       account.business_name,
     )
 
+    // Live pledge-tracker numbers — jobs booked since this account signed up,
+    // read fresh at send time so every touch reflects where they actually stand.
+    const pledgeCount: number | null = account.monthly_booking_goal ?? null
+    const { count: bookedCount } = await admin
+      .from('leads')
+      .select('id', { count: 'exact', head: true })
+      .eq('account_id', step.account_id)
+      .eq('status', 'booked')
+      .gte('created_at', account.created_at)
+    const jobsBookedSoFar = bookedCount ?? 0
+
     const isSmsStep = SMS_STEPS.has(step.step)
 
     if (isSmsStep) {
       // SMS-only step
       if (account.phone) {
-        const msg = buildSmsForStep(step.step, firstName, account.business_name)
+        const msg = buildSmsForStep(step.step, firstName, account.business_name, pledgeCount, jobsBookedSoFar)
         if (msg) await sendSms(account.phone, msg)
       }
     } else {
-      // Email step (and optionally SMS for welcome)
+      // Email step
       if (ownerEmail && apiKey) {
         const resend = new Resend(apiKey)
-        const customCopy = step.step === 'welcome' ? (cfg?.welcome_email ?? null) : null
-        const result = buildEmailForStep(step.step, account.business_name, firstName, customCopy)
+        const result = buildEmailForStep(step.step, account.business_name, firstName, null, pledgeCount, jobsBookedSoFar)
         if (result) {
           try {
             await resend.emails.send({ from, to: ownerEmail, subject: result.subject, html: result.html })
@@ -546,12 +555,6 @@ export async function processDueOwnerSteps(): Promise<number> {
             console.error('Owner automation email error:', err)
           }
         }
-      }
-
-      // Welcome step also sends an SMS
-      if (step.step === 'welcome' && account.phone) {
-        const msg = buildWelcomeSms(cfg?.welcome_sms ?? null)
-        await sendSms(account.phone, msg)
       }
     }
 

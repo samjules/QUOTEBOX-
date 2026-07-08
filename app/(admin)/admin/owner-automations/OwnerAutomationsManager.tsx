@@ -106,34 +106,33 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
 }
 
 const STEP_LABELS: Record<string, string> = {
-  welcome: 'Welcome',
-  no_leads_followup: 'No-Leads Follow-up',
+  no_leads_followup: 'No-Leads Follow-up (legacy)',
 }
 
-// All 22 steps in the 30-day sequence
+// All 22 steps in the pledge-path 30-day sequence
 const SEQUENCE_STEPS: { step: string; label: string; channel: 'email' | 'sms' | 'both' }[] = [
-  { step: 'welcome',             label: 'Welcome (Day 0)',           channel: 'both'  },
-  { step: 'day1_sms_2h',        label: 'Day 1 · +2h',              channel: 'sms'   },
-  { step: 'day2_email',         label: 'Day 2',                     channel: 'email' },
-  { step: 'day3_sms',           label: 'Day 3',                     channel: 'sms'   },
-  { step: 'day4_email',         label: 'Day 4',                     channel: 'email' },
-  { step: 'day5_morning_email', label: 'Day 5 Morning',             channel: 'email' },
-  { step: 'day5_afternoon_sms', label: 'Day 5 Afternoon',           channel: 'sms'   },
-  { step: 'day7_email',         label: 'Day 7',                     channel: 'email' },
-  { step: 'day9_sms',           label: 'Day 9',                     channel: 'sms'   },
-  { step: 'day10_email',        label: 'Day 10',                    channel: 'email' },
-  { step: 'day12_email',        label: 'Day 12',                    channel: 'email' },
-  { step: 'day13_sms',          label: 'Day 13',                    channel: 'sms'   },
-  { step: 'day14_email',        label: 'Day 14',                    channel: 'email' },
-  { step: 'day14_sms',          label: 'Day 14 · +2h',             channel: 'sms'   },
-  { step: 'day15_email',        label: 'Day 15',                    channel: 'email' },
-  { step: 'day17_email',        label: 'Day 17',                    channel: 'email' },
-  { step: 'day19_sms',          label: 'Day 19',                    channel: 'sms'   },
-  { step: 'day21_email',        label: 'Day 21',                    channel: 'email' },
-  { step: 'day23_sms',          label: 'Day 23',                    channel: 'sms'   },
-  { step: 'day25_email',        label: 'Day 25',                    channel: 'email' },
-  { step: 'day28_email',        label: 'Day 28',                    channel: 'email' },
-  { step: 'day30_sms',          label: 'Day 30',                    channel: 'sms'   },
+  { step: 'pledge_day0_email',  label: 'Day 0 · Pledge locked in',  channel: 'email' },
+  { step: 'pledge_day0_sms',    label: 'Day 0 · Welcome text',      channel: 'sms'   },
+  { step: 'pledge_day1_email',  label: 'Day 1 · Setup checklist',   channel: 'email' },
+  { step: 'pledge_day2_sms',    label: 'Day 2 · Setup check-in',    channel: 'sms'   },
+  { step: 'pledge_day3_email',  label: 'Day 3 · Titan Tuff proof',  channel: 'email' },
+  { step: 'pledge_day4_sms',    label: 'Day 4 · Speed tip',         channel: 'sms'   },
+  { step: 'pledge_day5_email',  label: 'Day 5 · Pledge tracker',    channel: 'email' },
+  { step: 'pledge_day6_sms',    label: 'Day 6 · Gap reminder',      channel: 'sms'   },
+  { step: 'pledge_day7_email',  label: 'Day 7 · Week one push',     channel: 'email' },
+  { step: 'pledge_day9_sms',    label: 'Day 9 · Objection handle',  channel: 'sms'   },
+  { step: 'pledge_day10_email', label: 'Day 10 · What you get',     channel: 'email' },
+  { step: 'pledge_day12_sms',   label: 'Day 12 · Third-of-month',   channel: 'sms'   },
+  { step: 'pledge_day14_email', label: 'Day 14 · Halfway check',    channel: 'email' },
+  { step: 'pledge_day16_sms',   label: 'Day 16 · Proof text',       channel: 'sms'   },
+  { step: 'pledge_day18_email', label: 'Day 18 · Titan Tuff story', channel: 'email' },
+  { step: 'pledge_day20_sms',   label: 'Day 20 · Scarcity',         channel: 'sms'   },
+  { step: 'pledge_day21_email', label: 'Day 21 · 9 days left',      channel: 'email' },
+  { step: 'pledge_day24_sms',   label: 'Day 24 · One week left',    channel: 'sms'   },
+  { step: 'pledge_day25_email', label: 'Day 25 · Last call',        channel: 'email' },
+  { step: 'pledge_day27_sms',   label: 'Day 27 · 72 hours',         channel: 'sms'   },
+  { step: 'pledge_day28_email', label: 'Day 28 · Final reminder',   channel: 'email' },
+  { step: 'pledge_day30_email', label: 'Day 30 · Final tally',      channel: 'email' },
 ]
 
 const CHANNEL_BADGE: Record<string, { label: string; bg: string; color: string }> = {
