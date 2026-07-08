@@ -46,6 +46,12 @@ const FAQS = [
 export default function TrialLanding({ onStart }: { onStart: (upsell?: never) => void }) {
   const [showSticky, setShowSticky] = useState(false)
 
+  // Funnel analytics — one row per landing-page view, compared against accounts
+  // actually created (accounts.signup_source = 'build') on /admin/build-analytics.
+  useEffect(() => {
+    fetch('/api/build/track-view', { method: 'POST' }).catch(() => {})
+  }, [])
+
   useEffect(() => {
     function onScroll() { setShowSticky(window.scrollY > 500) }
     window.addEventListener('scroll', onScroll, { passive: true })

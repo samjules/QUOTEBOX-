@@ -17,6 +17,8 @@ export interface Account {
   logo_url?: string | null
   upsell_purchased_at?: string | null
   avg_driving_mph?: number | null
+  signup_source?: string | null
+  monthly_booking_goal?: number | null
 }
 
 export interface FieldOption {

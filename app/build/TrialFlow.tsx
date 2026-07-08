@@ -66,7 +66,8 @@ function toSlug(name: string) {
 
 const COLOR_PRESETS = ['#F97316', '#374151', '#0e0020', '#22C55E', '#3B82F6', '#8B5CF6', '#EF4444', '#0EA5E9']
 
-type Phase = 'landing' | 'build' | 'rate' | 'drive' | 'upsell' | 'account'
+type Phase = 'landing' | 'build' | 'rate' | 'drive' | 'goal' | 'upsell' | 'account'
+const GOAL_PRESETS = [5, 10, 15, 20, 25]
 
 export default function TrialFlow() {
   const [phase, setPhase] = useState<Phase>('landing')
@@ -90,6 +91,9 @@ export default function TrialFlow() {
   const [chargeDrive, setChargeDrive] = useState(true)
   const [driveRate, setDriveRate] = useState('120')
   const [avgMph, setAvgMph] = useState('')
+
+  // Goal step
+  const [monthlyGoal, setMonthlyGoal] = useState<number | null>(null)
 
   // Upsell step
   const [upsell, setUpsell] = useState(false)
@@ -119,7 +123,7 @@ export default function TrialFlow() {
     const createRes = await fetch('/api/build/create-account', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email.trim(), password, businessName: businessName.trim() }),
+      body: JSON.stringify({ email: email.trim(), password, businessName: businessName.trim(), monthlyBookingGoal: monthlyGoal }),
     })
     const createData = await createRes.json()
     if (!createRes.ok || !createData.accountId) {
@@ -225,7 +229,7 @@ export default function TrialFlow() {
       <div style={pageStyle}>
         <div style={cardStyle}>
           <div style={bodyStyle}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#5c51d6', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Step 1 of 5</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#5c51d6', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Step 1 of 6</div>
             <h2 style={{ fontSize: 24, margin: '0 0 6px' }}>Build your instant quote form</h2>
             <p style={{ color: '#8b86a8', fontSize: 14.5, margin: '0 0 26px', lineHeight: 1.5 }}>This is what your customers will see once you&apos;re live.</p>
 
@@ -315,7 +319,7 @@ export default function TrialFlow() {
       <div style={pageStyle}>
         <div style={cardStyle}>
           <div style={bodyStyle}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#5c51d6', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Step 2 of 5</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#5c51d6', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Step 2 of 6</div>
             <h2 style={{ fontSize: 24, margin: '0 0 6px' }}>What do you charge per hour?</h2>
             <p style={{ color: '#8b86a8', fontSize: 14.5, margin: '0 0 26px', lineHeight: 1.5 }}>This is your base labor rate. We&apos;ll use it to price the Studio/1BR, 2–3BR, and 4+BR options on your form.</p>
 
@@ -377,7 +381,7 @@ export default function TrialFlow() {
       <div style={pageStyle}>
         <div style={cardStyle}>
           <div style={bodyStyle}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#5c51d6', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Step 3 of 5</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#5c51d6', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Step 3 of 6</div>
             <h2 style={{ fontSize: 24, margin: '0 0 6px' }}>Do you charge extra for drive time?</h2>
             <p style={{ color: '#8b86a8', fontSize: 14.5, margin: '0 0 20px', lineHeight: 1.5 }}>We calculate drive time ourselves from the distance to the job — mapping apps guess badly for this, so we use your own numbers instead.</p>
 
@@ -442,9 +446,64 @@ export default function TrialFlow() {
             <button
               style={{ ...btnPrimary, opacity: driveDisabled ? 0.4 : 1 }}
               disabled={driveDisabled}
-              onClick={() => setPhase('upsell')}
+              onClick={() => setPhase('goal')}
             >
               Continue →
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (phase === 'goal') {
+    return (
+      <div style={pageStyle}>
+        <div style={cardStyle}>
+          <div style={bodyStyle}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#5c51d6', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Step 4 of 6</div>
+            <h2 style={{ fontSize: 24, margin: '0 0 6px' }}>How many booked jobs do you want this month?</h2>
+            <p style={{ color: '#8b86a8', fontSize: 14.5, margin: '0 0 26px', lineHeight: 1.5 }}>
+              Make your pledge — we&apos;ll help you track progress toward it and nudge you along the way so you actually hit it.
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(64px, 1fr))', gap: 10, marginBottom: 20 }}>
+              {GOAL_PRESETS.map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setMonthlyGoal(n)}
+                  style={{
+                    padding: '16px 0', borderRadius: 11, textAlign: 'center', cursor: 'pointer',
+                    border: `2px solid ${monthlyGoal === n ? '#5c51d6' : '#e3e0ef'}`,
+                    background: monthlyGoal === n ? 'rgba(92,81,214,0.06)' : '#fff',
+                    fontSize: 20, fontWeight: 800, color: monthlyGoal === n ? '#5c51d6' : '#1c1830',
+                  }}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+
+            <label style={fieldLabel}>Or enter your own number</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
+              <input
+                type="number" min={1} step={1}
+                value={monthlyGoal ?? ''}
+                onChange={(e) => setMonthlyGoal(e.target.value ? Math.max(1, parseInt(e.target.value, 10) || 1) : null)}
+                placeholder="e.g. 12"
+                style={{ ...inputStyle, maxWidth: 140, fontSize: '1.3rem', fontWeight: 800, textAlign: 'center' as const, padding: '12px 14px' }}
+              />
+              <span style={{ fontSize: 14.5, color: '#8b86a8', fontWeight: 600 }}>booked jobs this month</span>
+            </div>
+          </div>
+          <div style={footStyle}>
+            <button style={btnGhost} onClick={() => setPhase('drive')}>Back</button>
+            <button
+              style={{ ...btnPrimary, opacity: monthlyGoal ? 1 : 0.4 }}
+              disabled={!monthlyGoal}
+              onClick={() => setPhase('upsell')}
+            >
+              Make my pledge →
             </button>
           </div>
         </div>
@@ -457,7 +516,7 @@ export default function TrialFlow() {
       <div style={pageStyle}>
         <div style={cardStyle}>
           <div style={{ ...bodyStyle, alignItems: 'center', textAlign: 'center', justifyContent: 'center' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#5c51d6', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 16, alignSelf: 'flex-start' }}>Step 4 of 5</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#5c51d6', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 16, alignSelf: 'flex-start' }}>Step 5 of 6</div>
             <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(92,81,214,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h7l-1 8 11-14h-7l1-6z" fill="#5c51d6" /></svg>
             </div>
@@ -488,7 +547,7 @@ export default function TrialFlow() {
     <div style={pageStyle}>
       <div style={cardStyle}>
         <div style={bodyStyle}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#5c51d6', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Step 5 of 5</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#5c51d6', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Step 6 of 6</div>
           <h2 style={{ fontSize: 24, margin: '0 0 6px' }}>Create your account</h2>
           <p style={{ color: '#8b86a8', fontSize: 14.5, margin: '0 0 26px', lineHeight: 1.5 }}>
             Your form is ready. Next, you&apos;ll be sent to secure checkout for your $1 trial{upsell ? ' plus the done-for-you setup' : ''}.

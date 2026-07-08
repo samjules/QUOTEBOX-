@@ -6,6 +6,9 @@ export async function POST(request: NextRequest) {
   const email = typeof body.email === 'string' ? body.email.trim() : ''
   const password = typeof body.password === 'string' ? body.password : ''
   const businessName = typeof body.businessName === 'string' ? body.businessName.trim() : ''
+  const monthlyBookingGoal = Number.isFinite(body.monthlyBookingGoal) && body.monthlyBookingGoal > 0
+    ? Math.round(body.monthlyBookingGoal)
+    : null
 
   if (!email) return NextResponse.json({ error: 'Email is required' }, { status: 400 })
   if (password.length < 6) return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 })
@@ -46,7 +49,7 @@ export async function POST(request: NextRequest) {
 
   const { data: newAccount, error: accountError } = await admin
     .from('accounts')
-    .insert({ business_name: businessName, owner_id: ownerId })
+    .insert({ business_name: businessName, owner_id: ownerId, signup_source: 'build', monthly_booking_goal: monthlyBookingGoal })
     .select('id')
     .single()
   if (accountError || !newAccount) {

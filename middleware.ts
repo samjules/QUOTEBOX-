@@ -1,6 +1,5 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { DEMO_VARIANT_COOKIE, isDemoVariant, pickDemoVariant } from '@/lib/demo-variant'
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -59,18 +58,6 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
-  }
-
-  // 50/50 split test on the /demo landing page — sticky per visitor via cookie
-  if (pathname === '/demo') {
-    const existing = request.cookies.get(DEMO_VARIANT_COOKIE)?.value
-    if (!isDemoVariant(existing)) {
-      supabaseResponse.cookies.set(DEMO_VARIANT_COOKIE, pickDemoVariant(), {
-        maxAge: 60 * 60 * 24 * 180,
-        path: '/',
-        sameSite: 'lax',
-      })
-    }
   }
 
   return supabaseResponse
