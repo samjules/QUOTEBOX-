@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { Space_Grotesk, Inter } from 'next/font/google'
+import { QRCodeSVG } from 'qrcode.react'
 import { trackBuildEvent } from '@/lib/track-build-event'
+
+const APPLE_APP_URL = 'https://apps.apple.com/us/app/quote-box-lead-machine/id6761129794'
 
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], weight: ['500', '700'], variable: '--font-space-grotesk-offer' })
 const inter = Inter({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], variable: '--font-inter-offer' })
@@ -93,6 +96,21 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
           </div>
         </div>
       </header>
+
+      <section className="feature-grid">
+        {[
+          { icon: '📋', label: 'Instant Quote Forms', desc: 'Branded, mobile-first, auto-calculated price in minutes.' },
+          { icon: '📱', label: 'iOS App', desc: 'Check and follow up on leads the moment they come in.' },
+          { icon: '💬', label: 'SMS & Email Flows', desc: 'Built specifically for movers — automatic, instant, no setup.' },
+          { icon: '📊', label: 'CRM', desc: 'Every lead, quote, and job tracked from first contact to booked.' },
+        ].map((f) => (
+          <div className="feature-card" key={f.label}>
+            <div className="feature-icon">{f.icon}</div>
+            <div className="feature-label">{f.label}</div>
+            <div className="feature-desc">{f.desc}</div>
+          </div>
+        ))}
+      </section>
 
       <div className="divider" />
 
@@ -230,6 +248,31 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
       <div className="divider" />
 
       <section>
+        <div className="app-banner">
+          <div className="app-qr">
+            <QRCodeSVG value={APPLE_APP_URL} size={92} level="M" />
+          </div>
+          <div className="app-copy">
+            <div className="app-eyebrow">iOS App · Included</div>
+            <h3>Check your leads from the job site.</h3>
+            <p>Get a push notification the second a lead comes in, tap to call or text, and update lead status — all from your phone. Scan to open the App Store.</p>
+          </div>
+          <a
+            href={APPLE_APP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="app-store-btn"
+            style={{ color: '#0c0a16' }}
+          >
+            <svg width="16" height="19" viewBox="0 0 814 1000" fill="currentColor"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-42.3-150.3-110.7c-67.5-98.2-120-252.6-120-398.7 0-138.9 48.4-207.5 96.8-253.5 57.3-54.5 138.4-86.1 213.3-86.1 81.6 0 132.2 39.5 189.5 39.5 55.4 0 115.7-42.3 207.8-42.3zm-156.5-252c32.5-50 56.7-119 56.7-188C688.3 24.6 549.8 0 476.5 0c-2 0-4 0-6.1.1-2.3 30.5-1.2 96 22.7 158.6 23.2 61.5 56.8 99.2 138.4 130.2z" /></svg>
+            View on the App Store
+          </a>
+        </div>
+      </section>
+
+      <div className="divider" />
+
+      <section>
         <div className="guarantee">
           <div className="seal">
             <svg width="44" height="44" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z" stroke="#fff" strokeWidth="1.6" /><path d="M9 12l2 2 4-4" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -342,6 +385,13 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
         .sub :global(strong){ color:var(--text); }
         @media(max-width:900px){ .hero{ grid-template-columns:1fr; text-align:center; } .hero-text{ order:1; } .hero-visual{ order:2; } .sub{ margin-left:auto; margin-right:auto; } }
 
+        .feature-grid{ max-width:1080px; margin:0 auto; padding:0 24px 44px; display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+        .feature-card{ background:rgba(255,255,255,0.06); border:1px solid var(--line); border-radius:14px; padding:22px 18px; text-align:center; }
+        .feature-icon{ font-size:26px; margin-bottom:10px; }
+        .feature-label{ font-family:'Nautic', var(--font-space-grotesk-offer), sans-serif; font-weight:800; font-size:15px; margin-bottom:6px; }
+        .feature-desc{ font-size:12.5px; color:var(--muted); line-height:1.5; }
+        @media(max-width:800px){ .feature-grid{ grid-template-columns:repeat(2,1fr); } }
+
         .showcase-head{ text-align:center; margin-bottom:34px; }
         .showcase-head h2{ font-size:clamp(22px,3.4vw,34px); margin:0 0 8px; }
         .showcase-head p{ color:var(--muted); font-size:15.5px; margin:0; }
@@ -399,6 +449,15 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
           font-family: 'Nautic', var(--font-space-grotesk-offer), sans-serif; font-weight:700; font-size:16px; margin-bottom:16px; }
         .step-card h3{ font-size:17px; margin:0 0 8px; }
         .step-card p{ font-size:14.5px; color:var(--muted); margin:0; line-height:1.55; }
+
+        .app-banner{ background:linear-gradient(160deg, var(--panel-2), var(--panel)); border:1px solid rgba(139,127,255,0.3); border-radius:20px; padding:36px 40px; display:flex; align-items:center; gap:30px; }
+        .app-qr{ flex:0 0 auto; background:#fff; border-radius:12px; padding:10px; }
+        .app-copy{ flex:1; min-width:0; }
+        .app-eyebrow{ color:var(--gold); font-size:11px; font-weight:800; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:8px; }
+        .app-copy h3{ font-size:21px; margin:0 0 8px; }
+        .app-copy p{ color:var(--muted); font-size:14.5px; line-height:1.6; margin:0; max-width:480px; }
+        .app-store-btn{ flex:0 0 auto; display:inline-flex; align-items:center; gap:8px; background:#fff; color:#0c0a16; font-weight:700; font-size:13.5px; padding:12px 20px; border-radius:10px; text-decoration:none; white-space:nowrap; }
+        @media(max-width:760px){ .app-banner{ flex-direction:column; text-align:center; padding:32px 24px; } .app-copy p{ margin-left:auto; margin-right:auto; } }
 
         .guarantee{ background:linear-gradient(160deg, var(--panel-2), var(--panel)); border:1px solid rgba(139,127,255,0.3); border-radius:20px; padding:44px; display:flex; align-items:center; gap:30px; }
         .seal{ flex:0 0 auto; width:96px; height:96px; border-radius:50%; background:radial-gradient(circle at 35% 30%, var(--primary-light), var(--primary)); display:flex; align-items:center; justify-content:center; box-shadow:0 10px 30px -6px rgba(92,81,214,0.6); }
