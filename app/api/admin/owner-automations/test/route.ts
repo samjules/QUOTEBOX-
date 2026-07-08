@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   buildEmailForStep,
   buildSmsForStep,
-  buildWelcomeSms,
   SMS_STEPS,
   ONBOARDING_STEPS,
 } from '@/lib/owner-automations'
@@ -117,14 +116,11 @@ export async function POST(request: NextRequest) {
 
   for (const step of stepsToTest) {
     const isSmsOnly = SMS_STEPS.has(step)
-    const isWelcome = step === 'welcome'
 
-    // Email (for email steps and the welcome step which is both)
     if (!isSmsOnly && apiKey) {
       try {
         const resend = new Resend(apiKey)
-        const customCopy = step === 'welcome' ? (cfg?.welcome_email ?? null) : null
-        const result = buildEmailForStep(step, testBiz, testFirstName, customCopy)
+        const result = buildEmailForStep(step, testBiz, testFirstName, null)
         if (result) {
           const { error } = await resend.emails.send({
             from,
@@ -139,12 +135,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // SMS (for SMS-only steps and welcome which is both)
-    if ((isSmsOnly || isWelcome) && testPhone) {
+    if (isSmsOnly && testPhone) {
       try {
-        const msg = isWelcome
-          ? buildWelcomeSms(cfg?.welcome_sms ?? null)
-          : buildSmsForStep(step, testFirstName, testBiz)
+        const msg = buildSmsForStep(step, testFirstName, testBiz)
         if (msg) {
           const ok = await sendSms(testPhone, `[TEST] ${msg}`)
           results.push({ step, channel: 'sms', ok })

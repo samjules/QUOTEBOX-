@@ -24,25 +24,6 @@ interface Config {
   ft_cancelled_email: EmailCopy | null
 }
 
-// ── defaults (mirrors lib/owner-automations.ts) ───────────────────────────
-
-const WELCOME_EMAIL_DEFAULTS: EmailCopy = {
-  subject: 'Welcome to QuoteBox, {{business}}!',
-  heading: "You're officially in. 🎉",
-  body: "Welcome to QuoteBox, {{business}}! Your account is live and ready to start capturing leads. To get you set up with ads and pulling in leads as fast as possible, let's book a quick call. I'll personally walk you through the setup and make sure your first campaign is dialed in.",
-  outro: 'Takes 20 minutes. No fluff — just getting your ads live and generating leads.',
-}
-
-const NO_LEADS_EMAIL_DEFAULTS: EmailCopy = {
-  subject: '{{business}} — still no leads yet?',
-  heading: "I noticed you haven't gotten any leads yet",
-  body: "Hey {{business}} — it's been a couple days and I don't see any leads coming in yet. That's totally normal at the start, but let's fix that. Book a free 20-minute consulting call and I'll help you figure out exactly what's holding things back — whether it's the ad setup, form copy, targeting, or something else entirely.",
-  outro: 'No obligation — I just want to make sure QuoteBox is working for you.',
-}
-
-const WELCOME_SMS_DEFAULT = "Welcome to QuoteBox! 🎉 Your account is live. Book your free ad setup call and let's get leads coming in: https://quote-box.com/get-started"
-const NO_LEADS_SMS_DEFAULT = "Hey! I noticed you haven't gotten any leads yet on QuoteBox. Need help? Book a free consulting call here: https://quote-box.com/get-started"
-
 // ── defaults (mirrors lib/free-trial.ts) ──────────────────────────────────
 
 const FT_CONFIRMATION_EMAIL_DEFAULTS: EmailCopy = {
@@ -819,54 +800,25 @@ export default function OwnerAutomationsManager({ steps: initialSteps, freeTrial
       {flowTab === 'onboarding' && (
       <div style={{ marginBottom: 36 }}>
         <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
-          Automation flow · click a node to edit
+          Automation flow
         </p>
 
         {/* Node: Trigger */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, paddingLeft: 4 }}>
           <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#5b50d6', flexShrink: 0 }} />
-          <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#5b50d6' }}>User signs up</span>
+          <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#5b50d6' }}>User signs up (via /build)</span>
         </div>
 
         {/* Connector */}
         <div style={{ width: 2, height: 16, background: '#e2e8f0', marginLeft: 8, marginBottom: 8 }} />
 
-        <StepNode
-          label="Welcome"
-          timing="Fires immediately on signup"
-          accentColor="#5b50d6"
-          emailValue={config.welcome_email}
-          emailDefaults={WELCOME_EMAIL_DEFAULTS}
-          smsValue={config.welcome_sms}
-          smsDefault={WELCOME_SMS_DEFAULT}
-          sentCount={stepCounts.welcome?.sent ?? 0}
-          pendingCount={stepCounts.welcome?.pending ?? 0}
-          onSave={(email, sms) => saveConfig({ welcome_email: email, welcome_sms: sms })}
-        />
-
-        {/* Connector with condition */}
-        <div style={{ display: 'flex', alignItems: 'stretch', gap: 0, margin: '8px 0 8px 8px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 2 }}>
-            <div style={{ flex: 1, width: 2, background: '#e2e8f0' }} />
-          </div>
-          <div style={{ marginLeft: 12, alignSelf: 'center', background: '#fef9c3', border: '1px solid #fde68a', borderRadius: 6, padding: '3px 10px', fontSize: '0.72rem', fontWeight: 600, color: '#92400e' }}>
-            +2 days · only if no leads yet
+        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, padding: '14px 18px' }}>
+          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0e0020', marginBottom: 4 }}>The Pledge Path — 22 fixed steps over 30 days</div>
+          <div style={{ fontSize: '0.78rem', color: '#64748b', lineHeight: 1.5 }}>
+            Every new account gets the full 30-day pledge sequence (12 emails + 10 SMS) tracking their real booked-jobs goal —
+            see the step-by-step activity table below. Copy is fixed to the pledge script, not editable per-step here.
           </div>
         </div>
-        <div style={{ width: 2, height: 8, background: '#e2e8f0', marginLeft: 8, marginBottom: 8 }} />
-
-        <StepNode
-          label="No-Leads Follow-up"
-          timing="+2 days after signup · skipped if leads exist"
-          accentColor="#f59e0b"
-          emailValue={config.no_leads_email}
-          emailDefaults={NO_LEADS_EMAIL_DEFAULTS}
-          smsValue={config.no_leads_sms}
-          smsDefault={NO_LEADS_SMS_DEFAULT}
-          sentCount={stepCounts.no_leads_followup?.sent ?? 0}
-          pendingCount={stepCounts.no_leads_followup?.pending ?? 0}
-          onSave={(email, sms) => saveConfig({ no_leads_email: email, no_leads_sms: sms })}
-        />
       </div>
       )}
 

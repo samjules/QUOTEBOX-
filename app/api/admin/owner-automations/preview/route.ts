@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   buildEmailForStep,
   buildSmsForStep,
-  buildWelcomeSms,
   SMS_STEPS,
 } from '@/lib/owner-automations'
 import {
@@ -66,7 +65,6 @@ export async function GET(request: NextRequest) {
   }
 
   const isSmsOnly = SMS_STEPS.has(step)
-  const isWelcome = step === 'welcome'
 
   let subject: string | null = null
   let html: string | null = null
@@ -77,10 +75,8 @@ export async function GET(request: NextRequest) {
     if (result) { subject = result.subject; html = result.html }
   }
 
-  if (isSmsOnly || isWelcome) {
-    sms = isWelcome
-      ? buildWelcomeSms(null)
-      : buildSmsForStep(step, 'Mike', 'Acme Junk Removal')
+  if (isSmsOnly) {
+    sms = buildSmsForStep(step, 'Mike', 'Acme Junk Removal')
   }
 
   return NextResponse.json({ subject, html, sms })

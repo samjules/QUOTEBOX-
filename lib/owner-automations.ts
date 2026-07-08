@@ -310,8 +310,6 @@ export function buildEmailForStep(
       })),
     },
 
-    // Legacy step, kept for backward compat with the free-trial no-leads flow.
-    no_leads_followup: buildNoLeadsEmail(businessName, null),
   }
 
   const result = configs[step]
@@ -344,71 +342,10 @@ export function buildSmsForStep(
     pledge_day20_sms: `Quotebox: Heads up — we only take a handful of $297 setup calls each month, and this month's slots are thinning out. If you want yours: ${CALENDAR_URL}${STOP}`,
     pledge_day24_sms: `Quotebox: One week left this month. ${jb}/${pc} booked. Last real window to get an ad setup live before it closes: ${CALENDAR_URL}${STOP}`,
     pledge_day27_sms: `Quotebox: 72 hours left on this month's ad setup slots. After that it rolls to next month's pledge: ${CALENDAR_URL}${STOP}`,
-    // Legacy step, kept for backward compat.
-    no_leads_followup: buildNoLeadsSms(null),
   }
 
   return msgs[step] ?? null
 }
-
-// ---------------------------------------------------------------------------
-// Legacy builders (kept for backward compatibility — used by admin test route)
-// ---------------------------------------------------------------------------
-
-const WELCOME_DEFAULTS: EmailCopy = {
-  subject: 'Welcome to QuoteBox, {{business}}!',
-  heading: "You're officially in. 🎉",
-  body: "Welcome to QuoteBox, <strong>{{business}}</strong>! Your account is live and ready to start capturing leads. To get you set up with ads and pulling in leads as fast as possible, let's book a quick call. I'll personally walk you through the setup and make sure your first campaign is dialed in.",
-  outro: 'Takes 20 minutes. No fluff — just getting your ads live and generating leads.',
-}
-
-const NO_LEADS_DEFAULTS: EmailCopy = {
-  subject: "{{business}} — still no leads yet?",
-  heading: "I noticed you haven't gotten any leads yet",
-  body: "Hey <strong>{{business}}</strong> — it's been a couple days and I don't see any leads coming in yet. That's totally normal at the start, but let's fix that. Book a free 20-minute consulting call and I'll help you figure out exactly what's holding things back — whether it's the ad setup, form copy, targeting, or something else entirely.",
-  outro: 'No obligation — I just want to make sure QuoteBox is working for you.',
-}
-
-const WELCOME_SMS_DEFAULT = `Welcome to QuoteBox! 🎉 Your account is live. Book your free ad setup call and let's get leads coming in: ${CALENDAR_URL}\n\nReply STOP to opt out.`
-const NO_LEADS_SMS_DEFAULT = `Hey! I noticed you haven't gotten any leads yet on QuoteBox. Need help? Book a free consulting call here: ${CALENDAR_URL}\n\nReply STOP to opt out.`
-
-function interpolate(str: string, businessName: string) {
-  return str.replace(/\{\{business\}\}/g, esc(businessName))
-}
-
-export function buildWelcomeEmail(businessName: string, custom: EmailCopy | null): { subject: string; html: string } {
-  const c = { ...WELCOME_DEFAULTS, ...Object.fromEntries(Object.entries(custom ?? {}).filter(([, v]) => v)) }
-  const subject = interpolate(c.subject!, businessName)
-  const html = emailShell(businessName, `
-    <h2 style="margin:0 0 16px;font-size:22px;color:#0e0020;">${interpolate(c.heading!, businessName)}</h2>
-    <p style="margin:0 0 20px;font-size:15px;color:#334155;line-height:1.6;">${interpolate(c.body!, businessName)}</p>
-    ${ctaButton('Book Your Free Ad Setup Call →', CALENDAR_URL)}
-    <p style="margin:0;font-size:14px;color:#64748b;line-height:1.6;">${interpolate(c.outro!, businessName)}</p>
-  `)
-  return { subject, html }
-}
-
-export function buildNoLeadsEmail(businessName: string, custom: EmailCopy | null): { subject: string; html: string } {
-  const c = { ...NO_LEADS_DEFAULTS, ...Object.fromEntries(Object.entries(custom ?? {}).filter(([, v]) => v)) }
-  const subject = interpolate(c.subject!, businessName)
-  const html = emailShell(businessName, `
-    <h2 style="margin:0 0 16px;font-size:22px;color:#0e0020;">${interpolate(c.heading!, businessName)}</h2>
-    <p style="margin:0 0 20px;font-size:15px;color:#334155;line-height:1.6;">${interpolate(c.body!, businessName)}</p>
-    ${ctaButton('Book a Free Consulting Call →', CALENDAR_URL)}
-    <p style="margin:0;font-size:14px;color:#64748b;line-height:1.6;">${interpolate(c.outro!, businessName)}</p>
-  `)
-  return { subject, html }
-}
-
-export function buildWelcomeSms(custom: string | null): string {
-  return custom || WELCOME_SMS_DEFAULT
-}
-
-export function buildNoLeadsSms(custom: string | null): string {
-  return custom || NO_LEADS_SMS_DEFAULT
-}
-
-export { WELCOME_DEFAULTS, NO_LEADS_DEFAULTS, WELCOME_SMS_DEFAULT, NO_LEADS_SMS_DEFAULT }
 
 // ---------------------------------------------------------------------------
 // Schedule the full 30-day sequence for a new account
@@ -498,24 +435,6 @@ export async function processDueOwnerSteps(): Promise<number> {
       .single()
 
     if (!account) { processed++; continue }
-
-    // Skip the no_leads_followup if the account already has leads (backward compat
-    // with the free-trial flow, which still schedules this one legacy step)
-    if (step.step === 'no_leads_followup') {
-      const { count } = await admin
-        .from('leads')
-        .select('id', { count: 'exact', head: true })
-        .eq('account_id', step.account_id)
-
-      if ((count ?? 0) > 0) {
-        await admin
-          .from('owner_onboarding_steps')
-          .update({ status: 'skipped', sent_at: new Date().toISOString() })
-          .eq('id', step.id)
-        processed++
-        continue
-      }
-    }
 
     const { data: ownerUser } = await admin.auth.admin.getUserById(account.owner_id)
     const ownerEmail = ownerUser?.user?.email ?? null
