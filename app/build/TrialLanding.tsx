@@ -6,333 +6,30 @@ import { Space_Grotesk, Inter } from 'next/font/google'
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], weight: ['500', '700'], variable: '--font-space-grotesk-offer' })
 const inter = Inter({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], variable: '--font-inter-offer' })
 
-const NAV_ITEMS = ['Dashboard', 'Leads', 'Calendar', 'Time Clock', 'Map', 'Hosted Forms', 'Form Builder', 'Analytics', 'Media', 'Automations', 'Campaigns', 'Billing & Credits', 'Settings'] as const
-
-// Sample data only — invented names/emails/numbers, not pulled from any real account.
-const SAMPLE_LEADS = [
-  { name: 'Jordan Patel', email: 'jordan.p@example.com', phone: '+1 555-201-4488', quote: '$420' },
-  { name: 'Casey Nguyen', email: 'casey.nguyen@example.com', phone: '+1 555-118-3302', quote: '$610' },
-  { name: 'Maria Chen', email: 'maria.c@example.com', phone: '+1 555-347-9021', quote: '$390' },
-  { name: 'Sam Cooper', email: 'sam.cooper@example.com', phone: '+1 555-902-1187', quote: '$540' },
-] as const
-
-const PANELS = ['Dashboard', 'Leads', 'Automations'] as const
-type PanelName = typeof PANELS[number]
-
-// Hero illustration — desktop dashboard with the iOS app's lock-screen alerts layered on top.
-// Sample data only, same as ProductPanel — nothing pulled from a real account.
-function HeroMock() {
+// Real product screenshots, framed in fake browser chrome — same treatment as the
+// homepage. Replaces the earlier hand-drawn CSS mockups, which read as noticeably
+// less credible next to actual software.
+function BrowserShot({ src, alt, url, glow }: { src: string; alt: string; url: string; glow?: string }) {
   return (
-    <div className="hero-mock">
-      <div className="hero-desktop">
-        <div className="hd-bar">
-          <span className="hd-dot r" /><span className="hd-dot y" /><span className="hd-dot g" />
-          <div className="hd-url">quote-box.com/dashboard</div>
+    <div className="bshot-wrap">
+      {glow && <div className="bshot-glow" style={{ background: `radial-gradient(ellipse at center, ${glow} 0%, transparent 70%)` }} />}
+      <div className="bshot">
+        <div className="bshot-bar">
+          <span className="bdot r" /><span className="bdot y" /><span className="bdot g" />
+          <div className="bshot-url">{url}</div>
         </div>
-        <div className="hd-shell">
-          <div className="hd-sidebar">
-            <div className="hd-brand"><span className="qb">QB</span>QuoteBox</div>
-            {['Dashboard', 'Leads', 'Calendar', 'Automations'].map((item, i) => (
-              <div key={item} className={`hd-nav ${i === 0 ? 'active' : ''}`}>{item}</div>
-            ))}
-          </div>
-          <div className="hd-content">
-            <div className="hd-title">Dashboard</div>
-            <div className="hd-sub">This Month</div>
-            <div className="hd-pipeline-label">PIPELINE VALUE · 22 LEADS</div>
-            <div className="hd-pipeline-big">$9,270</div>
-            <div className="hd-stats">
-              {[['Total Leads', '22'], ['New Leads', '14'], ['Booked', '3'], ['Ad Spend', '$412']].map(([l, v]) => (
-                <div className="hd-stat" key={l}><span className="l">{l}</span><span className="v">{v}</span></div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="hero-phone">
-        <div className="hp-frame">
-          <div className="hp-notch" />
-          <div className="hp-screen">
-            <div className="hp-clock">9:41</div>
-            <div className="hp-date">Wed, Jul 6</div>
-            <div className="hp-notif">
-              <div className="hp-icon">QB</div>
-              <div className="hp-body">
-                <div className="hp-top"><span>QUOTEBOX</span><span>now</span></div>
-                <div className="hp-lead">New lead — Jordan P.</div>
-                <div className="hp-text">3-bedroom move. Est. <b>$420</b>. Tap to call.</div>
-              </div>
-            </div>
-            <div className="hp-notif">
-              <div className="hp-icon">QB</div>
-              <div className="hp-body">
-                <div className="hp-top"><span>QUOTEBOX</span><span>1m ago</span></div>
-                <div className="hp-lead">Demo booked — Casey N.</div>
-                <div className="hp-text">Confirmed for <b>2:00 PM</b>.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <style jsx>{`
-        .hero-mock{position:relative;padding-bottom:56px;padding-right:24px;}
-        .hero-desktop{border-radius:14px;overflow:hidden;background:#0c0a16;border:1px solid var(--line);box-shadow:0 40px 90px -35px rgba(0,0,0,0.7);}
-        .hd-bar{display:flex;align-items:center;gap:6px;padding:10px 13px;background:#141024;border-bottom:1px solid var(--line);}
-        .hd-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
-        .hd-dot.r{background:#ff5f57;} .hd-dot.y{background:#febc2e;} .hd-dot.g{background:#28c840;}
-        .hd-url{margin-left:8px;background:rgba(255,255,255,0.06);padding:3px 12px;border-radius:6px;font-size:10.5px;color:var(--muted);}
-        .hd-shell{display:flex;min-height:230px;}
-        .hd-sidebar{width:96px;flex:0 0 auto;background:#14111f;padding:12px 8px;display:flex;flex-direction:column;gap:1px;}
-        .hd-brand{display:flex;align-items:center;gap:6px;color:#fff;font-weight:700;font-size:9.5px;margin-bottom:10px;padding:0 2px;}
-        .hd-brand .qb{width:16px;height:16px;border-radius:5px;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:800;flex:0 0 auto;}
-        .hd-nav{padding:5px 6px;border-radius:6px;color:#8b86a8;font-size:8.5px;font-weight:600;white-space:nowrap;}
-        .hd-nav.active{background:rgba(92,81,214,0.28);color:#fff;}
-        .hd-content{flex:1;background:#f4f3fa;padding:14px 16px;color:#1c1830;min-width:0;}
-        .hd-title{font-family: var(--font-space-grotesk-offer), sans-serif;font-weight:700;font-size:14px;}
-        .hd-sub{font-size:9px;color:#8b86a8;margin-bottom:10px;}
-        .hd-pipeline-label{font-size:8px;color:#8b86a8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;}
-        .hd-pipeline-big{font-family: var(--font-space-grotesk-offer), sans-serif;font-weight:700;font-size:22px;margin-bottom:10px;}
-        .hd-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
-        .hd-stat{background:#fff;border-radius:7px;padding:7px 8px;display:flex;flex-direction:column;gap:2px;box-shadow:0 1px 3px rgba(0,0,0,.05);min-width:0;}
-        .hd-stat .l{font-size:6.5px;color:#8b86a8;text-transform:uppercase;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-        .hd-stat .v{font-family: var(--font-space-grotesk-offer), sans-serif;font-weight:700;font-size:11px;color:#1c1830;}
-
-        .hero-phone{position:absolute;right:0;bottom:0;width:150px;}
-        .hp-frame{width:100%;aspect-ratio:150/305;border-radius:22px;background:#05060c;border:5px solid #1a1e33;box-shadow:0 20px 50px -18px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.05);position:relative;}
-        .hp-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:54px;height:12px;background:#05060c;border-radius:0 0 8px 8px;z-index:3;}
-        .hp-screen{position:absolute;inset:0;border-radius:17px;overflow:hidden;background:radial-gradient(circle at 50% 15%, #1c2140 0%, #0B0E1A 55%);padding:22px 8px 8px;}
-        .hp-clock{text-align:center;font-family: var(--font-space-grotesk-offer), sans-serif;font-size:19px;font-weight:600;color:#fff;margin-bottom:1px;}
-        .hp-date{text-align:center;color:var(--muted);font-size:6.5px;margin-bottom:9px;}
-        .hp-notif{background:rgba(23,28,51,.92);border:1px solid var(--line);border-radius:8px;padding:6px 7px;display:flex;gap:5px;margin-bottom:5px;}
-        .hp-icon{width:14px;height:14px;border-radius:4px;flex-shrink:0;background:linear-gradient(145deg, var(--primary-light), var(--primary));display:flex;align-items:center;justify-content:center;font-size:5px;font-weight:700;color:#fff;}
-        .hp-body{flex:1;min-width:0;}
-        .hp-top{display:flex;justify-content:space-between;font-size:5.5px;color:var(--muted);margin-bottom:1px;}
-        .hp-lead{font-size:6.5px;font-weight:700;color:#fff;margin-bottom:1px;line-height:1.2;}
-        .hp-text{font-size:6px;color:var(--muted);line-height:1.3;}
-        .hp-text :global(b){color:#fff;font-weight:700;}
-
-        @media(max-width:900px){
-          .hero-mock{padding-right:0;max-width:420px;margin:0 auto;}
-        }
-      `}</style>
-    </div>
-  )
-}
-
-function ProductPanel() {
-  const [i, setI] = useState(0)
-  useEffect(() => {
-    const t = setInterval(() => setI((p) => (p + 1) % PANELS.length), 4400)
-    return () => clearInterval(t)
-  }, [])
-  const active: PanelName = PANELS[i]
-
-  return (
-    <div className="browser-mock">
-      <div className="browser-bar">
-        <span className="bdot r" /><span className="bdot y" /><span className="bdot g" />
-        <div className="browser-url">quote-box.com/{active.toLowerCase().replace(/\s+/g, '-')}</div>
-      </div>
-      <div className="app-shell">
-        <div className="app-sidebar">
-          <div className="sidebar-brand"><span className="qb">QB</span>QuoteBox</div>
-          {NAV_ITEMS.map((item) => (
-            <div key={item} className={`nav-item ${item === active ? 'active' : ''}`}>{item}</div>
-          ))}
-        </div>
-
-        <div className="app-content">
-          {active === 'Dashboard' && (
-            <>
-              <div className="content-title">Dashboard</div>
-              <div className="content-sub">This Month</div>
-              <div className="pipeline-label">PIPELINE VALUE · 22 LEADS</div>
-              <div className="pipeline-big">$9,270</div>
-              <div className="live-banner">
-                <span className="live-dot" />Your quote form is live!
-                <span className="live-url">quote-box.com/sample-moving-co</span>
-              </div>
-              <div className="today-row">
-                <div>
-                  <div className="today-label">Today</div>
-                  {SAMPLE_LEADS.slice(0, 2).map((l) => (
-                    <div className="today-lead" key={l.name}><span className="avatar">{l.name.split(' ').map((n) => n[0]).join('')}</span>{l.name}</div>
-                  ))}
-                </div>
-              </div>
-              <div className="stat-grid">
-                {[['Total Leads', '22'], ['New Leads', '14'], ['Booked', '3'], ['Ad Spend', '$412']].map(([l, v]) => (
-                  <div className="stat-tile" key={l}><span className="l">{l}</span><span className="v">{v}</span></div>
-                ))}
-              </div>
-            </>
-          )}
-
-          {active === 'Leads' && (
-            <>
-              <div className="content-title">Leads</div>
-              <div className="content-sub">Sample Moving Co.</div>
-              <div className="stat-grid three">
-                {[['Total Leads', '22'], ['New Leads', '14'], ['Booked', '3']].map(([l, v]) => (
-                  <div className="stat-tile" key={l}><span className="l">{l}</span><span className="v">{v}</span></div>
-                ))}
-              </div>
-              <div className="lead-table">
-                <div className="lead-row head"><span>Name</span><span>Email</span><span>Phone</span><span>Quote</span></div>
-                {SAMPLE_LEADS.map((l) => (
-                  <div className="lead-row" key={l.name}><span>{l.name}</span><span>{l.email}</span><span>{l.phone}</span><span>{l.quote}</span></div>
-                ))}
-              </div>
-            </>
-          )}
-
-          {active === 'Automations' && (
-            <>
-              <div className="content-title">Automations</div>
-              <div className="content-sub">Nurture every lead from first touch to close.</div>
-              <div className="trigger-card">
-                <div className="trigger-label">TRIGGER</div>
-                <div className="trigger-name">Any New Lead</div>
-                <div className="trigger-sub">Meta or hosted form</div>
-              </div>
-              <div className="auto-card">
-                <div className="auto-card-head">Instant Contact<span className="tag">Email</span><span className="tag">SMS</span></div>
-                <div className="auto-bar"><span>Sent</span><div className="bar"><i style={{ width: '100%' }} /></div><b>184</b></div>
-                <div className="auto-bar"><span>Opened</span><div className="bar"><i style={{ width: '31%' }} /></div><b>31%</b></div>
-                <div className="auto-bar"><span>Clicked</span><div className="bar"><i style={{ width: '6%' }} /></div><b>6%</b></div>
-              </div>
-            </>
-          )}
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt={alt} />
       </div>
       <style jsx>{`
-        .browser-mock{position:relative;border-radius:16px;overflow:hidden;background:#0c0a16;border:1px solid var(--line);box-shadow:0 40px 90px -35px rgba(0,0,0,0.7);}
-        .browser-bar{display:flex;align-items:center;gap:8px;padding:13px 16px;background:#141024;border-bottom:1px solid var(--line);}
-        .bdot{width:11px;height:11px;border-radius:50%;flex:0 0 auto;}
+        .bshot-wrap{position:relative;width:100%;}
+        .bshot-glow{position:absolute;inset:-15%;z-index:0;}
+        .bshot{position:relative;z-index:1;border-radius:14px;overflow:hidden;background:#0c0a16;border:1px solid var(--line);box-shadow:0 40px 90px -30px rgba(0,0,0,0.75);}
+        .bshot-bar{display:flex;align-items:center;gap:6px;padding:10px 14px;background:#141024;border-bottom:1px solid var(--line);}
+        .bdot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;}
         .bdot.r{background:#ff5f57;} .bdot.y{background:#febc2e;} .bdot.g{background:#28c840;}
-        .browser-url{margin-left:10px;background:rgba(255,255,255,0.06);padding:5px 16px;border-radius:7px;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-
-        .app-shell{display:flex;min-height:420px;}
-        .app-sidebar{width:150px;flex:0 0 auto;background:#14111f;padding:16px 12px;display:flex;flex-direction:column;gap:1px;}
-        .sidebar-brand{display:flex;align-items:center;gap:8px;color:#fff;font-weight:700;font-size:12.5px;margin-bottom:16px;padding:0 4px;}
-        .sidebar-brand .qb{width:22px;height:22px;border-radius:6px;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:800;flex:0 0 auto;}
-        .nav-item{padding:7px 8px;border-radius:7px;color:#8b86a8;font-size:10.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-        .nav-item.active{background:rgba(92,81,214,0.28);color:#fff;}
-
-        .app-content{flex:1;background:#f4f3fa;padding:20px 22px;color:#1c1830;min-width:0;overflow:hidden;}
-        .content-title{font-family: var(--font-space-grotesk-offer), sans-serif;font-weight:700;font-size:19px;}
-        .content-sub{font-size:11.5px;color:#8b86a8;margin-bottom:14px;}
-
-        .pipeline-label{font-size:10px;color:#8b86a8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
-        .pipeline-big{font-family: var(--font-space-grotesk-offer), sans-serif;font-weight:700;font-size:28px;margin-bottom:12px;}
-        .live-banner{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#fff;border-radius:9px;padding:10px 14px;font-size:11.5px;font-weight:600;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
-        .live-dot{width:7px;height:7px;border-radius:50%;background:#1a9e6a;flex:0 0 auto;}
-        .live-url{font-size:10px;color:#8b86a8;font-weight:500;background:#f4f3fa;border-radius:6px;padding:3px 8px;}
-        .today-row{margin-bottom:14px;}
-        .today-label{font-size:10.5px;font-weight:700;color:#8b86a8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
-        .today-lead{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:600;background:#fff;border-radius:8px;padding:8px 10px;margin-bottom:5px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
-        .avatar{width:20px;height:20px;border-radius:50%;background:var(--primary);color:#fff;font-size:8.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
-
-        .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
-        .stat-grid.three{grid-template-columns:repeat(3,1fr);margin-bottom:14px;}
-        .stat-tile{background:#fff;border-radius:9px;padding:9px 10px;display:flex;flex-direction:column;gap:3px;box-shadow:0 1px 3px rgba(0,0,0,.05);min-width:0;}
-        .stat-tile .l{font-size:9px;color:#8b86a8;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-        .stat-tile .v{font-family: var(--font-space-grotesk-offer), sans-serif;font-weight:700;font-size:14px;color:#1c1830;}
-
-        .lead-table{background:#fff;border-radius:9px;overflow:hidden;}
-        .lead-row{display:grid;grid-template-columns:1.2fr 1.6fr 1.3fr 0.7fr;gap:8px;padding:8px 12px;font-size:10.5px;border-bottom:1px solid #eeecf5;color:#3a3555;white-space:nowrap;overflow:hidden;}
-        .lead-row span{overflow:hidden;text-overflow:ellipsis;}
-        .lead-row.head{color:#8b86a8;font-size:9px;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid #e3e0ef;font-weight:700;}
-        .lead-row:last-child{border-bottom:none;}
-
-        .trigger-card{background:var(--primary);color:#fff;border-radius:10px;padding:14px 16px;margin-bottom:12px;}
-        .trigger-label{font-size:9px;letter-spacing:.08em;opacity:.85;margin-bottom:2px;}
-        .trigger-name{font-family: var(--font-space-grotesk-offer), sans-serif;font-weight:700;font-size:14px;}
-        .trigger-sub{font-size:10.5px;opacity:.85;}
-        .auto-card{background:#fff;border-radius:10px;padding:16px;}
-        .auto-card-head{display:flex;align-items:center;gap:6px;font-family: var(--font-space-grotesk-offer), sans-serif;font-weight:700;font-size:13px;margin-bottom:12px;}
-        .auto-card-head .tag{font-family: var(--font-inter-offer), sans-serif;font-size:9px;font-weight:700;background:rgba(92,81,214,0.1);color:var(--primary);border-radius:999px;padding:2px 8px;}
-        .auto-bar{display:grid;grid-template-columns:52px 1fr 36px;align-items:center;gap:10px;font-size:11px;color:#8b86a8;margin-bottom:10px;}
-        .auto-bar .bar{height:6px;background:#eeecf5;border-radius:4px;overflow:hidden;}
-        .auto-bar .bar i{display:block;height:100%;background:var(--primary);border-radius:4px;transition:width 1s ease;}
-        .auto-bar b{text-align:right;color:#1c1830;font-weight:700;}
-
-        @media(max-width:640px){
-          .app-sidebar{width:0;padding:0;overflow:hidden;}
-          .stat-grid{grid-template-columns:repeat(2,1fr);}
-          .lead-row{grid-template-columns:1fr 1fr;}
-          .lead-row span:nth-child(3), .lead-row span:nth-child(4){display:none;}
-        }
-      `}</style>
-    </div>
-  )
-}
-
-function PhoneMock() {
-  return (
-    <div className="phone-mock">
-      <div className="phone-frame">
-        <div className="phone-notch" />
-        <div className="phone-screen">
-          <div className="p-step" style={{ animationDelay: '0s' }}>
-            <div className="p-banner"><span className="tag">Get your quote</span><h4>Sample Moving Co.</h4></div>
-            <div className="p-body">
-              <div className="p-label">Home Size</div>
-              <div className="p-option">Studio / 1 Bed</div>
-              <div className="p-option chosen">2 Bedrooms</div>
-              <div className="p-option">3 Bedrooms</div>
-            </div>
-          </div>
-          <div className="p-step" style={{ animationDelay: '3s' }}>
-            <div className="p-topbar"><span className="step-label">Almost there</span><h4>Sample Moving Co.</h4></div>
-            <div className="p-body">
-              <div className="p-label">Full Name</div>
-              <div className="p-input">Rebecca Nguyen</div>
-              <div className="p-label">Phone</div>
-              <div className="p-input">727-555-0148</div>
-            </div>
-          </div>
-          <div className="p-step" style={{ animationDelay: '6s' }}>
-            <div className="p-confirm">
-              <div className="check-circle">✓</div>
-              <h4>You&apos;re all set!</h4>
-              <div className="est-box"><span>Estimated Total</span><b>$510.00</b></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <style jsx>{`
-        .phone-mock{display:flex;flex-direction:column;align-items:center;gap:18px;}
-        .phone-frame{width:250px;height:480px;border-radius:36px;background:#0c0a16;padding:10px;box-shadow:0 30px 70px -25px rgba(0,0,0,0.65), 0 0 0 2px rgba(255,255,255,0.06) inset;position:relative;}
-        .phone-notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:86px;height:18px;background:#0c0a16;border-radius:0 0 12px 12px;z-index:3;}
-        .phone-screen{position:relative;width:100%;height:100%;border-radius:26px;overflow:hidden;background:#fff;}
-        .p-step{position:absolute;inset:0;display:flex;flex-direction:column;background:#fff;opacity:0;transform:translateX(20px);animation:pCycle 9s infinite;}
-        @keyframes pCycle{
-          0%{opacity:0;transform:translateX(20px);}
-          4%{opacity:1;transform:translateX(0);}
-          30%{opacity:1;transform:translateX(0);}
-          34%{opacity:0;transform:translateX(-20px);}
-          100%{opacity:0;}
-        }
-        .p-banner{background:linear-gradient(135deg,var(--primary),var(--primary-light));padding:22px 16px 16px;color:#fff;flex:0 0 auto;}
-        .p-banner .tag{font-size:9px;text-transform:uppercase;letter-spacing:.08em;opacity:.85;}
-        .p-banner h4{margin:4px 0 0;font-family: var(--font-space-grotesk-offer), sans-serif;font-size:15px;}
-        .p-topbar{background:linear-gradient(135deg,var(--primary),var(--primary-light));padding:16px 16px 14px;color:#fff;flex:0 0 auto;}
-        .p-topbar .step-label{font-size:9px;text-transform:uppercase;letter-spacing:.08em;opacity:.85;display:block;margin-bottom:3px;}
-        .p-topbar h4{margin:0;font-family: var(--font-space-grotesk-offer), sans-serif;font-size:15px;}
-        .p-body{padding:16px;flex:1;display:flex;flex-direction:column;gap:8px;}
-        .p-label{font-size:9.5px;color:#8b86a8;text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-top:6px;}
-        .p-option{border:1.5px solid #e3e0ef;border-radius:10px;padding:11px 12px;font-size:12px;color:#2b2640;font-weight:600;}
-        .p-option.chosen{border-color:var(--primary);background:rgba(92,81,214,0.06);color:var(--primary);}
-        .p-input{border:1.5px solid #e3e0ef;background:#f7f6fb;border-radius:9px;padding:10px 12px;font-size:12px;color:#2b2640;font-weight:600;}
-        .p-confirm{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;gap:10px;}
-        .check-circle{width:50px;height:50px;border-radius:50%;background:var(--green);color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;}
-        .p-confirm h4{font-family: var(--font-space-grotesk-offer), sans-serif;font-size:16px;margin:4px 0 0;color:#1c1830;}
-        .est-box{margin-top:8px;background:#f7f6fb;border:1px solid #e3e0ef;border-radius:10px;padding:12px 20px;}
-        .est-box span{display:block;font-size:9px;color:#8b86a8;text-transform:uppercase;letter-spacing:.05em;}
-        .est-box b{font-family: var(--font-space-grotesk-offer), sans-serif;font-size:21px;color:#1c1830;}
+        .bshot-url{margin-left:8px;background:rgba(255,255,255,0.06);padding:3px 12px;border-radius:6px;font-size:11px;color:var(--muted);}
+        .bshot img{width:100%;display:block;}
       `}</style>
     </div>
   )
@@ -378,7 +75,19 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
           </span>
         </div>
         <div className="hero-visual">
-          <HeroMock />
+          <BrowserShot
+            src="/screenshots/main-dashboard.png"
+            alt="QuoteBox CRM dashboard showing $111,811 pipeline"
+            url="quote-box.com/dashboard"
+            glow="rgba(245,166,35,0.16)"
+          />
+          <div className="lead-badge">
+            <div className="lead-badge-icon">🔔</div>
+            <div>
+              <div className="lead-badge-title">New lead received</div>
+              <div className="lead-badge-sub">Quote: $510.00 · Just now</div>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -389,7 +98,12 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
           <h2>This is the actual software</h2>
           <p>A quick look inside a live Quotebox account.</p>
         </div>
-        <ProductPanel />
+        <BrowserShot
+          src="/screenshots/leads-dashboard.png"
+          alt="QuoteBox leads dashboard — 686 total leads, $111,811 pipeline"
+          url="quote-box.com/leads"
+          glow="rgba(92,81,214,0.22)"
+        />
         <div className="stat-strip">
           <div className="stat"><div className="n">$111,811</div><div className="l">Pipeline value tracked</div></div>
           <div className="stat"><div className="n">685</div><div className="l">Leads captured</div></div>
@@ -435,7 +149,10 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
               <li>Ends in an instant estimate, not a maybe</li>
             </ul>
           </div>
-          <PhoneMock />
+          <div className="phone-shot">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/screenshots/home-size-form.png" alt="A real QuoteBox quote form — home size selection step" />
+          </div>
         </div>
       </section>
 
@@ -600,6 +317,13 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
         .truck-sticker{ display:inline-block; background:#fff; border-radius:18px; padding:10px 12px 6px; transform:rotate(-3deg); box-shadow:0 24px 54px -22px rgba(0,0,0,0.65); margin-bottom:18px; }
         .truck-sticker img{ display:block; width:150px; height:auto; }
         @media(max-width:900px){ .truck-sticker{ margin-left:auto; margin-right:auto; } }
+        .hero-visual{ position:relative; }
+        .lead-badge{ position:absolute; top:24px; right:-4%; z-index:3; background:#fff; border-radius:12px; padding:10px 14px; box-shadow:0 8px 32px rgba(0,0,0,0.35); display:flex; align-items:center; gap:10px; min-width:175px; }
+        .lead-badge-icon{ width:36px; height:36px; border-radius:50%; background:#dcfce7; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .lead-badge-title{ font-size:11px; font-weight:700; color:#0e0020; line-height:1.2; }
+        .lead-badge-sub{ font-size:10px; color:#10b981; font-weight:600; }
+        @media(max-width:900px){ .lead-badge{ right:4%; } }
+        @media(max-width:520px){ .lead-badge{ display:none; } }
         .eyebrow{ display:inline-flex; align-items:center; gap:8px; background:rgba(92,81,214,0.18); border:1px solid rgba(139,127,255,0.4); color:var(--primary-light);
           padding:7px 16px; border-radius:999px; font-size:13px; font-weight:600; letter-spacing:0.03em; text-transform:uppercase; margin-bottom:26px; }
         .eyebrow .dot{ width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); }
@@ -633,6 +357,9 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
         .phone-points{ list-style:none; padding:0; margin:26px 0 0; display:grid; gap:13px; }
         .phone-points li{ display:flex; gap:10px; align-items:flex-start; color:var(--text); font-size:15px; font-weight:500; }
         .phone-points li::before{ content:''; width:7px; height:7px; border-radius:50%; background:var(--green); margin-top:7px; flex:0 0 auto; box-shadow:0 0 8px var(--green); }
+        .phone-shot{ flex:0 0 auto; width:250px; border-radius:26px; overflow:hidden; box-shadow:0 30px 70px -25px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.08); }
+        .phone-shot img{ width:100%; display:block; }
+        @media(max-width:900px){ .phone-shot{ margin:0 auto; } }
 
         .stack-wrap{ display:flex; justify-content:center; padding-top:20px; }
         .receipt{ width:100%; max-width:460px; background:#fbfaf7; color:#221c33; border-radius:6px; padding:34px 30px 28px; position:relative;
