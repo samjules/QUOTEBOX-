@@ -206,14 +206,14 @@ export default function TrialFlow() {
 
   const pageStyle: React.CSSProperties = {
     minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start',
-    padding: '48px 24px 80px', background: '#0e0b1a',
+    padding: 'clamp(20px, 6vw, 48px) clamp(12px, 4vw, 24px) 80px', background: '#0e0b1a', boxSizing: 'border-box', width: '100%', overflowX: 'hidden',
   }
   const cardStyle: React.CSSProperties = {
     maxWidth: 560, width: '100%', background: '#fff', color: '#1c1830', borderRadius: 20, overflow: 'hidden',
     boxShadow: '0 40px 90px -35px rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', minHeight: 520,
   }
-  const bodyStyle: React.CSSProperties = { padding: '36px 40px', flex: 1, display: 'flex', flexDirection: 'column' }
-  const footStyle: React.CSSProperties = { borderTop: '1px solid #e3e0ef', padding: '18px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }
+  const bodyStyle: React.CSSProperties = { padding: 'clamp(20px, 5vw, 36px) clamp(16px, 5vw, 40px)', flex: 1, display: 'flex', flexDirection: 'column' }
+  const footStyle: React.CSSProperties = { borderTop: '1px solid #e3e0ef', padding: '18px clamp(16px, 5vw, 40px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }
   const btnPrimary: React.CSSProperties = { background: '#5c51d6', color: '#fff', border: 'none', borderRadius: 11, fontWeight: 700, fontSize: 14.5, padding: '13px 24px', cursor: 'pointer' }
   const btnGold: React.CSSProperties = { background: 'linear-gradient(135deg,#f5a623,#ffcf6b)', color: '#241704', border: 'none', borderRadius: 11, fontWeight: 700, fontSize: 14.5, padding: '13px 24px', cursor: 'pointer', width: '100%' }
   const btnGhost: React.CSSProperties = { background: 'none', border: 'none', color: '#8b86a8', fontWeight: 700, fontSize: 14.5, padding: '13px 10px', cursor: 'pointer' }
@@ -229,7 +229,7 @@ export default function TrialFlow() {
             <h2 style={{ fontSize: 24, margin: '0 0 6px' }}>Build your instant quote form</h2>
             <p style={{ color: '#8b86a8', fontSize: 14.5, margin: '0 0 26px', lineHeight: 1.5 }}>This is what your customers will see once you&apos;re live.</p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 220px', gap: 28 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 28 }}>
               <div>
                 <div style={{ marginBottom: 18 }}>
                   <label style={fieldLabel}>Business name</label>
