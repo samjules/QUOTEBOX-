@@ -286,19 +286,28 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
 
       <style jsx>{`
         .offer{
-          --bg:#0e0b1a; --bg-2:#141024; --panel:#181330; --panel-2:#1e1838;
+          --bg:#5b50d6; --bg-2:#453bc2; --panel:#181330; --panel-2:#1e1838;
           --primary:#5b50d6; --primary-light:#8b7fff; --gold:#f4a93c; --green:#34d399;
-          --text:#f4f2fb; --muted:#a79fc7; --line:rgba(255,255,255,0.09); --radius:16px;
-          background:
-            radial-gradient(ellipse 900px 500px at 15% -5%, rgba(92,81,214,0.35), transparent 60%),
-            radial-gradient(ellipse 700px 500px at 90% 10%, rgba(139,127,255,0.18), transparent 55%),
-            var(--bg);
+          --text:#ffffff; --muted:rgba(255,255,255,0.74); --line:rgba(255,255,255,0.18); --radius:16px;
+          background: var(--bg);
           color:var(--text); font-family: var(--font-inter-offer), sans-serif; -webkit-font-smoothing:antialiased;
           overflow-x:hidden; position:relative;
         }
+        .offer::before{
+          content:'';
+          position:fixed;
+          inset:0;
+          background:url('/patterns/map-pattern-2.jpg') repeat;
+          background-size:420px;
+          mix-blend-mode:multiply;
+          opacity:0.4;
+          pointer-events:none;
+          z-index:0;
+        }
+        .offer > * { position:relative; z-index:1; }
         .offer :global(h1), .offer :global(h2), .offer :global(h3){ font-family: 'Nautic', var(--font-space-grotesk-offer), sans-serif; font-weight:800; letter-spacing:-0.02em; }
         .offer :global(a){ color:inherit; }
-        .offer button{ font-family: var(--font-inter-offer), sans-serif; border:none; cursor:pointer; }
+        .offer button{ font-family: 'Nautic', var(--font-inter-offer), sans-serif; border:none; cursor:pointer; }
 
         nav{ max-width:1080px; margin:0 auto; padding:22px 24px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
         .brand{ display:flex; align-items:center; gap:10px; font-family: 'Nautic', var(--font-space-grotesk-offer), sans-serif; font-weight:700; font-size:19px; }
