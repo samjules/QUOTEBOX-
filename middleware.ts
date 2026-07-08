@@ -40,6 +40,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // Supabase's password-recovery email link should land on /reset-password?code=...,
+  // but falls back to Site URL root (this app's "/") whenever the actual redirectTo
+  // isn't in the project's Redirect URLs allow-list — catch that here so the reset
+  // still works even if that Supabase dashboard setting is wrong.
+  if (pathname === '/' && request.nextUrl.searchParams.has('code')) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/reset-password'
+    return NextResponse.redirect(url)
+  }
+
   const isAuthPage = pathname === '/login'
   const isProtectedPage = [
     '/dashboard', '/leads', '/hosted-forms', '/billing', '/settings', '/form-builder', '/meta-ads', '/admin', '/time-clock',
