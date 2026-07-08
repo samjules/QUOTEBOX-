@@ -391,6 +391,10 @@ export default async function DashboardPage({
         {/* ── Main content (below photo zone) ── */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 pb-10 space-y-5" style={{ marginTop: hasBg ? 0 : 8 }}>
 
+          {/* Pledge banner — invites owners toward the $297 Consultation & Ad Setup,
+              same offer the pledge-path email/SMS sequence pitches. Hidden once bought. */}
+          {!account.upsell_purchased_at && <PledgeBanner pledgeCount={account.monthly_booking_goal ?? null} />}
+
           {/* Slim Meta ads strip — discreet, always shown until Meta connected */}
           {!metaConnected && <MetaAdStrip />}
 
@@ -683,6 +687,39 @@ function QuickAction({
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
       </svg>
     </Link>
+  )
+}
+
+function PledgeBanner({ pledgeCount }: { pledgeCount: number | null }) {
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, #5b50d6, #453bc2)',
+      borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16,
+      boxShadow: '0 4px 16px rgba(91,80,214,0.25)', flexWrap: 'wrap' as const,
+    }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/delivery-truck.png" alt=""
+        style={{ width: 60, height: 60, objectFit: 'contain', borderRadius: 10, background: '#fff', padding: 5, flexShrink: 0 }}
+      />
+      <div style={{ flex: 1, minWidth: 220 }}>
+        <div style={{ color: '#fff', fontWeight: 800, fontSize: '0.92rem', marginBottom: 3 }}>
+          {pledgeCount ? `You pledged ${pledgeCount} jobs this month.` : 'Want more booked jobs this month?'}
+        </div>
+        <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.79rem', lineHeight: 1.4 }}>
+          Our $297 Consultation &amp; Ad Setup builds and launches your ad account so the rest come faster.
+        </div>
+      </div>
+      <a
+        href="https://quote-box.com/get-started"
+        style={{
+          flexShrink: 0, background: '#f4a93c', color: '#201d3d', fontWeight: 800, fontSize: '0.8rem',
+          padding: '10px 18px', borderRadius: 9, textDecoration: 'none', whiteSpace: 'nowrap' as const,
+        }}
+      >
+        Book my $297 setup →
+      </a>
+    </div>
   )
 }
 

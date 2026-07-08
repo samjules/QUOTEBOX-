@@ -295,12 +295,12 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
         }
         .offer::before{
           content:'';
-          position:fixed;
+          position:absolute;
           inset:0;
           background:url('/patterns/map-pattern-2.jpg') repeat;
-          background-size:420px;
-          mix-blend-mode:multiply;
-          opacity:0.4;
+          background-size:340px;
+          filter:invert(1);
+          opacity:0.07;
           pointer-events:none;
           z-index:0;
         }
