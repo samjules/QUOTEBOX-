@@ -61,13 +61,9 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
 
       <header className="hero">
         <div className="hero-text">
-          <div className="truck-sticker">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/delivery-truck.png" alt="" />
-          </div>
           <div className="eyebrow"><span className="dot" /> For moving &amp; junk removal companies</div>
-          <h1 className="headline">The quote form &amp; CRM<br />that turned <span className="accent">685 leads</span> into $111K in pipeline.</h1>
-          <p className="sub">Quotebox is the instant-quote form, CRM, and Meta Ads dashboard built specifically for movers and junk haulers — with every lead texted and emailed back automatically. Try the full software for <strong>$1 for your first month</strong>, instead of $34/month.</p>
+          <h1 className="headline">Turn website visitors into <span className="accent">qualified leads</span> — then run your whole pipeline from your phone.</h1>
+          <p className="sub">Quotebox is the instant-quote form, CRM, and mobile app built specifically for movers and junk haulers. Customers get a real price in minutes; you get their name, number, and job details the second they submit — right in your pocket. Try the full software for <strong>$1 for your first month</strong>, instead of $34/month.</p>
           <button className="cta-btn" onClick={() => onStart()}>Try Quotebox For $1 →</button>
           <span className="cta-sub">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#34d399" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -314,9 +310,6 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
         .divider{ max-width:1080px; margin:0 auto; height:1px; background:var(--line); }
 
         .hero{ max-width:1080px; margin:0 auto; padding:56px 24px 40px; display:grid; grid-template-columns:1.05fr 0.95fr; align-items:center; gap:40px; }
-        .truck-sticker{ display:inline-block; background:#fff; border-radius:18px; padding:10px 12px 6px; transform:rotate(-3deg); box-shadow:0 24px 54px -22px rgba(0,0,0,0.65); margin-bottom:18px; }
-        .truck-sticker img{ display:block; width:150px; height:auto; }
-        @media(max-width:900px){ .truck-sticker{ margin-left:auto; margin-right:auto; } }
         .hero-visual{ position:relative; }
         .lead-badge{ position:absolute; top:24px; right:-4%; z-index:3; background:#fff; border-radius:12px; padding:10px 14px; box-shadow:0 8px 32px rgba(0,0,0,0.35); display:flex; align-items:center; gap:10px; min-width:175px; }
         .lead-badge-icon{ width:36px; height:36px; border-radius:50%; background:#dcfce7; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
