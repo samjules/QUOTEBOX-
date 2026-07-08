@@ -1875,28 +1875,37 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
                 </label>
               </div>
 
-              {/* Estimate disclaimer — always required before submit */}
+              {/* Estimate disclaimer — always required before submit. Made deliberately
+                  loud: this is the moment a customer needs to register "not final". */}
               <div style={{
-                marginTop: 6,
-                padding: '14px 16px',
-                borderRadius: 12,
-                background: '#fffbeb',
-                border: '2px solid #fbbf24',
+                marginTop: 10,
+                padding: '20px 20px 18px',
+                borderRadius: 16,
+                background: 'linear-gradient(160deg, #fffbeb, #fef3c7)',
+                border: '2.5px solid #f59e0b',
+                boxShadow: '0 4px 14px rgba(245,158,11,0.18)',
               }}>
-                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#92400e', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  ⚠️ Important — Please Read
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <span style={{ fontSize: '1.6rem', lineHeight: 1 }}>⚠️</span>
+                  <span style={{ fontSize: '1.05rem', fontWeight: 900, color: '#78350f', letterSpacing: '0.01em' }}>
+                    THIS IS AN ESTIMATE — NOT A FINAL PRICE
+                  </span>
                 </div>
-                <div style={{ fontSize: '0.82rem', color: '#78350f', lineHeight: 1.6, marginBottom: 12 }}>
+                <div style={{ fontSize: '0.86rem', color: '#78350f', lineHeight: 1.65, marginBottom: 14, fontWeight: 500 }}>
                   {config.disclaimer_text || 'This quote is an estimate only. Your final price will be confirmed over the phone before any work begins. Actual costs may vary based on job conditions.'}
                 </div>
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+                <label style={{
+                  display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer',
+                  background: 'rgba(255,255,255,0.5)', padding: '10px 12px', borderRadius: 10,
+                  border: '1px solid rgba(180,83,9,0.25)',
+                }}>
                   <input
                     type="checkbox"
                     checked={disclaimerAcknowledged}
                     onChange={(e) => setDisclaimerAcknowledged(e.target.checked)}
-                    style={{ marginTop: 2, flexShrink: 0, width: 16, height: 16, accentColor: '#d97706' }}
+                    style={{ marginTop: 2, flexShrink: 0, width: 17, height: 17, accentColor: '#d97706' }}
                   />
-                  <span style={{ fontSize: '0.8rem', color: '#92400e', fontWeight: 600, lineHeight: 1.5 }}>
+                  <span style={{ fontSize: '0.82rem', color: '#92400e', fontWeight: 700, lineHeight: 1.5 }}>
                     I understand this is an estimate — final price confirmed over the phone.
                   </span>
                 </label>
@@ -2019,6 +2028,19 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
                         </div>
                       )}
                     </div>
+                  </div>
+
+                  {/* Estimate badge — the total above is not a final price, and this
+                      needs to travel with it everywhere it's shown, not just at intake. */}
+                  <div style={{
+                    marginTop: 16, display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '10px 14px', borderRadius: 10,
+                    background: '#fef3c7', border: '1.5px solid #f59e0b',
+                  }}>
+                    <span style={{ fontSize: '1.05rem', lineHeight: 1, flexShrink: 0 }}>⚠️</span>
+                    <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#78350f', letterSpacing: '0.02em' }}>
+                      ESTIMATE ONLY — NOT YOUR FINAL PRICE
+                    </span>
                   </div>
                 </div>
               )}

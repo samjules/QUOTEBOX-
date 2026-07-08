@@ -162,6 +162,19 @@ export default function ThankYouClient({ form }: { form: HostedForm }) {
               <div style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>
                 {currency}{total.toFixed(2)}
               </div>
+
+              {/* This number is not a final price — make that impossible to miss
+                  right where the customer is most likely to fixate on it. */}
+              <div style={{
+                marginTop: 16, display: 'flex', alignItems: 'center', gap: 8,
+                padding: '10px 14px', borderRadius: 10,
+                background: '#fef3c7', border: '1.5px solid #f59e0b',
+              }}>
+                <span style={{ fontSize: '1.05rem', lineHeight: 1, flexShrink: 0 }}>⚠️</span>
+                <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#78350f', letterSpacing: '0.02em' }}>
+                  ESTIMATE ONLY — NOT YOUR FINAL PRICE
+                </span>
+              </div>
             </div>
           )}
         </div>
