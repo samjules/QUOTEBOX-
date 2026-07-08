@@ -28,6 +28,10 @@ export default function ConfirmClient() {
           setError(data.error ?? 'We could not confirm your payment.')
           return
         }
+        // Fires only here — after the server has actually verified the Stripe
+        // payment — so this marks a real account creation, not just a page visit.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(window as any).fbq?.('track', 'CompleteRegistration')
         router.push('/dashboard?new=1')
       })
       .catch(() => setError('Network error confirming your payment.'))
