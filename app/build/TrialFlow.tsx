@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { FormField } from '@/lib/types'
 import TrialLanding from './TrialLanding'
+import { trackBuildEvent } from '@/lib/track-build-event'
 
 // Junk removal is hidden for now — focusing on moving only.
 const SERVICE_TYPES = [
@@ -116,6 +117,7 @@ export default function TrialFlow() {
     if (!email.trim()) { setSaveError('Email is required'); return }
     if (password.length < 6) { setSaveError('Password must be at least 6 characters'); return }
 
+    trackBuildEvent('step_account_submit')
     setSaving(true)
     setSaveError('')
     const supabase = createClient()
@@ -304,7 +306,7 @@ export default function TrialFlow() {
             <button
               style={{ ...btnPrimary, opacity: businessName.trim().length > 1 && serviceType ? 1 : 0.4, cursor: businessName.trim().length > 1 && serviceType ? 'pointer' : 'default' }}
               disabled={!(businessName.trim().length > 1 && serviceType !== null)}
-              onClick={() => setPhase('rate')}
+              onClick={() => { trackBuildEvent('step_build_continue'); setPhase('rate') }}
             >
               Continue →
             </button>
@@ -365,7 +367,7 @@ export default function TrialFlow() {
             <button
               style={{ ...btnPrimary, opacity: !hourlyRate || parseFloat(hourlyRate) <= 0 ? 0.4 : 1 }}
               disabled={!hourlyRate || parseFloat(hourlyRate) <= 0}
-              onClick={() => setPhase('drive')}
+              onClick={() => { trackBuildEvent('step_rate_continue'); setPhase('drive') }}
             >
               Continue →
             </button>
@@ -446,7 +448,7 @@ export default function TrialFlow() {
             <button
               style={{ ...btnPrimary, opacity: driveDisabled ? 0.4 : 1 }}
               disabled={driveDisabled}
-              onClick={() => setPhase('goal')}
+              onClick={() => { trackBuildEvent('step_drive_continue'); setPhase('goal') }}
             >
               Continue →
             </button>
@@ -501,7 +503,7 @@ export default function TrialFlow() {
             <button
               style={{ ...btnPrimary, opacity: monthlyGoal ? 1 : 0.4 }}
               disabled={!monthlyGoal}
-              onClick={() => setPhase('upsell')}
+              onClick={() => { trackBuildEvent('step_goal_continue'); setPhase('upsell') }}
             >
               Make my pledge →
             </button>
@@ -531,8 +533,8 @@ export default function TrialFlow() {
             </ul>
             <div style={{ fontSize: 15, color: '#8b86a8', marginBottom: 18 }}>One-time setup — <b style={{ color: '#1c1830', fontSize: 22 }}>$297</b></div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 340 }}>
-              <button style={btnGold} onClick={() => { setUpsell(true); setPhase('account') }}>Yes, build it for me — $297 →</button>
-              <button style={{ background: 'none', border: 'none', color: '#8b86a8', textDecoration: 'underline', fontSize: 13, cursor: 'pointer' }} onClick={() => { setUpsell(false); setPhase('account') }}>
+              <button style={btnGold} onClick={() => { trackBuildEvent('step_upsell_yes'); setUpsell(true); setPhase('account') }}>Yes, build it for me — $297 →</button>
+              <button style={{ background: 'none', border: 'none', color: '#8b86a8', textDecoration: 'underline', fontSize: 13, cursor: 'pointer' }} onClick={() => { trackBuildEvent('step_upsell_no'); setUpsell(false); setPhase('account') }}>
                 Continue with my $1 trial instead
               </button>
             </div>

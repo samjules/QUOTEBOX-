@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Space_Grotesk, Inter } from 'next/font/google'
+import { trackBuildEvent } from '@/lib/track-build-event'
 
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], weight: ['500', '700'], variable: '--font-space-grotesk-offer' })
 const inter = Inter({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], variable: '--font-inter-offer' })
@@ -62,7 +63,7 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
     <div className={`${spaceGrotesk.variable} ${inter.variable} offer`}>
       <nav>
         <div className="brand"><div className="logo-mark">QB</div>Quotebox</div>
-        <button className="cta-btn small" onClick={() => onStart()}>Start for $1</button>
+        <button className="cta-btn small" onClick={() => { trackBuildEvent('landing_nav'); onStart() }}>Start for $1</button>
       </nav>
 
       <header className="hero">
@@ -70,7 +71,7 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
           <div className="eyebrow"><span className="dot" /> For moving &amp; junk removal companies</div>
           <h1 className="headline">Turn website visitors into <span className="accent">qualified leads</span> — then run your whole pipeline from your phone.</h1>
           <p className="sub">Quotebox is the instant-quote form, CRM, and mobile app built specifically for movers and junk haulers. Customers get a real price in minutes; you get their name, number, and job details the second they submit — right in your pocket. Try the full software for <strong>$1 for your first month</strong>, instead of $34/month.</p>
-          <button className="cta-btn" onClick={() => onStart()}>Try Quotebox For $1 →</button>
+          <button className="cta-btn" onClick={() => { trackBuildEvent('landing_hero'); onStart() }}>Try Quotebox For $1 →</button>
           <span className="cta-sub">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#34d399" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
             Cancel anytime · Then $34/mo · Live in under 10 minutes
@@ -197,7 +198,7 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
           </div>
         </div>
         <div style={{ textAlign: 'center', marginTop: 38 }}>
-          <button className="cta-btn" onClick={() => onStart()}>Claim My $1 Trial →</button>
+          <button className="cta-btn" onClick={() => { trackBuildEvent('landing_offer'); onStart() }}>Claim My $1 Trial →</button>
           <span className="cta-sub" style={{ display: 'block', marginTop: 14 }}>Renews at $34/mo after your first month · Cancel anytime, no questions asked</span>
         </div>
       </section>
@@ -274,14 +275,14 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
       <section className="final-cta">
         <h2>Your branded quote form could be live in 10 minutes.</h2>
         <p>Start your $1 trial and get the same software Titan Tuff Moving used to turn 685 leads into $111K in pipeline.</p>
-        <button className="cta-btn" onClick={() => onStart()}>Claim My $1 Trial →</button>
+        <button className="cta-btn" onClick={() => { trackBuildEvent('landing_final'); onStart() }}>Claim My $1 Trial →</button>
       </section>
 
       <footer>Quotebox is a product of Arctic Reach LLC. © 2026 Quotebox. All rights reserved.</footer>
 
       <div className={`sticky-bar ${showSticky ? 'show' : ''}`}>
         <div className="txt">Your first month just <b>$1</b> — normally $34/mo</div>
-        <button className="cta-btn" onClick={() => onStart()}>Start My $1 Trial →</button>
+        <button className="cta-btn" onClick={() => { trackBuildEvent('landing_sticky'); onStart() }}>Start My $1 Trial →</button>
       </div>
 
       <style jsx>{`
