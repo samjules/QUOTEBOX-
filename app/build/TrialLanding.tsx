@@ -66,15 +66,15 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
     <div className={`${spaceGrotesk.variable} ${inter.variable} offer`}>
       <nav>
         <div className="brand"><div className="logo-mark">QB</div>Quotebox</div>
-        <button className="cta-btn small" onClick={() => { trackBuildEvent('landing_nav'); onStart() }}>Start for $1</button>
+        <button className="cta-btn small" onClick={() => { trackBuildEvent('landing_nav'); onStart() }}>Make My Pledge</button>
       </nav>
 
       <header className="hero">
         <div className="hero-text">
-          <div className="eyebrow"><span className="dot" /> For moving &amp; junk removal companies</div>
-          <h1 className="headline">Turn website visitors into <span className="accent">qualified leads</span> — then run your whole pipeline from your phone.</h1>
-          <p className="sub">Quotebox is the instant-quote form, CRM, and mobile app built specifically for movers and junk haulers. Customers get a real price in minutes; you get their name, number, and job details the second they submit — right in your pocket. Try the full software for <strong>$1 for your first month</strong>, instead of $34/month.</p>
-          <button className="cta-btn" onClick={() => { trackBuildEvent('landing_hero'); onStart() }}>Try Quotebox For $1 →</button>
+          <div className="eyebrow"><span className="dot" /> Take the pledge</div>
+          <h1 className="headline">Pledge your next <span className="accent">booked job.</span><br />We&apos;ll build you the strategy to get it.</h1>
+          <p className="sub">Every mover starts the same way — with one goal: the next booked job. Quotebox gives you the instant-quote form, automatic follow-up, and lead pipeline that turn that pledge into a real, trackable strategy — not a hope. Try the full platform for <strong>$1 for your first month</strong>, instead of $34/month.</p>
+          <button className="cta-btn" onClick={() => { trackBuildEvent('landing_hero'); onStart() }}>Make My Pledge →</button>
           <span className="cta-sub">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#34d399" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
             Cancel anytime · Then $34/mo · Live in under 10 minutes
@@ -136,7 +136,7 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
       <div className="divider" />
 
       <section className="problem">
-        <h2>Most movers are running six-figure ad spend through a Facebook inbox.</h2>
+        <h2>Most movers never hit their pledge — not because they can&apos;t do the work, but because the leads never turn into jobs.</h2>
         <p>No instant quote, no automatic follow-up, and no easy way to see which ads are actually turning into booked jobs.</p>
         <div className="leak-grid">
           <div className="leak-card">
@@ -216,7 +216,7 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
           </div>
         </div>
         <div style={{ textAlign: 'center', marginTop: 38 }}>
-          <button className="cta-btn" onClick={() => { trackBuildEvent('landing_offer'); onStart() }}>Claim My $1 Trial →</button>
+          <button className="cta-btn" onClick={() => { trackBuildEvent('landing_offer'); onStart() }}>Make My Pledge →</button>
           <span className="cta-sub" style={{ display: 'block', marginTop: 14 }}>Renews at $34/mo after your first month · Cancel anytime, no questions asked</span>
         </div>
       </section>
@@ -224,13 +224,13 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
       <div className="divider" />
 
       <section>
-        <h2 style={{ textAlign: 'center', fontSize: 'clamp(22px,3.4vw,32px)', margin: '0 0 8px' }}>How it works</h2>
+        <h2 style={{ textAlign: 'center', fontSize: 'clamp(22px,3.4vw,32px)', margin: '0 0 8px' }}>From pledge to proof</h2>
         <p style={{ textAlign: 'center', color: 'var(--muted)', margin: '0 0 10px' }}>Three steps. You&apos;ll be live before the coffee&apos;s cold.</p>
         <div className="steps">
           <div className="step-card">
             <div className="step-num">1</div>
-            <h3>Start your $1 trial</h3>
-            <p>Create your account and pick a look for your quote form. Takes about 10 minutes, no card decline surprises later.</p>
+            <h3>Pledge your number</h3>
+            <p>Pick how many booked jobs you&apos;re going after this month. We build your strategy — and your form — around hitting it.</p>
           </div>
           <div className="step-card">
             <div className="step-num">2</div>
@@ -316,16 +316,16 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
       <div className="divider" />
 
       <section className="final-cta">
-        <h2>Your branded quote form could be live in 10 minutes.</h2>
-        <p>Start your $1 trial and get the same software Titan Tuff Moving used to turn 685 leads into $111K in pipeline.</p>
-        <button className="cta-btn" onClick={() => { trackBuildEvent('landing_final'); onStart() }}>Claim My $1 Trial →</button>
+        <h2>Make your pledge. We&apos;ll build the strategy.</h2>
+        <p>Get the same software Titan Tuff Moving used to turn 685 leads into $111K in pipeline — live in under 10 minutes.</p>
+        <button className="cta-btn" onClick={() => { trackBuildEvent('landing_final'); onStart() }}>Make My Pledge →</button>
       </section>
 
       <footer>Quotebox is a product of Arctic Reach LLC. © 2026 Quotebox. All rights reserved.</footer>
 
       <div className={`sticky-bar ${showSticky ? 'show' : ''}`}>
-        <div className="txt">Your first month just <b>$1</b> — normally $34/mo</div>
-        <button className="cta-btn" onClick={() => { trackBuildEvent('landing_sticky'); onStart() }}>Start My $1 Trial →</button>
+        <div className="txt">Take the pledge — first month just <b>$1</b></div>
+        <button className="cta-btn" onClick={() => { trackBuildEvent('landing_sticky'); onStart() }}>Make My Pledge →</button>
       </div>
 
       <style jsx>{`
