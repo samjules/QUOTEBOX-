@@ -45,8 +45,12 @@ export default function PublicFooter() {
 
           {/* Brand */}
           <div>
-            <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.4rem', fontWeight: 700, marginBottom: 4 }}>
-              Quote<span style={{ color: '#FFE500' }}>.</span>Box
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 4 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/quotebox_icon.png" alt="QuoteBox" style={{ width: 26, height: 26, borderRadius: 6, objectFit: 'cover', display: 'block' }} />
+              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.4rem', fontWeight: 700 }}>
+                Quote<span style={{ color: '#FFE500' }}>.</span>Box
+              </div>
             </div>
             <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', marginBottom: 12, letterSpacing: '0.03em' }}>
               A product of Arctic Reach LLC

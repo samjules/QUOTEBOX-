@@ -25,6 +25,9 @@ export default function ThankYouClient({ form }: { form: HostedForm }) {
   const accentBg = legacyColorMap[config.brand_color] ?? config.brand_color ?? '#FFE500'
   const isDark = isColorDark(accentBg)
   const accentFg = isDark ? '#ffffff' : '#0e0020'
+  // Businesses that haven't uploaded their own hero photo yet get a branded
+  // QuoteBox purple + map-texture banner instead of a flat color bar.
+  const noHeroImage = !config.hero_image_url
 
   const isTestMode = searchParams.get('pixel_test') === '1'
   const [pixelStatus, setPixelStatus] = useState<'loading' | 'fired' | 'no_pixel'>('loading')
@@ -95,7 +98,7 @@ export default function ThankYouClient({ form }: { form: HostedForm }) {
       background: isDark
         ? `linear-gradient(135deg, rgba(240,244,255,0.88) 0%, rgba(232,238,255,0.85) 60%, rgba(240,244,255,0.88) 100%), url('/map-tiles/map_1_tile.svg') center / 600px auto`
         : `linear-gradient(135deg, rgba(255,255,255,0.86) 0%, rgba(255,255,255,0.83) 60%, rgba(255,255,255,0.86) 100%), url('/map-tiles/map_1_tile.svg') center / 600px auto`,
-      backgroundColor: isDark ? '#e8eeff' : `${accentBg}22`,
+      backgroundColor: isDark ? '#e8eeff' : noHeroImage ? 'rgba(126,58,242,0.12)' : `${accentBg}22`,
       display: 'flex',
       alignItems: 'flex-start',
       justifyContent: 'center',
@@ -109,6 +112,18 @@ export default function ThankYouClient({ form }: { form: HostedForm }) {
         overflow: 'hidden',
         boxShadow: '0 8px 40px rgba(0,0,0,0.10)',
       }}>
+        {/* Hero — business's own photo if set, otherwise a branded purple + map banner */}
+        {config.hero_image_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={config.hero_image_url} alt="" style={{ width: '100%', height: 120, objectFit: 'cover', display: 'block' }} />
+        ) : (
+          <div style={{
+            width: '100%', height: 90,
+            backgroundImage: `linear-gradient(135deg, rgba(91,33,182,0.90), rgba(147,51,234,0.82)), url('/patterns/map-pattern-2.jpg')`,
+            backgroundSize: 'cover', backgroundPosition: 'center',
+          }} />
+        )}
+
         {/* Branded header */}
         <div style={{ background: accentBg, padding: '28px 26px 24px', textAlign: 'center' }}>
           <div style={{

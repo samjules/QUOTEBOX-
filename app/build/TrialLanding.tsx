@@ -364,6 +364,10 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
 
       <header className="hero">
         <div className="hero-text">
+          <div className="truck-sticker">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/delivery-truck.png" alt="" />
+          </div>
           <div className="eyebrow"><span className="dot" /> For moving &amp; junk removal companies</div>
           <h1 className="headline">The quote form &amp; CRM<br />that turned <span className="accent">685 leads</span> into $111K in pipeline.</h1>
           <p className="sub">Quotebox is the instant-quote form, CRM, and Meta Ads dashboard built specifically for movers and junk haulers — with every lead texted and emailed back automatically. Try the full software for <strong>$1 for your first month</strong>, instead of $34/month.</p>
@@ -593,6 +597,9 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
         .divider{ max-width:1080px; margin:0 auto; height:1px; background:var(--line); }
 
         .hero{ max-width:1080px; margin:0 auto; padding:56px 24px 40px; display:grid; grid-template-columns:1.05fr 0.95fr; align-items:center; gap:40px; }
+        .truck-sticker{ display:inline-block; background:#fff; border-radius:18px; padding:10px 12px 6px; transform:rotate(-3deg); box-shadow:0 24px 54px -22px rgba(0,0,0,0.65); margin-bottom:18px; }
+        .truck-sticker img{ display:block; width:150px; height:auto; }
+        @media(max-width:900px){ .truck-sticker{ margin-left:auto; margin-right:auto; } }
         .eyebrow{ display:inline-flex; align-items:center; gap:8px; background:rgba(92,81,214,0.18); border:1px solid rgba(139,127,255,0.4); color:var(--primary-light);
           padding:7px 16px; border-radius:999px; font-size:13px; font-weight:600; letter-spacing:0.03em; text-transform:uppercase; margin-bottom:26px; }
         .eyebrow .dot{ width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); }

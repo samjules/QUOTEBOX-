@@ -1091,6 +1091,9 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
   const accentFg = isDark ? '#ffffff' : '#0e0020'
   const accentTint = accentBg + '18'
   const currency = config.currency ?? '$'
+  // Businesses that haven't uploaded their own hero photo yet get a branded
+  // QuoteBox purple + map-texture banner instead of a blank header.
+  const noHeroImage = !config.hero_image_url
 
   const fields = config.fields
 
@@ -1409,7 +1412,7 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
       background: isDark
         ? `linear-gradient(135deg, rgba(240,244,255,0.88) 0%, rgba(232,238,255,0.85) 60%, rgba(240,244,255,0.88) 100%), url('/map-tiles/map_1_tile.svg') center / 600px auto`
         : `linear-gradient(135deg, rgba(255,255,255,0.86) 0%, rgba(255,255,255,0.83) 60%, rgba(255,255,255,0.86) 100%), url('/map-tiles/map_1_tile.svg') center / 600px auto`,
-      backgroundColor: isDark ? '#e8eeff' : `${accentBg}22`,
+      backgroundColor: isDark ? '#e8eeff' : noHeroImage ? 'rgba(126,58,242,0.12)' : `${accentBg}22`,
       display: 'flex',
       alignItems: 'flex-start',
       justifyContent: 'center',
@@ -1477,14 +1480,23 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
             </div>
           )}
 
-          {/* Hero image on step 0 */}
-          {config.hero_image_url && step === 0 && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={config.hero_image_url}
-              alt="Hero"
-              style={{ width: '100%', height: 150, objectFit: 'cover', display: 'block' }}
-            />
+          {/* Hero on step 0 — business's own photo if they've uploaded one,
+              otherwise a branded QuoteBox purple + map-texture banner. */}
+          {step === 0 && (
+            config.hero_image_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={config.hero_image_url}
+                alt="Hero"
+                style={{ width: '100%', height: 150, objectFit: 'cover', display: 'block' }}
+              />
+            ) : (
+              <div style={{
+                width: '100%', height: 150,
+                backgroundImage: `linear-gradient(135deg, rgba(91,33,182,0.90), rgba(147,51,234,0.82)), url('/patterns/map-pattern-2.jpg')`,
+                backgroundSize: 'cover', backgroundPosition: 'center',
+              }} />
+            )
           )}
 
           <div style={{ padding: '20px 26px 22px' }}>

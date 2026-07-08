@@ -26,9 +26,13 @@ export default function LandingPage() {
         padding: '0 32px', height: 60, borderBottom: '1px solid #f0f0f0',
         position: 'sticky', top: 0, background: 'white', zIndex: 50,
       }}>
-        <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.35rem', fontWeight: 700, letterSpacing: '0.01em' }}>
-          Quote<span style={{ color: '#FFE500', WebkitTextStroke: '1px #0e0020' }}>.</span>Box
-        </span>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/quotebox_icon.png" alt="QuoteBox" style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover', display: 'block' }} />
+          <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.35rem', fontWeight: 700, letterSpacing: '0.01em', color: '#0e0020' }}>
+            Quote<span style={{ color: '#FFE500', WebkitTextStroke: '1px #0e0020' }}>.</span>Box
+          </span>
+        </Link>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <Link href="/contractor-leads" style={{ fontSize: '0.88rem', fontWeight: 500, color: '#555', textDecoration: 'none' }}>
             Moving & Junk Removal
