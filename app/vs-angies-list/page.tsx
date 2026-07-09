@@ -4,12 +4,12 @@ import PublicNav from '@/components/PublicNav'
 import PublicFooter from '@/components/PublicFooter'
 
 export const metadata: Metadata = {
-  title: "Quotebox vs Angi (Angie's List) — Better Moving & Junk Removal Leads for Less",
-  description: "Angi charges $40–$100/month plus shared lead fees. Quotebox is $15 per exclusive moving or junk removal lead, no monthly subscription. See the full comparison of Angi vs Quotebox.",
+  title: "Quotebox vs Angi (Angie's List) — Your Own Quote Form & CRM",
+  description: "Angi charges monthly fees and shares your lead with competitors. Quotebox gives your moving or junk removal company its own branded instant-quote form, automatic follow-up, and CRM — for $1 your first month. See the full comparison.",
   alternates: { canonical: 'https://quote-box.com/vs-angies-list' },
   openGraph: {
-    title: "Quotebox vs Angi Leads | Quotebox",
-    description: "Angi = monthly fees + shared leads. Quotebox = $15/lead, exclusive, no subscription. The better Angi alternative for movers and junk removal companies.",
+    title: "Quotebox vs Angi | Quotebox",
+    description: "Angi = monthly fees + shared leads. Quotebox = your own instant-quote form, automatic follow-up, and CRM. The better Angi alternative for movers and junk removal companies.",
     url: 'https://quote-box.com/vs-angies-list',
   },
 }

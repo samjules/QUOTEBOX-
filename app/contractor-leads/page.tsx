@@ -4,12 +4,12 @@ import PublicNav from '@/components/PublicNav'
 import PublicFooter from '@/components/PublicFooter'
 
 export const metadata: Metadata = {
-  title: 'Exclusive Moving & Junk Removal Leads — $15 Per Lead, No Monthly Fees',
-  description: 'Buy exclusive moving and junk removal leads from Facebook & Instagram ads. Unlike Thumbtack and Angi, you get every lead exclusively — not shared with 5 competitors. Pay $15 per lead, no subscription required.',
+  title: 'Moving & Junk Removal Lead Capture Software | Quotebox',
+  description: 'Turn website visitors into booked jobs. Quotebox gives moving and junk removal companies a branded instant-quote form, automatic SMS & email follow-up, and a full CRM — all in one platform. Try it for $1 your first month.',
   alternates: { canonical: 'https://quote-box.com/contractor-leads' },
   openGraph: {
-    title: 'Exclusive Moving & Junk Removal Leads — $15 Per Lead | Quotebox',
-    description: 'Stop bidding against competitors. Get exclusive moving and junk removal leads from Facebook & Instagram. $15/lead, no monthly fees.',
+    title: 'Moving & Junk Removal Lead Capture Software | Quotebox',
+    description: 'A branded instant-quote form, automatic follow-up, and CRM built for moving and junk removal companies. Try it for $1.',
     url: 'https://quote-box.com/contractor-leads',
   },
 }

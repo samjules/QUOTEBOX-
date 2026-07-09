@@ -4,12 +4,12 @@ import PublicNav from '@/components/PublicNav'
 import PublicFooter from '@/components/PublicFooter'
 
 export const metadata: Metadata = {
-  title: 'Quotebox vs Thumbtack — Exclusive Moving & Junk Removal Leads Without the Bidding War',
-  description: 'Thumbtack sends your lead to 5 movers and charges you to bid. Quotebox gives you exclusive moving and junk removal leads for $15 flat — no bidding, no sharing, no monthly fees. See the full comparison.',
+  title: 'Quotebox vs Thumbtack — Your Own Quote Form Instead of a Bidding War',
+  description: 'Thumbtack sends your lead to 5 movers and charges you to bid on it. Quotebox gives you your own branded instant-quote form, automatic follow-up, and CRM — leads come to you directly, no bidding. Try it for $1. See the full comparison.',
   alternates: { canonical: 'https://quote-box.com/vs-thumbtack' },
   openGraph: {
     title: 'Quotebox vs Thumbtack | Quotebox',
-    description: 'Thumbtack charges you just to send a bid and shares your lead with 5 competitors. Quotebox: $15 flat, exclusive leads, no bidding.',
+    description: 'Thumbtack charges you to bid and shares your lead with 5 competitors. Quotebox: your own instant-quote form, automatic follow-up, no bidding.',
     url: 'https://quote-box.com/vs-thumbtack',
   },
 }

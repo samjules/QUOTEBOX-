@@ -4,13 +4,13 @@ import PublicNav from '@/components/PublicNav'
 import PublicFooter from '@/components/PublicFooter'
 
 export const metadata: Metadata = {
-  title: 'Exclusive Junk Removal Leads — $15 Per Lead | Quotebox',
-  description: 'Buy exclusive junk removal leads from Facebook & Instagram ads. Every cleanout, hauling, and junk removal job lead goes only to you — not shared with competitors. $15/lead, no monthly fees.',
-  keywords: ['junk removal leads', 'exclusive junk removal leads', 'buy junk removal leads', 'hauling leads', 'cleanout leads', 'junk hauling leads'],
+  title: 'Junk Removal Lead Capture — Instant Quote Form & CRM | Quotebox',
+  description: 'Stop losing junk removal leads to a slow callback. Quotebox gives your junk removal business a branded instant-quote form, automatic follow-up, and a CRM to track every lead to booked. Try it for $1 your first month.',
+  keywords: ['junk removal software', 'junk removal quote form', 'junk removal CRM', 'hauling business software', 'cleanout lead capture', 'junk hauling software'],
   alternates: { canonical: 'https://quote-box.com/hvac-leads' },
   openGraph: {
-    title: 'Exclusive Junk Removal Leads — $15 Per Lead | Quotebox',
-    description: 'Stop sharing junk removal leads with 5 competitors. $15/lead, exclusive, instant delivery, no monthly fees.',
+    title: 'Junk Removal Lead Capture — Instant Quote Form & CRM | Quotebox',
+    description: 'A branded instant-quote form, automatic follow-up, and CRM built for junk removal businesses. Try it for $1.',
     url: 'https://quote-box.com/hvac-leads',
   },
 }

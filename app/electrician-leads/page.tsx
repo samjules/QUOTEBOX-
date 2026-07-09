@@ -4,13 +4,13 @@ import PublicNav from '@/components/PublicNav'
 import PublicFooter from '@/components/PublicFooter'
 
 export const metadata: Metadata = {
-  title: 'Exclusive Moving Company Leads — $15 Per Lead | Quotebox',
-  description: 'Buy exclusive moving leads from Facebook & Instagram ads. Local moves, long-distance moves, and apartment moves — every lead goes only to your moving company. $15/lead, no monthly fees.',
-  keywords: ['moving leads', 'exclusive moving leads', 'buy moving leads', 'moving company leads', 'local moving leads', 'long distance moving leads'],
+  title: 'Moving Company Lead Capture — Instant Quote Form & CRM | Quotebox',
+  description: 'Stop losing moving leads to a slow callback. Quotebox gives your moving company a branded instant-quote form, automatic follow-up, and a CRM to track every lead — local, long-distance, or apartment — to booked. Try it for $1 your first month.',
+  keywords: ['moving company software', 'moving quote form', 'moving company CRM', 'local moving software', 'long distance moving software', 'moving lead capture'],
   alternates: { canonical: 'https://quote-box.com/electrician-leads' },
   openGraph: {
-    title: 'Exclusive Moving Company Leads — $15 Per Lead | Quotebox',
-    description: 'Stop sharing moving leads with competitors. $15/lead, exclusive, instant delivery, no monthly fees.',
+    title: 'Moving Company Lead Capture — Instant Quote Form & CRM | Quotebox',
+    description: 'A branded instant-quote form, automatic follow-up, and CRM built for moving companies. Try it for $1.',
     url: 'https://quote-box.com/electrician-leads',
   },
 }
