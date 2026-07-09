@@ -40,6 +40,7 @@ interface UnifiedLead {
   scheduled_time: string | null
   created_at: string
   isMeta: boolean
+  isCaseStudy: boolean
   sales?: SalesLead
   booking?: FreeTrialLead
 }
@@ -79,12 +80,12 @@ export default function LeadsManager({ salesLeads: initialSales, freeTrialLeads:
     const fromSales: UnifiedLead[] = salesLeads.map((l) => ({
       id: l.id, source: 'sales', name: l.name, email: l.email, phone: l.phone,
       status: l.status, scheduled_date: l.scheduled_date, scheduled_time: l.scheduled_time,
-      created_at: l.created_at, isMeta: l.source === 'meta', sales: l,
+      created_at: l.created_at, isMeta: l.source === 'meta', isCaseStudy: l.source === 'case_study', sales: l,
     }))
     const fromBookings: UnifiedLead[] = bookingLeads.map((l) => ({
       id: l.id, source: 'booking', name: l.name, email: l.email, phone: l.phone,
       status: l.status, scheduled_date: l.scheduled_date, scheduled_time: l.scheduled_time,
-      created_at: l.created_at, isMeta: false, booking: l,
+      created_at: l.created_at, isMeta: false, isCaseStudy: false, booking: l,
     }))
     const all = [...fromSales, ...fromBookings]
     all.sort((a, b) => {
@@ -113,6 +114,7 @@ export default function LeadsManager({ salesLeads: initialSales, freeTrialLeads:
     sales: salesLeads.length,
     bookings: bookingLeads.length,
     metaLeads: salesLeads.filter((l) => l.source === 'meta').length,
+    caseStudyLeads: salesLeads.filter((l) => l.source === 'case_study').length,
   }), [unified, salesLeads, bookingLeads])
 
   const statusChips = sourceFilter === 'booking' ? BOOKING_STATUS_ORDER : sourceFilter === 'sales' ? SALES_STATUS_ORDER : null
@@ -229,12 +231,13 @@ export default function LeadsManager({ salesLeads: initialSales, freeTrialLeads:
       <div style={{ flex: 1, overflow: 'auto', padding: 24 }}>
         <div style={{ maxWidth: 1300, margin: '0 auto' }}>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 14, marginBottom: 24 }}>
             {[
               { label: 'Total Leads', value: stats.total },
               { label: 'Sales Pipeline', value: stats.sales },
               { label: 'Bookings', value: stats.bookings },
               { label: 'From Meta Ads', value: stats.metaLeads },
+              { label: 'Case Study', value: stats.caseStudyLeads },
             ].map(({ label, value }) => (
               <div key={label} style={{ background: '#0e0020', borderRadius: 10, padding: '18px 20px', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{label}</div>
@@ -441,6 +444,9 @@ export default function LeadsManager({ salesLeads: initialSales, freeTrialLeads:
                             <span style={{ fontSize: '0.7rem', fontWeight: 700, background: badge.bg, color: badge.text, padding: '2px 8px', borderRadius: 99 }}>{badge.label}</span>
                             {lead.isMeta && (
                               <span style={{ marginLeft: 4, fontSize: '0.7rem', fontWeight: 700, background: '#0866ff20', color: '#4d94ff', padding: '2px 8px', borderRadius: 99 }}>Meta</span>
+                            )}
+                            {lead.isCaseStudy && (
+                              <span style={{ marginLeft: 4, fontSize: '0.7rem', fontWeight: 700, background: '#f4a93c20', color: '#f4a93c', padding: '2px 8px', borderRadius: 99 }}>Case Study</span>
                             )}
                           </td>
                           <td style={{ padding: '12px 14px', color: 'rgba(255,255,255,0.6)', whiteSpace: 'nowrap' }}>

@@ -9,10 +9,14 @@ const VALID_REVENUES = [
   '$100k+/mo',
 ]
 
+// Sources a public form is allowed to self-report. 'meta' is reserved for the
+// internal Meta lead-sync webhook, not settable from this client-facing route.
+const VALID_PUBLIC_SOURCES = ['case_study']
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { name, email, phone, monthly_revenue, scheduled_date, scheduled_time } = body
+    const { name, email, phone, monthly_revenue, scheduled_date, scheduled_time, source } = body
 
     if (!name || !email) {
       return NextResponse.json({ error: 'Name and email are required' }, { status: 400 })
@@ -20,6 +24,10 @@ export async function POST(req: NextRequest) {
 
     if (monthly_revenue && !VALID_REVENUES.includes(monthly_revenue)) {
       return NextResponse.json({ error: 'Invalid monthly revenue value' }, { status: 400 })
+    }
+
+    if (source && !VALID_PUBLIC_SOURCES.includes(source)) {
+      return NextResponse.json({ error: 'Invalid source value' }, { status: 400 })
     }
 
     const supabase = createAdminClient()
@@ -30,6 +38,7 @@ export async function POST(req: NextRequest) {
       monthly_revenue: monthly_revenue || null,
       scheduled_date: scheduled_date || null,
       scheduled_time: scheduled_time || null,
+      source: source || null,
     }).select().single()
 
     if (error) {
