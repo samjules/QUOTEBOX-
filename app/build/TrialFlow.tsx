@@ -5,59 +5,22 @@ import { createClient } from '@/lib/supabase/client'
 import type { FormField } from '@/lib/types'
 import TrialLanding from './TrialLanding'
 import { trackBuildEvent } from '@/lib/track-build-event'
-
-// Junk removal is hidden for now — focusing on moving only.
-const SERVICE_TYPES = [
-  { id: 'moving', label: 'Moving', desc: 'Local & long-distance residential moves', color: '#F97316' },
-] as const
-type ServiceId = typeof SERVICE_TYPES[number]['id']
+import { SERVICE_TYPES, getServiceType, sizeField, routeField as buildRouteField, addonsField, notesField, type ServiceId } from '@/lib/service-types'
 
 function fid() { return Math.random().toString(36).slice(2, 9) }
 
-const TIER_LABELS = ['Studio / 1 Bedroom', '2–3 Bedrooms', '4+ Bedrooms']
-const DEFAULT_TIER_HOURS = [3, 5, 8]
-
-const DEFAULT_EXTRAS: Record<ServiceId, Array<{ label: string; price: string }>> = {
-  moving: [
-    { label: 'Packing & Unpacking', price: '150' },
-    { label: 'Piano / Heavy Items', price: '100' },
-    { label: 'Long Carry (>75 ft)', price: '75' },
-  ],
+const SERVICE_NAME_PLACEHOLDER: Record<ServiceId, string> = {
+  moving: 'Titan Tuff Moving',
+  junk_removal: 'Clearway Junk Removal',
+  pressure_washing: 'Sparkle Pressure Washing',
+  car_detailing: 'Shine Mobile Detailing',
 }
 
-// Drive time is charged as (distance ÷ the business's average mph) hours × their
-// drive-time rate — never a flat fee, since that ignores how far the job actually
-// is. ratePerMinute is what pricing.ts multiplies duration by; the wizard only
-// ever shows/asks for the equivalent hourly rate.
 function generateFields(service: ServiceId, hourlyRate: number, tierHours: number[], chargeDrive: boolean, driveRatePerHour: number): FormField[] {
-  const fields: FormField[] = []
-
-  // option.price is the hourly RATE, not the total — pricing.ts multiplies
-  // price × hours itself, so a pre-multiplied total here would double-charge.
-  fields.push({
-    id: fid(), type: 'radio',
-    label: 'Home Size',
-    required: true, showPrices: true,
-    options: TIER_LABELS.map((label, i) => ({ id: fid(), label, price: hourlyRate, hours: tierHours[i] || 1 })),
-  })
-
-  if (chargeDrive) {
-    fields.push({
-      id: fid(), type: 'route',
-      label: 'Moving Route',
-      required: true, routeChargeType: 'drivetime',
-      locationMode: 'point_to_point',
-      ratePerMinute: driveRatePerHour / 60,
-    } as FormField)
-  }
-
-  fields.push({
-    id: fid(), type: 'checkbox', label: 'Add-ons', required: false,
-    options: DEFAULT_EXTRAS[service].map((e) => ({ id: fid(), label: e.label, price: parseFloat(e.price) || 0 })),
-  })
-
-  fields.push({ id: fid(), type: 'textarea', label: 'Additional Notes', required: false, placeholder: 'Any special instructions or details about the job…' })
-
+  const cfg = getServiceType(service)
+  const fields: FormField[] = [sizeField(cfg, hourlyRate, tierHours)]
+  if (chargeDrive) fields.push(buildRouteField(cfg, driveRatePerHour))
+  fields.push(addonsField(cfg), notesField())
   return fields
 }
 
@@ -75,17 +38,24 @@ export default function TrialFlow() {
 
   // Build step
   const [businessName, setBusinessName] = useState('')
-  const [serviceType] = useState<ServiceId>('moving')
+  const [serviceType, setServiceType] = useState<ServiceId>('moving')
   const [brandColor, setBrandColor] = useState('#F97316')
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreviewUrl, setLogoPreviewUrl] = useState('')
   const logoInputRef = useRef<HTMLInputElement>(null)
 
   // Hourly rate step
-  const [hourlyRate, setHourlyRate] = useState('120')
-  const [tierHours, setTierHours] = useState<number[]>(DEFAULT_TIER_HOURS)
+  const [hourlyRate, setHourlyRate] = useState(String(getServiceType('moving').defaultHourlyRate))
+  const [tierHours, setTierHours] = useState<number[]>(getServiceType('moving').defaultTierHours.slice())
   function setTierHour(i: number, val: string) {
     setTierHours((p) => p.map((h, idx) => idx === i ? (parseFloat(val) || 0) : h))
+  }
+  function selectServiceType(id: ServiceId) {
+    setServiceType(id)
+    const cfg = getServiceType(id)
+    setHourlyRate(String(cfg.defaultHourlyRate))
+    setTierHours(cfg.defaultTierHours.slice())
+    setDriveRate(String(cfg.defaultHourlyRate))
   }
 
   // Drive time step
@@ -171,7 +141,8 @@ export default function TrialFlow() {
     const fields = generateFields(serviceType, parseFloat(hourlyRate) || 0, tierHours, chargeDrive, parseFloat(driveRate) || 0)
     const formConfig = {
       slug,
-      description: `Get an instant quote for your ${SERVICE_TYPES.find((s) => s.id === serviceType)!.label.toLowerCase()} job.`,
+      service_type: serviceType,
+      description: getServiceType(serviceType).formDescription,
       submit_label: 'Get My Quote →',
       currency: '$', brand_color: brandColor,
       show_total: true, quote_display: 'after_submit',
@@ -235,11 +206,30 @@ export default function TrialFlow() {
             <h2 style={{ fontSize: 24, margin: '0 0 6px' }}>Now let&apos;s build the tool that gets you there</h2>
             <p style={{ color: '#8b86a8', fontSize: 14.5, margin: '0 0 26px', lineHeight: 1.5 }}>Your instant quote form — the first piece of your strategy. This is what your customers will see once you&apos;re live.</p>
 
+            <div style={{ marginBottom: 22 }}>
+              <label style={fieldLabel}>What kind of business?</label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}>
+                {SERVICE_TYPES.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => selectServiceType(s.id)}
+                    style={{
+                      padding: '10px 12px', borderRadius: 10, textAlign: 'left', cursor: 'pointer',
+                      border: `2px solid ${serviceType === s.id ? '#5c51d6' : '#e3e0ef'}`,
+                      background: serviceType === s.id ? 'rgba(92,81,214,0.06)' : '#fff',
+                    }}
+                  >
+                    <div style={{ fontSize: 13, fontWeight: 700, color: serviceType === s.id ? '#5c51d6' : '#1c1830' }}>{s.label}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 28 }}>
               <div>
                 <div style={{ marginBottom: 18 }}>
                   <label style={fieldLabel}>Business name</label>
-                  <input style={inputStyle} type="text" placeholder="e.g. Titan Tuff Moving" value={businessName} onChange={(e) => setBusinessName(e.target.value)} autoFocus />
+                  <input style={inputStyle} type="text" placeholder={`e.g. ${SERVICE_NAME_PLACEHOLDER[serviceType]}`} value={businessName} onChange={(e) => setBusinessName(e.target.value)} autoFocus />
                 </div>
                 <div style={{ marginBottom: 18 }}>
                   <label style={fieldLabel}>Brand color</label>
@@ -284,17 +274,18 @@ export default function TrialFlow() {
                     </div>
                     <div style={{ padding: 12, flex: 1 }}>
                       <div style={{ fontSize: 9, color: '#8b86a8', textTransform: 'uppercase', letterSpacing: '.05em', fontWeight: 700, marginBottom: 8 }}>
-                        Home Size
+                        {getServiceType(serviceType).sizeFieldLabel}
                       </div>
-                      <div style={{ border: '1.5px solid #e3e0ef', borderRadius: 9, padding: '9px 10px', fontSize: 11, fontWeight: 600, color: '#2b2640', marginBottom: 7 }}>
-                        Studio / 1 Bed
-                      </div>
-                      <div style={{ border: `1.5px solid ${brandColor}`, background: `${brandColor}0f`, color: brandColor, borderRadius: 9, padding: '9px 10px', fontSize: 11, fontWeight: 600, marginBottom: 7 }}>
-                        2 Bedrooms
-                      </div>
-                      <div style={{ border: '1.5px solid #e3e0ef', borderRadius: 9, padding: '9px 10px', fontSize: 11, fontWeight: 600, color: '#2b2640' }}>
-                        3 Bedrooms
-                      </div>
+                      {getServiceType(serviceType).tierLabels.map((label, i) => (
+                        <div
+                          key={label}
+                          style={i === 1
+                            ? { border: `1.5px solid ${brandColor}`, background: `${brandColor}0f`, color: brandColor, borderRadius: 9, padding: '9px 10px', fontSize: 11, fontWeight: 600, marginBottom: 7 }
+                            : { border: '1.5px solid #e3e0ef', borderRadius: 9, padding: '9px 10px', fontSize: 11, fontWeight: 600, color: '#2b2640', marginBottom: 7 }}
+                        >
+                          {label}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -323,7 +314,7 @@ export default function TrialFlow() {
           <div style={bodyStyle}>
             <div style={{ fontSize: 12, fontWeight: 700, color: '#5c51d6', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Step 3 of 6</div>
             <h2 style={{ fontSize: 24, margin: '0 0 6px' }}>What do you charge per hour?</h2>
-            <p style={{ color: '#8b86a8', fontSize: 14.5, margin: '0 0 26px', lineHeight: 1.5 }}>This is your base labor rate. We&apos;ll use it to price the Studio/1BR, 2–3BR, and 4+BR options on your form.</p>
+            <p style={{ color: '#8b86a8', fontSize: 14.5, margin: '0 0 26px', lineHeight: 1.5 }}>This is your base labor rate. We&apos;ll use it to price the {getServiceType(serviceType).tierLabels.join(', ')} options on your form.</p>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <span style={{ fontSize: '2rem', fontWeight: 800, color: '#8b86a8' }}>$</span>
@@ -336,13 +327,13 @@ export default function TrialFlow() {
               <span style={{ fontSize: '1.1rem', color: '#8b86a8', fontWeight: 600 }}>/hr</span>
             </div>
             <div style={{ marginTop: 14, fontSize: 13, color: '#8b86a8', lineHeight: 1.5 }}>
-              Not sure? Most moving companies charge $80–$150/hr.
+              Not sure? {getServiceType(serviceType).rateHint}
             </div>
 
             <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #e3e0ef' }}>
               <label style={fieldLabel}>How many hours does each size typically take?</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
-                {TIER_LABELS.map((label, i) => {
+                {getServiceType(serviceType).tierLabels.map((label, i) => {
                   const rate = parseFloat(hourlyRate) || 0
                   const price = Math.round(rate * (tierHours[i] || 0))
                   return (

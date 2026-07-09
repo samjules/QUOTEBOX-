@@ -73,7 +73,7 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
         <div className="hero-text">
           <div className="eyebrow"><span className="dot" /> Take the pledge</div>
           <h1 className="headline">Pledge your next <span className="accent">booked job.</span><br />We&apos;ll build you the strategy to get it.</h1>
-          <p className="sub">Every mover starts the same way — with one goal: the next booked job. Quotebox gives you the instant-quote form, automatic follow-up, and lead pipeline that turn that pledge into a real, trackable strategy — not a hope. Try the full platform for <strong>$1 for your first month</strong>, instead of $34/month.</p>
+          <p className="sub">Every service business starts the same way — with one goal: the next booked job. Quotebox gives you the instant-quote form, automatic follow-up, and lead pipeline that turn that pledge into a real, trackable strategy — not a hope. Try the full platform for <strong>$1 for your first month</strong>, instead of $34/month.</p>
           <button className="cta-btn" onClick={() => { trackBuildEvent('landing_hero'); onStart() }}>Make My Pledge →</button>
           <span className="cta-sub">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#34d399" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -101,7 +101,7 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
         {[
           { icon: '📋', label: 'Instant Quote Forms', desc: 'Branded, mobile-first, auto-calculated price in minutes.' },
           { icon: '📱', label: 'iOS App', desc: 'Check and follow up on leads the moment they come in.' },
-          { icon: '💬', label: 'SMS & Email Flows', desc: 'Built specifically for movers — automatic, instant, no setup.' },
+          { icon: '💬', label: 'SMS & Email Flows', desc: 'Built specifically for home & auto service pros — automatic, instant, no setup.' },
           { icon: '📊', label: 'CRM', desc: 'Every lead, quote, and job tracked from first contact to booked.' },
         ].map((f) => (
           <div className="feature-card" key={f.label}>
@@ -136,13 +136,13 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
       <div className="divider" />
 
       <section className="problem">
-        <h2>Most movers never hit their pledge — not because they can&apos;t do the work, but because the leads never turn into jobs.</h2>
+        <h2>Most service businesses never hit their pledge — not because they can&apos;t do the work, but because the leads never turn into jobs.</h2>
         <p>No instant quote, no automatic follow-up, and no easy way to see which ads are actually turning into booked jobs.</p>
         <div className="leak-grid">
           <div className="leak-card">
             <div className="num">01</div>
             <h3>No instant quote form</h3>
-            <p>Customers want a number fast. Without a branded quote form, they&apos;re stuck waiting on a callback — and calling the next mover instead.</p>
+            <p>Customers want a number fast. Without a branded quote form, they&apos;re stuck waiting on a callback — and calling the next company instead.</p>
           </div>
           <div className="leak-card">
             <div className="num">02</div>
@@ -190,7 +190,7 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
             <div className="receipt-head">
               <div className="rlogo" />
               <h3>Quotebox Order Summary</h3>
-              <span>Moving &amp; Junk Removal Growth System</span>
+              <span>Booked-Job Growth System</span>
             </div>
             {[
               ['Branded instant quote form', 'Multi-step form with your logo, pricing rules, and up to 1,000 leads/mo capacity', '49'],
@@ -304,7 +304,7 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
       <div className="divider" />
 
       <section>
-        <h2 style={{ textAlign: 'center', fontSize: 'clamp(20px,3vw,30px)', margin: '0 0 30px' }}>Questions moving &amp; junk removal owners ask</h2>
+        <h2 style={{ textAlign: 'center', fontSize: 'clamp(20px,3vw,30px)', margin: '0 0 30px' }}>Questions service business owners ask</h2>
         {FAQS.map((f, i) => (
           <details className="faq-item" key={f.q} open={i === 0}>
             <summary>{f.q}</summary>

@@ -3,54 +3,25 @@
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { FormField } from '@/lib/types'
+import { SERVICE_TYPES, getServiceType, sizeField as homeSizeFieldFor, routeField as routeFieldFor, addonsField as addonsFieldFor, notesField, type ServiceId } from '@/lib/service-types'
 
 function fid() { return Math.random().toString(36).slice(2, 9) }
 
-// Quick Setup for a moving quote form — business info, hourly rate (with per-size
-// job hours), and drive-time pricing. Extras/minimum-charge/from-scratch templates
-// live in the (currently hidden) advanced builder; this only ever manages these two
-// generated fields plus business name/color/photo, whether creating or editing.
-const TIER_LABELS = ['Studio / 1 Bedroom', '2–3 Bedrooms', '4+ Bedrooms']
-const DEFAULT_TIER_HOURS = [3, 5, 8]
-const DEFAULT_EXTRAS = [
-  { label: 'Packing & Unpacking', price: '150' },
-  { label: 'Piano / Heavy Items', price: '100' },
-  { label: 'Long Carry (>75 ft)', price: '75' },
-]
-
-// option.price is the hourly RATE, not the total — pricing.ts multiplies
-// price × hours itself, so storing an already-multiplied total here would
-// double-charge (this bit us once already: a $100/hr, 3hr job showed $900,
-// not $300, because price was pre-multiplied AND hours was still attached).
-function homeSizeField(hourlyRate: number, tierHours: number[]): FormField {
-  return {
-    id: fid(), type: 'radio', label: 'Home Size', required: true, showPrices: true,
-    options: TIER_LABELS.map((label, i) => ({ id: fid(), label, price: hourlyRate, hours: tierHours[i] || 1 })),
-  }
+// Quick Setup for an instant quote form — business info, hourly rate (with per-size
+// job hours), and drive-time pricing, branched per service type (moving, junk
+// removal, pressure washing, car detailing). Extras/minimum-charge/from-scratch
+// templates live in the (currently hidden) advanced builder; this only ever manages
+// these two generated fields plus business name/color/photo, whether creating or editing.
+function homeSizeField(service: ServiceId, hourlyRate: number, tierHours: number[]): FormField {
+  return homeSizeFieldFor(getServiceType(service), hourlyRate, tierHours)
 }
 
-// Drive time is charged as (distance ÷ the business's average mph) hours × their
-// drive-time rate — never a flat fee, since that would ignore how far the job
-// actually is. ratePerMinute is stored since that's what pricing.ts multiplies
-// duration by; the wizard only ever shows/asks for the equivalent hourly rate.
-function routeField(driveRatePerHour: number): FormField {
-  return {
-    id: fid(), type: 'route', label: 'Moving Route', required: true,
-    routeChargeType: 'drivetime',
-    locationMode: 'point_to_point',
-    ratePerMinute: driveRatePerHour / 60,
-  } as FormField
+function routeField(service: ServiceId, driveRatePerHour: number): FormField {
+  return routeFieldFor(getServiceType(service), driveRatePerHour)
 }
 
-function addonsField(): FormField {
-  return {
-    id: fid(), type: 'checkbox', label: 'Add-ons', required: false,
-    options: DEFAULT_EXTRAS.map((e) => ({ id: fid(), label: e.label, price: parseFloat(e.price) || 0 })),
-  }
-}
-
-function notesField(): FormField {
-  return { id: fid(), type: 'textarea', label: 'Additional Notes', required: false, placeholder: 'Any special instructions or details about the job…' }
+function addonsField(service: ServiceId): FormField {
+  return addonsFieldFor(getServiceType(service))
 }
 
 function toSlug(name: string) {
@@ -62,7 +33,7 @@ const COLOR_PRESETS = ['#F97316', '#374151', '#0e0020', '#22C55E', '#3B82F6', '#
 interface ExistingForm {
   id: string
   form_name: string
-  form_config: { slug?: string; brand_color?: string; hero_image_url?: string; fields?: FormField[] }
+  form_config: { slug?: string; brand_color?: string; hero_image_url?: string; fields?: FormField[]; service_type?: string }
 }
 
 interface SetupWizardProps {
@@ -79,17 +50,19 @@ function stripSuffix(name: string) {
 }
 
 // Pull the hourly rate + per-size job hours back out of a previously-generated
-// Home Size field — uses the middle (2–3 Bedroom) tier's rate since that's what
-// seeded all three originally.
-function tiersFromExistingFields(fields: FormField[] | undefined): { rate: string; hours: number[] } {
-  const radio = fields?.find((f) => f.type === 'radio' && f.label === 'Home Size')
+// size-tier field (labeled "Home Size"/"Load Size"/etc. depending on service type) —
+// matched by shape (radio + showPrices), not the display label, since that varies
+// per vertical. Uses the middle tier's rate since that's what seeded all three originally.
+function tiersFromExistingFields(fields: FormField[] | undefined, service: ServiceId): { rate: string; hours: number[] } {
+  const cfg = getServiceType(service)
+  const radio = fields?.find((f) => f.type === 'radio' && f.showPrices)
   const opts = radio?.options
-  if (opts && opts.length === TIER_LABELS.length) {
+  if (opts && opts.length === cfg.tierLabels.length) {
     const hours = opts.map((o) => (o as { hours?: number }).hours || 1)
     const rate = Math.round(opts[1]?.price ?? opts[0]?.price ?? 0)
-    return { rate: String(rate || 120), hours }
+    return { rate: String(rate || cfg.defaultHourlyRate), hours }
   }
-  return { rate: '120', hours: DEFAULT_TIER_HOURS }
+  return { rate: String(cfg.defaultHourlyRate), hours: cfg.defaultTierHours.slice() }
 }
 
 // Whether drive time is charged, and the equivalent hourly rate if so. Forms saved
@@ -117,13 +90,14 @@ export default function SetupWizard({ accountId, existingForm, initialAvgMph, on
 
   // Business info
   const [businessName, setBusinessName] = useState(existingForm ? stripSuffix(existingForm.form_name) : '')
+  const [serviceType, setServiceType] = useState<ServiceId>((existingForm?.form_config.service_type as ServiceId) ?? 'moving')
   const [brandColor, setBrandColor] = useState(existingForm?.form_config.brand_color ?? '#F97316')
   const [heroImageUrl, setHeroImageUrl] = useState(existingForm?.form_config.hero_image_url ?? '')
   const [heroUploading, setHeroUploading] = useState(false)
   const heroFileRef = useRef<HTMLInputElement>(null)
 
   // Hourly rate + per-size job hours
-  const initialTiers = tiersFromExistingFields(existingFields)
+  const initialTiers = tiersFromExistingFields(existingFields, serviceType)
   const [hourlyRate, setHourlyRate] = useState(initialTiers.rate)
   const [tierHours, setTierHours] = useState<number[]>(initialTiers.hours)
 
@@ -132,6 +106,14 @@ export default function SetupWizard({ accountId, existingForm, initialAvgMph, on
   const [chargeDrive, setChargeDrive] = useState<boolean>(!isEditing || initialDrive.chargeDrive)
   const [driveRate, setDriveRate] = useState(initialDrive.driveRate || initialTiers.rate)
   const [avgMph, setAvgMph] = useState(initialAvgMph ? String(initialAvgMph) : '')
+
+  function selectServiceType(id: ServiceId) {
+    setServiceType(id)
+    const cfg = getServiceType(id)
+    setHourlyRate(String(cfg.defaultHourlyRate))
+    setTierHours(cfg.defaultTierHours.slice())
+    setDriveRate(String(cfg.defaultHourlyRate))
+  }
 
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
@@ -171,11 +153,11 @@ export default function SetupWizard({ accountId, existingForm, initialAvgMph, on
         await supabase.from('accounts').update({ avg_driving_mph: clampedMph }).eq('id', accountId)
       }
 
-      const newHomeSize = homeSizeField(rate, tierHours)
-      const newRoute = chargeDrive ? routeField(parseFloat(driveRate) || 0) : null
+      const newHomeSize = homeSizeField(serviceType, rate, tierHours)
+      const newRoute = chargeDrive ? routeField(serviceType, parseFloat(driveRate) || 0) : null
 
       if (existingForm) {
-        // Editing: regenerate only the two fields this wizard manages (Home Size, Route).
+        // Editing: regenerate only the two fields this wizard manages (size tier, route).
         // Anything else on the form (extras, notes, custom fields from the advanced
         // builder) is preserved exactly as-is.
         const others = (existingFields ?? []).filter((f) => f.type !== 'radio' && f.type !== 'route')
@@ -184,7 +166,7 @@ export default function SetupWizard({ accountId, existingForm, initialAvgMph, on
         const { error } = await supabase.from('hosted_forms')
           .update({
             form_name: `${businessName.trim()} Quote`,
-            form_config: { ...existingForm.form_config, brand_color: brandColor, hero_image_url: heroImageUrl, fields },
+            form_config: { ...existingForm.form_config, service_type: serviceType, brand_color: brandColor, hero_image_url: heroImageUrl, fields },
             updated_at: new Date().toISOString(),
           })
           .eq('id', existingForm.id)
@@ -197,11 +179,12 @@ export default function SetupWizard({ accountId, existingForm, initialAvgMph, on
         const { data: conflicts } = await supabase.from('hosted_forms').select('id').eq('form_config->>slug', slug)
         if ((conflicts ?? []).length > 0) slug = `${baseSlug}-${Math.random().toString(36).slice(2, 5)}`
 
-        const fields = [newHomeSize, ...(newRoute ? [newRoute] : []), addonsField(), notesField()]
+        const fields = [newHomeSize, ...(newRoute ? [newRoute] : []), addonsField(serviceType), notesField()]
 
         const formConfig = {
           slug,
-          description: 'Get an instant quote for your moving job.',
+          service_type: serviceType,
+          description: getServiceType(serviceType).formDescription,
           submit_label: 'Get My Instant Quote',
           currency: '$', brand_color: brandColor,
           show_total: true, quote_display: 'live',
@@ -334,6 +317,25 @@ export default function SetupWizard({ accountId, existingForm, initialAvgMph, on
             <Q label={isEditing ? 'Edit your quote form' : 'Build your instant quote form'} sub="Business name, color, and an optional photo." />
 
             <div style={{ marginBottom: 20 }}>
+              <label style={fieldLabel}>What kind of business?</label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 7 }}>
+                {SERVICE_TYPES.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => selectServiceType(s.id)}
+                    style={{
+                      padding: '9px 11px', borderRadius: 9, textAlign: 'left', cursor: 'pointer',
+                      border: `2px solid ${serviceType === s.id ? brandColor : 'var(--border)'}`,
+                      background: serviceType === s.id ? `${brandColor}0e` : 'var(--surface2)',
+                    }}
+                  >
+                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: serviceType === s.id ? brandColor : 'var(--fg)' }}>{s.label}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 20 }}>
               <label style={fieldLabel}>Your business name</label>
               <input style={inputStyle} type="text" placeholder="e.g. Smith's Moving Co." value={businessName} onChange={(e) => setBusinessName(e.target.value)} autoFocus />
             </div>
@@ -389,7 +391,7 @@ export default function SetupWizard({ accountId, existingForm, initialAvgMph, on
           <ProgressBar current={2} />
           <div style={bodyStyle}>
             <div style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: 'var(--muted)', marginBottom: 10 }}>Step 2 of {STEPS.length}</div>
-            <Q label="What do you charge per hour?" sub="This is your base labor rate. We'll use it to price the Studio/1BR, 2–3BR, and 4+BR options on your form." />
+            <Q label="What do you charge per hour?" sub={`This is your base labor rate. We'll use it to price the ${getServiceType(serviceType).tierLabels.join(', ')} options on your form.`} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <span style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--muted)' }}>$</span>
               <input
@@ -401,13 +403,13 @@ export default function SetupWizard({ accountId, existingForm, initialAvgMph, on
               <span style={{ fontSize: '1.1rem', color: 'var(--muted)', fontWeight: 600 }}>/hr</span>
             </div>
             <div style={{ marginTop: 14, fontSize: '0.8rem', color: 'var(--muted)', lineHeight: 1.5 }}>
-              Not sure? Most moving companies charge $80–$150/hr.
+              Not sure? {getServiceType(serviceType).rateHint}
             </div>
 
             <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
               <label style={fieldLabel}>How many hours does each size typically take?</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
-                {TIER_LABELS.map((label, i) => {
+                {getServiceType(serviceType).tierLabels.map((label, i) => {
                   const rate = parseFloat(hourlyRate) || 0
                   const price = Math.round(rate * (tierHours[i] || 0))
                   return (
