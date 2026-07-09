@@ -17,24 +17,24 @@ export const metadata: Metadata = {
 
 const faqs = [
   {
-    q: 'How much do moving leads cost?',
-    a: 'Every moving lead on Quotebox is $15 flat. No monthly fee, no per-bid charges, no subscription. Only pay when a real customer contacts you.',
+    q: 'How much does Quotebox cost?',
+    a: 'Your first month is $1, full access, no feature limits. After that it renews at $34/month. No per-lead fees, no bidding, no contract — cancel anytime.',
   },
   {
-    q: 'Are the moving leads exclusive?',
+    q: 'Are the leads exclusive to me?',
     a: 'Yes — 100% exclusive. When a customer fills out your moving quote form, you are the only moving company who receives their information.',
   },
   {
-    q: 'What types of moves can I get leads for?',
-    a: 'Local residential moves, long-distance moves, apartment moves, office and commercial moves, senior moves, and specialty moves like pianos or safes. You customize your form to show exactly the services you offer.',
+    q: 'What types of moves can I quote?',
+    a: 'Local residential moves, long-distance moves, apartment moves, office and commercial moves, senior moves, and specialty moves like pianos or safes. You customize your form and pricing to show exactly the services you offer.',
   },
   {
-    q: 'Can I get leads for long-distance moves?',
-    a: 'Yes. Long-distance moving is one of the highest-value lead types. You can set up a dedicated quote form for long-distance moves and capture customers actively planning an interstate or cross-country relocation.',
+    q: 'Can I quote long-distance moves?',
+    a: 'Yes. Long-distance moving is one of the highest-value job types. Set up your drive-time and hourly pricing to capture customers planning an interstate or cross-country relocation, right alongside local jobs.',
   },
   {
     q: 'How does Quotebox compare to Thumbtack for movers?',
-    a: 'Thumbtack charges you to send each quote, and sends your lead to up to five competing movers. Quotebox: you pay $15 only when a real customer submits your form — and no other moving company gets that lead.',
+    a: 'Thumbtack charges you to send each quote, and sends your lead to up to five competing movers who all bid for it. Quotebox gives you your own quote form and CRM for a flat $34/month — no bidding, and every lead is exclusively yours.',
   },
 ]
 
@@ -50,38 +50,38 @@ export default function ElectricianLeadsPage() {
   }
 
   return (
-    <div style={{ fontFamily: "'Nautic', sans-serif", color: '#0e0020', background: '#fff' }}>
+    <div style={{ fontFamily: "'Nautic', sans-serif", color: '#201d3d', background: '#fff' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <PublicNav />
 
       {/* Hero */}
-      <section style={{ background: '#0e0020', color: 'white', padding: '80px 24px 72px', textAlign: 'center' }}>
+      <section style={{ background: '#453bc2', color: 'white', padding: '80px 24px 72px', textAlign: 'center' }}>
         <div style={{ maxWidth: 740, margin: '0 auto' }}>
           <div style={{
-            display: 'inline-block', background: '#FFE500', color: '#0e0020',
+            display: 'inline-block', background: '#f4a93c', color: '#201d3d',
             fontSize: '0.73rem', fontWeight: 700, letterSpacing: '0.08em',
             textTransform: 'uppercase', padding: '5px 14px', borderRadius: 99, marginBottom: 28,
           }}>
-            🚚 Exclusive moving leads
+            🚚 Instant quote forms for movers
           </div>
           <h1 style={{
-            fontFamily: "'Oswald', sans-serif",
+            fontFamily: "'Nautic', sans-serif",
             fontSize: 'clamp(2.4rem, 5vw, 3.8rem)',
             fontWeight: 800, lineHeight: 1.08, marginBottom: 24,
           }}>
-            Moving Leads Delivered<br />
-            <span style={{ color: '#FFE500' }}>Directly to You.</span>
+            Moving leads,<br />
+            <span style={{ color: '#f4a93c' }}>tracked to booked.</span>
           </h1>
-          <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.75, marginBottom: 40, maxWidth: 580, margin: '0 auto 40px' }}>
-            Local moves, long-distance, apartment moves — your branded moving quote form captures customers from Facebook & Instagram and delivers each lead exclusively to you. $15 per lead, no monthly fee.
+          <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.75)', lineHeight: 1.75, marginBottom: 40, maxWidth: 580, margin: '0 auto 40px' }}>
+            Local moves, long-distance, apartment moves — a branded instant-quote form for your moving company, connected to automatic SMS &amp; email follow-up and a full CRM.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/build" style={{
-              background: '#FFE500', color: '#0e0020', fontWeight: 700,
+              background: '#f4a93c', color: '#201d3d', fontWeight: 800,
               padding: '14px 32px', borderRadius: 10, textDecoration: 'none', fontSize: '1rem',
             }}>
-              Get moving leads — free to start
+              Try Quotebox for $1 →
             </Link>
             <Link href="/contractor-leads" style={{
               background: 'rgba(255,255,255,0.1)', color: 'white', fontWeight: 600,
@@ -97,17 +97,17 @@ export default function ElectricianLeadsPage() {
       {/* Benefits */}
       <section style={{ padding: '72px 24px', background: '#fff' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.8rem, 3.5vw, 2.6rem)', fontWeight: 700, textAlign: 'center', marginBottom: 48 }}>
+          <h2 style={{ fontFamily: "'Nautic', sans-serif", fontSize: 'clamp(1.8rem, 3.5vw, 2.6rem)', fontWeight: 700, textAlign: 'center', marginBottom: 48 }}>
             Why moving companies choose Quotebox
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 24 }}>
             {[
-              { icon: '🔒', title: '100% exclusive leads', body: 'No other moving company on the platform receives the same lead. Full stop.' },
-              { icon: '📏', title: 'Capture long-distance moves', body: 'Target customers planning cross-state or cross-country moves — the highest-value jobs in the moving industry.' },
-              { icon: '📍', title: 'Hyper-local targeting', body: 'Your ads only run in the cities and zip codes your crews can service — no wasted spend on leads too far away.' },
-              { icon: '💰', title: '$15 per lead, zero monthly fee', body: 'Pay only when a real customer contacts you. No monthly subscription, no bid fees, no contracts.' },
+              { icon: '📋', title: 'Your own branded quote form', body: 'No marketplace, no bidding against other movers for the same customer.' },
+              { icon: '📏', title: 'Capture long-distance moves', body: 'Set up drive-time pricing to quote cross-state or cross-country moves — the highest-value jobs in the industry.' },
+              { icon: '💬', title: 'Automatic follow-up', body: 'Every new lead gets an instant SMS and email reply, even at 11pm on a Sunday.' },
+              { icon: '📍', title: 'Hyper-local targeting', body: 'Connect your Meta ads and run campaigns only in the cities and zip codes your crews can service.' },
               { icon: '🏷️', title: 'Your branded quote form', body: 'Customers see your company name and logo — not a marketplace. Build trust before you even call back.' },
-              { icon: '📱', title: 'Meta ads — we handle it', body: 'We run Facebook and Instagram campaigns in your service area. You focus on the moves, we send you the customers.' },
+              { icon: '📊', title: 'Full CRM & pipeline', body: 'Every lead, quote, and job tracked from first contact to booked — no spreadsheets.' },
             ].map(({ icon, title, body }) => (
               <div key={title} style={{ background: '#f9fafb', borderRadius: 12, padding: '24px 20px', border: '1px solid #e5e7eb' }}>
                 <div style={{ fontSize: '1.6rem', marginBottom: 10 }}>{icon}</div>
@@ -122,7 +122,7 @@ export default function ElectricianLeadsPage() {
       {/* FAQ */}
       <section style={{ padding: '72px 24px', background: '#f9fafb' }}>
         <div style={{ maxWidth: 700, margin: '0 auto' }}>
-          <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(1.7rem, 3vw, 2.2rem)', fontWeight: 700, marginBottom: 32, textAlign: 'center' }}>
+          <h2 style={{ fontFamily: "'Nautic', sans-serif", fontSize: 'clamp(1.7rem, 3vw, 2.2rem)', fontWeight: 700, marginBottom: 32, textAlign: 'center' }}>
             Moving Lead FAQ
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -140,7 +140,7 @@ export default function ElectricianLeadsPage() {
 
       <section style={{ padding: '48px 24px', background: '#fff' }}>
         <div style={{ maxWidth: 700, margin: '0 auto', textAlign: 'center' }}>
-          <p style={{ color: '#9ca3af', fontSize: '0.88rem', marginBottom: 16 }}>Also looking for leads in another service?</p>
+          <p style={{ color: '#9ca3af', fontSize: '0.88rem', marginBottom: 16 }}>Also looking for a quote form for another service?</p>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
             {[
               { label: 'Junk Removal Leads', href: '/hvac-leads' },
@@ -158,20 +158,20 @@ export default function ElectricianLeadsPage() {
       </section>
 
       {/* CTA */}
-      <section style={{ padding: '72px 24px', background: '#FFE500' }}>
+      <section style={{ padding: '72px 24px', background: '#f4a93c' }}>
         <div style={{ maxWidth: 580, margin: '0 auto', textAlign: 'center' }}>
-          <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 800, color: '#0e0020', marginBottom: 16 }}>
+          <h2 style={{ fontFamily: "'Nautic', sans-serif", fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 800, color: '#201d3d', marginBottom: 16 }}>
             Book more moves
           </h2>
-          <p style={{ color: '#0e0020', opacity: 0.7, marginBottom: 32, fontSize: '1rem', lineHeight: 1.65 }}>
-            Build your branded moving quote form in 5 minutes. $15 per exclusive lead. Free to sign up.
+          <p style={{ color: '#201d3d', opacity: 0.75, marginBottom: 32, fontSize: '1rem', lineHeight: 1.65 }}>
+            Build your branded moving quote form in 5 minutes. Try the full platform for $1 your first month.
           </p>
           <Link href="/build" style={{
-            display: 'inline-block', background: '#0e0020', color: '#FFE500',
-            fontWeight: 700, padding: '16px 40px', borderRadius: 10,
+            display: 'inline-block', background: '#201d3d', color: '#f4a93c',
+            fontWeight: 800, padding: '16px 40px', borderRadius: 10,
             textDecoration: 'none', fontSize: '1.05rem',
           }}>
-            Get started free
+            Try Quotebox for $1 →
           </Link>
         </div>
       </section>

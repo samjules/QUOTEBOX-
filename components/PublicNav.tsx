@@ -4,7 +4,7 @@ export default function PublicNav() {
   return (
     <>
       <div className="maze-dark" style={{
-        background: '#0e0020', color: 'rgba(255,255,255,0.55)',
+        background: '#201d3d', color: 'rgba(255,255,255,0.55)',
         textAlign: 'center', fontSize: '0.72rem', padding: '6px 16px',
         letterSpacing: '0.03em',
       }}>
@@ -20,14 +20,16 @@ export default function PublicNav() {
       padding: '0 32px', height: 60, borderBottom: '1px solid #f0f0f0',
       position: 'sticky', top: 0, background: 'white', zIndex: 50,
     }}>
-      <Link href="/" style={{ textDecoration: 'none' }}>
-        <span style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.35rem', fontWeight: 700, letterSpacing: '0.01em', color: '#0e0020' }}>
-          Quote<span style={{ color: '#FFE500', WebkitTextStroke: '1px #0e0020' }}>.</span>Box
+      <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/quotebox_icon.png" alt="QuoteBox" style={{ width: 30, height: 30, borderRadius: 7, objectFit: 'cover', display: 'block' }} />
+        <span style={{ fontFamily: "'Nautic', sans-serif", fontSize: '1.3rem', fontWeight: 700, letterSpacing: '0.01em', color: '#201d3d' }}>
+          Quote<span style={{ color: '#f4a93c', WebkitTextStroke: '1px #201d3d' }}>.</span>Box
         </span>
       </Link>
       <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
         <Link href="/contractor-leads" style={{ fontSize: '0.88rem', fontWeight: 500, color: '#555', textDecoration: 'none' }}>
-          Contractor Leads
+          Moving & Junk Removal
         </Link>
         <Link href="/agency" style={{ fontSize: '0.88rem', fontWeight: 500, color: '#555', textDecoration: 'none' }}>
           Done for you
@@ -37,9 +39,9 @@ export default function PublicNav() {
         </Link>
         <Link href="/build" style={{
           fontSize: '0.88rem', fontWeight: 600, padding: '8px 18px',
-          background: '#0e0020', color: '#FFE500', borderRadius: 8, textDecoration: 'none',
+          background: '#201d3d', color: '#f4a93c', borderRadius: 8, textDecoration: 'none',
         }}>
-          Get started free
+          Try for $1
         </Link>
       </div>
     </nav>

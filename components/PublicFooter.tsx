@@ -34,7 +34,7 @@ const linkStyle: React.CSSProperties = {
 
 export default function PublicFooter() {
   return (
-    <footer className="maze-dark" style={{ background: '#0e0020', color: 'white', padding: '60px 32px 32px' }}>
+    <footer className="maze-dark" style={{ background: '#201d3d', color: 'white', padding: '60px 32px 32px' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
         <div style={{
           display: 'grid',
@@ -48,15 +48,15 @@ export default function PublicFooter() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 4 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/quotebox_icon.png" alt="QuoteBox" style={{ width: 26, height: 26, borderRadius: 6, objectFit: 'cover', display: 'block' }} />
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.4rem', fontWeight: 700 }}>
-                Quote<span style={{ color: '#FFE500' }}>.</span>Box
+              <div style={{ fontFamily: "'Nautic', sans-serif", fontSize: '1.4rem', fontWeight: 700 }}>
+                Quote<span style={{ color: '#f4a93c' }}>.</span>Box
               </div>
             </div>
             <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', marginBottom: 12, letterSpacing: '0.03em' }}>
               A product of Arctic Reach LLC
             </div>
             <p style={{ fontSize: '0.83rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, maxWidth: 220, margin: 0 }}>
-              Exclusive moving and junk removal leads from Facebook & Instagram ads. $350/month flat — no per-lead fees, no contracts.
+              Instant quote forms, CRM, and mobile app for moving, junk removal, pressure washing, and auto detailing businesses. $1 your first month, then $34/mo.
             </p>
           </div>
 
