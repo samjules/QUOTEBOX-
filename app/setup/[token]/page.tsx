@@ -17,7 +17,7 @@ export default async function SetupPage({ params }: { params: Promise<{ token: s
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#0d0d1a',
+      background: '#5b50d6',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -26,19 +26,19 @@ export default async function SetupPage({ params }: { params: Promise<{ token: s
       padding: '40px 20px',
     }}>
       <div style={{ marginBottom: 32 }}>
-        <span style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: '1.6rem', color: 'white', letterSpacing: '0.02em' }}>
-          Quote<span style={{ color: '#FFE500' }}>.</span>Box
+        <span style={{ fontFamily: "'Nautic', sans-serif", fontWeight: 700, fontSize: '1.6rem', color: 'white', letterSpacing: '0.02em' }}>
+          Quote<span style={{ color: '#f4a93c' }}>.</span>Box
         </span>
       </div>
 
       <div style={{
-        background: '#0e0020',
+        background: '#201d3d',
         borderRadius: 16,
         padding: '40px 36px',
         maxWidth: 440,
         width: '100%',
       }}>
-        <h1 style={{ fontFamily: "'Oswald', sans-serif", fontSize: '1.6rem', fontWeight: 700, color: 'white', textAlign: 'center', margin: '0 0 8px' }}>
+        <h1 style={{ fontFamily: "'Nautic', sans-serif", fontSize: '1.6rem', fontWeight: 700, color: 'white', textAlign: 'center', margin: '0 0 8px' }}>
           Welcome, {lead.name}!
         </h1>
         <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', margin: '0 0 8px' }}>
@@ -49,7 +49,7 @@ export default async function SetupPage({ params }: { params: Promise<{ token: s
           marginBottom: 28, padding: '10px 16px', background: 'rgba(255,229,0,0.06)',
           borderRadius: 8, border: '1px solid rgba(255,229,0,0.1)',
         }}>
-          {lead.tier} leads/mo &mdash; <span style={{ color: '#FFE500', fontWeight: 600 }}>${Number(lead.monthly_total).toLocaleString()}/mo</span>
+          {lead.tier} leads/mo &mdash; <span style={{ color: '#f4a93c', fontWeight: 600 }}>${Number(lead.monthly_total).toLocaleString()}/mo</span>
         </div>
 
         <SetupForm token={token} email={lead.email} />

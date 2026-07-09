@@ -711,7 +711,7 @@ function PledgeBanner({ pledgeCount }: { pledgeCount: number | null }) {
         </div>
       </div>
       <a
-        href="https://quote-box.com/get-started"
+        href="https://quote-box.com/setup"
         style={{
           flexShrink: 0, background: '#f4a93c', color: '#201d3d', fontWeight: 800, fontSize: '0.8rem',
           padding: '10px 18px', borderRadius: 9, textDecoration: 'none', whiteSpace: 'nowrap' as const,
@@ -912,7 +912,7 @@ function LaunchRunway({
       key: 'consult', label: 'Book a\nConsultation', done: false,
       cta: {
         label: 'Book a call',
-        href: '/get-started',
+        href: '/setup',
         desc: 'Hop on a free 15-min call with us — we\'ll set up your ads and get leads flowing.',
       },
     },

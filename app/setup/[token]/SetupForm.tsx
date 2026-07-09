@@ -55,7 +55,7 @@ export default function SetupForm({ token, email }: { token: string; email: stri
     fontSize: '0.95rem',
     borderRadius: 10,
     border: '1px solid rgba(255,255,255,0.15)',
-    background: '#0d0d1a',
+    background: '#5b50d6',
     color: 'white',
     outline: 'none',
     boxSizing: 'border-box',
@@ -83,8 +83,8 @@ export default function SetupForm({ token, email }: { token: string; email: stri
         type="submit"
         disabled={loading}
         style={{
-          background: '#FFE500',
-          color: '#0d0d1a',
+          background: '#f4a93c',
+          color: '#201d3d',
           fontWeight: 700,
           fontSize: '1rem',
           padding: '14px 32px',

@@ -3,7 +3,7 @@ import { Resend } from 'resend'
 import { sendSms } from '@/lib/sms'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://quote-box.com'
-const CALENDAR_URL = `${SITE_URL}/get-started`
+const CALENDAR_URL = `${SITE_URL}/setup`
 const LOGIN_URL = `${SITE_URL}/dashboard`
 
 const H = 60 * 60 * 1000
