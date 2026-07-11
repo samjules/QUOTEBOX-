@@ -202,34 +202,18 @@ export default function CaseStudyPage() {
 
       {phase !== 'gate' && (
         <>
-          {/* Video (placeholder — swap src when the real case study video is ready) */}
+          {/* Case study video — Loom embed */}
           <section style={{ padding: '0 24px 56px' }}>
             <div style={sectionInner}>
               <div style={{
-                position: 'relative', borderRadius: 16, overflow: 'hidden',
-                aspectRatio: '16 / 9', background: '#0c0a16',
-                border: '1px solid rgba(255,255,255,0.12)',
+                position: 'relative', paddingBottom: '49.895833333333336%', height: 0,
+                borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)',
               }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/screenshots/leads-dashboard.png"
-                  alt="Case study video placeholder"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.35 }}
+                <iframe
+                  src="https://www.loom.com/embed/875f38554a5548b08db520bfa7f2eb37"
+                  allowFullScreen
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
                 />
-                <div style={{
-                  position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-                  alignItems: 'center', justifyContent: 'center', gap: 14,
-                }}>
-                  <div style={{
-                    width: 68, height: 68, borderRadius: '50%', background: '#f4a93c',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="#201d3d"><path d="M8 5v14l11-7z" /></svg>
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.55)', fontWeight: 600, letterSpacing: '0.03em' }}>
-                    VIDEO PLACEHOLDER — drop the real case study video URL here
-                  </div>
-                </div>
               </div>
             </div>
           </section>
