@@ -43,6 +43,10 @@ export default function CaseStudyPage() {
       setGateError('Name and email are required')
       return
     }
+    if (!phone.trim()) {
+      setGateError('Phone number is required')
+      return
+    }
     setGateError('')
     setGateSubmitting(true)
     try {
@@ -52,6 +56,7 @@ export default function CaseStudyPage() {
         body: JSON.stringify({
           name: gateName.trim(),
           email: gateEmail.trim(),
+          phone: phone.trim(),
           source: 'case_study',
         }),
       })
@@ -142,7 +147,22 @@ export default function CaseStudyPage() {
   }
 
   return (
-    <div style={pageStyle}>
+    <div style={pageStyle} className="csbg">
+      <style jsx>{`
+        .csbg{ position: relative; }
+        .csbg::before{
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: url('/patterns/map-pattern-2.jpg') repeat;
+          background-size: 340px;
+          filter: invert(1);
+          opacity: 0.07;
+          pointer-events: none;
+          z-index: 0;
+        }
+        .csbg > :global(*){ position: relative; z-index: 1; }
+      `}</style>
       {/* Nav */}
       <div style={{ padding: '24px 24px 0' }}>
         <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -193,6 +213,10 @@ export default function CaseStudyPage() {
                 <div>
                   <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: 6 }}>Email</label>
                   <input type="email" value={gateEmail} onChange={(e) => setGateEmail(e.target.value)} placeholder="you@company.com" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: 6 }}>Phone *</label>
+                  <input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(555) 123-4567" style={inputStyle} />
                 </div>
               </div>
               {gateError && <div style={{ color: '#ff8080', fontSize: '0.85rem', marginTop: 8, textAlign: 'center' }}>{gateError}</div>}
