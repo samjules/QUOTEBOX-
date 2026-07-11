@@ -41,6 +41,7 @@ interface UnifiedLead {
   created_at: string
   isMeta: boolean
   isCaseStudy: boolean
+  isPhoneSales: boolean
   sales?: SalesLead
   booking?: FreeTrialLead
 }
@@ -80,12 +81,12 @@ export default function LeadsManager({ salesLeads: initialSales, freeTrialLeads:
     const fromSales: UnifiedLead[] = salesLeads.map((l) => ({
       id: l.id, source: 'sales', name: l.name, email: l.email, phone: l.phone,
       status: l.status, scheduled_date: l.scheduled_date, scheduled_time: l.scheduled_time,
-      created_at: l.created_at, isMeta: l.source === 'meta', isCaseStudy: l.source === 'case_study', sales: l,
+      created_at: l.created_at, isMeta: l.source === 'meta', isCaseStudy: l.source === 'case_study', isPhoneSales: l.source === 'phone_sales', sales: l,
     }))
     const fromBookings: UnifiedLead[] = bookingLeads.map((l) => ({
       id: l.id, source: 'booking', name: l.name, email: l.email, phone: l.phone,
       status: l.status, scheduled_date: l.scheduled_date, scheduled_time: l.scheduled_time,
-      created_at: l.created_at, isMeta: false, isCaseStudy: false, booking: l,
+      created_at: l.created_at, isMeta: false, isCaseStudy: false, isPhoneSales: false, booking: l,
     }))
     const all = [...fromSales, ...fromBookings]
     all.sort((a, b) => {
@@ -417,6 +418,9 @@ export default function LeadsManager({ salesLeads: initialSales, freeTrialLeads:
                             )}
                             {lead.isCaseStudy && (
                               <span style={{ marginLeft: 4, fontSize: '0.7rem', fontWeight: 700, background: '#f4a93c20', color: '#f4a93c', padding: '2px 8px', borderRadius: 99 }}>Case Study</span>
+                            )}
+                            {lead.isPhoneSales && (
+                              <span style={{ marginLeft: 4, fontSize: '0.7rem', fontWeight: 700, background: '#5b50d620', color: '#8b7fff', padding: '2px 8px', borderRadius: 99 }}>Phone Sales</span>
                             )}
                           </td>
                           <td style={{ padding: '12px 14px', color: 'rgba(255,255,255,0.6)', whiteSpace: 'nowrap' }}>
