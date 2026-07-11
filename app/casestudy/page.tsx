@@ -33,6 +33,7 @@ export default function CaseStudyPage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
   const [phone, setPhone] = useState('')
+  const [smsConsent, setSmsConsent] = useState(false)
   const [bookSubmitting, setBookSubmitting] = useState(false)
   const [bookError, setBookError] = useState('')
 
@@ -58,6 +59,7 @@ export default function CaseStudyPage() {
           email: gateEmail.trim(),
           phone: phone.trim(),
           source: 'case_study',
+          sms_consent: smsConsent,
         }),
       })
       if (!res.ok) {
@@ -96,6 +98,7 @@ export default function CaseStudyPage() {
           scheduled_date: selectedDate,
           scheduled_time: selectedTime,
           source: 'case_study',
+          sms_consent: smsConsent,
         }),
       })
       if (!res.ok) {
@@ -218,6 +221,17 @@ export default function CaseStudyPage() {
                   <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: 6 }}>Phone *</label>
                   <input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(555) 123-4567" style={inputStyle} />
                 </div>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 9, cursor: 'pointer', marginTop: 2 }}>
+                  <input
+                    type="checkbox"
+                    checked={smsConsent}
+                    onChange={(e) => setSmsConsent(e.target.checked)}
+                    style={{ marginTop: 3, flexShrink: 0, width: 15, height: 15, accentColor: '#f4a93c' }}
+                  />
+                  <span style={{ fontSize: '0.76rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>
+                    Text me updates about Quotebox. Message &amp; data rates may apply, message frequency varies. Reply STOP to opt out anytime.
+                  </span>
+                </label>
               </div>
               {gateError && <div style={{ color: '#ff8080', fontSize: '0.85rem', marginTop: 8, textAlign: 'center' }}>{gateError}</div>}
               <button

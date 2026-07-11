@@ -16,7 +16,7 @@ const VALID_PUBLIC_SOURCES = ['case_study']
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { name, email, phone, monthly_revenue, scheduled_date, scheduled_time, source } = body
+    const { name, email, phone, monthly_revenue, scheduled_date, scheduled_time, source, sms_consent } = body
 
     if (!name || !email) {
       return NextResponse.json({ error: 'Name and email are required' }, { status: 400 })
@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
       scheduled_date: scheduled_date || null,
       scheduled_time: scheduled_time || null,
       source: source || null,
+      sms_consent: sms_consent === true,
     }).select().single()
 
     if (error) {
