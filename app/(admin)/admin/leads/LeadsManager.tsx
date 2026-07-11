@@ -389,20 +389,6 @@ export default function LeadsManager({ salesLeads: initialSales, freeTrialLeads:
                                       >
                                         {saving === lead.id ? 'Saving...' : 'Save Notes'}
                                       </button>
-                                      <span style={{ flex: 1 }} />
-                                      <button
-                                        onClick={() => handleDelete(lead)}
-                                        disabled={saving === lead.id}
-                                        style={{
-                                          padding: '6px 14px', fontSize: '0.72rem', fontWeight: 600,
-                                          borderRadius: 6, border: '1px solid rgba(239,68,68,0.3)', cursor: 'pointer',
-                                          background: 'transparent', color: '#ef4444',
-                                          opacity: saving === lead.id ? 0.5 : 1,
-                                          fontFamily: "'Nautic', sans-serif",
-                                        }}
-                                      >
-                                        Delete Lead
-                                      </button>
                                     </div>
                                   </>
                                 ) : (
@@ -417,22 +403,6 @@ export default function LeadsManager({ salesLeads: initialSales, freeTrialLeads:
                                         <a href={lead.booking.zoom_join_url} target="_blank" rel="noreferrer" style={{ fontSize: '0.78rem', color: '#FFE500' }}>Zoom link ↗</a>
                                       </div>
                                     )}
-                                    <div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'center' }}>
-                                      <span style={{ flex: 1 }} />
-                                      <button
-                                        onClick={() => handleDelete(lead)}
-                                        disabled={saving === lead.id}
-                                        style={{
-                                          padding: '6px 14px', fontSize: '0.72rem', fontWeight: 600,
-                                          borderRadius: 6, border: '1px solid rgba(239,68,68,0.3)', cursor: 'pointer',
-                                          background: 'transparent', color: '#ef4444',
-                                          opacity: saving === lead.id ? 0.5 : 1,
-                                          fontFamily: "'Nautic', sans-serif",
-                                        }}
-                                      >
-                                        Delete Lead
-                                      </button>
-                                    </div>
                                   </>
                                 )}
                               </div>
@@ -489,22 +459,38 @@ export default function LeadsManager({ salesLeads: initialSales, freeTrialLeads:
                             {new Date(lead.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                           </td>
                           <td style={{ padding: '12px 14px' }}>
-                            {lead.source === 'sales' && (
+                            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                              {lead.source === 'sales' && (
+                                <button
+                                  onClick={() => handleSendLink(lead)}
+                                  disabled={sendingLink === lead.id}
+                                  style={{
+                                    padding: '5px 12px', fontSize: '0.72rem', fontWeight: 700, borderRadius: 6,
+                                    border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+                                    background: lead.status === 'closed' ? 'rgba(255,255,255,0.06)' : '#FFE500',
+                                    color: lead.status === 'closed' ? 'rgba(255,255,255,0.3)' : '#0d0d1a',
+                                    opacity: sendingLink === lead.id ? 0.5 : 1,
+                                    fontFamily: "'Nautic', sans-serif",
+                                  }}
+                                >
+                                  {sendingLink === lead.id ? 'Sending...' : 'Send Link'}
+                                </button>
+                              )}
                               <button
-                                onClick={() => handleSendLink(lead)}
-                                disabled={sendingLink === lead.id}
+                                onClick={() => handleDelete(lead)}
+                                disabled={saving === lead.id}
+                                title="Delete lead"
                                 style={{
-                                  padding: '5px 12px', fontSize: '0.72rem', fontWeight: 700, borderRadius: 6,
-                                  border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
-                                  background: lead.status === 'closed' ? 'rgba(255,255,255,0.06)' : '#FFE500',
-                                  color: lead.status === 'closed' ? 'rgba(255,255,255,0.3)' : '#0d0d1a',
-                                  opacity: sendingLink === lead.id ? 0.5 : 1,
-                                  fontFamily: "'Nautic', sans-serif",
+                                  padding: '5px 9px', fontSize: '0.78rem', fontWeight: 700, borderRadius: 6,
+                                  border: '1px solid rgba(239,68,68,0.3)', cursor: 'pointer',
+                                  background: 'transparent', color: '#ef4444',
+                                  opacity: saving === lead.id ? 0.5 : 1, flexShrink: 0,
+                                  fontFamily: "'Nautic', sans-serif", lineHeight: 1,
                                 }}
                               >
-                                {sendingLink === lead.id ? 'Sending...' : 'Send Link'}
+                                🗑
                               </button>
-                            )}
+                            </div>
                           </td>
                         </tr>
                       )
