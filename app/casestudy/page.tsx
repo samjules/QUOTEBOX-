@@ -61,6 +61,7 @@ export default function CaseStudyPage() {
         setGateSubmitting(false)
         return
       }
+      ;(window as any).fbq?.('track', 'Lead')
       setPhase('unlocked')
     } catch {
       setGateError('Network error. Please try again.')
@@ -73,6 +74,10 @@ export default function CaseStudyPage() {
       setBookError('Pick a date and time')
       return
     }
+    if (!phone.trim()) {
+      setBookError('Phone number is required')
+      return
+    }
     setBookError('')
     setBookSubmitting(true)
     try {
@@ -82,7 +87,7 @@ export default function CaseStudyPage() {
         body: JSON.stringify({
           name: gateName.trim(),
           email: gateEmail.trim(),
-          phone: phone.trim() || null,
+          phone: phone.trim(),
           scheduled_date: selectedDate,
           scheduled_time: selectedTime,
           source: 'case_study',
@@ -94,6 +99,7 @@ export default function CaseStudyPage() {
         setBookSubmitting(false)
         return
       }
+      ;(window as any).fbq?.('track', 'Schedule')
       setPhase('booked')
     } catch {
       setBookError('Network error. Please try again.')
@@ -306,8 +312,8 @@ export default function CaseStudyPage() {
 
                     <div style={{ width: '100%', height: 1, background: 'rgba(255,255,255,0.1)', marginBottom: 20 }} />
 
-                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: 6 }}>Phone (optional)</label>
-                    <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(555) 123-4567" style={{ ...inputStyle, marginBottom: 16 }} />
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: 6 }}>Phone *</label>
+                    <input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(555) 123-4567" style={{ ...inputStyle, marginBottom: 16 }} />
 
                     {bookError && <div style={{ color: '#ff8080', fontSize: '0.85rem', marginBottom: 8, textAlign: 'center' }}>{bookError}</div>}
 

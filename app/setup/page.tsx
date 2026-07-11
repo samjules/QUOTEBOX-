@@ -46,6 +46,10 @@ export default function SetupBookingPage() {
       setError('Name and email are required')
       return
     }
+    if (!phone.trim()) {
+      setError('Phone number is required')
+      return
+    }
     setError('')
     setSubmitting(true)
     try {
@@ -55,7 +59,7 @@ export default function SetupBookingPage() {
         body: JSON.stringify({
           name: name.trim(),
           email: email.trim(),
-          phone: phone.trim() || null,
+          phone: phone.trim(),
           monthly_revenue: revenue,
           scheduled_date: selectedDate,
           scheduled_time: selectedTime,
@@ -67,6 +71,7 @@ export default function SetupBookingPage() {
         setSubmitting(false)
         return
       }
+      ;(window as any).fbq?.('track', 'Schedule')
       setStep(2)
     } catch {
       setError('Network error. Please try again.')
@@ -288,8 +293,8 @@ export default function SetupBookingPage() {
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" style={inputStyle} />
               </div>
               <div>
-                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: 6 }}>Phone</label>
-                <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(555) 123-4567" style={inputStyle} />
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: 6 }}>Phone *</label>
+                <input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(555) 123-4567" style={inputStyle} />
               </div>
             </div>
 
