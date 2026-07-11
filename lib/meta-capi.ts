@@ -3,7 +3,7 @@ import { createHash } from 'crypto'
 // Meta Conversions API — CRM lead-stage events for the admin sales pipeline
 // (sales_leads). Same Dataset ID as the site-wide Meta Pixel in app/layout.tsx,
 // since this feeds the same ad account's Events Manager, just server-side.
-const DATASET_ID = '614817694167232'
+const DATASET_ID = '882416391131950'
 const API_VERSION = 'v25.0'
 
 function sha256(value: string): string {

@@ -34,7 +34,7 @@ export async function GET() {
     ...(testEventCode ? { test_event_code: testEventCode } : {}),
   }
 
-  const res = await fetch(`https://graph.facebook.com/v25.0/614817694167232/events?access_token=${token}`, {
+  const res = await fetch(`https://graph.facebook.com/v25.0/882416391131950/events?access_token=${token}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
