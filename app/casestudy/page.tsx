@@ -1,25 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-
-const TIME_SLOTS = ['7:00 AM', '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM']
-
-function getWeekdays(weeks: number): Date[] {
-  const dates: Date[] = []
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const start = new Date(today)
-  start.setDate(start.getDate() + 1)
-  const end = new Date(today)
-  end.setDate(end.getDate() + weeks * 7)
-  const d = new Date(start)
-  while (d <= end) {
-    const day = d.getDay()
-    if (day !== 0 && day !== 6) dates.push(new Date(d))
-    d.setDate(d.getDate() + 1)
-  }
-  return dates
-}
+import { MEETING_TIME_SLOTS, getBookableWeekdays, isSlotBookable } from '@/lib/booking'
 
 export default function CaseStudyPage() {
   // 'gate' -> collect email to unlock the video. 'unlocked' -> video + booking calendar.
@@ -37,7 +19,7 @@ export default function CaseStudyPage() {
   const [bookSubmitting, setBookSubmitting] = useState(false)
   const [bookError, setBookError] = useState('')
 
-  const weekdays = getWeekdays(3)
+  const weekdays = getBookableWeekdays(3)
 
   async function handleGateSubmit() {
     if (!gateName.trim() || !gateEmail.trim()) {
@@ -329,19 +311,23 @@ export default function CaseStudyPage() {
                       Select a Time <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(Alaska Time)</span>
                     </label>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
-                      {TIME_SLOTS.map((t) => {
+                      {MEETING_TIME_SLOTS.map((t) => {
                         const isSel = selectedTime === t
+                        const bookable = !selectedDate || isSlotBookable(selectedDate, t)
                         return (
                           <button
                             key={t}
-                            onClick={() => setSelectedTime(t)}
+                            onClick={() => bookable && setSelectedTime(t)}
+                            disabled={!bookable}
                             style={{
                               padding: '8px 16px', borderRadius: 99,
                               border: isSel ? '2px solid #f4a93c' : '1px solid rgba(255,255,255,0.12)',
                               background: isSel ? 'rgba(244,169,60,0.12)' : 'transparent',
-                              color: isSel ? '#f4a93c' : 'rgba(255,255,255,0.75)',
-                              cursor: 'pointer', fontSize: '0.82rem', fontWeight: 700,
+                              color: !bookable ? 'rgba(255,255,255,0.25)' : isSel ? '#f4a93c' : 'rgba(255,255,255,0.75)',
+                              cursor: bookable ? 'pointer' : 'not-allowed',
+                              fontSize: '0.82rem', fontWeight: 700,
                               fontFamily: "'Nautic', sans-serif",
+                              textDecoration: !bookable ? 'line-through' : 'none',
                             }}
                           >
                             {t}

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { cancelOwnerSequence } from '@/lib/owner-automations'
+import { alaskaWallTimeToUTC } from '@/lib/alaska-time'
+import { isSlotBookable } from '@/lib/booking'
+import { sendBookingConfirmation } from '@/lib/sales-lead-notify'
 
 const VALID_REVENUES = [
   'Under $10k/mo',
@@ -30,6 +33,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid source value' }, { status: 400 })
     }
 
+    // Appointments need a real 24h buffer and nothing before 10am — enforced
+    // client-side too, but re-checked here since the client can't be trusted.
+    if (scheduled_date && scheduled_time && !isSlotBookable(scheduled_date, scheduled_time)) {
+      return NextResponse.json({ error: 'That time is no longer available — please pick a slot at least 24 hours out.' }, { status: 400 })
+    }
+
+    const scheduledAt = scheduled_date && scheduled_time ? alaskaWallTimeToUTC(scheduled_date, scheduled_time) : null
+
     const supabase = createAdminClient()
     const { data, error } = await supabase.from('sales_leads').insert({
       name,
@@ -38,12 +49,21 @@ export async function POST(req: NextRequest) {
       monthly_revenue: monthly_revenue || null,
       scheduled_date: scheduled_date || null,
       scheduled_time: scheduled_time || null,
+      scheduled_at: scheduledAt ? scheduledAt.toISOString() : null,
       source: source || null,
       sms_consent: sms_consent === true,
     }).select().single()
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    if (scheduled_date && scheduled_time) {
+      try {
+        await sendBookingConfirmation({ id: data.id, name, email, phone: phone || null, scheduled_date, scheduled_time })
+      } catch (err) {
+        console.error('Sales lead booking confirmation error:', err)
+      }
     }
 
     // If this email belongs to a QuoteBox account owner, stop their nurture sequence
