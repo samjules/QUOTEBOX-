@@ -38,6 +38,11 @@ export async function sendMetaCapiEvent(opts: MetaCapiLeadEvent): Promise<void> 
 
   if (!userData.em && !userData.ph && !userData.lead_id) return
 
+  // Set META_CAPI_TEST_EVENT_CODE (from Events Manager -> your dataset -> Test
+  // Events tab) to route events into the Test Events view instead of live data —
+  // useful for verifying the connection. Remove it once confirmed working.
+  const testEventCode = process.env.META_CAPI_TEST_EVENT_CODE
+
   const payload = {
     data: [{
       action_source: 'system_generated',
@@ -46,6 +51,7 @@ export async function sendMetaCapiEvent(opts: MetaCapiLeadEvent): Promise<void> 
       custom_data: { event_source: 'crm', lead_event_source: 'Quotebox' },
       user_data: userData,
     }],
+    ...(testEventCode ? { test_event_code: testEventCode } : {}),
   }
 
   try {
