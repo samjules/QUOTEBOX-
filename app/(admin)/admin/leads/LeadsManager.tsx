@@ -481,14 +481,18 @@ export default function LeadsManager({ salesLeads: initialSales, freeTrialLeads:
                                 disabled={saving === lead.id}
                                 title="Delete lead"
                                 style={{
-                                  padding: '5px 9px', fontSize: '0.78rem', fontWeight: 700, borderRadius: 6,
+                                  padding: '6px', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center',
                                   border: '1px solid rgba(239,68,68,0.3)', cursor: 'pointer',
                                   background: 'transparent', color: '#ef4444',
                                   opacity: saving === lead.id ? 0.5 : 1, flexShrink: 0,
-                                  fontFamily: "'Nautic', sans-serif", lineHeight: 1,
                                 }}
                               >
-                                🗑
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="3 6 5 6 21 6" />
+                                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3-3h8a1 1 0 0 1 1 1v2H7V4a1 1 0 0 1 1-1z" />
+                                  <line x1="10" y1="11" x2="10" y2="17" />
+                                  <line x1="14" y1="11" x2="14" y2="17" />
+                                </svg>
                               </button>
                             </div>
                           </td>

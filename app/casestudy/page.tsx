@@ -173,6 +173,8 @@ export default function CaseStudyPage() {
         </div>
       </section>
 
+      <ScreenshotMarquee />
+
       {phase === 'gate' && (
         <section style={{ padding: '0 24px 64px' }}>
           <div style={{ ...sectionInner, maxWidth: 440 }}>
@@ -352,6 +354,38 @@ export default function CaseStudyPage() {
           </section>
         </>
       )}
+    </div>
+  )
+}
+
+const MARQUEE_SHOTS = [
+  { src: '/casestudy/dashboard-year.png', alt: 'Dashboard — $140,631 pipeline, 807 leads this year' },
+  { src: '/casestudy/leadmap.png', alt: 'Live lead map with booked lead detail' },
+  { src: '/casestudy/ltv-calculator.png', alt: 'LTV calculator — 2.65x ROAS' },
+  { src: '/casestudy/leads-stats.png', alt: 'Leads dashboard — 807 total, 403 new, 48 booked' },
+  { src: '/casestudy/lead-row.png', alt: 'A super lead row with quote and contact info' },
+  { src: '/casestudy/dashboard-month.png', alt: 'Dashboard — $15,680 pipeline this month' },
+]
+
+// Real product screenshots, floating directly on the page background (no card),
+// auto-panning left-to-right forever. The list is rendered twice back-to-back so
+// the loop has no visible seam.
+function ScreenshotMarquee() {
+  return (
+    <div className="marquee">
+      <div className="marquee-track">
+        {[...MARQUEE_SHOTS, ...MARQUEE_SHOTS].map((shot, i) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={i} src={shot.src} alt={shot.alt} />
+        ))}
+      </div>
+      <style jsx>{`
+        .marquee{ width: 100%; overflow: hidden; padding: 8px 0 64px; -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+        .marquee-track{ display: flex; align-items: center; gap: 28px; width: max-content; animation: pan 32s linear infinite; }
+        .marquee-track img{ height: 130px; width: auto; border-radius: 10px; box-shadow: 0 18px 40px -18px rgba(0,0,0,0.45); flex-shrink: 0; }
+        @keyframes pan{ from { transform: translateX(-50%); } to { transform: translateX(0%); } }
+        @media (max-width: 640px){ .marquee-track img{ height: 90px; } }
+      `}</style>
     </div>
   )
 }
