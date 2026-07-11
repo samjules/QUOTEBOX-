@@ -1,17 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MEETING_TIME_SLOTS, getBookableWeekdays, isSlotBookable } from '@/lib/booking'
+import { trackBuildEvent } from '@/lib/track-build-event'
 
 export default function CaseStudyPage() {
   // 'gate' -> collect email to unlock the video. 'unlocked' -> video + booking calendar.
   const [phase, setPhase] = useState<'gate' | 'unlocked' | 'booked'>('gate')
 
-  const [gateName, setGateName] = useState('')
+  useEffect(() => {
+    trackBuildEvent('casestudy_view')
+  }, [])
+
   const [gateEmail, setGateEmail] = useState('')
   const [gateSubmitting, setGateSubmitting] = useState(false)
   const [gateError, setGateError] = useState('')
 
+  const [bookName, setBookName] = useState('')
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
   const [phone, setPhone] = useState('')
@@ -22,12 +27,8 @@ export default function CaseStudyPage() {
   const weekdays = getBookableWeekdays(3)
 
   async function handleGateSubmit() {
-    if (!gateName.trim() || !gateEmail.trim()) {
-      setGateError('Name and email are required')
-      return
-    }
-    if (!phone.trim()) {
-      setGateError('Phone number is required')
+    if (!gateEmail.trim()) {
+      setGateError('Email is required')
       return
     }
     setGateError('')
@@ -37,11 +38,9 @@ export default function CaseStudyPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: gateName.trim(),
+          name: gateEmail.split('@')[0].trim() || 'Case Study Viewer',
           email: gateEmail.trim(),
-          phone: phone.trim(),
           source: 'case_study',
-          sms_consent: smsConsent,
         }),
       })
       if (!res.ok) {
@@ -51,6 +50,7 @@ export default function CaseStudyPage() {
         return
       }
       ;(window as any).fbq?.('track', 'Lead')
+      trackBuildEvent('casestudy_gate_submit')
       setPhase('unlocked')
     } catch {
       setGateError('Network error. Please try again.')
@@ -59,6 +59,10 @@ export default function CaseStudyPage() {
   }
 
   async function handleBookSubmit() {
+    if (!bookName.trim()) {
+      setBookError('Name is required')
+      return
+    }
     if (!selectedDate || !selectedTime) {
       setBookError('Pick a date and time')
       return
@@ -74,7 +78,7 @@ export default function CaseStudyPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: gateName.trim(),
+          name: bookName.trim(),
           email: gateEmail.trim(),
           phone: phone.trim(),
           scheduled_date: selectedDate,
@@ -90,6 +94,7 @@ export default function CaseStudyPage() {
         return
       }
       ;(window as any).fbq?.('track', 'Schedule')
+      trackBuildEvent('casestudy_booking_submit')
       setPhase('booked')
     } catch {
       setBookError('Network error. Please try again.')
@@ -170,7 +175,7 @@ export default function CaseStudyPage() {
             Case Study
           </div>
           <h1 style={{ fontSize: 'clamp(1.9rem, 4.5vw, 2.9rem)', fontWeight: 800, lineHeight: 1.12, margin: '0 0 16px', textTransform: 'uppercase' }}>
-            This moving company has a <span style={{ color: '#f4a93c' }}>2.65x ROAS</span> from instant quote forms
+            This moving company went from <span style={{ color: '#f4a93c' }}>$5K to $20K a month</span> using instant quote forms
           </h1>
           <p style={{ fontSize: '1.02rem', color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, maxWidth: 560, margin: '0 auto' }}>
             See the exact quote form, follow-up sequence, and CRM setup one moving company used to hit a 2.65x return on ad spend.
@@ -185,35 +190,16 @@ export default function CaseStudyPage() {
           <div style={{ ...sectionInner, maxWidth: 440 }}>
             <div style={{ background: '#201d3d', borderRadius: 16, padding: '32px 28px' }}>
               <h2 style={{ fontSize: '1.3rem', fontWeight: 800, textAlign: 'center', margin: '0 0 8px' }}>
-                Enter your info to unlock the 3-minute case study
+                Enter your email to unlock the 3-minute case study
               </h2>
               <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.6)', textAlign: 'center', margin: '0 0 24px' }}>
                 Free — no credit card, just the video.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 8 }}>
                 <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: 6 }}>Name</label>
-                  <input value={gateName} onChange={(e) => setGateName(e.target.value)} placeholder="Your full name" style={inputStyle} />
-                </div>
-                <div>
                   <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: 6 }}>Email</label>
                   <input type="email" value={gateEmail} onChange={(e) => setGateEmail(e.target.value)} placeholder="you@company.com" style={inputStyle} />
                 </div>
-                <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: 6 }}>Phone *</label>
-                  <input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(555) 123-4567" style={inputStyle} />
-                </div>
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 9, cursor: 'pointer', marginTop: 2 }}>
-                  <input
-                    type="checkbox"
-                    checked={smsConsent}
-                    onChange={(e) => setSmsConsent(e.target.checked)}
-                    style={{ marginTop: 3, flexShrink: 0, width: 15, height: 15, accentColor: '#f4a93c' }}
-                  />
-                  <span style={{ fontSize: '0.76rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>
-                    Text me updates about Quotebox. Message &amp; data rates may apply, message frequency varies. Reply STOP to opt out anytime.
-                  </span>
-                </label>
               </div>
               {gateError && <div style={{ color: '#ff8080', fontSize: '0.85rem', marginTop: 8, textAlign: 'center' }}>{gateError}</div>}
               <button
@@ -338,8 +324,22 @@ export default function CaseStudyPage() {
 
                     <div style={{ width: '100%', height: 1, background: 'rgba(255,255,255,0.1)', marginBottom: 20 }} />
 
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: 6 }}>Name *</label>
+                    <input required value={bookName} onChange={(e) => setBookName(e.target.value)} placeholder="Your full name" style={{ ...inputStyle, marginBottom: 12 }} />
+
                     <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: 6 }}>Phone *</label>
-                    <input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(555) 123-4567" style={{ ...inputStyle, marginBottom: 16 }} />
+                    <input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(555) 123-4567" style={{ ...inputStyle, marginBottom: 12 }} />
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: 9, cursor: 'pointer', marginBottom: 16 }}>
+                      <input
+                        type="checkbox"
+                        checked={smsConsent}
+                        onChange={(e) => setSmsConsent(e.target.checked)}
+                        style={{ marginTop: 3, flexShrink: 0, width: 15, height: 15, accentColor: '#f4a93c' }}
+                      />
+                      <span style={{ fontSize: '0.76rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>
+                        Text me updates about Quotebox. Message &amp; data rates may apply, message frequency varies. Reply STOP to opt out anytime.
+                      </span>
+                    </label>
 
                     {bookError && <div style={{ color: '#ff8080', fontSize: '0.85rem', marginBottom: 8, textAlign: 'center' }}>{bookError}</div>}
 

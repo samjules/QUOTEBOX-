@@ -26,13 +26,20 @@ const FUNNEL_STEPS: { event: string | string[]; label: string }[] = [
   { event: '__accounts__', label: 'Account actually created' },
 ]
 
+const CASESTUDY_FUNNEL_STEPS: { event: string; label: string }[] = [
+  { event: 'casestudy_view', label: 'Page view' },
+  { event: 'casestudy_gate_submit', label: 'Unlocked video (Lead)' },
+  { event: 'casestudy_booking_submit', label: 'Booked a call (Schedule)' },
+]
+
 export default async function BuildAnalyticsPage() {
   const admin = createAdminClient()
 
-  const [{ data: views }, { data: accounts }, { data: clicks }] = await Promise.all([
+  const [{ data: views }, { data: accounts }, { data: clicks }, { data: caseStudyLeads }] = await Promise.all([
     admin.from('build_page_views').select('created_at'),
     admin.from('accounts').select('created_at').eq('signup_source', 'build'),
     admin.from('build_funnel_events').select('event, created_at'),
+    admin.from('sales_leads').select('id, scheduled_date').eq('source', 'case_study'),
   ])
 
   const viewRows = views ?? []
@@ -44,6 +51,10 @@ export default async function BuildAnalyticsPage() {
 
   const clicksByEvent = new Map<string, number>()
   for (const c of clickRows) clicksByEvent.set(c.event, (clicksByEvent.get(c.event) ?? 0) + 1)
+
+  const csLeads = caseStudyLeads ?? []
+  const csFunnelCounts = CASESTUDY_FUNNEL_STEPS.map((s) => ({ ...s, count: clicksByEvent.get(s.event) ?? 0 }))
+  const csFirstCount = csFunnelCounts[0]?.count ?? 0
 
   function countFor(event: string | string[]): number {
     if (event === '__views__') return totalViews
@@ -158,9 +169,63 @@ export default async function BuildAnalyticsPage() {
         </table>
       </div>
 
-      <p className="text-xs text-gray-400 mt-4">
+      <p className="text-xs text-gray-400 mt-4 mb-10">
         Views are tracked client-side on landing-page mount. Button presses are tracked per-click (not deduped per visitor).
         Accounts are counted from accounts.signup_source = &apos;build&apos;.
+      </p>
+
+      {/* ── /casestudy funnel ── */}
+      <h1 className="text-xl font-semibold mb-1" style={{ color: '#0e0020' }}>/casestudy funnel analytics</h1>
+      <p className="text-sm text-gray-500 mb-6">
+        Case study lead magnet — page view, email/phone gate, and $297 walkthrough bookings.
+      </p>
+
+      <div className="grid grid-cols-3 gap-5 mb-8">
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="text-2xl font-bold" style={{ color: '#0e0020' }}>{csLeads.length}</div>
+          <div className="text-xs text-gray-500 mt-1">leads captured</div>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="text-2xl font-bold" style={{ color: '#0e0020' }}>{csLeads.filter((l) => l.scheduled_date).length}</div>
+          <div className="text-xs text-gray-500 mt-1">calls booked</div>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="text-2xl font-bold" style={{ color: '#16a34a' }}>
+            {csFirstCount > 0 ? `${((csLeads.length / csFirstCount) * 100).toFixed(1)}%` : '—'}
+          </div>
+          <div className="text-xs text-gray-500 mt-1">view → lead conversion</div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-200 p-5 mb-8">
+        <div className="text-sm font-semibold mb-4" style={{ color: '#0e0020' }}>Funnel — step by step</div>
+        <div className="flex flex-col gap-2">
+          {csFunnelCounts.map((s, i) => {
+            const prev = i > 0 ? csFunnelCounts[i - 1].count : s.count
+            const dropOffPct = prev > 0 ? 100 - (s.count / prev) * 100 : 0
+            const widthPct = csFirstCount > 0 ? Math.max(2, (s.count / csFirstCount) * 100) : 0
+            return (
+              <div key={s.label} className="flex items-center gap-4">
+                <div className="w-56 shrink-0 text-xs text-gray-600">{s.label}</div>
+                <div className="flex-1 bg-gray-100 rounded-md h-7 relative overflow-hidden">
+                  <div
+                    className="h-full rounded-md flex items-center justify-end pr-2"
+                    style={{ width: `${widthPct}%`, background: 'linear-gradient(90deg, #f4a93c, #e8922a)', minWidth: 32 }}
+                  >
+                    <span className="text-xs font-bold text-white">{s.count}</span>
+                  </div>
+                </div>
+                <div className="w-20 shrink-0 text-xs text-right" style={{ color: i > 0 && dropOffPct > 0 ? '#dc2626' : '#9ca3af' }}>
+                  {i > 0 ? `-${dropOffPct.toFixed(0)}%` : ''}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      <p className="text-xs text-gray-400 mt-4">
+        Leads captured / calls booked come straight from sales_leads where source = &apos;case_study&apos;.
       </p>
     </div>
   )
