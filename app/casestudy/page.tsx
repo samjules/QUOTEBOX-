@@ -187,11 +187,11 @@ export default function CaseStudyPage() {
           }}>
             Case Study
           </div>
-          <h1 style={{ fontSize: 'clamp(1.9rem, 4.5vw, 2.9rem)', fontWeight: 800, lineHeight: 1.12, margin: '0 0 16px' }}>
-            How Titan Tuff Moving turned <span style={{ color: '#f4a93c' }}>685 leads</span> into <span style={{ color: '#f4a93c' }}>$111,811</span> in pipeline
+          <h1 style={{ fontSize: 'clamp(1.9rem, 4.5vw, 2.9rem)', fontWeight: 800, lineHeight: 1.12, margin: '0 0 16px', textTransform: 'uppercase' }}>
+            This moving company has a <span style={{ color: '#f4a93c' }}>2.65x ROAS</span> from instant quote forms
           </h1>
           <p style={{ fontSize: '1.02rem', color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, maxWidth: 560, margin: '0 auto' }}>
-            A 12-minute walkthrough of the exact quote form, follow-up sequence, and CRM setup one moving company used to hit a 2.88x return on ad spend.
+            See the exact quote form, follow-up sequence, and CRM setup one moving company used to hit a 2.65x return on ad spend.
           </p>
         </div>
       </section>
@@ -203,7 +203,7 @@ export default function CaseStudyPage() {
           <div style={{ ...sectionInner, maxWidth: 440 }}>
             <div style={{ background: '#201d3d', borderRadius: 16, padding: '32px 28px' }}>
               <h2 style={{ fontSize: '1.3rem', fontWeight: 800, textAlign: 'center', margin: '0 0 8px' }}>
-                Enter your email to unlock the case study
+                Enter your info to unlock the 3-minute case study
               </h2>
               <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.6)', textAlign: 'center', margin: '0 0 24px' }}>
                 Free — no credit card, just the video.
@@ -239,7 +239,7 @@ export default function CaseStudyPage() {
                 disabled={gateSubmitting}
                 style={{ ...goldBtn, width: '100%', marginTop: 16, opacity: gateSubmitting ? 0.6 : 1 }}
               >
-                {gateSubmitting ? 'Unlocking…' : 'Watch the case study →'}
+                {gateSubmitting ? 'Unlocking…' : 'View the 3-Minute Case Study →'}
               </button>
             </div>
           </div>
