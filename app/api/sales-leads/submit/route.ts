@@ -4,6 +4,7 @@ import { cancelOwnerSequence } from '@/lib/owner-automations'
 import { alaskaWallTimeToUTC } from '@/lib/alaska-time'
 import { isSlotBookable } from '@/lib/booking'
 import { sendBookingConfirmation } from '@/lib/sales-lead-notify'
+import { sendMetaCapiEvent } from '@/lib/meta-capi'
 
 const VALID_REVENUES = [
   'Under $10k/mo',
@@ -57,6 +58,8 @@ export async function POST(req: NextRequest) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
+
+    sendMetaCapiEvent({ eventName: 'New', email, phone: phone || null }).catch(() => {})
 
     if (scheduled_date && scheduled_time) {
       try {

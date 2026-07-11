@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
+import { sendMetaCapiEvent, SALES_LEAD_STATUS_EVENT_NAMES } from '@/lib/meta-capi'
 
 const VALID_STATUSES = ['new', 'contacted', 'closed', 'lost']
 
@@ -33,6 +34,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const { data, error } = await admin.from('sales_leads').update(update).eq('id', id).select().single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    if (status && data) {
+      sendMetaCapiEvent({
+        eventName: SALES_LEAD_STATUS_EVENT_NAMES[status] ?? status,
+        email: data.email,
+        phone: data.phone,
+        leadId: data.meta_lead_id,
+      }).catch(() => {})
+    }
 
     return NextResponse.json(data)
   } catch {
