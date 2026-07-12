@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 import { getMetaAdSpend } from '@/lib/meta-ads'
 
 export const dynamic = 'force-dynamic'
@@ -16,10 +17,21 @@ function money(n: number): string {
 export default async function CaseStudyAnalyticsPage() {
   const admin = createAdminClient()
 
+  // Reuse the same Meta connection every customer already has — whichever
+  // account you (the logged-in admin) connected Meta ads to from Settings,
+  // same as any customer would.
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: myAccount } = user
+    ? await admin.from('accounts').select('meta_access_token, meta_ad_account_id').eq('owner_id', user.id).single()
+    : { data: null }
+
   const [{ data: clicks }, { data: caseStudyLeads }, adSpend] = await Promise.all([
     admin.from('build_funnel_events').select('event, created_at'),
     admin.from('sales_leads').select('id, scheduled_date, created_at').eq('source', 'case_study'),
-    getMetaAdSpend('last_30d'),
+    myAccount?.meta_access_token && myAccount?.meta_ad_account_id
+      ? getMetaAdSpend(myAccount.meta_access_token, myAccount.meta_ad_account_id)
+      : Promise.resolve(null),
   ])
 
   const clickRows = clicks ?? []
@@ -94,9 +106,8 @@ export default async function CaseStudyAnalyticsPage() {
 
       {!adSpend ? (
         <div className="bg-white rounded-xl border border-gray-200 p-5 mb-8 text-sm text-gray-500">
-          Not connected yet. Add <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">META_MARKETING_ACCESS_TOKEN</code> (a token with{' '}
-          <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">ads_read</code> permission on the ad account) and{' '}
-          <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">META_AD_ACCOUNT_ID</code> (e.g. <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">act_1234567890</code>) to Vercel&apos;s environment variables to see spend here.
+          Meta ads isn&apos;t connected on your account yet. Connect it the same way any customer would —{' '}
+          <a href="/settings" className="font-semibold" style={{ color: '#5b50d6' }}>Settings → Connect Meta Ads</a> — and spend will show up here automatically.
         </div>
       ) : (
         <>
@@ -107,7 +118,7 @@ export default async function CaseStudyAnalyticsPage() {
             </div>
             <div className="bg-white rounded-xl border border-gray-200 p-5">
               <div className="text-2xl font-bold" style={{ color: '#0e0020' }}>{costPerLead !== null ? money(costPerLead) : '—'}</div>
-              <div className="text-xs text-gray-500 mt-1">cost per lead</div>
+              <div className="text-xs text-gray-500 mt-1">cost per lead (CRM)</div>
             </div>
             <div className="bg-white rounded-xl border border-gray-200 p-5">
               <div className="text-2xl font-bold" style={{ color: '#0e0020' }}>{costPerBooking !== null ? money(costPerBooking) : '—'}</div>
@@ -123,8 +134,8 @@ export default async function CaseStudyAnalyticsPage() {
                   <th className="px-5 py-3 font-semibold">Spend</th>
                   <th className="px-5 py-3 font-semibold">Impressions</th>
                   <th className="px-5 py-3 font-semibold">Clicks</th>
-                  <th className="px-5 py-3 font-semibold">CPC</th>
-                  <th className="px-5 py-3 font-semibold">CTR</th>
+                  <th className="px-5 py-3 font-semibold">Meta Leads</th>
+                  <th className="px-5 py-3 font-semibold">CPL</th>
                 </tr>
               </thead>
               <tbody>
@@ -136,8 +147,8 @@ export default async function CaseStudyAnalyticsPage() {
                     <td className="px-5 py-2.5" style={{ color: '#0e0020' }}>{money(c.spend)}</td>
                     <td className="px-5 py-2.5 text-gray-600">{c.impressions.toLocaleString()}</td>
                     <td className="px-5 py-2.5 text-gray-600">{c.clicks.toLocaleString()}</td>
-                    <td className="px-5 py-2.5 text-gray-600">{money(c.cpc)}</td>
-                    <td className="px-5 py-2.5 text-gray-600">{c.ctr.toFixed(2)}%</td>
+                    <td className="px-5 py-2.5 text-gray-600">{c.leads.toLocaleString()}</td>
+                    <td className="px-5 py-2.5 text-gray-600">{c.cpl > 0 ? money(c.cpl) : '—'}</td>
                   </tr>
                 ))}
               </tbody>
