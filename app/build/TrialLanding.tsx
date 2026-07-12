@@ -51,7 +51,8 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
   const [showSticky, setShowSticky] = useState(false)
 
   // Funnel analytics — one row per landing-page view, compared against accounts
-  // actually created (accounts.signup_source = 'build') on /admin/build-analytics.
+  // actually created (accounts.signup_source = 'build'). Raw data only for now;
+  // the admin dashboard for this was retired in favor of /admin/casestudy-analytics.
   useEffect(() => {
     fetch('/api/build/track-view', { method: 'POST' }).catch(() => {})
   }, [])
