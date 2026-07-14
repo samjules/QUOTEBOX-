@@ -97,15 +97,18 @@ export async function sendBookingConfirmation(lead: { id: string; name: string; 
   const zoomJoinUrl = lead.zoom_join_url ?? null
 
   const apiKey = process.env.RESEND_API_KEY
-  const from = process.env.RESEND_FROM_EMAIL || 'Quotebox <hello@quote-box.com>'
+  const from = process.env.RESEND_FROM_EMAIL || 'Sam at QuoteBox <sam@quote-box.com>'
   if (apiKey) {
     try {
       const resend = new Resend(apiKey)
       const { subject, html } = buildConfirmationEmail(firstName, dateLabel, timeLabel, zoomJoinUrl)
-      await resend.emails.send({ from, to: lead.email, subject, html })
+      const { error: sendError } = await resend.emails.send({ from, to: lead.email, subject, html })
+      if (sendError) console.error('Sales lead booking confirmation email rejected by Resend:', sendError)
     } catch (err) {
       console.error('Sales lead booking confirmation email error:', err)
     }
+  } else {
+    console.error('Sales lead booking confirmation email skipped: RESEND_API_KEY not set')
   }
   if (lead.phone) {
     await sendSms(lead.phone, buildConfirmationSms(firstName, dateLabel, timeLabel, zoomJoinUrl))
@@ -129,7 +132,7 @@ export async function processSalesLeadReminders(): Promise<{ reminded: number }>
 
   let reminded = 0
   const apiKey = process.env.RESEND_API_KEY
-  const from = process.env.RESEND_FROM_EMAIL || 'Quotebox <hello@quote-box.com>'
+  const from = process.env.RESEND_FROM_EMAIL || 'Sam at QuoteBox <sam@quote-box.com>'
 
   for (const lead of due ?? []) {
     const { data: claimed } = await admin
@@ -150,7 +153,8 @@ export async function processSalesLeadReminders(): Promise<{ reminded: number }>
       try {
         const resend = new Resend(apiKey)
         const { subject, html } = buildReminderEmail(firstName, dateLabel, timeLabel, zoomJoinUrl)
-        await resend.emails.send({ from, to: lead.email, subject, html })
+        const { error: sendError } = await resend.emails.send({ from, to: lead.email, subject, html })
+        if (sendError) console.error('Sales lead reminder email rejected by Resend:', sendError)
       } catch (err) {
         console.error('Sales lead reminder email error:', err)
       }

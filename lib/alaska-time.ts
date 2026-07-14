@@ -35,3 +35,31 @@ export function alaskaWallTimeToUTC(dateISO: string, time12h: string): Date | nu
   const offset = timeZoneOffsetMinutes('America/Anchorage', naiveUTC)
   return new Date(naiveUTC.getTime() - offset * 60000)
 }
+
+// Converts a wall-clock date/time in an arbitrary IANA timezone to the equivalent
+// wall-clock date/time in Alaska. Used to translate a prospect's local time
+// (based on the state they're in) into the Alaska time the call system stores.
+export function wallTimeToAlaskaWallTime(
+  dateISO: string,
+  time24h: string,
+  fromTimeZone: string
+): { dateISO: string; time24h: string } | null {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(time24h.trim())
+  if (!match) return null
+  const hh = String(parseInt(match[1], 10)).padStart(2, '0')
+  const mm = String(parseInt(match[2], 10)).padStart(2, '0')
+  const naiveUTC = new Date(`${dateISO}T${hh}:${mm}:00Z`)
+  const fromOffset = timeZoneOffsetMinutes(fromTimeZone, naiveUTC)
+  const utc = new Date(naiveUTC.getTime() - fromOffset * 60000)
+
+  const toOffset = timeZoneOffsetMinutes('America/Anchorage', utc)
+  const alaskaAsUTC = new Date(utc.getTime() + toOffset * 60000)
+
+  const y = alaskaAsUTC.getUTCFullYear()
+  const mo = String(alaskaAsUTC.getUTCMonth() + 1).padStart(2, '0')
+  const d = String(alaskaAsUTC.getUTCDate()).padStart(2, '0')
+  const h = String(alaskaAsUTC.getUTCHours()).padStart(2, '0')
+  const mi = String(alaskaAsUTC.getUTCMinutes()).padStart(2, '0')
+
+  return { dateISO: `${y}-${mo}-${d}`, time24h: `${h}:${mi}` }
+}

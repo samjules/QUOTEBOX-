@@ -1,6 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { US_STATE_TIMEZONES } from '@/lib/us-state-timezones'
+import { wallTimeToAlaskaWallTime } from '@/lib/alaska-time'
 
 function to12h(time24: string): string {
   const [hStr, mStr] = time24.split(':')
@@ -30,6 +32,9 @@ export default function BookCallForm() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [time, setTime] = useState('14:00')
 
+  const [stateCode, setStateCode] = useState('AK')
+  const [clientTime, setClientTime] = useState('14:00')
+
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -40,6 +45,26 @@ export default function BookCallForm() {
   const [result, setResult] = useState<{ zoomJoinUrl: string | null } | null>(null)
 
   const cells = monthGrid(viewYear, viewMonth)
+
+  const stateTz = US_STATE_TIMEZONES.find((s) => s.code === stateCode)?.tz ?? 'America/Anchorage'
+  const converted = useMemo(() => {
+    const baseDate = selectedDate ?? `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    return wallTimeToAlaskaWallTime(baseDate, clientTime, stateTz)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate, clientTime, stateTz])
+
+  const dayShifted = !!(converted && selectedDate && converted.dateISO !== selectedDate)
+
+  function applyConvertedTime() {
+    if (!converted) return
+    setTime(converted.time24h)
+    if (converted.dateISO !== selectedDate) {
+      const [y, m] = converted.dateISO.split('-').map(Number)
+      setSelectedDate(converted.dateISO)
+      setViewYear(y)
+      setViewMonth(m - 1)
+    }
+  }
 
   async function handleSubmit() {
     if (!name.trim() || !email.trim()) {
@@ -170,7 +195,35 @@ export default function BookCallForm() {
           })}
         </div>
 
-        <div style={{ marginTop: 20 }}>
+        <div style={{ marginTop: 20, padding: 12, background: '#f4f4f6', borderRadius: 10 }}>
+          <label style={labelStyle}>Client&apos;s state</label>
+          <select value={stateCode} onChange={(e) => setStateCode(e.target.value)} style={{ ...inputStyle, marginBottom: 12 }}>
+            {US_STATE_TIMEZONES.map((s) => (
+              <option key={s.code} value={s.code}>{s.name}</option>
+            ))}
+          </select>
+
+          <label style={labelStyle}>Client&apos;s local time</label>
+          <input type="time" value={clientTime} onChange={(e) => setClientTime(e.target.value)} style={inputStyle} />
+
+          {converted && (
+            <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+              <div style={{ fontSize: '0.8rem', color: '#334155' }}>
+                = <strong style={{ color: '#5b50d6' }}>{to12h(converted.time24h)}</strong> Alaska Time
+                {dayShifted && <span style={{ color: '#94a3b8' }}> ({converted.dateISO > (selectedDate ?? '') ? 'next day' : 'prior day'})</span>}
+              </div>
+              <button
+                type="button"
+                onClick={applyConvertedTime}
+                style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #5b50d6', background: 'white', color: '#5b50d6', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+              >
+                Use this time →
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div style={{ marginTop: 16 }}>
           <label style={labelStyle}>Time (Alaska Time)</label>
           <input type="time" value={time} onChange={(e) => setTime(e.target.value)} style={inputStyle} />
         </div>
