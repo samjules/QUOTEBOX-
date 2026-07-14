@@ -54,3 +54,20 @@ export const US_STATE_TIMEZONES: { code: string; name: string; tz: string }[] = 
   { code: 'WI', name: 'Wisconsin', tz: 'America/Chicago' },
   { code: 'WY', name: 'Wyoming', tz: 'America/Denver' },
 ]
+
+// Friendly zone name for a given IANA timezone, used in email/SMS copy
+// ("12:00 PM Pacific Time") instead of showing the raw IANA string.
+const ZONE_LABELS: Record<string, string> = {
+  'America/New_York': 'Eastern Time',
+  'America/Chicago': 'Central Time',
+  'America/Denver': 'Mountain Time',
+  'America/Phoenix': 'Arizona Time',
+  'America/Los_Angeles': 'Pacific Time',
+  'America/Anchorage': 'Alaska Time',
+  'Pacific/Honolulu': 'Hawaii Time',
+}
+
+export function timezoneLabel(tz: string): string {
+  return ZONE_LABELS[tz] ?? tz
+}
+

@@ -88,6 +88,7 @@ export default function BookCallForm() {
           scheduled_date: selectedDate,
           scheduled_time: to12h(time),
           notes: notes.trim() || null,
+          client_timezone: stateTz,
         }),
       })
       const d = await res.json()

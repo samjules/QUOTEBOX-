@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { Resend } from 'resend'
 import { sendSms } from '@/lib/sms'
+import { alaskaWallTimeToUTC } from '@/lib/alaska-time'
+import { timezoneLabel } from '@/lib/us-state-timezones'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://quote-box.com'
 const REMINDER_LEAD_MS = 24 * 60 * 60 * 1000
@@ -47,12 +49,13 @@ function zoomButton(zoomJoinUrl: string | null, label: string): string {
   `
 }
 
-function buildConfirmationEmail(firstName: string, dateLabel: string, timeLabel: string, zoomJoinUrl: string | null): { subject: string; html: string } {
+function buildConfirmationEmail(firstName: string, dateLabel: string, timeLabel: string, zoomJoinUrl: string | null, clientLabel: string | null): { subject: string; html: string } {
   const subject = `You're booked — ${dateLabel} at ${timeLabel} (Quotebox)`
+  const clientPart = clientLabel ? ` (${esc(clientLabel)} your time)` : ''
   const html = emailShell(`
     <h2 style="margin:0 0 16px;font-size:22px;color:#201d3d;">You're all set, ${esc(firstName)}!</h2>
     <p style="margin:0 0 12px;font-size:15px;color:#334155;line-height:1.6;">
-      Your call is booked for <strong>${esc(dateLabel)} at ${esc(timeLabel)} (Alaska Time)</strong>. We'll walk you through exactly how Quotebox would work for your business.
+      Your call is booked for <strong>${esc(dateLabel)} at ${esc(timeLabel)} (Alaska Time)${clientPart}</strong>. We'll walk you through exactly how Quotebox would work for your business.
     </p>
     ${zoomButton(zoomJoinUrl, 'Save Your Zoom Link →')}
     <p style="margin:0;font-size:14px;color:#64748b;line-height:1.6;">
@@ -62,46 +65,61 @@ function buildConfirmationEmail(firstName: string, dateLabel: string, timeLabel:
   return { subject, html }
 }
 
-function buildConfirmationSms(firstName: string, dateLabel: string, timeLabel: string, zoomJoinUrl: string | null): string {
+function buildConfirmationSms(firstName: string, dateLabel: string, timeLabel: string, zoomJoinUrl: string | null, clientLabel: string | null): string {
   const zoomPart = zoomJoinUrl ? ` Zoom link: ${zoomJoinUrl}` : ''
-  return `You're booked, ${firstName}! Quotebox call on ${dateLabel} at ${timeLabel} (Alaska Time).${zoomPart} We'll text a reminder the day before.`
+  const clientPart = clientLabel ? ` (${clientLabel} your time)` : ''
+  return `You're booked, ${firstName}! Quotebox call on ${dateLabel} at ${timeLabel} (Alaska Time)${clientPart}.${zoomPart} We'll text a reminder the day before.`
 }
 
-function buildReminderEmail(firstName: string, dateLabel: string, timeLabel: string, zoomJoinUrl: string | null): { subject: string; html: string } {
+function buildReminderEmail(firstName: string, dateLabel: string, timeLabel: string, zoomJoinUrl: string | null, clientLabel: string | null): { subject: string; html: string } {
   const subject = `Reminder: your Quotebox call is tomorrow at ${timeLabel}`
+  const clientPart = clientLabel ? ` (${esc(clientLabel)} your time)` : ''
   const html = emailShell(`
     <h2 style="margin:0 0 16px;font-size:22px;color:#201d3d;">See you tomorrow, ${esc(firstName)}!</h2>
     <p style="margin:0;font-size:15px;color:#334155;line-height:1.6;">
-      Quick reminder — your Quotebox call is scheduled for <strong>${esc(dateLabel)} at ${esc(timeLabel)} (Alaska Time)</strong>.${zoomJoinUrl ? '' : " We'll call the number you booked with."}
+      Quick reminder — your Quotebox call is scheduled for <strong>${esc(dateLabel)} at ${esc(timeLabel)} (Alaska Time)${clientPart}</strong>.${zoomJoinUrl ? '' : " We'll call the number you booked with."}
     </p>
     ${zoomButton(zoomJoinUrl, 'Join Zoom Call →')}
   `)
   return { subject, html }
 }
 
-function buildReminderSms(firstName: string, timeLabel: string, zoomJoinUrl: string | null): string {
+function buildReminderSms(firstName: string, timeLabel: string, zoomJoinUrl: string | null, clientLabel: string | null): string {
   const zoomPart = zoomJoinUrl ? ` Zoom link: ${zoomJoinUrl}` : ''
-  return `Hey ${firstName} — reminder: your Quotebox call is tomorrow at ${timeLabel} (Alaska Time).${zoomPart} See you then!`
+  const clientPart = clientLabel ? ` (${clientLabel} your time)` : ''
+  return `Hey ${firstName} — reminder: your Quotebox call is tomorrow at ${timeLabel} (Alaska Time)${clientPart}.${zoomPart} See you then!`
 }
 
 function dateLabelFor(scheduledDate: string): string {
   return new Date(scheduledDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 }
 
+// Formats the Alaska-time booking in the client's own local timezone, e.g. "12:00 PM Pacific Time",
+// so confirmation/reminder copy can show both times. Returns null if the client is in Alaska
+// (nothing extra to say) or if no timezone was captured.
+function clientTimeLabel(scheduledDate: string, scheduledTime: string, clientTimezone: string | null | undefined): string | null {
+  if (!clientTimezone || clientTimezone === 'America/Anchorage') return null
+  const utc = alaskaWallTimeToUTC(scheduledDate, scheduledTime)
+  if (!utc) return null
+  const time = new Intl.DateTimeFormat('en-US', { timeZone: clientTimezone, hour: 'numeric', minute: '2-digit', hour12: true }).format(utc)
+  return `${time} ${timezoneLabel(clientTimezone)}`
+}
+
 // Fired immediately after a sales_leads row is booked (scheduled_date/time set).
-export async function sendBookingConfirmation(lead: { id: string; name: string; email: string; phone: string | null; scheduled_date: string; scheduled_time: string; zoom_join_url?: string | null }) {
+export async function sendBookingConfirmation(lead: { id: string; name: string; email: string; phone: string | null; scheduled_date: string; scheduled_time: string; zoom_join_url?: string | null; client_timezone?: string | null }) {
   const admin = createAdminClient()
   const firstName = lead.name.trim().split(/\s+/)[0] || 'there'
   const dateLabel = dateLabelFor(lead.scheduled_date)
   const timeLabel = lead.scheduled_time
   const zoomJoinUrl = lead.zoom_join_url ?? null
+  const clientLabel = clientTimeLabel(lead.scheduled_date, lead.scheduled_time, lead.client_timezone)
 
   const apiKey = process.env.RESEND_API_KEY
   const from = process.env.RESEND_FROM_EMAIL || 'Sam at QuoteBox <sam@quote-box.com>'
   if (apiKey) {
     try {
       const resend = new Resend(apiKey)
-      const { subject, html } = buildConfirmationEmail(firstName, dateLabel, timeLabel, zoomJoinUrl)
+      const { subject, html } = buildConfirmationEmail(firstName, dateLabel, timeLabel, zoomJoinUrl, clientLabel)
       const { error: sendError } = await resend.emails.send({ from, to: lead.email, subject, html })
       if (sendError) console.error('Sales lead booking confirmation email rejected by Resend:', sendError)
     } catch (err) {
@@ -111,7 +129,7 @@ export async function sendBookingConfirmation(lead: { id: string; name: string; 
     console.error('Sales lead booking confirmation email skipped: RESEND_API_KEY not set')
   }
   if (lead.phone) {
-    await sendSms(lead.phone, buildConfirmationSms(firstName, dateLabel, timeLabel, zoomJoinUrl))
+    await sendSms(lead.phone, buildConfirmationSms(firstName, dateLabel, timeLabel, zoomJoinUrl, clientLabel))
   }
   await admin.from('sales_leads').update({ confirmation_sent_at: new Date().toISOString() }).eq('id', lead.id)
 }
@@ -123,7 +141,7 @@ export async function processSalesLeadReminders(): Promise<{ reminded: number }>
 
   const { data: due } = await admin
     .from('sales_leads')
-    .select('id, name, email, phone, scheduled_date, scheduled_time, scheduled_at, zoom_join_url')
+    .select('id, name, email, phone, scheduled_date, scheduled_time, scheduled_at, zoom_join_url, client_timezone')
     .is('reminder_sent_at', null)
     .not('scheduled_at', 'is', null)
     .lte('scheduled_at', reminderCutoff)
@@ -148,11 +166,12 @@ export async function processSalesLeadReminders(): Promise<{ reminded: number }>
     const dateLabel = dateLabelFor(lead.scheduled_date)
     const timeLabel = lead.scheduled_time
     const zoomJoinUrl = lead.zoom_join_url ?? null
+    const clientLabel = clientTimeLabel(lead.scheduled_date, lead.scheduled_time, lead.client_timezone)
 
     if (apiKey) {
       try {
         const resend = new Resend(apiKey)
-        const { subject, html } = buildReminderEmail(firstName, dateLabel, timeLabel, zoomJoinUrl)
+        const { subject, html } = buildReminderEmail(firstName, dateLabel, timeLabel, zoomJoinUrl, clientLabel)
         const { error: sendError } = await resend.emails.send({ from, to: lead.email, subject, html })
         if (sendError) console.error('Sales lead reminder email rejected by Resend:', sendError)
       } catch (err) {
@@ -160,7 +179,7 @@ export async function processSalesLeadReminders(): Promise<{ reminded: number }>
       }
     }
     if (lead.phone) {
-      await sendSms(lead.phone, buildReminderSms(firstName, timeLabel, zoomJoinUrl))
+      await sendSms(lead.phone, buildReminderSms(firstName, timeLabel, zoomJoinUrl, clientLabel))
     }
     reminded++
   }

@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
-    const { name, email, phone, scheduled_date, scheduled_time, notes } = body
+    const { name, email, phone, scheduled_date, scheduled_time, notes, client_timezone } = body
 
     if (!name || !email || !scheduled_date || !scheduled_time) {
       return NextResponse.json({ error: 'Name, email, date, and time are required' }, { status: 400 })
@@ -56,12 +56,13 @@ export async function POST(req: NextRequest) {
       notes: notes || null,
       zoom_meeting_id: zoomMeetingId,
       zoom_join_url: zoomJoinUrl,
+      client_timezone: client_timezone || null,
     }).select().single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
     try {
-      await sendBookingConfirmation({ id: data.id, name, email, phone: phone || null, scheduled_date, scheduled_time, zoom_join_url: zoomJoinUrl })
+      await sendBookingConfirmation({ id: data.id, name, email, phone: phone || null, scheduled_date, scheduled_time, zoom_join_url: zoomJoinUrl, client_timezone: client_timezone || null })
     } catch (err) {
       console.error('Book-call confirmation error:', err)
     }
