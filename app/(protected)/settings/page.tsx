@@ -9,6 +9,9 @@
 //
 // LEADERBOARD MIGRATION — run once before the leaderboard opt-out toggle works:
 //   ALTER TABLE accounts ADD COLUMN IF NOT EXISTS leaderboard_hidden BOOLEAN NOT NULL DEFAULT FALSE;
+//
+// LTV CALCULATOR MIGRATION — run once before the LTV calculator toggle works:
+//   ALTER TABLE accounts ADD COLUMN IF NOT EXISTS ltv_calculator_hidden BOOLEAN NOT NULL DEFAULT FALSE;
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -93,6 +96,10 @@ export default function SettingsPage() {
   const [leaderboardHidden, setLeaderboardHidden] = useState(false)
   const [savingLeaderboard, setSavingLeaderboard] = useState(false)
 
+  // LTV calculator visibility state
+  const [ltvCalculatorHidden, setLtvCalculatorHidden] = useState(false)
+  const [savingLtvCalculator, setSavingLtvCalculator] = useState(false)
+
   // Delete account state
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
@@ -175,6 +182,7 @@ export default function SettingsPage() {
         setStripeConnectAccountId(account.stripe_connect_account_id ?? null)
         setAgreementTemplateUrl(account.agreement_template_url ?? null)
         setLeaderboardHidden(account.leaderboard_hidden ?? false)
+        setLtvCalculatorHidden(account.ltv_calculator_hidden ?? false)
 
         // Load team members
         const { data: members } = await supabase
@@ -557,6 +565,23 @@ export default function SettingsPage() {
       setTimeout(() => setMessage(''), 3000)
     } else {
       setMessage('Error: Failed to update leaderboard preference')
+    }
+  }
+
+  async function handleToggleLtvCalculator(hidden: boolean) {
+    if (!accountId) return
+    setSavingLtvCalculator(true)
+    const { error } = await supabase
+      .from('accounts')
+      .update({ ltv_calculator_hidden: hidden })
+      .eq('id', accountId)
+    setSavingLtvCalculator(false)
+    if (!error) {
+      setLtvCalculatorHidden(hidden)
+      setMessage(hidden ? 'LTV Calculator hidden from your dashboard.' : 'LTV Calculator is now visible on your dashboard.')
+      setTimeout(() => setMessage(''), 3000)
+    } else {
+      setMessage('Error: Failed to update LTV Calculator preference')
     }
   }
 
@@ -1246,6 +1271,41 @@ export default function SettingsPage() {
                 <span
                   className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition duration-200 ease-in-out ${
                     leaderboardHidden ? 'translate-x-0' : 'translate-x-5'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
+          {/* LTV Calculator Visibility */}
+          <div className="bg-white shadow rounded-xl p-6">
+            <h2 className="text-lg font-medium text-gray-900 mb-1">LTV Calculator</h2>
+            <p className="text-sm text-gray-500 mb-5">
+              Control whether the LTV Calculator card appears on your dashboard.
+            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-700">
+                  {ltvCalculatorHidden ? 'Hidden from dashboard' : 'Visible on dashboard'}
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {ltvCalculatorHidden
+                    ? 'The LTV Calculator card is not shown on your dashboard.'
+                    : 'The LTV Calculator card is shown on your dashboard when data is available.'}
+                </p>
+              </div>
+              <button
+                onClick={() => handleToggleLtvCalculator(!ltvCalculatorHidden)}
+                disabled={savingLtvCalculator}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${
+                  ltvCalculatorHidden ? 'bg-gray-300' : 'bg-brand-600'
+                }`}
+                role="switch"
+                aria-checked={!ltvCalculatorHidden}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition duration-200 ease-in-out ${
+                    ltvCalculatorHidden ? 'translate-x-0' : 'translate-x-5'
                   }`}
                 />
               </button>

@@ -27,6 +27,28 @@ const PLANS = {
   },
 }
 
+// Current public pricing (quote-box.com/pricing) — replaces the old $1 trial funnel.
+const NEW_PLANS: Record<string, { name: string; description: string; amount: number; mode: 'subscription' | 'payment' }> = {
+  software_99: {
+    name: 'Quotebox — Software',
+    description: 'Instant quote forms, CRM, SMS/email follow-up, and the iOS app.',
+    amount: 9900,
+    mode: 'subscription',
+  },
+  ad_setup_350: {
+    name: 'Paid Ad Campaign Setup',
+    description: 'One-time setup of your Meta/Google paid ad campaign — targeting, creative, and tracking.',
+    amount: 35000,
+    mode: 'payment',
+  },
+  fully_managed_750: {
+    name: 'Quotebox — Fully Managed',
+    description: 'Software plus done-for-you ad management, lead follow-up, and CRM upkeep.',
+    amount: 75000,
+    mode: 'subscription',
+  },
+}
+
 const TRIAL_1_COUPON_ID = 'trial-1-dollar-1mo'
 
 async function ensureTrialCoupon(): Promise<string> {
@@ -58,6 +80,40 @@ serve(async (req) => {
     }
 
     const origin = req.headers.get('origin') || 'https://quote-box.com'
+
+    // Current public pricing — $99/mo software, $350 one-time ad setup, $750/mo fully managed.
+    if (plan in NEW_PLANS) {
+      const cfg = NEW_PLANS[plan as keyof typeof NEW_PLANS]
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: cfg.name,
+                description: cfg.description,
+              },
+              unit_amount: cfg.amount,
+              ...(cfg.mode === 'subscription' ? { recurring: { interval: 'month' } } : {}),
+            },
+            quantity: 1,
+          },
+        ],
+        mode: cfg.mode,
+        success_url: successUrl || `${origin}/build/confirm?session_id={CHECKOUT_SESSION_ID}&account_id=${accountId}`,
+        cancel_url: cancelUrl || `${origin}/dashboard?checkout=cancelled`,
+        metadata: { accountId, userId, plan },
+      })
+
+      console.log('Pricing checkout session created:', session.id, 'plan:', plan)
+
+      return new Response(
+        JSON.stringify({ sessionId: session.id, url: session.url }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      )
+    }
 
     // $1 trial: $34/mo recurring, discounted to $1 for the first month via a repeating coupon,
     // plus an optional one-time $297 "done for you" setup line in the same checkout session.

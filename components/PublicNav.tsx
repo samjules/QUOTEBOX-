@@ -31,17 +31,20 @@ export default function PublicNav() {
         <Link href="/contractor-leads" style={{ fontSize: '0.88rem', fontWeight: 500, color: '#555', textDecoration: 'none' }}>
           Moving & Junk Removal
         </Link>
+        <Link href="/pricing" style={{ fontSize: '0.88rem', fontWeight: 500, color: '#555', textDecoration: 'none' }}>
+          Pricing
+        </Link>
         <Link href="/agency" style={{ fontSize: '0.88rem', fontWeight: 500, color: '#555', textDecoration: 'none' }}>
           Done for you
         </Link>
         <Link href="/login" style={{ fontSize: '0.88rem', fontWeight: 500, color: '#555', textDecoration: 'none' }}>
           Log in
         </Link>
-        <Link href="/build" style={{
+        <Link href="/pricing" style={{
           fontSize: '0.88rem', fontWeight: 600, padding: '8px 18px',
           background: '#201d3d', color: '#f4a93c', borderRadius: 8, textDecoration: 'none',
         }}>
-          Try for $1
+          Get Started
         </Link>
       </div>
     </nav>

@@ -11,17 +11,48 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const VERIFY_SESSION_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/verify-subscription-session`
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-// Only the $1→$34/mo trial (+ optional $297 done-for-you setup) is sold going forward.
-// Legacy plans are label-only here — existing accounts on them keep working, just
-// with no price asserted that could go stale, and no path to newly subscribe to them.
+// Current public pricing (quote-box.com/pricing): $99/mo software, $350 one-time ad
+// setup, $750/mo fully managed. Legacy plans are label-only here — existing accounts
+// on them keep working, just with no price asserted that could go stale, and no path
+// to newly subscribe to them.
 const PLAN_INFO: Record<string, { label: string; detail: string }> = {
-  trial: { label: 'Trial', detail: 'Started at $1 · billed at $34/month' },
-  starter: { label: 'Starter', detail: 'Full platform access' },
+  trial: { label: 'Trial', detail: 'Legacy trial plan' },
+  starter: { label: 'Software', detail: '$99/month · Full platform access' },
   growth: { label: 'Growth', detail: 'Full platform access · Unlimited leads' },
-  fully_managed: { label: 'Fully Managed', detail: 'Full platform access · Unlimited leads' },
+  fully_managed: { label: 'Fully Managed', detail: '$750/month · Full platform access · Unlimited leads' },
   pay_per_lead: { label: 'Retainer', detail: '$15 per booked lead' },
   pro: { label: 'Pro', detail: 'Full platform access · Unlimited leads' },
 }
+
+const NEW_PLANS = [
+  {
+    id: 'software_99',
+    label: 'Software',
+    price: '$99',
+    cadence: '/month',
+    detail: 'Everything you need to run instant quotes, CRM, and follow-up.',
+    features: ['Branded instant quote form', 'Unlimited leads', 'Instant SMS + email follow-up', 'Full CRM & lead pipeline', 'iOS app access'],
+    cta: 'Get Started — $99/mo',
+  },
+  {
+    id: 'ad_setup_350',
+    label: 'Paid Ad Campaign Setup',
+    price: '$350',
+    cadence: 'one-time',
+    detail: 'We build and launch your Meta/Google paid ad campaign.',
+    features: ['Campaign targeting & budget setup', 'Ad creative built for your brand', 'Conversion tracking wired into your CRM'],
+    cta: 'Get Started — $350',
+  },
+  {
+    id: 'fully_managed_750',
+    label: 'Fully Managed',
+    price: '$750',
+    cadence: '/month',
+    detail: 'Software plus done-for-you ad management and lead follow-up.',
+    features: ['Everything in Software', 'Done-for-you ad management', 'Ongoing CRM & pipeline upkeep'],
+    cta: 'Get Started — $750/mo',
+  },
+] as const
 
 export default function BillingPage() {
   const searchParams = useSearchParams()
@@ -29,7 +60,6 @@ export default function BillingPage() {
 
   const [accountId, setAccountId] = useState<string | null>(null)
   const [plan, setPlan] = useState<string | null>(null)
-  const [upsell, setUpsell] = useState(false)
   const [blessed, setBlessed] = useState(false)
   const [totalLeads, setTotalLeads] = useState(0)
   const [monthlyLeads, setMonthlyLeads] = useState(0)
@@ -131,13 +161,13 @@ export default function BillingPage() {
     }
   }, [searchParams, accountId, loadBillingData])
 
-  async function subscribe() {
+  async function subscribe(planId: string) {
     setSubscribing(true)
     try {
       const response = await fetch('/api/build/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accountId, upsell }),
+        body: JSON.stringify({ accountId, plan: planId }),
       })
       const data = await response.json()
       if (!response.ok || !data.url) throw new Error(data.error ?? `HTTP error! status: ${response.status}`)
@@ -220,74 +250,46 @@ export default function BillingPage() {
           </div>
         )}
 
-        {/* Trial offer card — shown when not yet subscribed. This is the only plan sold now. */}
+        {/* Plan picker — shown when not yet subscribed. */}
         {!isActive && (
-          <div
-            className="bg-white rounded-2xl p-8 mb-6"
-            style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)' }}
-          >
-            <span
-              className="inline-block px-3 py-1 text-xs font-bold rounded-full mb-4"
-              style={{ background: 'rgba(91,91,214,0.1)', color: '#5b5bd6' }}
-            >
-              TRIAL
-            </span>
-            <div className="flex items-end gap-2 mb-2">
-              <span className="text-5xl font-bold text-gray-900">$1</span>
-              <span className="text-gray-400 mb-2">first month, then $34/month</span>
-            </div>
-            <p className="text-gray-500 text-sm mb-6">
-              Everything you need to start booking jobs from your own quote form
-            </p>
-            <ul className="space-y-3 mb-6">
-              {[
-                'Branded instant quote form',
-                'Unlimited leads',
-                'Instant SMS + email follow-up',
-                'Full CRM & lead pipeline',
-                'iOS app access',
-              ].map((feature) => (
-                <li key={feature} className="flex items-center gap-3 text-sm text-gray-700">
-                  <svg
-                    className="w-4 h-4 flex-shrink-0"
-                    style={{ color: '#5b5bd6' }}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  {feature}
-                </li>
-              ))}
-            </ul>
-
-            <label className="flex items-start gap-3 mb-6 p-4 rounded-xl cursor-pointer" style={{ background: '#f9fafb', border: '1px solid #e5e7eb' }}>
-              <input
-                type="checkbox"
-                checked={upsell}
-                onChange={(e) => setUpsell(e.target.checked)}
-                className="mt-0.5"
-              />
-              <span className="text-sm text-gray-700">
-                <span className="font-semibold text-gray-900">Add done-for-you setup — $297 one-time.</span>{' '}
-                Our team configures your SMS/email sequence, pricing rules, and CRM pipeline for you.
-              </span>
-            </label>
-
-            <button
-              onClick={subscribe}
-              disabled={subscribing}
-              className="px-8 py-3 rounded-xl text-sm font-bold text-white transition disabled:opacity-60 disabled:cursor-not-allowed active:scale-95"
-              style={{ background: 'linear-gradient(135deg, #5b5bd6 0%, #4c4cbf 100%)' }}
-            >
-              {subscribing ? 'Redirecting to checkout…' : upsell ? 'Continue — $1 + $297 setup' : 'Get Started — $1'}
-            </button>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {NEW_PLANS.map((p) => (
+              <div
+                key={p.id}
+                className="bg-white rounded-2xl p-6 flex flex-col"
+                style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)' }}
+              >
+                <span
+                  className="inline-block px-3 py-1 text-xs font-bold rounded-full mb-4 self-start"
+                  style={{ background: 'rgba(91,91,214,0.1)', color: '#5b5bd6' }}
+                >
+                  {p.label.toUpperCase()}
+                </span>
+                <div className="flex items-end gap-2 mb-2">
+                  <span className="text-4xl font-bold text-gray-900">{p.price}</span>
+                  <span className="text-gray-400 mb-1">{p.cadence}</span>
+                </div>
+                <p className="text-gray-500 text-sm mb-5">{p.detail}</p>
+                <ul className="space-y-2.5 mb-6 flex-1">
+                  {p.features.map((feature) => (
+                    <li key={feature} className="flex items-center gap-2.5 text-sm text-gray-700">
+                      <svg className="w-4 h-4 flex-shrink-0" style={{ color: '#5b5bd6' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  onClick={() => subscribe(p.id)}
+                  disabled={subscribing}
+                  className="px-6 py-3 rounded-xl text-sm font-bold text-white transition disabled:opacity-60 disabled:cursor-not-allowed active:scale-95"
+                  style={{ background: 'linear-gradient(135deg, #5b5bd6 0%, #4c4cbf 100%)' }}
+                >
+                  {subscribing ? 'Redirecting…' : p.cta}
+                </button>
+              </div>
+            ))}
           </div>
         )}
 

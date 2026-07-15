@@ -15,10 +15,14 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 )
 
-const PLAN_MAP: Record<string, 'pro' | 'pay_per_lead' | 'trial'> = {
+const PLAN_MAP: Record<string, 'pro' | 'pay_per_lead' | 'trial' | 'starter' | 'fully_managed'> = {
   pro: 'pro',
   ppl_onboarding: 'pay_per_lead',
   trial_1: 'trial',
+  // Current public pricing (quote-box.com/pricing)
+  software_99: 'starter',
+  ad_setup_350: 'starter',
+  fully_managed_750: 'fully_managed',
 }
 
 const corsHeaders = {

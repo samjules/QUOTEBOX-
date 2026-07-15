@@ -290,7 +290,7 @@ export default async function DashboardPage({
   const roas = metaAdSpend !== null && metaAdSpend > 0 ? bookedPipeline / metaAdSpend : null
   const profitPerLead = costPerLead !== null ? valuePerLead - costPerLead : null
   const bookingRate = totalLeads > 0 ? (bookedLeads / totalLeads) * 100 : 0
-  const showHormoziCard = bookedLeads > 0 || (metaAdSpend !== null && metaAdSpend > 0)
+  const showHormoziCard = !account.ltv_calculator_hidden && (bookedLeads > 0 || (metaAdSpend !== null && metaAdSpend > 0))
 
   const blessed = billing?.blessed === true
   const metaConnected = !!account.meta_access_token

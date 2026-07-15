@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Space_Grotesk, Inter } from 'next/font/google'
 import { QRCodeSVG } from 'qrcode.react'
 import { trackBuildEvent } from '@/lib/track-build-event'
+import { PLAN_DEFS, type PlanId } from './plans'
 
 const APPLE_APP_URL = 'https://apps.apple.com/us/app/quote-box-lead-machine/id6761129794'
 
@@ -39,16 +40,20 @@ function BrowserShot({ src, alt, url, glow }: { src: string; alt: string; url: s
   )
 }
 
-const FAQS = [
-  { q: 'Is this really $1, or is there a catch?', a: "It's $1 for your first month — full access, no feature limits. After that, it renews at the normal $34/month rate. Cancel anytime before your first renewal and you're never charged again." },
-  { q: 'Do I need to be technical to set this up?', a: 'No. Most owners have their branded quote form live in under 10 minutes using our guided setup. If you get stuck, our team will build it with you on a quick call at no charge.' },
-  { q: 'What happens after I sign up?', a: "You'll land in your dashboard immediately. From there you can build your quote form, connect your number for SMS, and start collecting leads the same day." },
-  { q: 'Does this replace my Facebook/Google ads?', a: 'No — Quotebox is where your leads land and get followed up with automatically. If you want us to also run your ad campaigns, that\'s available separately once you\'re set up.' },
-  { q: 'Can I cancel anytime?', a: "Yes. There's no contract. Cancel from your dashboard in a couple of clicks, whenever you want." },
-] as const
+function faqsForPlan(planDef: (typeof PLAN_DEFS)[PlanId]) {
+  return [
+    { q: `Is it really ${planDef.priceLabel}, or is there a catch?`, a: `It's ${planDef.priceLabel} — full access, no feature limits, no hidden fees. Cancel anytime, no contract.` },
+    { q: 'Do I need to be technical to set this up?', a: 'No. Most owners have their branded quote form live in under 10 minutes using our guided setup. If you get stuck, our team will build it with you on a quick call at no charge.' },
+    { q: 'What happens after I sign up?', a: "You'll land in your dashboard immediately. From there you can build your quote form, connect your number for SMS, and start collecting leads the same day." },
+    { q: 'Does this replace my Facebook/Google ads?', a: 'No — Quotebox is where your leads land and get followed up with automatically. If you want us to also run your ad campaigns, our Paid Ad Campaign Setup and Fully Managed plans cover that.' },
+    { q: 'Can I cancel anytime?', a: "Yes. There's no contract. Cancel from your dashboard in a couple of clicks, whenever you want." },
+  ] as const
+}
 
-export default function TrialLanding({ onStart }: { onStart: (upsell?: never) => void }) {
+export default function TrialLanding({ plan, onStart }: { plan: PlanId; onStart: () => void }) {
   const [showSticky, setShowSticky] = useState(false)
+  const planDef = PLAN_DEFS[plan]
+  const FAQS = faqsForPlan(planDef)
 
   // Funnel analytics — one row per landing-page view, compared against accounts
   // actually created (accounts.signup_source = 'build'). Raw data only for now;
@@ -74,11 +79,11 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
         <div className="hero-text">
           <div className="eyebrow"><span className="dot" /> Take the pledge</div>
           <h1 className="headline">Pledge your next <span className="accent">booked job.</span><br />We&apos;ll build you the strategy to get it.</h1>
-          <p className="sub">Every service business starts the same way — with one goal: the next booked job. Quotebox gives you the instant-quote form, automatic follow-up, and lead pipeline that turn that pledge into a real, trackable strategy — not a hope. Try the full platform for <strong>$1 for your first month</strong>, instead of $34/month.</p>
+          <p className="sub">Every service business starts the same way — with one goal: the next booked job. Quotebox gives you the instant-quote form, automatic follow-up, and lead pipeline that turn that pledge into a real, trackable strategy — not a hope. Get started with <strong>{planDef.name} — {planDef.priceLabel}</strong>.</p>
           <button className="cta-btn" onClick={() => { trackBuildEvent('landing_hero'); onStart() }}>Make My Pledge →</button>
           <span className="cta-sub">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#34d399" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            Cancel anytime · Then $34/mo · Live in under 10 minutes
+            {planDef.checkoutNote} · Live in under 10 minutes
           </span>
         </div>
         <div className="hero-visual">
@@ -187,38 +192,43 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
         </div>
         <div className="stack-wrap">
           <div className="receipt">
-            <div className="stamp">1st month</div>
+            <div className="stamp">{planDef.name}</div>
             <div className="receipt-head">
               <div className="rlogo" />
               <h3>Quotebox Order Summary</h3>
               <span>Booked-Job Growth System</span>
             </div>
-            {[
-              ['Branded instant quote form', 'Multi-step form with your logo, pricing rules, and up to 1,000 leads/mo capacity', '49'],
-              ['Instant SMS + email follow-up', 'Every new lead contacted automatically, the moment they submit', '97'],
-              ['Meta Ads sync & analytics', 'Spend, leads, and cost-per-lead in one dashboard, tied to real bookings', '79'],
-              ['Full CRM & lead pipeline', 'Every lead, quote, and job tracked from first contact to booked', '59'],
-              ['Route & pricing calculator', 'Auto-quotes distance, crew size, and job type', '39'],
-              ['iOS app access', 'Quote and follow up from the job site', '29'],
-            ].map(([name, desc, was]) => (
+            {(plan === 'ad_setup_350'
+              ? [
+                  ['Meta/Google ad campaign build', 'Targeting, budget, and campaign structure set up for your area'],
+                  ['Ad creative', 'Scroll-stopping creative built for your service and brand'],
+                  ['Conversion tracking', 'Pixel + lead-form tracking wired into your CRM'],
+                ]
+              : [
+                  ['Branded instant quote form', 'Multi-step form with your logo, pricing rules, and up to 1,000 leads/mo capacity'],
+                  ['Instant SMS + email follow-up', 'Every new lead contacted automatically, the moment they submit'],
+                  ['Meta Ads sync & analytics', 'Spend, leads, and cost-per-lead in one dashboard, tied to real bookings'],
+                  ['Full CRM & lead pipeline', 'Every lead, quote, and job tracked from first contact to booked'],
+                  ['Route & pricing calculator', 'Auto-quotes distance, crew size, and job type'],
+                  ['iOS app access', 'Quote and follow up from the job site'],
+                  ...(plan === 'fully_managed_750'
+                    ? [['Done-for-you ad management', 'Our team runs and optimizes your paid ad campaigns for you']]
+                    : []),
+                ]
+            ).map(([name, desc]) => (
               <div className="rline" key={name}>
                 <div className="rname">{name}<small>{desc}</small></div>
-                <div className="rprice"><span className="was">${was}</span>$0</div>
               </div>
             ))}
-            <div className="rtotal">
-              <div className="label">Total monthly value</div>
-              <div className="value">$352</div>
-            </div>
             <div className="due">
               <div className="label">Due today</div>
-              <div className="amt">$1<sup>1st mo</sup></div>
+              <div className="amt">{planDef.dueToday}</div>
             </div>
           </div>
         </div>
         <div style={{ textAlign: 'center', marginTop: 38 }}>
           <button className="cta-btn" onClick={() => { trackBuildEvent('landing_offer'); onStart() }}>Make My Pledge →</button>
-          <span className="cta-sub" style={{ display: 'block', marginTop: 14 }}>Renews at $34/mo after your first month · Cancel anytime, no questions asked</span>
+          <span className="cta-sub" style={{ display: 'block', marginTop: 14 }}>{planDef.checkoutNote} · No questions asked</span>
         </div>
       </section>
 
@@ -280,7 +290,7 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
           </div>
           <div>
             <h3>The &quot;Live In 10 Minutes&quot; guarantee</h3>
-            <p>Get your branded quote form live within 10 minutes, or our team will build it with you free on a call. Not happy after trying it? Cancel anytime during your $1 trial — no contract, no hoops, keep whatever you&apos;ve already collected in your CRM.</p>
+            <p>Get your branded quote form live within 10 minutes, or our team will build it with you free on a call. Not happy after trying it? Cancel anytime — no contract, no hoops, keep whatever you&apos;ve already collected in your CRM.</p>
           </div>
         </div>
       </section>
@@ -325,7 +335,7 @@ export default function TrialLanding({ onStart }: { onStart: (upsell?: never) =>
       <footer>Quotebox is a product of Arctic Reach LLC. © 2026 Quotebox. All rights reserved.</footer>
 
       <div className={`sticky-bar ${showSticky ? 'show' : ''}`}>
-        <div className="txt">Take the pledge — first month just <b>$1</b></div>
+        <div className="txt">Take the pledge — <b>{planDef.priceLabel}</b></div>
         <button className="cta-btn" onClick={() => { trackBuildEvent('landing_sticky'); onStart() }}>Make My Pledge →</button>
       </div>
 

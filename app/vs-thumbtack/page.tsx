@@ -95,11 +95,11 @@ export default function VsThumbthackPage() {
           <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.75)', lineHeight: 1.75, marginBottom: 40, maxWidth: 580, margin: '0 auto 40px' }}>
             Thumbtack sends your lead to five competitors and charges you to bid whether you win or lose. Quotebox gives you your own branded quote form, automatic follow-up, and CRM for a flat $34/month — no bidding, ever.
           </p>
-          <Link href="/build" style={{
+          <Link href="/pricing" style={{
             background: '#f4a93c', color: '#201d3d', fontWeight: 800,
             padding: '14px 32px', borderRadius: 10, textDecoration: 'none', fontSize: '1rem',
           }}>
-            Try Quotebox for $1 →
+            See Pricing →
           </Link>
         </div>
       </section>
@@ -187,14 +187,14 @@ export default function VsThumbthackPage() {
             Ready to stop bidding?
           </h2>
           <p style={{ color: '#201d3d', opacity: 0.75, marginBottom: 32, fontSize: '1.05rem', lineHeight: 1.65 }}>
-            Try Quotebox for $1 your first month and get exclusive moving and junk removal leads through your own branded form — without ever competing against five other companies for the same job.
+            Get Quotebox starting at $99/month and get exclusive moving and junk removal leads through your own branded form — without ever competing against five other companies for the same job.
           </p>
-          <Link href="/build" style={{
+          <Link href="/pricing" style={{
             display: 'inline-block', background: '#201d3d', color: '#f4a93c',
             fontWeight: 800, padding: '16px 40px', borderRadius: 10,
             textDecoration: 'none', fontSize: '1.05rem',
           }}>
-            Try Quotebox for $1 →
+            See Pricing →
           </Link>
         </div>
       </section>

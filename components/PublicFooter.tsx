@@ -15,6 +15,7 @@ const compareLinks = [
 
 const companyLinks = [
   { label: 'Home', href: '/' },
+  { label: 'Pricing', href: '/pricing' },
   { label: 'Done for You', href: '/agency' },
   { label: 'Moving Management', href: '/moving-management' },
   { label: 'Log in', href: '/login' },
@@ -56,7 +57,7 @@ export default function PublicFooter() {
               A product of Arctic Reach LLC
             </div>
             <p style={{ fontSize: '0.83rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, maxWidth: 220, margin: 0 }}>
-              Instant quote forms, CRM, and mobile app for moving, junk removal, pressure washing, and auto detailing businesses. $1 your first month, then $34/mo.
+              Instant quote forms, CRM, and mobile app for moving, junk removal, pressure washing, and auto detailing businesses. Plans from $99/mo.
             </p>
           </div>
 

@@ -37,17 +37,20 @@ export default function LandingPage() {
           <Link href="/contractor-leads" style={{ fontSize: '0.88rem', fontWeight: 500, color: '#555', textDecoration: 'none' }}>
             Moving & Junk Removal
           </Link>
+          <Link href="/pricing" style={{ fontSize: '0.88rem', fontWeight: 500, color: '#555', textDecoration: 'none' }}>
+            Pricing
+          </Link>
           <Link href="/agency" style={{ fontSize: '0.88rem', fontWeight: 500, color: '#555', textDecoration: 'none' }}>
             Done for you
           </Link>
           <Link href="/login" style={{ fontSize: '0.88rem', fontWeight: 500, color: '#555', textDecoration: 'none' }}>
             Log in
           </Link>
-          <Link href="/build" style={{
+          <Link href="/pricing" style={{
             fontSize: '0.88rem', fontWeight: 600, padding: '8px 18px',
             background: '#201d3d', color: '#f4a93c', borderRadius: 8, textDecoration: 'none',
           }}>
-            Try for $1
+            Get Started
           </Link>
         </div>
       </nav>
@@ -72,7 +75,7 @@ export default function LandingPage() {
               fontSize: '0.73rem', fontWeight: 800, letterSpacing: '0.08em',
               textTransform: 'uppercase', padding: '5px 14px', borderRadius: 99, marginBottom: 28,
             }}>
-              <span>★</span> $1 First Month · Then $34/mo · Cancel Anytime
+              <span>★</span> Plans From $99/mo · Cancel Anytime
             </div>
             <h1 style={{
               fontFamily: "'Nautic', sans-serif", fontSize: 'clamp(2.6rem, 5.5vw, 4.4rem)',
@@ -82,15 +85,15 @@ export default function LandingPage() {
               Run it all from your phone.
             </h1>
             <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.68)', lineHeight: 1.75, marginBottom: 38, maxWidth: 480 }}>
-              Build a branded quote form for your moving or junk removal business in minutes. Instant-quote form, CRM, and iOS &amp; Android app, all in one — try the full platform for <strong style={{ color: '#fff' }}>$1 your first month</strong>, instead of $34/month.
+              Build a branded quote form for your moving or junk removal business in minutes. Instant-quote form, CRM, and iOS &amp; Android app, all in one — run it yourself for <strong style={{ color: '#fff' }}>$99/month</strong>, or have us build your ad campaign and manage it for you.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <Link href="/build" style={{
+              <Link href="/pricing" style={{
                 padding: '16px 36px', background: '#f4a93c', color: '#201d3d',
                 fontWeight: 800, fontSize: '1.05rem', borderRadius: 10, textDecoration: 'none',
                 fontFamily: "'Nautic', sans-serif", letterSpacing: '0.03em',
               }}>
-                Try Quotebox for $1 →
+                See Pricing →
               </Link>
             </div>
             <p style={{ marginTop: 18, fontSize: '0.82rem', color: 'rgba(255,255,255,0.35)' }}>
@@ -161,7 +164,7 @@ export default function LandingPage() {
         background: '#f4a93c', padding: '13px 24px', textAlign: 'center',
         fontSize: '0.88rem', fontWeight: 700, color: '#201d3d', letterSpacing: '0.01em',
       }}>
-        Instant Quote Form · CRM · iOS &amp; Android App · $1 Your First Month, Then $34/mo
+        Instant Quote Form · CRM · iOS &amp; Android App · Plans From $99/mo
       </div>
 
       {/* ── How the form works (4 steps) ── */}
@@ -239,13 +242,13 @@ export default function LandingPage() {
           </div>
 
           <div style={{ textAlign: 'center', marginTop: 52 }}>
-            <Link href="/build" style={{
+            <Link href="/pricing" style={{
               display: 'inline-block', padding: '15px 36px',
               background: '#201d3d', color: '#f4a93c',
               fontWeight: 800, fontSize: '1rem', borderRadius: 10, textDecoration: 'none',
               fontFamily: "'Nautic', sans-serif", letterSpacing: '0.03em',
             }}>
-              Try Quotebox for $1 →
+              See Pricing →
             </Link>
             <p style={{ marginTop: 12, fontSize: '0.78rem', color: '#9ca3af' }}>Cancel anytime</p>
           </div>
@@ -745,13 +748,13 @@ export default function LandingPage() {
                 </div>
               ))}
             </div>
-            <Link href="/build" style={{
+            <Link href="/pricing" style={{
               display: 'inline-block', padding: '14px 32px',
               background: '#f4a93c', color: '#201d3d',
               fontWeight: 800, fontSize: '0.95rem', borderRadius: 10, textDecoration: 'none',
               fontFamily: "'Nautic', sans-serif", letterSpacing: '0.03em',
             }}>
-              Try Quotebox for $1 →
+              See Pricing →
             </Link>
           </div>
 
@@ -788,20 +791,20 @@ export default function LandingPage() {
             fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.1em',
             textTransform: 'uppercase', padding: '5px 14px', borderRadius: 99, marginBottom: 24,
           }}>
-            $1 first month · Then $34/mo
+            Plans from $99/mo
           </div>
           <h2 style={{ fontFamily: "'Nautic', sans-serif", fontSize: 'clamp(2.2rem, 5vw, 3.4rem)', fontWeight: 800, color: '#201d3d', marginBottom: 16, lineHeight: 1.08 }}>
             Build your instant quote form now.
           </h2>
           <p style={{ fontSize: '1.05rem', color: 'rgba(14,0,32,0.65)', lineHeight: 1.75, marginBottom: 40, maxWidth: 520, margin: '0 auto 40px' }}>
-            Instant-quote form, CRM, and mobile app, all in one. Just $1 for your first month. Start collecting leads from your first share.
+            Instant-quote form, CRM, and mobile app, all in one. Start collecting leads from your first share.
           </p>
-          <Link href="/build" style={{
+          <Link href="/pricing" style={{
             display: 'inline-block', padding: '18px 48px', background: '#201d3d',
             color: '#f4a93c', fontWeight: 800, fontSize: '1.1rem', borderRadius: 10,
             textDecoration: 'none', fontFamily: "'Nautic', sans-serif", letterSpacing: '0.03em',
           }}>
-            Try Quotebox for $1 →
+            See Pricing →
           </Link>
           <p style={{ marginTop: 16, fontSize: '0.82rem', color: 'rgba(14,0,32,0.4)', fontWeight: 500 }}>
             Cancel anytime · Takes under 5 minutes

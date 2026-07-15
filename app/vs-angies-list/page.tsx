@@ -89,11 +89,11 @@ export default function VsAngiesListPage() {
           <p style={{ fontSize: '1.05rem', color: 'rgba(255,255,255,0.75)', lineHeight: 1.75, marginBottom: 40, maxWidth: 580, margin: '0 auto 40px' }}>
             Angi charges a monthly subscription <em>and</em> per-lead fees for leads shared with competing movers and junk haulers. Quotebox gives you your own exclusive quote form, automatic follow-up, and CRM for a flat $34/month — no sharing, no contracts.
           </p>
-          <Link href="/build" style={{
+          <Link href="/pricing" style={{
             background: '#f4a93c', color: '#201d3d', fontWeight: 800,
             padding: '14px 32px', borderRadius: 10, textDecoration: 'none', fontSize: '1rem',
           }}>
-            Try Quotebox for $1 →
+            See Pricing →
           </Link>
         </div>
       </section>
@@ -170,14 +170,14 @@ export default function VsAngiesListPage() {
             Cancel Angi. Keep the leads.
           </h2>
           <p style={{ color: '#201d3d', opacity: 0.75, marginBottom: 32, fontSize: '1.05rem', lineHeight: 1.65 }}>
-            Try Quotebox for $1 your first month, build your form in under 10 minutes, and replace your Angi spend with your own exclusive quote form and CRM.
+            Build your form in under 10 minutes, starting at $99/month, and replace your Angi spend with your own exclusive quote form and CRM.
           </p>
-          <Link href="/build" style={{
+          <Link href="/pricing" style={{
             display: 'inline-block', background: '#201d3d', color: '#f4a93c',
             fontWeight: 800, padding: '16px 40px', borderRadius: 10,
             textDecoration: 'none', fontSize: '1.05rem',
           }}>
-            Try Quotebox for $1 →
+            See Pricing →
           </Link>
         </div>
       </section>

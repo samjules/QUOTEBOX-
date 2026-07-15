@@ -77,11 +77,11 @@ export default function ElectricianLeadsPage() {
             Local moves, long-distance, apartment moves — a branded instant-quote form for your moving company, connected to automatic SMS &amp; email follow-up and a full CRM.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/build" style={{
+            <Link href="/pricing" style={{
               background: '#f4a93c', color: '#201d3d', fontWeight: 800,
               padding: '14px 32px', borderRadius: 10, textDecoration: 'none', fontSize: '1rem',
             }}>
-              Try Quotebox for $1 →
+              See Pricing →
             </Link>
             <Link href="/contractor-leads" style={{
               background: 'rgba(255,255,255,0.1)', color: 'white', fontWeight: 600,
@@ -166,12 +166,12 @@ export default function ElectricianLeadsPage() {
           <p style={{ color: '#201d3d', opacity: 0.75, marginBottom: 32, fontSize: '1rem', lineHeight: 1.65 }}>
             Build your branded moving quote form in 5 minutes. Try the full platform for $1 your first month.
           </p>
-          <Link href="/build" style={{
+          <Link href="/pricing" style={{
             display: 'inline-block', background: '#201d3d', color: '#f4a93c',
             fontWeight: 800, padding: '16px 40px', borderRadius: 10,
             textDecoration: 'none', fontSize: '1.05rem',
           }}>
-            Try Quotebox for $1 →
+            See Pricing →
           </Link>
         </div>
       </section>

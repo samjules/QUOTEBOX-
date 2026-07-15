@@ -9,9 +9,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Not signed in' }, { status: 401 })
   }
 
+  const VALID_PLANS = ['software_99', 'ad_setup_350', 'fully_managed_750']
+
   const body = await request.json().catch(() => ({}))
   const accountId = typeof body.accountId === 'string' ? body.accountId : null
-  const upsell = body.upsell === true
+  const plan = VALID_PLANS.includes(body.plan) ? body.plan : 'software_99'
 
   if (!accountId) {
     return NextResponse.json({ error: 'accountId required' }, { status: 400 })
@@ -36,10 +38,9 @@ export async function POST(request: NextRequest) {
       Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
     },
     body: JSON.stringify({
-      plan: 'trial_1',
+      plan,
       accountId,
       userId: user.id,
-      upsell,
       successUrl: `${origin}/build/confirm?session_id={CHECKOUT_SESSION_ID}&account_id=${accountId}`,
       cancelUrl: `${origin}/dashboard?checkout=cancelled`,
     }),
