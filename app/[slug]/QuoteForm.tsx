@@ -6,7 +6,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { FormField, HostedForm } from '@/lib/types'
-import { applyConditionalRate, computeTotal } from '@/lib/pricing'
+import { applyConditionalRate, computeTotal, interpolateRamp } from '@/lib/pricing'
 import area from '@turf/area'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
@@ -1143,16 +1143,29 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
   const displayTotal = minQuote > 0 ? Math.max(total, minQuote) : total
   const minApplied = minQuote > 0 && total < minQuote
 
+  // How many extra hours the high end of the range assumes — configurable per
+  // form in the builder's Rates section (defaults to 5 for older saved forms).
+  const rangeBufferHours = config.range_buffer_hours ?? 5
+
+  // maxPrice is only set (and differs from price) on options that carry an
+  // hourly rate — it projects that option's contribution if the job runs the
+  // full high-end buffer used for displayTotalMax below.
   const lineItems = useMemo(() => {
-    const items: Array<{ label: string; value: string; price: number }> = []
+    const items: Array<{ label: string; value: string; price: number; maxPrice?: number }> = []
     for (const f of config.fields) {
-      if (f.type === 'radio' || f.type === 'dropdown') {
+      if (f.type === 'radio' || f.type === 'dropdown' || (f.type === 'slider' && (f.sliderMode ?? 'stops') === 'stops')) {
         const opt = f.options?.find((o) => o.id === answers[f.id])
-        if (opt) items.push({ label: f.label, value: opt.label, price: opt.price })
+        if (opt) items.push({ label: f.label, value: opt.label, price: opt.price, maxPrice: opt.hours ? opt.price + opt.price * rangeBufferHours : undefined })
+      } else if (f.type === 'slider' && f.sliderMode === 'continuous') {
+        const value = Number(answers[f.id]) || f.sliderMin || 0
+        const hours = interpolateRamp(f.continuousRamp ?? [], value)
+        const rateField = config.fields.find((rf) => rf.id === f.continuousRateFieldId)
+        const rate = rateField?.options?.find((o) => o.id === answers[rateField.id])?.price ?? 0
+        if (hours > 0) items.push({ label: f.label, value: `${value} ${f.sliderUnitLabel ?? 'units'}`, price: hours * rate })
       } else if (f.type === 'checkbox') {
         const selectedIds = (answers[f.id] as string[]) ?? []
         for (const o of (f.options ?? []).filter((o) => selectedIds.includes(o.id))) {
-          items.push({ label: f.label, value: o.label, price: o.price })
+          items.push({ label: f.label, value: o.label, price: o.price, maxPrice: o.hours ? o.price + o.price * rangeBufferHours : undefined })
         }
       } else if (f.type === 'number') {
         const val = Number(answers[f.id]) || 0
@@ -1189,7 +1202,60 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
       }
     }
     return items
-  }, [config.fields, answers, routeData, drawAreaData])
+  }, [config.fields, answers, routeData, drawAreaData, rangeBufferHours])
+
+  // Sum of $/hr rates from any selected options that carry an hourly rate —
+  // used to project a "could take longer" high end (+rangeBufferHours) alongside the base estimate.
+  const hourlyRate = useMemo(() => {
+    let rate = 0
+    for (const f of config.fields) {
+      if (f.type === 'radio' || f.type === 'dropdown' || (f.type === 'slider' && (f.sliderMode ?? 'stops') === 'stops')) {
+        const opt = f.options?.find((o) => o.id === answers[f.id])
+        if (opt?.hours) rate += opt.price
+      } else if (f.type === 'checkbox') {
+        const selectedIds = (answers[f.id] as string[]) ?? []
+        for (const o of (f.options ?? []).filter((o) => selectedIds.includes(o.id))) {
+          if (o.hours) rate += o.price
+        }
+      }
+    }
+    return rate
+  }, [config.fields, answers])
+
+  // Sum of the base "hours" on whichever selected options carry an hourly
+  // rate — the low end of the on-site-time number line shown in the email.
+  const jobHours = useMemo(() => {
+    let hrs = 0
+    for (const f of config.fields) {
+      if (f.type === 'radio' || f.type === 'dropdown' || (f.type === 'slider' && (f.sliderMode ?? 'stops') === 'stops')) {
+        const opt = f.options?.find((o) => o.id === answers[f.id])
+        if (opt?.hours) hrs += opt.hours
+      } else if (f.type === 'checkbox') {
+        const selectedIds = (answers[f.id] as string[]) ?? []
+        for (const o of (f.options ?? []).filter((o) => selectedIds.includes(o.id))) {
+          if (o.hours) hrs += o.hours
+        }
+      }
+    }
+    return hrs
+  }, [config.fields, answers])
+
+  // Extra hours derived from continuous sliders (e.g. boxes, large items) —
+  // added to jobHours for the total estimated-time-on-site shown on the final page.
+  const continuousHours = useMemo(() => {
+    let hrs = 0
+    for (const f of config.fields) {
+      if (f.type === 'slider' && f.sliderMode === 'continuous') {
+        const value = Number(answers[f.id]) || f.sliderMin || 0
+        hrs += interpolateRamp(f.continuousRamp ?? [], value)
+      }
+    }
+    return hrs
+  }, [config.fields, answers])
+
+  const totalEstimatedHours = jobHours + continuousHours
+
+  const displayTotalMax = hourlyRate > 0 && rangeBufferHours > 0 ? displayTotal + hourlyRate * rangeBufferHours : null
 
   const handleRouteChange = useCallback((fieldId: string, result: RouteResult | null) => {
     setRouteData((prev) => ({ ...prev, [fieldId]: result }))
@@ -1243,6 +1309,7 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
     if (f.type === 'textarea') return !!String(answers[f.id] ?? '').trim()
     if (f.type === 'draw_area') return drawAreaData[f.id] != null
     if (f.type === 'booking') return !f.required || !!answers[f.id]
+    if (f.type === 'slider') return (f.sliderMode ?? 'stops') !== 'stops' || !!answers[f.id]
     return true
   }
 
@@ -1314,9 +1381,9 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
 
     // Send email estimate unless disabled in form config
     if (config.send_email_estimate !== false) {
-      // Strip prices from email when quote is hidden or after_submit
-      const emailLineItems = hidePrices
-        ? lineItems.map((item) => ({ ...item, price: 0 }))
+      // Strip prices from email only when the form has pricing hidden entirely
+      const emailLineItems = hidePricesInEmail
+        ? lineItems.map((item) => ({ ...item, price: 0, maxPrice: undefined }))
         : lineItems
       fetch('/api/leads/send-quote-email', {
         method: 'POST',
@@ -1326,8 +1393,19 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
           customerEmail: email.trim(),
           formName: form.form_name,
           currency,
-          total: hidePrices ? 0 : displayTotal,
-          minApplied: hidePrices ? false : minApplied,
+          total: hidePricesInEmail ? 0 : displayTotal,
+          totalMax: hidePricesInEmail ? undefined : displayTotalMax ?? undefined,
+          rangeReason: !hidePricesInEmail && displayTotalMax != null
+            ? config.range_reason?.trim() || `Minimum ${currency}${displayTotal.toFixed(2)} — may run up to ${rangeBufferHours} extra hour${rangeBufferHours === 1 ? '' : 's'}`
+            : undefined,
+          hours: !hidePricesInEmail && displayTotalMax != null && jobHours > 0 ? jobHours : undefined,
+          bufferHours: !hidePricesInEmail && displayTotalMax != null && jobHours > 0 ? rangeBufferHours : undefined,
+          openEndedText: !hidePricesInEmail && config.open_ended_estimate
+            ? config.open_ended_text?.trim() || "This is a minimum estimate — there's no maximum."
+            : undefined,
+          estimatedHours: !hidePricesInEmail && totalEstimatedHours > 0 ? totalEstimatedHours : undefined,
+          estimatedRate: !hidePricesInEmail && totalEstimatedHours > 0 && hourlyRate > 0 ? hourlyRate : undefined,
+          minApplied: hidePricesInEmail ? false : minApplied,
           lineItems: emailLineItems,
           businessName: businessName || undefined,
           emailSubject: config.email_template?.subject || undefined,
@@ -1343,6 +1421,10 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
     const qs = new URLSearchParams({ email })
     if (name) qs.set('name', name)
     if (displayTotal > 0) qs.set('total', displayTotal.toFixed(2))
+    if (displayTotalMax != null) qs.set('max', displayTotalMax.toFixed(2))
+    if (effectiveDisplay !== 'hidden' && lineItems.length > 0) qs.set('items', JSON.stringify(lineItems))
+    if (effectiveDisplay !== 'hidden' && totalEstimatedHours > 0) qs.set('hours', totalEstimatedHours.toFixed(1))
+    if (effectiveDisplay !== 'hidden' && hourlyRate > 0) qs.set('rate', String(hourlyRate))
     if (isTestMode) qs.set('pixel_test', '1')
     // Full page load so the Meta Pixel script initialises cleanly on thank-you
     window.location.href = `/${config.slug}/thank-you?${qs.toString()}`
@@ -1359,6 +1441,10 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
   // Also respect legacy show_total=false for forms saved before quote_display existed
   const effectiveDisplay = config.quote_display ?? (config.show_total === false ? 'hidden' : 'live')
   const hidePrices = effectiveDisplay === 'after_submit' || effectiveDisplay === 'hidden'
+  // The email always shows pricing once a quote exists — "after_submit" only
+  // controls when the price appears on-site (withheld until the thank-you
+  // page). Only "hidden" (no pricing configured at all) suppresses the email too.
+  const hidePricesInEmail = effectiveDisplay === 'hidden'
 
   // ── Shared styles ──
   const inputStyle: React.CSSProperties = {
@@ -1457,6 +1543,49 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
         </div>
       )}
 
+      <style jsx>{`
+        .qb-slider {
+          -webkit-appearance: none;
+          appearance: none;
+          height: 10px;
+          border-radius: 999px;
+          background: #e2e8f0;
+          outline: none;
+          cursor: pointer;
+        }
+        .qb-slider::-webkit-slider-runnable-track {
+          height: 10px;
+          border-radius: 999px;
+          background: transparent;
+        }
+        .qb-slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 26px;
+          height: 26px;
+          border-radius: 50%;
+          background: currentColor;
+          border: 4px solid white;
+          box-shadow: 0 2px 8px rgba(15,23,42,0.35);
+          margin-top: -8px;
+          cursor: pointer;
+        }
+        .qb-slider::-moz-range-track {
+          height: 10px;
+          border-radius: 999px;
+          background: transparent;
+        }
+        .qb-slider::-moz-range-thumb {
+          width: 26px;
+          height: 26px;
+          border-radius: 50%;
+          background: currentColor;
+          border: 4px solid white;
+          box-shadow: 0 2px 8px rgba(15,23,42,0.35);
+          cursor: pointer;
+        }
+      `}</style>
+
       <div style={{
         width: '100%',
         maxWidth: 520,
@@ -1471,12 +1600,12 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
         <div style={{ background: accentBg }}>
           {/* Progress bar */}
           {!isConfirmStep && (
-            <div style={{ height: 4, background: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(26,26,46,0.1)' }}>
+            <div style={{ height: 7, background: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(26,26,46,0.12)' }}>
               <div style={{
                 height: '100%',
                 width: `${progressPercent}%`,
-                background: isDark ? 'rgba(255,255,255,0.8)' : 'rgba(26,26,46,0.45)',
-                borderRadius: '0 2px 2px 0',
+                background: isDark ? '#ffffff' : 'rgba(26,26,46,0.55)',
+                borderRadius: '0 3px 3px 0',
                 transition: 'width 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
               }} />
             </div>
@@ -1529,6 +1658,26 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
               <div style={{ fontSize: '0.84rem', color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(26,26,46,0.58)', marginTop: 5, lineHeight: 1.55 }}>
                 {config.description}
               </div>
+            )}
+            {step === 0 && config.phone_number && (
+              <a
+                href={`tel:${config.phone_number.replace(/[^0-9+]/g, '')}`}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  marginTop: 12,
+                  padding: '10px 18px',
+                  borderRadius: 99,
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  color: accentFg,
+                  border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.55)' : 'rgba(26,26,46,0.35)'}`,
+                }}
+              >
+                📞 Call Now to Get an Accurate Estimate
+              </a>
             )}
           </div>
         </div>
@@ -1748,6 +1897,89 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
                 </>
               )}
 
+              {/* ── Slider ── */}
+              {currentField.type === 'slider' && (() => {
+                const sliderMode = currentField.sliderMode ?? 'stops'
+                const stopOptions = currentField.options ?? []
+
+                if (sliderMode === 'stops') {
+                  const sorted = [...stopOptions].sort((a, b) => (a.sliderValue ?? 0) - (b.sliderValue ?? 0))
+                  const selectedIdx = sorted.findIndex((o) => o.id === answers[currentField.id])
+                  const idx = selectedIdx === -1 ? 0 : selectedIdx
+                  const selected = sorted[idx]
+                  return (
+                    <>
+                      <input
+                        type="range" min={0} max={Math.max(sorted.length - 1, 0)} step={1}
+                        value={idx}
+                        onChange={(e) => {
+                          const opt = sorted[parseInt(e.target.value, 10)]
+                          if (opt) setAnswers((p) => ({ ...p, [currentField.id]: opt.id }))
+                        }}
+                        className="qb-slider"
+                        style={{
+                          width: '100%',
+                          color: accentBg,
+                          background: `linear-gradient(to right, ${accentBg} ${(idx / Math.max(sorted.length - 1, 1)) * 100}%, #e2e8f0 ${(idx / Math.max(sorted.length - 1, 1)) * 100}%)`,
+                        }}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
+                        {sorted.map((o) => (
+                          <span key={o.id} style={{ fontSize: '0.68rem', color: o.id === selected?.id ? '#0f172a' : '#94a3b8', fontWeight: o.id === selected?.id ? 700 : 400, textAlign: 'center', flex: 1 }}>
+                            {o.label}
+                          </span>
+                        ))}
+                      </div>
+                      {!hidePrices && selected && (
+                        <div style={{ fontSize: '0.82rem', color: '#64748b', marginTop: 12, textAlign: 'center' }}>
+                          {selected.hours ? `${currency}${selected.price}/hr × ${selected.hours}h` : `${currency}${selected.price}`}
+                        </div>
+                      )}
+                      <button onClick={handleNext} disabled={!canAdvance()}
+                        style={{ ...continueBtn, opacity: canAdvance() ? 1 : 0.35, cursor: canAdvance() ? 'pointer' : 'not-allowed' }}>
+                        Continue →
+                      </button>
+                    </>
+                  )
+                }
+
+                const min = currentField.sliderMin ?? 0
+                const max = currentField.sliderMax ?? 10
+                const step = currentField.sliderStep ?? 1
+                const value = (answers[currentField.id] as number) ?? min
+                const hours = interpolateRamp(currentField.continuousRamp ?? [], value)
+                const rateField = config.fields.find((f) => f.id === currentField.continuousRateFieldId)
+                const rate = rateField?.options?.find((o) => o.id === answers[rateField.id])?.price ?? 0
+                const unit = currentField.sliderUnitLabel ?? 'units'
+                return (
+                  <>
+                    <input
+                      type="range" min={min} max={max} step={step}
+                      value={value}
+                      onChange={(e) => setAnswers((p) => ({ ...p, [currentField.id]: parseFloat(e.target.value) || 0 }))}
+                      className="qb-slider"
+                      style={{
+                        width: '100%',
+                        color: accentBg,
+                        background: `linear-gradient(to right, ${accentBg} ${((value - min) / Math.max(max - min, 1)) * 100}%, #e2e8f0 ${((value - min) / Math.max(max - min, 1)) * 100}%)`,
+                      }}
+                    />
+                    <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0f172a', marginTop: 10, textAlign: 'center' }}>
+                      {value} {unit}
+                    </div>
+                    {!hidePrices && hours > 0 && (
+                      <div style={{ fontSize: '0.82rem', color: '#64748b', marginTop: 6, textAlign: 'center' }}>
+                        +{hours.toFixed(1)}hr @ {currency}{rate}/hr = {currency}{(hours * rate).toFixed(2)}
+                      </div>
+                    )}
+                    <button onClick={handleNext} disabled={!canAdvance()}
+                      style={{ ...continueBtn, opacity: canAdvance() ? 1 : 0.35, cursor: canAdvance() ? 'pointer' : 'not-allowed' }}>
+                      Continue →
+                    </button>
+                  </>
+                )
+              })()}
+
               {/* ── Textarea ── */}
               {currentField.type === 'textarea' && (
                 <>
@@ -1939,8 +2171,15 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
                     </div>
                     {minApplied && <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 2 }}>Min. fee applies</div>}
                   </div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a' }}>
-                    {currency}{displayTotal.toFixed(2)}
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a' }}>
+                      {currency}{displayTotal.toFixed(2)}
+                    </div>
+                    {displayTotalMax != null && (
+                      <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>
+                        up to {currency}{displayTotalMax.toFixed(2)}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -2030,12 +2269,36 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
                     borderTop: lineItems.length > 0 ? '2px solid rgba(0,0,0,0.08)' : 'none',
                   }}>
                     <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      {effectiveDisplay === 'after_submit' ? 'Starting at' : 'Total'}
+                      {config.open_ended_estimate ? 'Starting At' : displayTotalMax != null ? 'Estimated Range' : (effectiveDisplay === 'after_submit' ? 'Starting at' : 'Total')}
                     </span>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>
-                        {displayTotal > 0 ? `${currency}${displayTotal.toFixed(2)}` : 'Free'}
+                        {displayTotal > 0
+                          ? (config.open_ended_estimate
+                            ? `${currency}${displayTotal.toFixed(2)}+`
+                            : displayTotalMax != null
+                            ? `${currency}${displayTotal.toFixed(2)} – ${currency}${displayTotalMax.toFixed(2)}`
+                            : `${currency}${displayTotal.toFixed(2)}`)
+                          : 'Free'}
                       </div>
+                      {config.open_ended_estimate && (
+                        <>
+                          {totalEstimatedHours > 0 && hourlyRate > 0 && (
+                            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#334155', marginTop: 6 }}>
+                              Est. {totalEstimatedHours.toFixed(1)} hours @ {currency}{hourlyRate}/hr
+                            </div>
+                          )}
+                          <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 4 }}>
+                            {config.open_ended_text?.trim() || "This is a minimum estimate — there's no maximum."}
+                            {totalEstimatedHours > 0 && hourlyRate > 0 && ' This is how your quote is calculated — the job may take more or less time.'}
+                          </div>
+                        </>
+                      )}
+                      {!config.open_ended_estimate && displayTotalMax != null && (
+                        <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 4 }}>
+                          {config.range_reason?.trim() || `Minimum ${currency}${displayTotal.toFixed(2)} — may run up to ${rangeBufferHours} extra hour${rangeBufferHours === 1 ? '' : 's'}`}
+                        </div>
+                      )}
                       {minApplied && (
                         <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 4 }}>
                           Minimum booking fee applies

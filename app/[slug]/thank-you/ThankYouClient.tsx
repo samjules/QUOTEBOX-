@@ -19,6 +19,16 @@ export default function ThankYouClient({ form }: { form: HostedForm }) {
   const email = searchParams.get('email') ?? ''
   const totalStr = searchParams.get('total')
   const total = totalStr ? parseFloat(totalStr) : 0
+  const maxStr = searchParams.get('max')
+  const maxTotal = maxStr ? parseFloat(maxStr) : null
+  const itemsStr = searchParams.get('items')
+  const lineItems: Array<{ label: string; value: string; price: number }> = itemsStr
+    ? (() => { try { return JSON.parse(itemsStr) } catch { return [] } })()
+    : []
+  const hoursStr = searchParams.get('hours')
+  const totalHours = hoursStr ? parseFloat(hoursStr) : 0
+  const rateStr = searchParams.get('rate')
+  const hourlyRate = rateStr ? parseFloat(rateStr) : 0
   const currency = config.currency ?? '$'
 
   const legacyColorMap: Record<string, string> = { yellow: '#FFE500', blue: '#1A56FF' }
@@ -174,11 +184,60 @@ export default function ThankYouClient({ form }: { form: HostedForm }) {
               textAlign: 'left',
             }}>
               <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                {config.total_label || (effectiveDisplay === 'after_submit' ? 'Starting at' : 'Your Estimated Quote')}
+                {config.total_label || (config.open_ended_estimate ? 'Starting At' : maxTotal != null ? 'Estimated Range' : effectiveDisplay === 'after_submit' ? 'Starting at' : 'Your Estimated Quote')}
               </div>
-              <div style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>
-                {currency}{total.toFixed(2)}
+
+              {lineItems.length > 0 && (
+                <div style={{ marginBottom: 14 }}>
+                  {lineItems.map((item, i) => (
+                    <div key={i} style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+                      gap: 12, paddingTop: i === 0 ? 0 : 10, paddingBottom: 10,
+                      borderBottom: i < lineItems.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
+                    }}>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#334155', lineHeight: 1.3 }}>
+                          {item.label}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: 2, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {item.value}
+                        </div>
+                      </div>
+                      {item.price > 0 && (
+                        <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0f172a', flexShrink: 0 }}>
+                          {currency}{item.price.toFixed(2)}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                <div style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>
+                  {config.open_ended_estimate ? `${currency}${total.toFixed(2)}+` : `${currency}${total.toFixed(2)}`}
+                </div>
+                {!config.open_ended_estimate && maxTotal != null && (
+                  <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#64748b', lineHeight: 1 }}>
+                    up to {currency}{maxTotal.toFixed(2)}
+                  </div>
+                )}
               </div>
+              {totalHours > 0 && hourlyRate > 0 && (
+                <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#334155', marginTop: 8 }}>
+                  Est. {totalHours.toFixed(1)} hours @ {currency}{hourlyRate}/hr
+                </div>
+              )}
+              {config.open_ended_estimate ? (
+                <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: 6 }}>
+                  {config.open_ended_text?.trim() || "This is a minimum estimate — there's no maximum."}
+                  {totalHours > 0 && hourlyRate > 0 && ' This is how your quote is calculated — the job may take more or less time.'}
+                </div>
+              ) : maxTotal != null && (
+                <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: 6 }}>
+                  Starting price — may run up to 5 extra hours depending on the job
+                </div>
+              )}
 
               {/* This number is not a final price — make that impossible to miss
                   right where the customer is most likely to fixate on it. */}

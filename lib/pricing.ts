@@ -1,4 +1,39 @@
-import type { FormField } from './types'
+import type { FormField, RampPoint } from './types'
+
+// Piecewise-linear interpolation of a value → hours ramp, clamped flat
+// beyond the first/last point. `points` must be sorted by `value` ascending.
+export function interpolateRamp(points: RampPoint[], value: number): number {
+  if (points.length === 0) return 0
+  if (points.length === 1 || value <= points[0].value) return points[0].hours
+  const last = points[points.length - 1]
+  if (value >= last.value) return last.hours
+  for (let i = 0; i < points.length - 1; i++) {
+    const a = points[i]
+    const b = points[i + 1]
+    if (value >= a.value && value <= b.value) {
+      const span = b.value - a.value
+      if (span === 0) return a.hours
+      const t = (value - a.value) / span
+      return a.hours + t * (b.hours - a.hours)
+    }
+  }
+  return last.hours
+}
+
+// Finds the currently-selected option's price on a referenced field — used
+// by slider (continuous mode) to bill its derived hours at another field's
+// dynamically-chosen $/hr rate (e.g. whichever vehicle was picked).
+function lookupRate(
+  fieldId: string | undefined,
+  fields: FormField[],
+  answers: Record<string, unknown>,
+): number {
+  if (!fieldId) return 0
+  const field = fields.find((f) => f.id === fieldId)
+  if (!field) return 0
+  const opt = field.options?.find((o) => o.id === answers[fieldId])
+  return opt?.price ?? 0
+}
 
 export interface RouteResult {
   distanceMiles: number
@@ -73,7 +108,7 @@ export function computeBreakdown(
   }
 
   for (const f of fields) {
-    if (f.type === 'radio' || f.type === 'dropdown') {
+    if (f.type === 'radio' || f.type === 'dropdown' || (f.type === 'slider' && f.sliderMode === 'stops')) {
       // rate(hours): price × hours gives the labor cost directly from the selection
       const opt = f.options?.find((o) => o.id === (answers[f.id] as string))
       if (opt) {
@@ -82,6 +117,19 @@ export function computeBreakdown(
           ? `${opt.label} · $${opt.price}/hr × ${opt.hours}hr`
           : opt.label
         if (amount !== 0) lines.push({ label: f.label, detail, amount })
+      }
+    } else if (f.type === 'slider' && f.sliderMode === 'continuous') {
+      const value = Number(answers[f.id]) || f.sliderMin || 0
+      const hours = interpolateRamp(f.continuousRamp ?? [], value)
+      const rate = lookupRate(f.continuousRateFieldId, fields, answers)
+      const amount = hours * rate
+      const unit = f.sliderUnitLabel ?? 'units'
+      if (amount !== 0) {
+        lines.push({
+          label: f.label,
+          detail: `${value} ${unit} → ${hours.toFixed(1)}hr @ $${rate}/hr`,
+          amount,
+        })
       }
     } else if (f.type === 'checkbox') {
       for (const oid of (answers[f.id] as string[]) ?? []) {

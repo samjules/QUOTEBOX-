@@ -29,6 +29,12 @@ export interface FieldOption {
   // Per-option rate overrides applied to other fields when this option is selected
   rateOverrides?: Record<string, number>                              // fieldId → ratePerUnit (number fields)
   routeOverrides?: Record<string, { mile?: number; min?: number }>   // fieldId → route rates
+  sliderValue?: number  // slider (stops mode): track position for this stop
+}
+
+export interface RampPoint {
+  value: number  // raw slider value
+  hours: number  // hours billed at that value — piecewise-linear between points, clamped flat beyond the first/last
 }
 
 export interface RuleCondition {
@@ -52,7 +58,7 @@ export interface RadiusTier {
 
 export interface FormField {
   id: string
-  type: 'radio' | 'dropdown' | 'checkbox' | 'number' | 'textarea' | 'route' | 'image' | 'draw_area' | 'booking'
+  type: 'radio' | 'dropdown' | 'checkbox' | 'number' | 'textarea' | 'route' | 'image' | 'draw_area' | 'booking' | 'slider'
   label: string
   required: boolean
   options?: FieldOption[]
@@ -74,6 +80,14 @@ export interface FormField {
   conditionalRules?: ConditionalRule[]
   // Draw Area field
   ratePerSqFt?: number
+  // Slider field
+  sliderMin?: number
+  sliderMax?: number
+  sliderStep?: number
+  sliderUnitLabel?: string             // e.g. "boxes", "large items"
+  sliderMode?: 'stops' | 'continuous'  // stops: snaps to `options` (priced like radio); continuous: raw numeric value fed through continuousRamp
+  continuousRateFieldId?: string       // continuous mode: field whose selected option's price is the $/hr to bill the ramp's hours against
+  continuousRamp?: RampPoint[]         // continuous mode: value → hours mapping (≥2 points, sorted by value)
 }
 
 export interface QuizAnswer {
@@ -115,6 +129,10 @@ export interface FormConfig {
   fields: FormField[]
   meta_pixel_id?: string
   min_quote?: number
+  range_buffer_hours?: number  // hours assumed for the high end of the estimate range (default 5)
+  range_reason?: string        // custom explanation for why there's a range (e.g. "bigger truck may be needed") — overrides the default buffer-hours message
+  open_ended_estimate?: boolean  // show the total as a minimum only, no upper range, regardless of range_buffer_hours
+  open_ended_text?: string       // note shown under the total when open_ended_estimate is true (e.g. "This is a minimum — there's no maximum")
   disclaimer_enabled?: boolean
   disclaimer_text?: string
   send_email_estimate?: boolean
@@ -122,6 +140,7 @@ export interface FormConfig {
   confirm_message?: string
   next_step_label?: string
   total_label?: string
+  phone_number?: string
   email_template?: {
     subject?: string
     intro?: string

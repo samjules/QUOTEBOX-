@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import SetupWizard from './SetupWizard'
 import QuizBuilder, { makeDefaultQuizConfig } from './QuizBuilder'
-import type { FormField, FieldOption, ConditionalRule, RuleCondition, RadiusTier, QuizConfig } from '@/lib/types'
+import type { FormField, FieldOption, ConditionalRule, RuleCondition, RadiusTier, RampPoint, QuizConfig } from '@/lib/types'
 import { computeBreakdown } from '@/lib/pricing'
 import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
@@ -118,6 +118,20 @@ function makeField(type: FormField['type']): FormField {
     booking: {
       label: 'Preferred Booking Date',
       required: true,
+    },
+    slider: {
+      label: 'Home Size',
+      required: true,
+      sliderMode: 'stops',
+      sliderMin: 0,
+      sliderMax: 10,
+      sliderStep: 1,
+      options: [
+        { id: uid(), label: 'Studio / 1 Bed', price: 120, sliderValue: 0 },
+        { id: uid(), label: '2 Bedrooms', price: 150, sliderValue: 5 },
+        { id: uid(), label: '3 Bedrooms', price: 180, sliderValue: 8 },
+        { id: uid(), label: '4+ Bedrooms', price: 220, sliderValue: 10 },
+      ],
     },
   }
   return { id: uid(), type, ...defaults[type] }
@@ -609,6 +623,7 @@ function CanvasPreview({
   confirmMessage,
   nextStepLabel,
   totalLabel,
+  phoneNumber,
   onSelectField,
   onRemoveField,
   onChangeFormName,
@@ -639,6 +654,7 @@ function CanvasPreview({
   confirmMessage: string
   nextStepLabel: string
   totalLabel: string
+  phoneNumber: string
   onSelectField: (id: string) => void
   onRemoveField: (id: string, e: React.MouseEvent) => void
   onChangeFormName: (v: string) => void
@@ -738,6 +754,27 @@ function CanvasPreview({
             placeholder="Add a description…"
             style={{ fontSize: '0.82rem', marginTop: 5, color: textSecondary, lineHeight: 1.4 }}
           />
+          {activeTab === 0 && phoneNumber && (
+            <a
+              href={`tel:${phoneNumber.replace(/[^0-9+]/g, '')}`}
+              onClick={(e) => e.preventDefault()}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                marginTop: 12,
+                padding: '9px 16px',
+                borderRadius: 99,
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                textDecoration: 'none',
+                color: textPrimary,
+                border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.55)' : 'rgba(26,26,46,0.35)'}`,
+              }}
+            >
+              📞 Call Now to Get an Accurate Estimate
+            </a>
+          )}
         </div>
       </div>
 
@@ -1494,6 +1531,7 @@ function PropsPanel({
   onSetOptRouteOverride,
   onOpenMediaPicker,
   onSetTiers,
+  onSetRamp,
 }: {
   field: FormField | null
   allFields: FormField[]
@@ -1512,6 +1550,7 @@ function PropsPanel({
   onSetOptRouteOverride: (fid: string, oid: string, targetFid: string, key: 'mile' | 'min', rateStr: string) => void
   onOpenMediaPicker: (fieldId: string) => void
   onSetTiers: (fieldId: string, tiers: RadiusTier[]) => void
+  onSetRamp: (fieldId: string, ramp: RampPoint[]) => void
 }) {
   const [baseAddrSuggestions, setBaseAddrSuggestions] = useState<{ place_name: string }[]>([])
   const [baseAddrOpen, setBaseAddrOpen] = useState(false)
@@ -1546,7 +1585,9 @@ function PropsPanel({
     )
   }
 
-  const hasOpts = ['radio', 'dropdown', 'checkbox'].includes(field.type)
+  const isSliderStops = field.type === 'slider' && (field.sliderMode ?? 'stops') === 'stops'
+  const isSliderContinuous = field.type === 'slider' && field.sliderMode === 'continuous'
+  const hasOpts = ['radio', 'dropdown', 'checkbox'].includes(field.type) || isSliderStops
   const hasRate = field.type === 'number'
   const hasPH = ['number', 'textarea'].includes(field.type)
   const isImage = field.type === 'image'
@@ -1837,6 +1878,151 @@ function PropsPanel({
         </div>
       )}
 
+      {field.type === 'slider' && (
+        <>
+          <div className="prop-group">
+            <div className="prop-label">Slider mode</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 2 }}>
+              {([
+                ['stops', 'Stops — snaps to priced options (e.g. vehicle/size tiers)'],
+                ['continuous', 'Continuous — raw value fed through a rate formula'],
+              ] as const).map(([val, lbl]) => (
+                <label
+                  key={val}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 7,
+                    fontSize: '0.78rem', cursor: 'pointer',
+                    color: (field.sliderMode ?? 'stops') === val ? 'var(--accent)' : 'var(--fg)',
+                    fontWeight: (field.sliderMode ?? 'stops') === val ? 600 : 400,
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name={`sliderMode_${field.id}`}
+                    value={val}
+                    checked={(field.sliderMode ?? 'stops') === val}
+                    onChange={() => onSetProp(field.id, 'sliderMode', val)}
+                    style={{ accentColor: 'var(--accent)' }}
+                  />
+                  {lbl}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="prop-group">
+            <div className="prop-label">Track range</div>
+            <div style={{ display: 'flex', gap: 5 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Min</div>
+                <input
+                  className="prop-input" type="number" step={1}
+                  value={field.sliderMin ?? 0}
+                  style={{ marginBottom: 0 }}
+                  onChange={(e) => onSetProp(field.id, 'sliderMin', parseFloat(e.target.value) || 0)}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Max</div>
+                <input
+                  className="prop-input" type="number" step={1}
+                  value={field.sliderMax ?? 10}
+                  style={{ marginBottom: 0 }}
+                  onChange={(e) => onSetProp(field.id, 'sliderMax', parseFloat(e.target.value) || 0)}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Step</div>
+                <input
+                  className="prop-input" type="number" min={0.01} step={0.5}
+                  value={field.sliderStep ?? 1}
+                  style={{ marginBottom: 0 }}
+                  onChange={(e) => onSetProp(field.id, 'sliderStep', parseFloat(e.target.value) || 1)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {isSliderContinuous && (
+            <>
+              <div className="prop-group">
+                <div className="prop-label">Unit label</div>
+                <input
+                  className="prop-input"
+                  value={field.sliderUnitLabel ?? ''}
+                  placeholder="e.g. boxes, large items"
+                  onChange={(e) => onSetProp(field.id, 'sliderUnitLabel', e.target.value)}
+                />
+              </div>
+
+              <div className="prop-group">
+                <div className="prop-label">Bill hours at rate from</div>
+                <select
+                  className="prop-input"
+                  value={field.continuousRateFieldId ?? ''}
+                  onChange={(e) => onSetProp(field.id, 'continuousRateFieldId', e.target.value)}
+                >
+                  <option value="">— choose a field —</option>
+                  {allFields.filter((f) => f.id !== field.id && (f.type === 'radio' || f.type === 'dropdown' || (f.type === 'slider' && (f.sliderMode ?? 'stops') === 'stops'))).map((f) => (
+                    <option key={f.id} value={f.id}>{f.label}</option>
+                  ))}
+                </select>
+                <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginTop: 4, lineHeight: 1.4 }}>
+                  This slider's derived hours get billed at whatever $/hr the chosen field's selected option carries.
+                </div>
+              </div>
+
+              <div className="prop-group">
+                <div className="prop-label" style={{ marginBottom: 4 }}>Value → hours ramp</div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--muted)', marginBottom: 10, lineHeight: 1.4 }}>
+                  Piecewise-linear: hours interpolate between points, and clamp flat below the first / above the last.
+                </div>
+                {(field.continuousRamp ?? []).map((pt, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600 }}>Value</div>
+                      <input
+                        className="prop-input" type="number" step={1}
+                        value={pt.value}
+                        style={{ marginBottom: 0 }}
+                        onChange={(e) => {
+                          const ramp = [...(field.continuousRamp ?? [])]
+                          ramp[i] = { ...pt, value: parseFloat(e.target.value) || 0 }
+                          onSetRamp(field.id, ramp)
+                        }}
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600 }}>Hours</div>
+                      <input
+                        className="prop-input" type="number" min={0} step={0.5}
+                        value={pt.hours}
+                        style={{ marginBottom: 0 }}
+                        onChange={(e) => {
+                          const ramp = [...(field.continuousRamp ?? [])]
+                          ramp[i] = { ...pt, hours: parseFloat(e.target.value) || 0 }
+                          onSetRamp(field.id, ramp)
+                        }}
+                      />
+                    </div>
+                    <button
+                      className="rm-btn"
+                      onClick={() => onSetRamp(field.id, (field.continuousRamp ?? []).filter((_, idx) => idx !== i))}
+                    >✕</button>
+                  </div>
+                ))}
+                <button
+                  className="add-opt-btn"
+                  onClick={() => onSetRamp(field.id, [...(field.continuousRamp ?? []), { value: 0, hours: 0 }])}
+                >
+                  + Add point
+                </button>
+              </div>
+            </>
+          )}
+        </>
+      )}
+
       {hasOpts && (
         <div className="prop-toggle">
           <span className="prop-toggle-lbl">Show prices on options</span>
@@ -1877,7 +2063,7 @@ function PropsPanel({
                           onChange={(e) => onSetOpt(field.id, o.id, 'price', parseFloat(e.target.value) || 0)}
                         />
                       </div>
-                      {(field.type === 'radio' || field.type === 'dropdown') && (
+                      {(field.type === 'radio' || field.type === 'dropdown' || isSliderStops) && (
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Hours</div>
                           <input
@@ -1887,6 +2073,19 @@ function PropsPanel({
                             placeholder="e.g. 3"
                             style={{ marginBottom: 0 }}
                             onChange={(e) => onSetOpt(field.id, o.id, 'hours', parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                      )}
+                      {isSliderStops && (
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '0.62rem', color: 'var(--muted)', marginBottom: 2, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Track Position</div>
+                          <input
+                            className="prop-input"
+                            type="number" min={field.sliderMin ?? 0} max={field.sliderMax ?? 10} step={field.sliderStep ?? 1}
+                            value={o.sliderValue ?? ''}
+                            placeholder="e.g. 5"
+                            style={{ marginBottom: 0 }}
+                            onChange={(e) => onSetOpt(field.id, o.id, 'sliderValue', parseFloat(e.target.value) || 0)}
                           />
                         </div>
                       )}
@@ -2179,6 +2378,8 @@ export default function FormBuilderPage() {
   const [formSlug, setFormSlug] = useState('my-quote-form')
   const [currency, setCurrency] = useState('$')
   const [minQuote, setMinQuote] = useState(0)
+  const [rangeBufferHours, setRangeBufferHours] = useState(5)
+  const [rangeReason, setRangeReason] = useState('')
   const [heroImageUrl, setHeroImageUrl] = useState('')
   const [quoteDisplay, setQuoteDisplay] = useState<'live' | 'after_submit' | 'hidden'>('live')
   const [editingFormId, setEditingFormId] = useState<string | null>(null)
@@ -2213,6 +2414,7 @@ export default function FormBuilderPage() {
   const [confirmMessage, setConfirmMessage] = useState('We\u2019ve received your details and will send your personalised quote shortly.')
   const [nextStepLabel, setNextStepLabel] = useState('Next Step →')
   const [totalLabel, setTotalLabel] = useState('Estimated Total')
+  const [phoneNumber, setPhoneNumber] = useState('')
   const [aiModalOpen, setAiModalOpen] = useState(false)
   const [aiGenerating, setAiGenerating] = useState(false)
   const [emailSubject, setEmailSubject] = useState('')
@@ -2403,6 +2605,8 @@ export default function FormBuilderPage() {
     const legacyColors: Record<string, string> = { yellow: '#FFE500', blue: '#1A56FF' }
     setBrandColor(legacyColors[c.brand_color] ?? c.brand_color ?? '#FFE500')
     setMinQuote(c.min_quote ?? 0)
+    setRangeBufferHours(c.range_buffer_hours ?? 5)
+    setRangeReason(c.range_reason ?? '')
     setHeroImageUrl(c.hero_image_url ?? '')
     if (c.quote_display) {
       setQuoteDisplay(c.quote_display)
@@ -2416,6 +2620,7 @@ export default function FormBuilderPage() {
     setConfirmMessage(c.confirm_message ?? 'We\u2019ve received your details and will send your personalised quote shortly.')
     setNextStepLabel(c.next_step_label ?? 'Next Step →')
     setTotalLabel(c.total_label ?? 'Estimated Total')
+    setPhoneNumber(c.phone_number ?? '')
     setEmailSubject(c.email_template?.subject ?? '')
     setEmailIntro(c.email_template?.intro ?? '')
     setEmailOutro(c.email_template?.outro ?? '')
@@ -2554,6 +2759,12 @@ export default function FormBuilderPage() {
   function setTiers(fieldId: string, tiers: RadiusTier[]) {
     setFields((prev) =>
       prev.map((f) => f.id === fieldId ? { ...f, radiusTiers: tiers } : f)
+    )
+  }
+
+  function setRamp(fieldId: string, ramp: RampPoint[]) {
+    setFields((prev) =>
+      prev.map((f) => f.id === fieldId ? { ...f, continuousRamp: ramp } : f)
     )
   }
 
@@ -2749,6 +2960,8 @@ export default function FormBuilderPage() {
         hero_image_url: heroImageUrl.trim() || '',
         fields,
         min_quote: minQuote || 0,
+        range_buffer_hours: rangeBufferHours || 5,
+        range_reason: rangeReason.trim() || '',
         disclaimer_enabled: disclaimerEnabled,
         disclaimer_text: disclaimerText,
         send_email_estimate: sendEmailEstimate,
@@ -2756,6 +2969,7 @@ export default function FormBuilderPage() {
         confirm_message: confirmMessage,
         next_step_label: nextStepLabel,
         total_label: totalLabel,
+        phone_number: phoneNumber.trim(),
         email_template: {
           subject: emailSubject || '',
           intro: emailIntro || '',
@@ -3002,6 +3216,7 @@ export default function FormBuilderPage() {
                   { type: 'textarea', icon: '≡',  label: 'Notes',        hint: 'free-text customer input' },
                   { type: 'booking',  icon: '📅', label: 'Booking Date', hint: 'date picker' },
                   { type: 'number',   icon: '#',  label: 'Number',       hint: 'quantity × rate' },
+                  { type: 'slider',   icon: '🎚️', label: 'Slider',       hint: 'drag slider — stops or a continuous rate formula' },
                 ] as { type: FormField['type']; icon: string; label: string; hint: string }[]).map(({ type, icon, label, hint }) => (
                   <button
                     key={type}
@@ -3052,6 +3267,18 @@ export default function FormBuilderPage() {
                     value={submitLabel}
                     onChange={(e) => setSubmitLabel(e.target.value)}
                   />
+                  <label>Phone Number</label>
+                  <input
+                    type="tel"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="(555) 123-4567"
+                  />
+                  <div className="slug-prev" style={{ marginTop: 2 }}>
+                    {phoneNumber
+                      ? 'Shows a "Call Now" button on your live form'
+                      : 'Add a number to show a "Call Now" button on your live form'}
+                  </div>
                   <label>Currency</label>
                   <select
                     value={currency}
@@ -3178,6 +3405,31 @@ export default function FormBuilderPage() {
                         {lbl}
                       </label>
                     ))}
+                  </div>
+                  <label style={{ marginTop: 12 }}>Estimated Range — Buffer Hours</label>
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.5}
+                    value={rangeBufferHours || ''}
+                    placeholder="5"
+                    onChange={(e) => setRangeBufferHours(parseFloat(e.target.value) || 0)}
+                  />
+                  <div className="slug-prev" style={{ marginTop: 2 }}>
+                    {rangeBufferHours > 0
+                      ? `High end of the range assumes the job runs up to ${rangeBufferHours} extra hour${rangeBufferHours === 1 ? '' : 's'} at the hourly rate(s) selected.`
+                      : 'No hourly buffer — the range will only reflect the priced options themselves, not extra time.'}
+                  </div>
+                  <label style={{ marginTop: 12 }}>Estimated Range — Explanation</label>
+                  <textarea
+                    rows={2}
+                    value={rangeReason}
+                    onChange={(e) => setRangeReason(e.target.value)}
+                    style={{ resize: 'vertical' }}
+                    placeholder={`Minimum shown — may run up to ${rangeBufferHours || 5} extra hour${(rangeBufferHours || 5) === 1 ? '' : 's'}`}
+                  />
+                  <div className="slug-prev" style={{ marginTop: 2 }}>
+                    Shown under the range total on the form and in the quote email. Use this to explain *why* there&rsquo;s a range — e.g. a different rate for a bigger truck/trailer, or that the job could simply take longer. Leave blank to use the default buffer-hours message.
                   </div>
                 </div>
               </div>
@@ -3531,6 +3783,7 @@ export default function FormBuilderPage() {
                 confirmMessage={confirmMessage}
                 nextStepLabel={nextStepLabel}
                 totalLabel={totalLabel}
+                phoneNumber={phoneNumber}
                 onSelectField={setSelectedId}
                 onRemoveField={removeField}
                 onChangeFormName={setFormName}
@@ -3576,6 +3829,7 @@ export default function FormBuilderPage() {
             onSetOptRouteOverride={setOptRouteOverride}
             onOpenMediaPicker={(fieldId) => { loadHeroMedia(); setMediaPickerTarget(fieldId) }}
             onSetTiers={setTiers}
+            onSetRamp={setRamp}
           />
         )}
       </div>
