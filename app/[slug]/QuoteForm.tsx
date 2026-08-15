@@ -1091,9 +1091,6 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
   const accentFg = isDark ? '#ffffff' : '#0e0020'
   const accentTint = accentBg + '18'
   const currency = config.currency ?? '$'
-  // Businesses that haven't uploaded their own hero photo yet get a branded
-  // QuoteBox purple + map-texture banner instead of a blank header.
-  const noHeroImage = !config.hero_image_url
 
   const fields = config.fields
 
@@ -1464,8 +1461,8 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
 
   const continueBtn: React.CSSProperties = {
     width: '100%',
-    padding: '17px',
-    borderRadius: 16,
+    padding: '16px',
+    borderRadius: 999,
     border: 'none',
     background: accentBg,
     color: accentFg,
@@ -1475,7 +1472,7 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
     fontFamily: 'inherit',
     letterSpacing: '0.01em',
     marginTop: 20,
-    boxShadow: `0 10px 24px -8px ${accentBg}80, 0 2px 6px rgba(15,23,42,0.06)`,
+    boxShadow: `0 8px 20px -6px ${accentBg}70, 0 1px 3px rgba(15,23,42,0.05)`,
     transition: 'transform 0.12s ease, box-shadow 0.12s ease',
   }
 
@@ -1495,12 +1492,8 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
   return (
     <div style={{
       minHeight: '100vh',
-      background: isDark
-        ? `linear-gradient(135deg, rgba(240,244,255,0.88) 0%, rgba(232,238,255,0.85) 60%, rgba(240,244,255,0.88) 100%), url('/map-tiles/map_1_tile.svg') center / 600px auto`
-        : noHeroImage
-          ? `linear-gradient(135deg, rgba(76,29,149,0.94) 0%, rgba(126,34,206,0.90) 55%, rgba(76,29,149,0.94) 100%), url('/map-tiles/map_1_tile.svg') center / 600px auto`
-          : `linear-gradient(135deg, rgba(255,255,255,0.86) 0%, rgba(255,255,255,0.83) 60%, rgba(255,255,255,0.86) 100%), url('/map-tiles/map_1_tile.svg') center / 600px auto`,
-      backgroundColor: isDark ? '#e8eeff' : noHeroImage ? '#6b21a8' : `${accentBg}22`,
+      backgroundColor: '#F1F2F5',
+      backgroundImage: `repeating-linear-gradient(118deg, rgba(15,23,42,0.05) 0px, rgba(15,23,42,0.05) 1.5px, transparent 1.5px, transparent 30px)`,
       display: 'flex',
       alignItems: 'flex-start',
       justifyContent: 'center',
@@ -1590,9 +1583,9 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
         width: '100%',
         maxWidth: 520,
         background: 'white',
-        borderRadius: 26,
-        border: '1px solid rgba(15,23,42,0.05)',
-        boxShadow: '0 2px 5px rgba(15,23,42,0.05), 0 24px 64px -12px rgba(15,23,42,0.22)',
+        borderRadius: 24,
+        border: '1px solid rgba(15,23,42,0.04)',
+        boxShadow: '0 1px 2px rgba(15,23,42,0.04), 0 20px 48px -16px rgba(15,23,42,0.16)',
         overflow: 'hidden',
       }}>
 
@@ -1600,19 +1593,20 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
         <div style={{ background: accentBg }}>
           {/* Progress bar */}
           {!isConfirmStep && (
-            <div style={{ height: 7, background: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(26,26,46,0.12)' }}>
+            <div style={{ height: 6, margin: '14px 24px 0', borderRadius: 999, overflow: 'hidden', background: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(26,26,46,0.12)' }}>
               <div style={{
                 height: '100%',
                 width: `${progressPercent}%`,
                 background: isDark ? '#ffffff' : 'rgba(26,26,46,0.55)',
-                borderRadius: '0 3px 3px 0',
+                borderRadius: 999,
                 transition: 'width 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
               }} />
             </div>
           )}
 
           {/* Hero on step 0 — business's own photo if they've uploaded one,
-              otherwise a branded QuoteBox purple + map-texture banner. */}
+              otherwise a soft tint of their own brand color with the page's
+              dash texture, so the fallback still reads as "theirs". */}
           {step === 0 && (
             config.hero_image_url ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -1624,8 +1618,9 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
             ) : (
               <div style={{
                 width: '100%', height: 150,
-                backgroundImage: `linear-gradient(135deg, rgba(91,33,182,0.90), rgba(147,51,234,0.82)), url('/patterns/map-pattern-2.jpg')`,
-                backgroundSize: 'cover', backgroundPosition: 'center',
+                backgroundImage: `linear-gradient(135deg, ${accentBg}f2, ${accentBg}d9), repeating-linear-gradient(118deg, rgba(255,255,255,0.12) 0px, rgba(255,255,255,0.12) 1.5px, transparent 1.5px, transparent 26px)`,
+                backgroundSize: 'cover, auto',
+                backgroundPosition: 'center, center',
               }} />
             )
           )}
@@ -1740,8 +1735,9 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
                         onClick={() => selectRadio(currentField.id, o.id)}
                         style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                          padding: '16px 18px', borderRadius: 14,
+                          padding: '16px 18px', borderRadius: 16,
                           border: `2px solid ${sel ? accentBg : '#e2e8f0'}`,
+                          boxShadow: sel ? `0 6px 16px -8px ${accentBg}60` : '0 1px 2px rgba(15,23,42,0.03)',
                           cursor: 'pointer', background: sel ? accentTint : 'white',
                           textAlign: 'left', fontFamily: 'inherit', transition: 'all 0.12s', width: '100%',
                         }}
@@ -1765,7 +1761,7 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
                             fontSize: '0.82rem', fontWeight: 700, flexShrink: 0, marginLeft: 10,
                             background: sel ? accentBg : '#f1f5f9',
                             color: sel ? accentFg : '#475569',
-                            padding: '3px 11px', borderRadius: 8, transition: 'all 0.12s',
+                            padding: '3px 11px', borderRadius: 999, transition: 'all 0.12s',
                           }}>
                             {o.hours ? `${currency}${o.price}/hr × ${o.hours}h` : `+${currency}${o.price}`}
                           </span>
@@ -1829,8 +1825,9 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
                           }}
                           style={{
                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            padding: '16px 18px', borderRadius: 14,
+                            padding: '16px 18px', borderRadius: 16,
                             border: `2px solid ${sel ? accentBg : '#e2e8f0'}`,
+                            boxShadow: sel ? `0 6px 16px -8px ${accentBg}60` : '0 1px 2px rgba(15,23,42,0.03)',
                             cursor: 'pointer', background: sel ? accentTint : 'white',
                             textAlign: 'left', fontFamily: 'inherit', transition: 'all 0.12s', width: '100%',
                           }}
@@ -1854,7 +1851,7 @@ export default function QuoteForm({ form, businessName = '', avgMph = null }: { 
                               fontSize: '0.82rem', fontWeight: 700, flexShrink: 0, marginLeft: 10,
                               background: sel ? accentBg : '#f1f5f9',
                               color: sel ? 'white' : '#475569',
-                              padding: '3px 11px', borderRadius: 8, transition: 'all 0.12s',
+                              padding: '3px 11px', borderRadius: 999, transition: 'all 0.12s',
                             }}>
                               {o.hours ? `${currency}${o.price}/hr × ${o.hours}h` : `+${currency}${o.price}`}
                             </span>
