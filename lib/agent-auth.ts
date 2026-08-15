@@ -8,6 +8,7 @@ export type AgentScope =
   | 'automations:write'
   | 'forms:read'
   | 'forms:write'
+  | 'leads:read'
 
 export interface AgentAuthContext {
   accountId: string

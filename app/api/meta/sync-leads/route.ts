@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { enrollLead } from '@/lib/enroll-lead'
 import { processDueSteps } from '@/lib/process-automations'
+import { notifyLeadWebhooks } from '@/lib/agent-webhooks'
 
 export const dynamic = 'force-dynamic'
 
@@ -100,7 +101,22 @@ export async function POST(request: NextRequest) {
           form_data: formData,
           status: 'new',
           created_at: lead.created_time,
-        }).select('id').single()
+        }).select('id, created_at').single()
+
+        if (insertedLead) {
+          await notifyLeadWebhooks(account.id, {
+            id: insertedLead.id,
+            account_id: account.id,
+            hosted_form_id: null,
+            name,
+            email,
+            phone,
+            form_type: 'meta_lead_form',
+            form_data: formData,
+            status: 'new',
+            created_at: insertedLead.created_at,
+          })
+        }
 
         // Enroll and immediately fire automation for leads created within the last 48 hours
         const isRecent = (Date.now() - new Date(lead.created_time).getTime()) < 48 * 60 * 60 * 1000

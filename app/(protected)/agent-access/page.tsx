@@ -7,6 +7,7 @@ interface AgentKey {
   name: string
   key_prefix: string
   scopes: string[]
+  webhook_url: string | null
   last_used_at: string | null
   revoked_at: string | null
   created_at: string
@@ -24,7 +25,7 @@ interface AgentProposal {
   resolved_at: string | null
 }
 
-const ALL_SCOPES = ['analytics:read', 'automations:read', 'automations:write', 'forms:read', 'forms:write']
+const ALL_SCOPES = ['analytics:read', 'automations:read', 'automations:write', 'forms:read', 'forms:write', 'leads:read']
 
 function fmtDate(iso: string | null) {
   if (!iso) return '—'
@@ -38,10 +39,15 @@ export default function AgentAccessPage() {
 
   const [newKeyName, setNewKeyName] = useState('')
   const [newKeyScopes, setNewKeyScopes] = useState<string[]>(ALL_SCOPES)
+  const [newKeyWebhookUrl, setNewKeyWebhookUrl] = useState('')
   const [creating, setCreating] = useState(false)
   const [mintedKey, setMintedKey] = useState<string | null>(null)
+  const [mintedWebhookSecret, setMintedWebhookSecret] = useState<string | null>(null)
 
   const [resolving, setResolving] = useState<string | null>(null)
+  const [editingWebhook, setEditingWebhook] = useState<string | null>(null)
+  const [webhookDraft, setWebhookDraft] = useState('')
+  const [savingWebhook, setSavingWebhook] = useState(false)
 
   async function loadAll() {
     setLoading(true)
@@ -65,13 +71,19 @@ export default function AgentAccessPage() {
     const res = await fetch('/api/agent/keys', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newKeyName.trim(), scopes: newKeyScopes }),
+      body: JSON.stringify({
+        name: newKeyName.trim(),
+        scopes: newKeyScopes,
+        webhook_url: newKeyWebhookUrl.trim() || undefined,
+      }),
     })
     const body = await res.json()
     setCreating(false)
     if (res.ok) {
       setMintedKey(body.plaintext)
+      setMintedWebhookSecret(body.webhook_secret ?? null)
       setNewKeyName('')
+      setNewKeyWebhookUrl('')
       loadAll()
     } else {
       alert(body.error ?? 'Failed to create key')
@@ -82,6 +94,27 @@ export default function AgentAccessPage() {
     if (!confirm('Revoke this key? Anything using it will lose access immediately.')) return
     const res = await fetch(`/api/agent/keys/${id}`, { method: 'DELETE' })
     if (res.ok) loadAll()
+  }
+
+  async function handleSaveWebhook(id: string) {
+    setSavingWebhook(true)
+    const res = await fetch(`/api/agent/keys/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ webhook_url: webhookDraft.trim() || null }),
+    })
+    const body = await res.json()
+    setSavingWebhook(false)
+    if (res.ok) {
+      if (body.webhook_secret) {
+        setMintedWebhookSecret(body.webhook_secret)
+        setMintedKey(null)
+      }
+      setEditingWebhook(null)
+      loadAll()
+    } else {
+      alert(body.error ?? 'Failed to update webhook')
+    }
   }
 
   async function handleResolve(id: string, decision: 'approved' | 'rejected') {
@@ -162,11 +195,25 @@ export default function AgentAccessPage() {
           <h2 className="text-lg font-medium text-gray-900 mb-1">API Keys</h2>
           <p className="text-sm text-gray-500 mb-5">Keys an agent uses to authenticate. Scope each key to only what it needs.</p>
 
-          {mintedKey && (
+          {(mintedKey || mintedWebhookSecret) && (
             <div className="mb-5 border border-amber-200 bg-amber-50 rounded-lg p-4">
-              <p className="text-sm font-medium text-amber-900">Copy this key now — it won&apos;t be shown again.</p>
-              <code className="block text-sm bg-white border border-amber-200 rounded px-3 py-2 mt-2 break-all">{mintedKey}</code>
-              <button onClick={() => setMintedKey(null)} className="text-xs text-amber-700 hover:text-amber-900 mt-2 font-medium">
+              <p className="text-sm font-medium text-amber-900">Copy these now — they won&apos;t be shown again.</p>
+              {mintedKey && (
+                <>
+                  <p className="text-xs text-amber-800 mt-2">API key (send as <code>Authorization: Bearer …</code>)</p>
+                  <code className="block text-sm bg-white border border-amber-200 rounded px-3 py-2 mt-1 break-all">{mintedKey}</code>
+                </>
+              )}
+              {mintedWebhookSecret && (
+                <>
+                  <p className="text-xs text-amber-800 mt-2">Webhook signing secret (verify <code>X-QuoteBox-Signature</code>)</p>
+                  <code className="block text-sm bg-white border border-amber-200 rounded px-3 py-2 mt-1 break-all">{mintedWebhookSecret}</code>
+                </>
+              )}
+              <button
+                onClick={() => { setMintedKey(null); setMintedWebhookSecret(null) }}
+                className="text-xs text-amber-700 hover:text-amber-900 mt-2 font-medium"
+              >
                 Dismiss
               </button>
             </div>
@@ -202,6 +249,18 @@ export default function AgentAccessPage() {
                 ))}
               </div>
             </div>
+            <div className="mb-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Webhook URL <span className="text-gray-400 font-normal">(optional — POSTed on every new lead)</span>
+              </label>
+              <input
+                type="url"
+                value={newKeyWebhookUrl}
+                onChange={(e) => setNewKeyWebhookUrl(e.target.value)}
+                placeholder="https://your-crm.example.com/webhooks/quotebox-leads"
+                className="shadow-sm focus:ring-brand-500 focus:border-brand-500 block w-full sm:text-sm border-gray-300 rounded-md px-4 py-2 border"
+              />
+            </div>
             <button
               type="submit"
               disabled={creating || !newKeyName.trim() || newKeyScopes.length === 0}
@@ -218,21 +277,64 @@ export default function AgentAccessPage() {
           ) : (
             <div className="space-y-2">
               {keys.map((k) => (
-                <div key={k.id} className="flex items-center justify-between border border-gray-200 rounded-lg p-3">
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">
-                      {k.name} <span className="text-gray-400 font-normal">{k.key_prefix}…</span>
-                      {k.revoked_at && <span className="ml-2 text-xs text-red-500 font-medium">Revoked</span>}
+                <div key={k.id} className="border border-gray-200 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {k.name} <span className="text-gray-400 font-normal">{k.key_prefix}…</span>
+                        {k.revoked_at && <span className="ml-2 text-xs text-red-500 font-medium">Revoked</span>}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-0.5">{k.scopes.join(', ')}</div>
+                      <div className="text-xs text-gray-400 mt-0.5">
+                        Created {fmtDate(k.created_at)} · Last used {fmtDate(k.last_used_at)}
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500 mt-0.5">{k.scopes.join(', ')}</div>
-                    <div className="text-xs text-gray-400 mt-0.5">
-                      Created {fmtDate(k.created_at)} · Last used {fmtDate(k.last_used_at)}
-                    </div>
+                    {!k.revoked_at && (
+                      <button onClick={() => handleRevoke(k.id)} className="text-sm text-red-500 hover:text-red-600 font-medium">
+                        Revoke
+                      </button>
+                    )}
                   </div>
+
                   {!k.revoked_at && (
-                    <button onClick={() => handleRevoke(k.id)} className="text-sm text-red-500 hover:text-red-600 font-medium">
-                      Revoke
-                    </button>
+                    <div className="mt-2 pt-2 border-t border-gray-100">
+                      {editingWebhook === k.id ? (
+                        <div className="flex gap-2 items-center">
+                          <input
+                            type="url"
+                            value={webhookDraft}
+                            onChange={(e) => setWebhookDraft(e.target.value)}
+                            placeholder="https://your-crm.example.com/webhooks/quotebox-leads"
+                            className="flex-1 text-sm border-gray-300 rounded-md px-3 py-1.5 border"
+                          />
+                          <button
+                            onClick={() => handleSaveWebhook(k.id)}
+                            disabled={savingWebhook}
+                            className="text-sm text-brand-600 hover:text-brand-700 font-medium disabled:opacity-50"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setEditingWebhook(null)}
+                            className="text-sm text-gray-400 hover:text-gray-600 font-medium"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs text-gray-500 truncate">
+                            Webhook: {k.webhook_url ?? 'none'}
+                          </span>
+                          <button
+                            onClick={() => { setEditingWebhook(k.id); setWebhookDraft(k.webhook_url ?? '') }}
+                            className="text-xs text-brand-600 hover:text-brand-700 font-medium flex-shrink-0"
+                          >
+                            {k.webhook_url ? 'Edit' : 'Add webhook'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               ))}

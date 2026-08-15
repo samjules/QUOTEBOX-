@@ -4,6 +4,7 @@ import crypto from 'crypto'
 import { enrollLead } from '@/lib/enroll-lead'
 import { processDueSteps } from '@/lib/process-automations'
 import { enrollAgencyLead } from '@/lib/agency-leads'
+import { notifyLeadWebhooks } from '@/lib/agent-webhooks'
 
 const supabaseAdmin = () =>
   createClient(
@@ -152,7 +153,22 @@ export async function POST(request: NextRequest) {
           form_type: 'meta_lead_form',
           form_data: formData,
           status: 'new',
-        }).select('id').single()
+        }).select('id, created_at').single()
+
+        if (insertedLead) {
+          await notifyLeadWebhooks(account.id, {
+            id: insertedLead.id,
+            account_id: account.id,
+            hosted_form_id: null,
+            name,
+            email,
+            phone,
+            form_type: 'meta_lead_form',
+            form_data: formData,
+            status: 'new',
+            created_at: insertedLead.created_at,
+          })
+        }
 
         // Enroll lead and immediately fire initial_contact
         if (insertedLead?.id && email) {

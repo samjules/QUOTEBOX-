@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { enrollLead } from '@/lib/enroll-lead'
 import { processDueSteps } from '@/lib/process-automations'
+import { notifyLeadWebhooks } from '@/lib/agent-webhooks'
 
 export async function POST(request: NextRequest) {
   // Use service role key to bypass RLS — FK constraint check on hosted_form_id
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'This form is no longer active' }, { status: 400 })
   }
 
-  let insertedLead: { id: string } | null = null
+  let insertedLead: { id: string; created_at: string } | null = null
   try {
     const { data, error: insertError } = await supabaseAdmin.from('leads').insert({
       account_id: body.account_id,
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
       form_type: body.form_type,
       status: body.status,
       form_data: body.form_data,
-    }).select('id').single()
+    }).select('id, created_at').single()
 
     if (insertError) {
       return NextResponse.json({ error: 'Failed to submit lead' }, { status: 500 })
@@ -62,6 +63,21 @@ export async function POST(request: NextRequest) {
     insertedLead = data
   } catch {
     return NextResponse.json({ error: 'Failed to submit lead' }, { status: 500 })
+  }
+
+  if (insertedLead) {
+    await notifyLeadWebhooks(body.account_id, {
+      id: insertedLead.id,
+      account_id: body.account_id,
+      hosted_form_id: body.hosted_form_id,
+      name: body.name,
+      email: body.email,
+      phone: body.phone,
+      form_type: body.form_type,
+      form_data: body.form_data,
+      status: body.status,
+      created_at: insertedLead.created_at,
+    })
   }
 
   // Server-side credit deduction for credit-based plans
